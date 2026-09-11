@@ -67,9 +67,12 @@ export function makeWorld(zone:Zone):World{
   // ORTADA ARTI seklinde iki yol; gerisi kul. Kenarlara gorunmez duvar koymak
   // yerine can hizla eriyor, yani oyuncu yolun sonunu goremeden geri donmek
   // zorunda kaliyor - sinir hissettirilmeden konmus oluyor.
-  room(25,6,5,24);      // dikey kol
-  room(4,14,46,5);      // yatay kol
-  gecis(25,28,30,30,'haven',[15,4]);   // geldigin agiz: uzerine basinca geri
+  // Yollar genisletildi ve kavsak GIRISE yaklastirildi: onceki yerlesimde
+  // oyuncu daha kavsaga varmadan sag/sol kapali oluyordu, can da eridigi icin
+  // cogu zaman hic yatay yola cikamiyordu.
+  room(24,3,7,27);      // dikey kol (7 karo genis)
+  room(2,17,50,6);      // yatay kol (6 karo yuksek, girise 4 karo mesafede)
+  gecis(24,28,31,30,'haven',[15,4]);   // geldigin agiz: uzerine basinca geri
  }else if(zone==='magara'){
   // Sarnic Agzi: siginagin kapagindan inilen ilk karanlik. Tek parca boyali
   // sahne (public/assets/arkaplan/magara.png). Prop katmani YOK, o yuzden
