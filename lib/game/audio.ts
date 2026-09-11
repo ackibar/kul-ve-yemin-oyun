@@ -10,6 +10,10 @@ const ATES_SES='/assets/audio/fireplace.mp3';
 // motor en yakin alevlere gore 0..1 arasi bir seviye veriyor. Boylece uc ocagin
 // yan yana oldugu sigginakta ses uc katina cikmiyor, sadece biraz doluyor.
 const ATES_KAT=.9;
+// Kayitli efekt ornekleri. Sentezlenen karsiliklarinin yerine gecerler; dosya
+// yuklenemezse sentez calmaya devam eder, yani ses hic kaybolmaz.
+const ORNEKLER:Record<string,string>={death:'/assets/audio/death.mp3'};
+const ORNEK_KAT=1.35;   // ornekler sentez tonlarindan daha sakin masterlanmis
 // Muzik yolu kazanci. Sentezlenmis muzik tek tek zayif tonlardan olustugu icin .2
 // yetiyordu; kayitli parca masterlanmis (ortalama -14 dBFS) oldugundan ayni katsayi
 // onu one cikarip adim/vurus efektlerini bastiriyor - ustelik master kompresoru de
@@ -22,8 +26,8 @@ const SENTEZ_KAT=.2,PARCA_KAT=.38;
 const HIZ=.9;
 export class GameAudio{
  private ctx:AudioContext|null=null;private musicBus:GainNode|null=null;private fxBus:GainNode|null=null;private timer:ReturnType<typeof setInterval>|null=null;private next=0;private beat=0;private zone='haven';private active=true;music=.45;effects=.65;
- private parca:AudioBuffer|null=null;private basla=0;private bitis=0;private calan:AudioBufferSourceNode[]=[];private bekleniyor=true;private ates:AudioBufferSourceNode|null=null;private atesKazanc:GainNode|null=null;private atesPan:StereoPannerNode|null=null;private muzikKat=SENTEZ_KAT;
- start(){if(!this.ctx){const C=window.AudioContext||(window as unknown as {webkitAudioContext:typeof AudioContext}).webkitAudioContext;if(!C)return;this.ctx=new C();this.musicBus=this.ctx.createGain();this.fxBus=this.ctx.createGain();const compressor=this.ctx.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=10;compressor.ratio.value=4;compressor.attack.value=.006;compressor.release.value=.18;const master=this.ctx.createGain();master.gain.value=1.45;compressor.connect(master);master.connect(this.ctx.destination);this.musicBus.connect(compressor);this.fxBus.connect(compressor);this.setVolumes(this.music,this.effects);void this.parcaYukle();void this.atesYukle();}void this.ctx.resume().catch(()=>{});if(!this.timer){this.next=this.ctx.currentTime+.05;this.timer=setInterval(()=>this.schedule(),100)}}
+ private parca:AudioBuffer|null=null;private basla=0;private bitis=0;private calan:AudioBufferSourceNode[]=[];private bekleniyor=true;private ornek:Record<string,AudioBuffer>={};private ates:AudioBufferSourceNode|null=null;private atesKazanc:GainNode|null=null;private atesPan:StereoPannerNode|null=null;private muzikKat=SENTEZ_KAT;
+ start(){if(!this.ctx){const C=window.AudioContext||(window as unknown as {webkitAudioContext:typeof AudioContext}).webkitAudioContext;if(!C)return;this.ctx=new C();this.musicBus=this.ctx.createGain();this.fxBus=this.ctx.createGain();const compressor=this.ctx.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=10;compressor.ratio.value=4;compressor.attack.value=.006;compressor.release.value=.18;const master=this.ctx.createGain();master.gain.value=1.45;compressor.connect(master);master.connect(this.ctx.destination);this.musicBus.connect(compressor);this.fxBus.connect(compressor);this.setVolumes(this.music,this.effects);void this.parcaYukle();void this.atesYukle();void this.ornekYukle();}void this.ctx.resume().catch(()=>{});if(!this.timer){this.next=this.ctx.currentTime+.05;this.timer=setInterval(()=>this.schedule(),100)}}
  setVolumes(m:number,f:number){this.music=m;this.effects=f;this.musicBus?.gain.setTargetAtTime(m*this.muzikKat,this.ctx!.currentTime,.08);this.fxBus?.gain.setTargetAtTime(f*.5,this.ctx!.currentTime,.02)}
  setZone(zone:string){if(this.zone!==zone){this.zone=zone;this.beat=0;}}
  pause(p:boolean){this.active=!p;if(this.ctx){if(p)void this.ctx.suspend().catch(()=>{});else{if(!this.parca)this.next=this.ctx.currentTime+.05;void this.ctx.resume().catch(()=>{});}}}
@@ -37,6 +41,10 @@ export class GameAudio{
   this.parca=buf;this.basla=b/buf.sampleRate;this.bitis=(e+1)/buf.sampleRate;
   this.muzikKat=PARCA_KAT;this.setVolumes(this.music,this.effects);
   this.next=this.ctx!.currentTime+.06;}catch{/* dosya okunamadiysa sentezlenmis muzik yedege gecer */}finally{this.bekleniyor=false;}}
+ private async ornekYukle(){for(const[ad,yol]of Object.entries(ORNEKLER))try{
+   const r=await fetch(yol);if(!r.ok)continue;
+   this.ornek[ad]=await this.ctx!.decodeAudioData(await r.arrayBuffer());
+  }catch{/* yuklenemezse sentez karsiligi calar */}}
  private async atesYukle(){try{const r=await fetch(ATES_SES);if(!r.ok)return;
   const buf=await this.ctx!.decodeAudioData(await r.arrayBuffer());if(!this.ctx||!this.fxBus)return;
   const d=buf.getChannelData(0),tara=Math.min(buf.length,buf.sampleRate);let b=0,e=buf.length-1;
@@ -60,6 +68,11 @@ export class GameAudio{
    src.start(t,this.basla);src.stop(t+gercek+.05);src.onended=()=>{src.disconnect();g.disconnect();this.calan=this.calan.filter(x=>x!==src)};this.calan.push(src);
    // Bir sonraki tur, bu turun cikisiyla tam ust uste binsin: dikis duyulmaz.
    this.next=t+gercek-XF;}}
- play(name:Sound,scale=1){if(!this.ctx||!this.fxBus||this.ctx.state!=='running'||this.effects===0||scale<=0.001)return;const t=this.ctx.currentTime,b=this.fxBus,s=Math.min(1,Math.max(0,scale));const notes=(ns:number[],d=.1,v=.3,type:OscillatorType='triangle')=>ns.forEach((f,i)=>this.tone(f,t+i*d,d*2,v*s,type,b));switch(name){case 'step':this.tone(85+Math.random()*30,t,.04,.13*s,'triangle',b);break;case 'swing':notes([250,130,70],.025,.25,'sawtooth');break;case 'hit':notes([110,65],.03,.55,'square');break;case 'hurt':notes([180,100,70],.06,.35,'sawtooth');break;case 'dodge':notes([120,230,380],.025,.16,'sine');break;case 'chest':notes([330,440,554,660],.1,.25);break;case 'coin':notes([880,1320],.07,.2);break;case 'level':notes([293.66,369.99,440,587.33,739.99,880],.11,.3);break;case 'talk':notes([330,440],.055,.12);break;case 'drink':notes([220,330,550],.075,.2,'sine');break;case 'door':notes([146,220,293],.12,.22);break;case 'death':notes([293,261,220,146],.25,.25);break;case 'select':notes([480],.05,.15);break;case 'trap':notes([180,240,120],.04,.3,'sawtooth');break;}}
+ play(name:Sound,scale=1){if(!this.ctx||!this.fxBus||this.ctx.state!=='running'||this.effects===0||scale<=0.001)return;
+  const buf=this.ornek[name];
+  if(buf){const src=this.ctx.createBufferSource();src.buffer=buf;
+   const g=this.ctx.createGain();g.gain.value=Math.min(1,Math.max(0,scale))*ORNEK_KAT;
+   src.connect(g);g.connect(this.fxBus);src.start();
+   src.onended=()=>{src.disconnect();g.disconnect()};return;}const t=this.ctx.currentTime,b=this.fxBus,s=Math.min(1,Math.max(0,scale));const notes=(ns:number[],d=.1,v=.3,type:OscillatorType='triangle')=>ns.forEach((f,i)=>this.tone(f,t+i*d,d*2,v*s,type,b));switch(name){case 'step':this.tone(85+Math.random()*30,t,.04,.13*s,'triangle',b);break;case 'swing':notes([250,130,70],.025,.25,'sawtooth');break;case 'hit':notes([110,65],.03,.55,'square');break;case 'hurt':notes([180,100,70],.06,.35,'sawtooth');break;case 'dodge':notes([120,230,380],.025,.16,'sine');break;case 'chest':notes([330,440,554,660],.1,.25);break;case 'coin':notes([880,1320],.07,.2);break;case 'level':notes([293.66,369.99,440,587.33,739.99,880],.11,.3);break;case 'talk':notes([330,440],.055,.12);break;case 'drink':notes([220,330,550],.075,.2,'sine');break;case 'door':notes([146,220,293],.12,.22);break;case 'death':notes([293,261,220,146],.25,.25);break;case 'select':notes([480],.05,.15);break;case 'trap':notes([180,240,120],.04,.3,'sawtooth');break;}}
  destroy(){if(this.timer)clearInterval(this.timer);this.timer=null;for(const s of this.calan)try{s.stop()}catch{}this.calan=[];try{this.ates?.stop()}catch{}this.ates=null;void this.ctx?.close().catch(()=>{});this.ctx=null;}
 }
