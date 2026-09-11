@@ -103,6 +103,8 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // Ucurumun DORT BIR YANI acik: kenarindan dolasilabilsin diye cevresi
   // yurunebilir. Sag taraf kayalik ama gecis orada da kapali kalmasin.
   room(19,9,10,12);
+  // Ucurumun basinda duran adam. Atladiysa bir daha yok.
+  if(flags?.tuhn!=='atladi')at({id:'tuhn',type:'npc',x:20,y:15,name:'Tuhn',portrait:6});
  }else if(zone==='cistern'){
   room(3,3,11,11);room(5,12,4,24);room(3,29,12,12);room(12,33,22,4);room(28,27,14,15);room(32,12,4,20);room(27,3,15,12);room(12,6,19,4);room(17,18,9,9);room(8,21,12,3);room(22,23,12,3);
   at({id:'backHaven',type:'portal',x:6,y:5,to:'magara',spawn:[14,25],name:'Yukarı çık'});

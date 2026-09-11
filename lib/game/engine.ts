@@ -35,6 +35,10 @@ export class Engine{
   *  kucule asagi kayiyor; bitince olum. */
  /** Uyku sahnesi sayaci: karart -> bekle -> ac. Ekran kararmisken karakter
   *  ters yone dondurulur, uyanip yatagin obur tarafina gecmis gibi olur. */
+ /** Rauf yoldasken vurus bekleme sayaci ve dusmanlarin ona vurma sayaci.
+  *  Cani flags.raufCan'da string olarak tutuluyor ki kayitla birlikte gitsin. */
+ private raufVur=0;private raufHasar=0;private sahneUyari=0;
+ static readonly RAUF_CAN=90;
  private uyku=0;private uykuDondu=false;
  static readonly UYKU=2.4;
  /** Kul Ovasi'nda saniyede eriyen can. Haritanin kenarina gorunmez duvar
@@ -67,7 +71,7 @@ export class Engine{
  private img(key:string,path:string){const im=new Image();im.src=path;this.images[key]=im;return new Promise<void>((resolve,reject)=>{im.onload=()=>resolve();im.onerror=()=>reject(new Error(path));})}
   private async loadAssets(){const jobs:Promise<void>[]=[];const optional:boolean[]=[];/** optional[i] === true olan isler ISTEGE BAGLI: eksikligi oyunu kirmaz.
   *  Karakter dongusu disindaki tum isler zorunlu sayilir. */
- const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};for(const id of [3,5,21,22,35])jobs.push(this.img('tile'+id,`/assets/dungeon/1%20Tiles/Tile_${String(id).padStart(2,'0')}.png`));jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);mark(false);for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?5:6);n++){const iste=(kind==='characters'&&n===5)||(kind==='enemies'&&n===6);for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death']){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death'])jobs.push(this.img(`characters1sword${dir}${action}`,`/assets/characters/1sword/${dir}_${action}.png`));for(const z of ['haven','magara','disari','yikik'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));for(const z of ['haven','cistern','forge'])for(let i=0;i<16;i++)jobs.push(this.img(`wang_${z}_${i}`,`/assets/dungeon/wang/${z}/wang_${i}.png`));for(const [key,name]of [['fire','Fire1'],['chest','Chest1_D'],['lever','Lever1'],['trap','Spikes'],['portal','Trapdoor_D']])jobs.push(this.img(key,`/assets/dungeon/3%20Animated%20objects/${name}.png`));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));for(const a of ['Tables/1.png','Tables/2.png','Chairs/1.png','Bookshelf/1.png','Bookshelf/2.png','Boxes/1.png','Boxes/2.png'])jobs.push(this.img(a,'/assets/dungeon/2%20Objects/'+a));mark(false);const result=await Promise.allSettled(jobs);
+ const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};for(const id of [3,5,21,22,35])jobs.push(this.img('tile'+id,`/assets/dungeon/1%20Tiles/Tile_${String(id).padStart(2,'0')}.png`));jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);jobs.push(this.img('ceset','/assets/characters/5/D_Corpse.png'));optional.push(true);mark(false);for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?6:6);n++){const iste=(kind==='characters'&&(n===5||n===6))||(kind==='enemies'&&n===6);for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death']){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death'])jobs.push(this.img(`characters1sword${dir}${action}`,`/assets/characters/1sword/${dir}_${action}.png`));for(const z of ['haven','magara','disari','yikik'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));for(const z of ['haven','cistern','forge'])for(let i=0;i<16;i++)jobs.push(this.img(`wang_${z}_${i}`,`/assets/dungeon/wang/${z}/wang_${i}.png`));for(const [key,name]of [['fire','Fire1'],['chest','Chest1_D'],['lever','Lever1'],['trap','Spikes'],['portal','Trapdoor_D']])jobs.push(this.img(key,`/assets/dungeon/3%20Animated%20objects/${name}.png`));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));for(const a of ['Tables/1.png','Tables/2.png','Chairs/1.png','Bookshelf/1.png','Bookshelf/2.png','Boxes/1.png','Boxes/2.png'])jobs.push(this.img(a,'/assets/dungeon/2%20Objects/'+a));mark(false);const result=await Promise.allSettled(jobs);
   // Rauf seti (characters/5, enemies/6) sonradan eklenecek; eksikligi oyunu kirmaz.
   const zorunlu=result.filter((_,i)=>!optional[i]);
   this.ready=zorunlu.every(r=>r.status==='fulfilled');if(!this.ready)this.onEvent({type:'message',text:'Bazı görseller yüklenemedi. Bağlantını kontrol edip sayfayı yenile.'});this.emit();}
@@ -109,7 +113,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  spawnDrop(x:number,y:number,kind:'wood'|'xp'|'gold'|'bow',amount:number){this.drops.push({id:`drop_${Date.now()}_${Math.random()}`,x,y,kind,amount,vx:(Math.random()-.5)*45,vy:(Math.random()-.6)*45,life:30});}
  nearest(){let near:Entity|null=null,best=40;for(const e of this.world.entities){if(['fire','trap'].includes(e.type))continue;if(e.type==='decor'&&!e.asset?.includes('Table')&&!e.asset?.startsWith('nesne/'))continue;if(e.type==='core'&&(this.state.inventory.core||this.state.ending))continue;const d=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(d<best&&lineOfSight(this.world,this.state.x,this.state.y,e.x,e.y,e.id)){near=e;best=d}}return near;}
  interact(){if(this.paused||!this.ready)return;const e=this.nearest();if(!e){this.notify('Konuşmak veya açmak için biraz yaklaş.');return;}if(e.type==='yatak'){this.uyku=Engine.UYKU;this.uykuDondu=false;this.input={x:0,y:0,attack:false};this.audio.play('door');return;}
-  if(e.type==='decor'&&e.asset?.includes('Table')){this.audio.play('talk');this.onEvent({type:'dialogue',id:'crafting'});return;}if(e.type==='npc'){this.audio.play('talk');this.onEvent({type:'dialogue',id:e.id});return;}if(e.type==='chest'){if(this.state.opened.includes(e.id)){this.notify('Bu sandığı daha önce açmıştın. Vurarak kırabilirsin.');return;}this.state.opened.push(e.id);for(const[id,n]of e.items||[])addItem(this.state,id,n);addItem(this.state,'arrow',10);this.state.gold+=e.gold||0;this.audio.play('chest');const lootText=(e.items||[]).map(([id,n])=>`${ITEMS[id].name}${n>1?' ×'+n:''}`).concat(['+10 Ok']).concat(e.gold?[`+${e.gold} altın`]:[]).join(' · ');if(Math.random()<0.35&&this.state.zone!=='haven'){const batCount=Math.floor(1+Math.random()*2);for(let i=0;i<batCount;i++){this.mobs.push({id:`bat_${e.id}_${Date.now()}_${i}`,kind:1,x:e.x+(Math.random()-.5)*16,y:e.y+(Math.random()-.5)*16,max:22,hp:22,cool:.3,windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y});}this.notify(lootText?`${lootText} · 🦇 Sandıktan yarasa fırladı!`:'🦇 Sandıktan yarasa fırladı!');}else{this.notify(lootText);}this.state.journal.unshift(`${e.items?.map(([id])=>ITEMS[id].name).join(', ')} buldun.`);if(e.items?.some(([id])=>id==='medicine'))this.state.flags.medicineStarted=true;this.save();this.emit();return;}if(e.type==='lever'){if(this.state.flags.gateOpen){this.notify('Ocak kapısı zaten açık.');return;}this.state.flags.gateOpen=true;this.audio.play('door');this.notify('Kül Ocağı’nın kapısı açıldı.');this.save();this.emit();return;}if(e.type==='core'){if(!this.state.killed.includes('warden')){this.notify('Önce Kül Bekçisi’ni yenmelisin.');return;}addItem(this.state,'core');this.state.flags.coreStarted=true;this.audio.play('level');this.notify('Kül kalbi senin. Geçitle Undur’a dön.');this.save();this.emit();return;}if(e.type==='portal'&&e.to){if(e.id==='toForge'&&!this.state.flags.gateOpen){this.notify('Kapı kilitli. Sarnıcın güneybatısındaki kolu bul.');return;}if(e.id==='returnHaven'&&!this.state.killed.includes('warden')){this.notify('Geçidi Bekçi’nin mührü tutuyor.');return;}this.changeZone(e.to,e.spawn!);}}
+  if(e.type==='decor'&&e.asset?.includes('Table')){this.audio.play('talk');this.onEvent({type:'dialogue',id:'crafting'});return;}if(e.type==='npc'){// Yoldas Rauf'un kendi kolu var; ana gorev diyalogu yerine o acilir.
+   if(e.id==='tuhn')this.state.flags.talk=this.state.flags.tuhn==='kaldi'?'tuhn:kaldi':'tuhn:1';
+   else if(e.id==='rauf'&&this.state.flags.rauf==='takip')this.state.flags.talk='rauf:takip1';else if(e.id==='rauf'&&this.state.flags.rauf==='serbest')this.state.flags.talk='rauf:serbest1';this.audio.play('talk');this.onEvent({type:'dialogue',id:e.id});return;}if(e.type==='chest'){if(this.state.opened.includes(e.id)){this.notify('Bu sandığı daha önce açmıştın. Vurarak kırabilirsin.');return;}this.state.opened.push(e.id);for(const[id,n]of e.items||[])addItem(this.state,id,n);addItem(this.state,'arrow',10);this.state.gold+=e.gold||0;this.audio.play('chest');const lootText=(e.items||[]).map(([id,n])=>`${ITEMS[id].name}${n>1?' ×'+n:''}`).concat(['+10 Ok']).concat(e.gold?[`+${e.gold} altın`]:[]).join(' · ');if(Math.random()<0.35&&this.state.zone!=='haven'){const batCount=Math.floor(1+Math.random()*2);for(let i=0;i<batCount;i++){this.mobs.push({id:`bat_${e.id}_${Date.now()}_${i}`,kind:1,x:e.x+(Math.random()-.5)*16,y:e.y+(Math.random()-.5)*16,max:22,hp:22,cool:.3,windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y});}this.notify(lootText?`${lootText} · 🦇 Sandıktan yarasa fırladı!`:'🦇 Sandıktan yarasa fırladı!');}else{this.notify(lootText);}this.state.journal.unshift(`${e.items?.map(([id])=>ITEMS[id].name).join(', ')} buldun.`);if(e.items?.some(([id])=>id==='medicine'))this.state.flags.medicineStarted=true;this.save();this.emit();return;}if(e.type==='lever'){if(this.state.flags.gateOpen){this.notify('Ocak kapısı zaten açık.');return;}this.state.flags.gateOpen=true;this.audio.play('door');this.notify('Kül Ocağı’nın kapısı açıldı.');this.save();this.emit();return;}if(e.type==='core'){if(!this.state.killed.includes('warden')){this.notify('Önce Kül Bekçisi’ni yenmelisin.');return;}addItem(this.state,'core');this.state.flags.coreStarted=true;this.audio.play('level');this.notify('Kül kalbi senin. Geçitle Undur’a dön.');this.save();this.emit();return;}if(e.type==='portal'&&e.to){if(e.id==='toForge'&&!this.state.flags.gateOpen){this.notify('Kapı kilitli. Sarnıcın güneybatısındaki kolu bul.');return;}if(e.id==='returnHaven'&&!this.state.killed.includes('warden')){this.notify('Geçidi Bekçi’nin mührü tutuyor.');return;}this.changeZone(e.to,e.spawn!);}}
  private changeZone(zone:Zone,spawn:[number,number]){this.state.zone=zone;this.state.x=spawn[0]*16+8;this.state.y=spawn[1]*16+8;this.world=makeWorld(zone,this.state.flags as Record<string,string|boolean|undefined>);this.resetMobs();this.camera={x:this.state.x-this.gorus.en/2,y:this.state.y-this.gorus.boy/2};this.invulnerable=1.5;this.audio.setZone(zone);this.audio.play('door');this.onEvent({type:'zone',id:zone});this.save();this.emit()}
  useItem(id:ItemId){if(this.paused&&!['potion','tonic'].includes(id))return false;if(id==='potion'){if(this.state.hp>=stats(this.state).maxHp){this.notify('Canın zaten dolu.');return false;}if(!removeItem(this.state,id)){this.notify('Can iksirin kalmadı. Alf’ten alabilirsin.');return false;}this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+45);this.float(this.state.x,this.state.y-10,'+45','#8cdda5');}else if(id==='tonic'){if(!removeItem(this.state,id))return false;this.tonic=20;this.notify('Köz toniği: 20 saniye +8 saldırı.');}else return false;this.audio.play('drink');this.save();this.emit();return true;}
  /** Kusanilan silaha gore sprite takimi. Varyant yuklenmemisse silahsiz
@@ -253,6 +259,24 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      this.particles.push({x:e.x+(Math.random()-.5)*13,y:e.y-12-Math.random()*6,
       vx:(Math.random()-.5)*7,vy:-9-Math.random()*11,life:.7+Math.random()*.9,
       color:c,size:1,g:-14});}}
+   // --- Tuhn: ikna edilemediyse ucuruma yurur ve atlar ---
+   if(this.state.flags.tuhn==='atladi'&&this.state.zone==='magara'){
+    const bd=this.world.entities.find(x=>x.id==='tuhn');
+    if(bd){
+     // Boslugun UZERINDE yurumesin: ucurum karosuna basar basmaz kaybolur.
+     const tx=bd.x/16,ty=bd.y/16;
+     const bosta=this.world.ucurumlar.some(([x1,y1,x2,y2])=>tx>=x1&&tx<x2&&ty>=y1&&ty<y2);
+     const hx=24*16+8-bd.x,hy=15*16+8-bd.y,hu=Math.hypot(hx,hy);
+     if(!bosta&&hu>4){const v=26*dt;bd.x+=hx/hu*v;bd.y+=hy/hu*v;
+      const y=this.sahneYuru.get('tuhn')||{dir:'S' as const,flip:false,yol:0};
+      y.dir='S';y.flip=hx<0;y.yol+=v;this.sahneYuru.set('tuhn',y);
+     }else{
+      this.world.entities=this.world.entities.filter(x=>x.id!=='tuhn');
+      this.sahneYuru.delete('tuhn');
+      this.audio.play('hurt');this.notify('Tuhn bir adım attı. Ses gelmedi.');
+      this.save();this.emit();}
+    }
+   }
    // --- Rauf: dovus / takip / teslim ---
    const rf=this.state.flags.rauf;
    if(rf==='dovus'&&!this.mobs.some(m=>m.id==='rauf')){
@@ -275,6 +299,44 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     let e=this.world.entities.find(x=>x.id==='rauf');
     if(!e){e={id:'rauf',type:'npc',x:this.state.x-14,y:this.state.y+6,name:'Rauf',portrait:5};
      this.world.entities.push(e);}
+    // --- Yoldas Rauf: once dusman, sonra oyuncu ---
+    // "Kacmis olabilirim ama korkak degilim" - yaninda bir dusman varsa
+    // oyuncuyu takip etmeyi birakip onunla dovusur. Kendi cani var, olebilir.
+    if(this.state.flags.raufCan===undefined)this.state.flags.raufCan=String(Engine.RAUF_CAN);
+    let rcan=Number(this.state.flags.raufCan)||0;
+    this.raufVur=Math.max(0,this.raufVur-dt);this.raufHasar=Math.max(0,this.raufHasar-dt);
+    const yakinlar=this.mobs.filter(m=>m.hp>0&&Math.hypot(m.x-e.x,m.y-e.y)<72);
+    yakinlar.sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y));
+    const hedef=yakinlar[0];
+    if(hedef){
+     const hx=hedef.x-e.x,hy=hedef.y-e.y,hu=Math.hypot(hx,hy)||1;
+     if(hu>15){const v=42,ax=hx/hu*v*dt,ay=hy/hu*v*dt;let gitti=0;
+      if(walkable(this.world,e.x+ax,e.y,7,'rauf')){e.x+=ax;gitti+=Math.abs(ax);}
+      if(walkable(this.world,e.x,e.y+ay,7,'rauf')){e.y+=ay;gitti+=Math.abs(ay);}
+      const y=this.sahneYuru.get('rauf')||{dir:'D' as const,flip:false,yol:0};
+      if(Math.abs(hx)>Math.abs(hy)){y.dir='S';y.flip=hx<0;}else{y.dir=hy<0?'U':'D';y.flip=false;}
+      y.yol+=gitti;this.sahneYuru.set('rauf',y);
+     }else{
+      this.sahneYuru.delete('rauf');
+      if(this.raufVur<=0){this.raufVur=.8;hedef.hp-=16;hedef.hurt=.18;
+       this.audio.play('hit');this.float(hedef.x,hedef.y-12,'−16','#e2c98b');
+       if(hedef.hp<=0&&hedef.id!=='rauf')this.kill(hedef);}
+     }
+     // dusmanlar da ona vuruyor
+     if(this.raufHasar<=0&&yakinlar.some(m=>Math.hypot(m.x-e.x,m.y-e.y)<16)){
+      this.raufHasar=1.1;
+      const gelen=yakinlar.filter(m=>Math.hypot(m.x-e.x,m.y-e.y)<16)
+       .reduce((t,m)=>t+6+m.kind*2,0);
+      rcan=Math.max(0,rcan-gelen);this.state.flags.raufCan=String(Math.round(rcan));
+      this.float(e.x,e.y-16,'−'+gelen,'#ff8b89');this.audio.play('hurt');
+      if(rcan<=0){
+       this.world.entities=this.world.entities.filter(x=>x.id!=='rauf');
+       this.sahneYuru.delete('rauf');
+       this.state.flags.rauf='oldu';
+       this.state.journal.unshift('Rauf yolda düştü. Seni korurken öldü.');
+       this.notify('Rauf öldü.');this.save();this.emit();}
+     }
+    }else{
     // oyuncunun birkac adim gerisinde yurur
     const dx=this.state.x-e.x,dy=this.state.y-e.y,uz=Math.hypot(dx,dy);
     if(uz>26){const v=Math.min(46,uz*1.4);const ax=dx/uz*v*dt,ay=dy/uz*v*dt;
@@ -286,6 +348,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      if(Math.abs(dx)>Math.abs(dy)){y.dir='S';y.flip=dx<0;}else{y.dir=dy<0?'U':'D';y.flip=false;}
      y.yol+=gitti;this.sahneYuru.set('rauf',y);
     }else this.sahneYuru.delete('rauf');
+    }
     // Alf'e yaklasinca teslim
     const alf=this.world.entities.find(x=>x.id==='boran');
     if(alf&&Math.hypot(alf.x-this.state.x,alf.y-this.state.y)<40){
@@ -298,6 +361,14 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    // --- Teslim sahnesi: Alf, Rauf'u alip kuzey koridorundan cikar, sonra doner ---
    const sah=this.state.flags.teslimSahne;
    if(sah&&this.state.zone==='haven'){
+    // "Sen burada kal." Oyuncu pesinden kuzey koridoruna giremez; infazi
+    // gormez. Kapali kapinin ardinda olmasi olayin agirligini artiriyor.
+    if(this.state.y<7*16&&this.state.x>11*16&&this.state.x<19*16){
+     this.state.y=7*16;
+     if(this.sahneUyari<=0){this.sahneUyari=3;
+      this.notify('Alf dönüp baktı: “Sen burada kal. Bu benimle onun arasında.”');}
+    }
+    this.sahneUyari=Math.max(0,this.sahneUyari-dt);
     const CIKIS={x:14.5*16,y:2*16};
     const alf=this.world.entities.find(x=>x.id==='boran');
     const rau=this.world.entities.find(x=>x.id==='rauf');
@@ -329,6 +400,8 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    // --- NPC dolasmasi: yuru -> bekle -> yeni hedef ---
    for(const e of this.world.entities){
     if(e.type!=='npc')continue;
+    // Tuhn ucurumun kenarinda sabit durur; dolasma sistemi onu icine sokabilirdi.
+    if(e.id==='tuhn')continue;
     // Takip eden Rauf'u dolasma sistemi kendi evine cekmesin
     if(e.id==='rauf'&&this.state.flags.rauf==='takip'){this.gez.delete('rauf');continue;}
     // Teslim sahnesi oynarken Alf ve Rauf'u dolasma sistemi cekmesin
@@ -378,7 +451,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    const kz=this.state.zone==='yikik'?'cistern':this.state.zone;const tile=this.images[`wang_${kz}_${m}`];if(tile?.naturalWidth)c.drawImage(tile,x*16-8,y*16-8,16,16);}
   // Bolge tonu zeminde; zemine komsu olmayan duvarlar uzaklik hissi icin karartilir (doku gorunsun diye %50).
   for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){if(isFloor(x,y)){c.fillStyle=this.state.zone==='forge'?'#21122118':'#10213310';c.fillRect(x*16,y*16,16,16);}else if(![[0,1],[0,-1],[-1,0],[1,0],[1,1],[-1,-1],[1,-1],[-1,1]].some(([dx,dy])=>isFloor(x+dx,y+dy))){c.fillStyle='#060a1280';c.fillRect(x*16,y*16,16,16);}}}
-  for(const e of this.world.entities){if(e.type==='ceset'){const im=this.images['characters5DIdle'];if(im?.naturalWidth){c.save();c.translate(e.x,e.y);c.rotate(Math.PI/2);c.globalAlpha=.92;c.drawImage(im,0,0,64,64,-16*OYUNCU_OLCEK,-16*OYUNCU_OLCEK,32*OYUNCU_OLCEK,32*OYUNCU_OLCEK);c.restore();}this.label(e.name||'',e.x,e.y-22,'#9d9384');continue;}if(e.type==='portal'){const gizli=e.asset==='gizli';if(!gizli)this.sprite('portal',e.x,e.y,0,22,32);if(e.id==='returnHaven'&&!this.state.killed.includes('warden'))continue;if(gizli){this.label(e.name!,e.x,e.y+13,'#c9bda4');continue;}const glow=c.createRadialGradient(e.x,e.y,1,e.x,e.y,22);glow.addColorStop(0,'#74c8ef30');glow.addColorStop(1,'#74c8ef00');c.fillStyle=glow;c.fillRect(e.x-22,e.y-22,44,44);this.label(e.name!,e.x,e.y+13,'#b6dbe9');}if(e.type==='trap')this.sprite('trap',e.x,e.y,this.trapActive(e)?4:0,17,17);}
+  for(const e of this.world.entities){if(e.type==='ceset'){this.sprite('ceset',e.x,e.y,0,32,32,false,OYUNCU_OLCEK*1.18);this.label(e.name||'',e.x,e.y-20,'#9d9384');continue;}if(e.type==='portal'){const gizli=e.asset==='gizli';if(!gizli)this.sprite('portal',e.x,e.y,0,22,32);if(e.id==='returnHaven'&&!this.state.killed.includes('warden'))continue;if(gizli){this.label(e.name!,e.x,e.y+13,'#c9bda4');continue;}const glow=c.createRadialGradient(e.x,e.y,1,e.x,e.y,22);glow.addColorStop(0,'#74c8ef30');glow.addColorStop(1,'#74c8ef00');c.fillStyle=glow;c.fillRect(e.x-22,e.y-22,44,44);this.label(e.name!,e.x,e.y+13,'#b6dbe9');}if(e.type==='trap')this.sprite('trap',e.x,e.y,this.trapActive(e)?4:0,17,17);}
   const actors:({y:number;draw:()=>void})[]=this.world.entities.filter(e=>e.type!=='portal'&&e.type!=='trap').map(e=>({y:e.y,draw:()=>{
    if(e.type==='decor'){this.sprite(e.asset!,e.x,e.y);if(e.name)this.label(e.name,e.x,e.y-20,'#dfc28e');return;}
    if(e.type==='fire'){this.sprite('fire',e.x,e.y,Math.floor(time*8)%8,32,32,false,e.s??1);return;}
