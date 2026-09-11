@@ -41,7 +41,10 @@ export class Engine{
   *  koymak yerine sure basinci var: yolun ucuna varmadan geri donmek gerekiyor. */
  static readonly KUL_HASAR=8;
  private dusus=0;
- static readonly DUSUS=0.9;
+ /** Dusus suresi. Once 0.9 sn'lik yumusak kucuIme vardi; istenen "bir anda
+  *  kaybolmak" oldugu icin kisaltildi ve sprite kupsel egriyle hizla siliniyor
+  *  - ilk 0.15 sn'de gorunmez oluyor, kalan sure olum ekranina gecis. */
+ static readonly DUSUS=0.5;
  private sonImza='';
  private sahneSayac=0;
  private dizSayac=0;private dizX=0;private dizY=0;
@@ -371,10 +374,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   const isFloor=(tx:number,ty:number)=>ty>=0&&ty<this.world.h&&tx>=0&&tx<this.world.w&&this.world.tiles[ty][tx]===1;const y0=Math.floor(cy/16)-1,y1=Math.ceil((cy+this.gorus.boy)/16)+2,x0=Math.floor(cx/16)-1,x1=Math.ceil((cx+this.gorus.en)/16)+2;
   // Dual-grid autotile: her cizilen karo dort dunya hucresinin kesistigi koseye ortalanir;
   // wang_N'de N = kose duvar maskesi (NW=8, NE=4, SW=2, SE=1), wang_0 tam zemin, wang_15 tam duvar.
-  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const m=(isFloor(x-1,y-1)?0:8)|(isFloor(x,y-1)?0:4)|(isFloor(x-1,y)?0:2)|(isFloor(x,y)?0:1);const tile=this.images[`wang_${this.state.zone}_${m}`];if(tile?.naturalWidth)c.drawImage(tile,x*16-8,y*16-8,16,16);}
+  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const m=(isFloor(x-1,y-1)?0:8)|(isFloor(x,y-1)?0:4)|(isFloor(x-1,y)?0:2)|(isFloor(x,y)?0:1);// Yikik Ev'in kendi karo seti yok; sarnicin tas setini oduncu aliyor, yoksa oda bombos cizilirdi.
+   const kz=this.state.zone==='yikik'?'cistern':this.state.zone;const tile=this.images[`wang_${kz}_${m}`];if(tile?.naturalWidth)c.drawImage(tile,x*16-8,y*16-8,16,16);}
   // Bolge tonu zeminde; zemine komsu olmayan duvarlar uzaklik hissi icin karartilir (doku gorunsun diye %50).
   for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){if(isFloor(x,y)){c.fillStyle=this.state.zone==='forge'?'#21122118':'#10213310';c.fillRect(x*16,y*16,16,16);}else if(![[0,1],[0,-1],[-1,0],[1,0],[1,1],[-1,-1],[1,-1],[-1,1]].some(([dx,dy])=>isFloor(x+dx,y+dy))){c.fillStyle='#060a1280';c.fillRect(x*16,y*16,16,16);}}}
-  for(const e of this.world.entities){if(e.type==='portal'){this.sprite('portal',e.x,e.y,0,22,32);if(e.id==='returnHaven'&&!this.state.killed.includes('warden'))continue;const glow=c.createRadialGradient(e.x,e.y,1,e.x,e.y,22);glow.addColorStop(0,'#74c8ef30');glow.addColorStop(1,'#74c8ef00');c.fillStyle=glow;c.fillRect(e.x-22,e.y-22,44,44);this.label(e.name!,e.x,e.y+13,'#b6dbe9');}if(e.type==='trap')this.sprite('trap',e.x,e.y,this.trapActive(e)?4:0,17,17);}
+  for(const e of this.world.entities){if(e.type==='portal'){const gizli=e.asset==='gizli';if(!gizli)this.sprite('portal',e.x,e.y,0,22,32);if(e.id==='returnHaven'&&!this.state.killed.includes('warden'))continue;if(gizli){this.label(e.name!,e.x,e.y+13,'#c9bda4');continue;}const glow=c.createRadialGradient(e.x,e.y,1,e.x,e.y,22);glow.addColorStop(0,'#74c8ef30');glow.addColorStop(1,'#74c8ef00');c.fillStyle=glow;c.fillRect(e.x-22,e.y-22,44,44);this.label(e.name!,e.x,e.y+13,'#b6dbe9');}if(e.type==='trap')this.sprite('trap',e.x,e.y,this.trapActive(e)?4:0,17,17);}
   const actors:({y:number;draw:()=>void})[]=this.world.entities.filter(e=>e.type!=='portal'&&e.type!=='trap').map(e=>({y:e.y,draw:()=>{
    if(e.type==='decor'){this.sprite(e.asset!,e.x,e.y);if(e.name)this.label(e.name,e.x,e.y-20,'#dfc28e');return;}
    if(e.type==='fire'){this.sprite('fire',e.x,e.y,Math.floor(time*8)%8,32,32,false,e.s??1);return;}
@@ -390,8 +394,8 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   }}));
   for(const m of this.mobs)actors.push({y:m.y,draw:()=>{c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const dir=Math.abs(dx)>Math.abs(dy)?'S':dy<0?'U':'D';this.sprite(`enemies${m.kind}${dir}${m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk'}`,m.x,m.y,Math.floor(time*7),32,32,dir==='S'&&dx<0,(m.boss?1.7:1)*OYUNCU_OLCEK);if(m.hp<m.max||m.boss){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');}}});
    actors.push({y:this.state.y,draw:()=>{const s=this.state;c.fillStyle='#02081280';c.beginPath();c.ellipse(s.x,s.y+1,8.5*OYUNCU_OLCEK,2.8*OYUNCU_OLCEK,0,0,7);c.fill();const action=this.slash>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';// Dusus: sprite kucule kucule asagi kayiyor, boslugun icine iniyormus gibi.
-  const dk=this.dusus>0?this.dusus/Engine.DUSUS:1;
-  this.sprite(this.kit()+this.direction+action,s.x,s.y+(1-dk)*11,action==='Walk'?Math.floor(this.yol/Engine.ADIM):Math.floor(time*(action==='Attack'?16:5)),32,32,this.direction==='S'&&this.flip,OYUNCU_OLCEK*(.22+.78*dk),this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);if(this.slash>0){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const angle=this.direction==='S'?(this.flip?Math.PI:0):this.direction==='U'?-Math.PI/2:Math.PI/2;c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK,angle-1.1,angle+1.1);c.stroke();}}});
+  const dk=this.dusus>0?Math.pow(this.dusus/Engine.DUSUS,3):1;
+  this.sprite(this.kit()+this.direction+action,s.x,s.y+(1-dk)*11,action==='Walk'?Math.floor(this.yol/Engine.ADIM):Math.floor(time*(action==='Attack'?16:5)),32,32,this.direction==='S'&&this.flip,OYUNCU_OLCEK*(.05+.95*dk),this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);if(this.slash>0){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const angle=this.direction==='S'?(this.flip?Math.PI:0):this.direction==='U'?-Math.PI/2:Math.PI/2;c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK,angle-1.1,angle+1.1);c.stroke();}}});
   actors.sort((a,b)=>a.y-b.y).forEach(a=>a.draw());
   c.fillStyle=this.state.zone==='haven'?'#060e1924':'#070b1c42';c.fillRect(cx,cy,this.gorus.en,this.gorus.boy);
   for(const e of this.world.entities.filter(e=>e.type==='fire'||e.type==='core')){if(Math.abs(e.x-this.state.x)>230||Math.abs(e.y-this.state.y)>160)continue;const radius=48+Math.sin(time*3+e.x)*3;const glow=c.createRadialGradient(e.x,e.y-6,0,e.x,e.y-6,radius);glow.addColorStop(0,'#f7af3936');glow.addColorStop(.35,'#ee8e1815');glow.addColorStop(1,'#ee8e1800');c.fillStyle=glow;c.fillRect(e.x-radius,e.y-radius-6,radius*2,radius*2);}

@@ -37,6 +37,9 @@ ZEMIN_ISIK = 28           # bundan koyu = tuvalin disi (siyah kenar)
 # kapatiyordu. Mekana gore elle tutulan tek liste - otomatik cikarim degil,
 # seviye tasarimi karari.
 GECITLER = {'haven': [(12, 0, 19, 8), (12, 22, 19, 30)]}
+# Ufuk acili sahnelerde ustteki gokyuzu parlaklik testinde "zemin" cikiyor;
+# bu satirin ustu bastan yurunemez sayilir.
+GOK = {'disari': 9}
 KORIDOR = []
 
 
@@ -130,17 +133,19 @@ def dikdortgenler(grid):
     return kutular
 
 
-def dikey_ekle(yollar, kare_px):
-    """Kare parcalari YUKARIDAN ASAGIYA ust uste ekler.
+def dikey_ekle(yollar, en_px, parca_px):
+    """Parcalari YUKARIDAN ASAGIYA ust uste ekler.
 
-    Her parca once kendi kare olcusune indirgenir, sonra birlestirilir; onceden
-    birlestirip tek seferde olceklemek parcalarin oranini bozardi.
+    Her parca once kendi olcusune indirgenir, sonra birlestirilir; onceden
+    birlestirip tek seferde olceklemek parcalarin oranini bozardi. Parca
+    yuksekligi disaridan verilir cunku kaynak her zaman KARE degil - dis
+    dunya sahnesi 16:9 geldi ve kare varsayimi tuvali 960x960'a sikistiriyordu.
     """
-    parcalar = [Image.open(y).convert('RGBA').resize((kare_px, kare_px), Image.LANCZOS)
+    parcalar = [Image.open(y).convert('RGBA').resize((en_px, parca_px), Image.LANCZOS)
                 for y in yollar]
-    tuval = Image.new('RGBA', (kare_px, kare_px * len(parcalar)), (0, 0, 0, 0))
+    tuval = Image.new('RGBA', (en_px, parca_px * len(parcalar)), (0, 0, 0, 0))
     for i, im in enumerate(parcalar):
-        tuval.paste(im, (0, i * kare_px))
+        tuval.paste(im, (0, i * parca_px))
     return tuval
 
 
@@ -150,13 +155,12 @@ def main(bg_yolu, prop_yolu, ad='haven'):
     propler = [y for y in prop_yolu.split(',') if y]
     if len(bgler) != len(propler):
         sys.exit(f'parca sayilari tutmuyor: {len(bgler)} arkaplan / {len(propler)} prop')
-    NY = PARCA_KARO * len(bgler)
-    kare = PARCA_KARO * KARO
-    W, H = NX * KARO, NY * KARO
     if len(bgler) > 1:
-        print(f'{len(bgler)} kare parca ust uste ekleniyor -> {NX}x{NY} karo')
-    bg = dikey_ekle(bgler, kare)
-    prop = dikey_ekle(propler, kare)
+        NY = PARCA_KARO * len(bgler)
+        print(f'{len(bgler)} parca ust uste ekleniyor -> {NX}x{NY} karo')
+    W, H = NX * KARO, NY * KARO
+    bg = dikey_ekle(bgler, W, H // len(bgler))
+    prop = dikey_ekle(propler, W, H // len(bgler))
     sahne = Image.alpha_composite(bg, prop)
     os.makedirs(f'{ROOT}/public/assets/arkaplan', exist_ok=True)
     sahne.convert('RGB').save(f'{ROOT}/public/assets/arkaplan/{ad}.png')
@@ -166,6 +170,10 @@ def main(bg_yolu, prop_yolu, ad='haven'):
     lum = np.asarray(bg.convert('L')).astype(float)
     zemin = karolara(lum > ZEMIN_ISIK)
     engel = karolara(ayak_izi(np.asarray(prop)[..., 3]))
+    gok = GOK.get(ad)
+    if gok:
+        zemin[:gok] = False
+        print(f'  gokyuzu kesildi: ilk {gok} karo satiri yurunemez')
     engel &= zemin                      # zemin disinda engel aramaya gerek yok
     # Koridor agizlarindaki dekoratif taslar gecisi kapatiyordu; iki gecit
     # bilerek acik tutuluyor (seviye tasarimi karari, otomatik cikarim degil).
@@ -205,6 +213,8 @@ def main(bg_yolu, prop_yolu, ad='haven'):
 if __name__ == '__main__':
     # kullanim: mekan_kur.py <arkaplan[,arkaplan2]> <prop[,prop2]> [ad]
     #   kare parcalar virgulle, yukaridan asagiya sirayla verilir
+    if len(sys.argv) > 4:
+        NX, NY = (int(v) for v in sys.argv[4].lower().split('x'))
     main(sys.argv[1] if len(sys.argv) > 1 else f'{ROOT}/background.jpeg',
          sys.argv[2] if len(sys.argv) > 2 else f'{ROOT}/generated/prop/prop_saydam.png',
          sys.argv[3] if len(sys.argv) > 3 else 'haven')

@@ -1,8 +1,8 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM = '0.4';
+export const SURUM = '0.5';
 
-export type Zone = 'haven' | 'disari' | 'magara' | 'cistern' | 'forge';
+export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern' | 'forge';
 export type ItemId = 'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'core'|'wood'|'torch'|'arrow';
 export type Item = {id:ItemId;name:string;kind:'weapon'|'armor'|'ring'|'consumable'|'quest';description:string;rarity:'Sıradan'|'Nadir'|'Eşsiz'|'Görev';icon:string;attack?:number;defense?:number;hp?:number;price:number};
 export const ITEMS:Record<ItemId,Item>={
@@ -26,7 +26,7 @@ export const ITEMS:Record<ItemId,Item>={
  ledger:{id:'ledger',name:'Kayıp defter',kind:'quest',description:'Sığınağın erzak kayıtları. Alf bunu bekliyor.',rarity:'Görev',icon:'book',price:0},
  core:{id:'core',name:'Kül kalbi',kind:'quest',description:'Sığınağın altında atan güç. Undur ne yapılacağını biliyor.',rarity:'Görev',icon:'gem',price:0},
 };
-export const ZONES:Record<Zone,{name:string;subtitle:string;danger:string}>={haven:{name:'Son Sığınak',subtitle:'Ateşin hâlâ yandığı yer',danger:'Güvenli bölge'},disari:{name:'Kül Ovası',subtitle:'Örtünün altında kalan dünya',danger:'Ölümcül · uzun kalma'},magara:{name:'Sarnıç Ağzı',subtitle:'Sığınağın altındaki ilk karanlık',danger:'Tenha'},cistern:{name:'Unutulmuş Sarnıç',subtitle:'Taşların hatırladığı sırlar',danger:'Seviye 1–3'},forge:{name:'Kül Ocağı',subtitle:'Yeminin başladığı yer',danger:'Seviye 3–5'}};
+export const ZONES:Record<Zone,{name:string;subtitle:string;danger:string}>={haven:{name:'Son Sığınak',subtitle:'Ateşin hâlâ yandığı yer',danger:'Güvenli bölge'},disari:{name:'Kül Ovası',subtitle:'Örtünün altında kalan dünya',danger:'Ölümcül · uzun kalma'},yikik:{name:'Yıkık Ev',subtitle:'Külün giremediği tek oda',danger:'Kapalı · güvenli'},magara:{name:'Sarnıç Ağzı',subtitle:'Sığınağın altındaki ilk karanlık',danger:'Tenha'},cistern:{name:'Unutulmuş Sarnıç',subtitle:'Taşların hatırladığı sırlar',danger:'Seviye 1–3'},forge:{name:'Kül Ocağı',subtitle:'Yeminin başladığı yer',danger:'Seviye 3–5'}};
 export interface State {version:1;started:boolean;zone:Zone;x:number;y:number;hp:number;xp:number;level:number;gold:number;points:number;skills:{power:number;vigor:number;agility:number};inventory:Partial<Record<ItemId,number>>;equipment:{weapon:ItemId;armor:ItemId;ring:ItemId|null};flags:Record<string,boolean|string>;opened:string[];killed:string[];journal:string[];playtime:number;ending:string|null;}
 export const XP=[0,100,260,490,790];
 export const newState=():State=>({version:1,started:true,zone:'haven',x:15*16,y:14*16,hp:100,xp:0,level:1,gold:18,points:0,skills:{power:0,vigor:0,agility:0},inventory:{rusty:1,leather:1,potion:3},equipment:{weapon:'rusty',armor:'leather',ring:null},flags:{},opened:[],killed:[],journal:['Son Sığınak’a vardın. Önce şifacı Mirna ile konuş.'],playtime:0,ending:null});

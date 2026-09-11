@@ -85,8 +85,14 @@ def main(prop_yolu, bg_yolu, hedef_dir):
     alfa = np.clip((T_HI - yes) / (T_HI - T_LO), 0, 1)
 
 
-    key = np.array([np.median(np.concatenate([p[:24].reshape(-1, 3), p[-24:].reshape(-1, 3)])[:, c])
-                    for c in range(3)])
+    # Fon rengi KENARDAN degil, gorselin guclu yesil piksellerinden olculur.
+    # Kenar orneklemesi sigginak sayfasinda calisiyordu cunku fon tuvalin
+    # tamamiydi; dis dunya sayfasinda kenarlar gokyuzu, yesil ortada kaliyor
+    # ve kenardan bakinca fon "koyu gri" sanildi.
+    guclu = yesillik(p) > 60
+    if guclu.sum() < p[..., 0].size * .01:
+        sys.exit('yeterince yesil fon bulunamadi')
+    key = np.median(p[guclu], 0)
     print(f'  fon rengi = {key.round(0)}')
     rgb = spill_sil(p, yes, key)
     sizinti = genis_lekeler((alfa > .5) & sizinti_maskesi(p, bg, key))

@@ -429,7 +429,11 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 .round.weapon img{transform:translateY(-6px)}
 .round.potion img{transform:translateY(-5px)}
 @media (max-height:560px){
-  .round img{width:18px!important;height:18px!important;transform:translateY(-6px)}
-  .attack img{width:24px!important;height:24px!important}
-  .hud button img{width:20px!important;height:20px!important}
+  .round img{width:22px!important;height:22px!important;transform:translateY(-7px)}
+  .attack img{width:28px!important;height:28px!important}
+  .hud button img{width:22px!important;height:22px!important}
 }
+
+/* Etkilesim dugmesindeki piksel ikon metinle ayni hizada dursun */
+.interact img{image-rendering:pixelated;flex-shrink:0}
+@media (max-height:560px){.interact img{width:18px!important;height:18px!important}}
