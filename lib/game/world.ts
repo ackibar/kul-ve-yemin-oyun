@@ -1,0 +1,85 @@
+import type {ItemId,Zone} from './data';
+export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number};
+export type EnemySpec={id:string;kind:1|2|3|4|5|6;x:number;y:number;boss?:boolean};
+export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[];enemies:EnemySpec[];spawn:[number,number];blockers:[number,number,number,number][]};
+export function makeWorld(zone:Zone):World{
+ const w=zone==='haven'?30:46,h=zone==='haven'?30:48;
+ const tiles=Array.from({length:h},()=>Array<number>(w).fill(0));
+ const room=(x:number,y:number,rw:number,rh:number)=>{for(let j=y;j<y+rh;j++)for(let i=x;i<x+rw;i++)tiles[j][i]=1};
+ const entities:Entity[]=[],enemies:EnemySpec[]=[];
+ /** Arka plan gorselinde boyali olan mobilyanin carpisma kutulari (karo birimi,
+  *  x2/y2 haric). Gorsel carpisma izgarasini bilmedigi icin elle cikarildi;
+  *  bkz. scripts/haven_engel.py ve generated/_ENGELLER.png dogrulama katmani. */
+ const blockers:[number,number,number,number][]=[];
+ const at=(e:Entity)=>entities.push({...e,x:e.x*16+8,y:e.y*16+8});
+ const fire=(x:number,y:number)=>at({id:`fire${x}_${y}`,type:'fire',x,y});
+ /** Nesne yerlestirir: sprite'i cizer VE ayak izini engel olarak ekler.
+  *  fw/fh karo biriminde ayak izi; gorselin tamami degil, tabani esas alinir
+  *  (raf gibi uzun nesnelerde ust kisim yalnizca gorsel). */
+ const obj=(id:string,tx:number,ty:number,ad:string,fw:number,fh:number,name?:string)=>{
+  entities.push({id,type:'decor',x:tx*16,y:ty*16,asset:`nesne/${ad}`,name});
+  blockers.push([tx-fw/2,ty-fh,tx+fw/2,ty]);
+ };
+ const decor=(id:string,x:number,y:number,asset:string,name?:string)=>at({id,type:'decor',x,y,asset,name:name||(asset.includes('Table')?'Zanaat Masası':undefined)});
+ const chest=(id:string,x:number,y:number,items:[ItemId,number][],gold=0)=>at({id,type:'chest',x,y,items,gold,name:'Sandık'});
+ const enemy=(id:string,kind:1|2|3|4|5|6,x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
+ if(zone==='haven'){
+  // Zemin ve carpisma ARTIK ELLE YAZILMIYOR: yeni mekan tek sahne gorseli +
+  // ayri prop sayfasi olarak geldi, ikisi de scripts/mekan_kur.py ile islendi.
+  // ZEMIN arka planin aydinlik kismindan, blockers prop katmaninin alfasindan
+  // cikti. Gorsel degisirse script yeniden calistirilip bu iki satir guncellenir;
+  // dogrulama katmani generated/_YENI_ENGEL.png.
+  const ZEMIN=['000000000000000000000000000000','000000000000000000000000000000','000000000000100001000000000000','000000000000110011000000000000','000001111111111111111111110000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000000000001111111100000000000','000000000000111111000000000000','000000000000111111000000000000','000000000000111111000000000000','000000000000000000000000000000','000000000000000000000000000000'];
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
+  blockers.push([7,5,8,6],[9,5,10,7],[21,5,25,10],[20,6,21,10],[10,7,12,9],[19,7,20,11],[4,8,10,10],[12,8,13,9],[17,8,19,9],[25,8,27,10],[3,9,4,13],[11,9,12,12],[18,9,19,10],[4,10,9,13],[12,10,13,12],[23,10,24,12],[20,11,22,13],[25,11,27,24],[4,13,6,14],[7,13,9,14],[23,13,25,19],[3,14,4,15],[22,15,23,19],[3,17,4,20],[4,18,6,24],[7,18,10,21],[6,19,7,24],[10,19,12,21],[20,19,21,21],[19,20,20,21],[21,20,22,21],[24,20,25,21],[7,22,12,24],[19,23,25,24]);
+  at({id:'mira',type:'npc',x:9,y:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
+  at({id:'toCistern',type:'portal',x:15,y:25,to:'cistern',spawn:[7,7],name:'Sarnıca in'});
+  // Ocaklarda boyali ALEV yok, sadece kor ve odun var; animasyonlu alevi motor
+  // buraya koyuyor. Konum ocak halkasinin prop bileseninden olculdu.
+  // Capa: Fire1 sprite'i 32 birimlik hucrenin TAMAMINI dolduruyor ve sprite()
+  // hucreyi y+6'da bitiriyor, yani alevin TABANI y+6. Halkanin biraz on-altina
+  // otursun diye y = merkez + halka_yuksekligi*0.35 - 6.
+  entities.push({id:'alev0',type:'fire',x:190.8,y:171.9,s:1.16});entities.push({id:'alev1',type:'fire',x:334.0,y:190.6,s:1.16});entities.push({id:'alev2',type:'fire',x:327.2,y:323.4,s:1.13});
+  decor('table2',22,10,'Tables/2.png','Zanaat Masası');
+  chest('havenGift',14,22,[['copper',1],['bow',1],['arrow',25],['tonic',1]]);
+  }else if(zone==='cistern'){
+  room(3,3,11,11);room(5,12,4,24);room(3,29,12,12);room(12,33,22,4);room(28,27,14,15);room(32,12,4,20);room(27,3,15,12);room(12,6,19,4);room(17,18,9,9);room(8,21,12,3);room(22,23,12,3);
+  at({id:'backHaven',type:'portal',x:6,y:5,to:'haven',spawn:[15,23],name:'Sığınağa dön'});
+  at({id:'toForge',type:'portal',x:39,y:38,to:'forge',spawn:[7,7],name:'Kül Ocağı',});
+  at({id:'rauf',type:'npc',x:38,y:11,name:'Rauf',portrait:5});
+  at({id:'gateLever',type:'lever',x:5,y:37,name:'Ocak kapısını aç'});
+  chest('medicineChest',38,6,[['medicine',1],['potion',2]],12);chest('cisternWest',10,34,[['chain',1],['bow',1],['potion',2]],24);chest('cisternCenter',21,20,[['wind',1],['tonic',1]],15);chest('cisternEast',37,30,[['guard',1],['potion',2]],20);
+  for(const [x,y] of [[3,3],[13,3],[27,3],[41,3],[3,29],[14,29],[28,27],[41,27],[17,18]])fire(x,y);
+  for(const [x,y] of [[6,17],[7,26],[20,8],[34,20],[24,34]])at({id:`trap${x}_${y}`,type:'trap',x,y});
+  enemy('c1',1,11,11);enemy('c2',1,17,8);enemy('c3',2,29,8);enemy('c4',1,35,8);enemy('c5',3,7,32);enemy('c6',2,11,37);enemy('c7',1,20,23);enemy('c8',3,32,32);enemy('c9',2,38,35);enemy('c10',1,34,24);enemy('bat1',5,15,15);enemy('bat2',5,25,25);
+  decor('cbox',4,11,'Boxes/1.png');decor('cchair',39,13,'Chairs/1.png');decor('ctable',31,5,'Tables/1.png','Zanaat Masası');decor('cshelf',29,29,'Bookshelf/1.png');
+ }else{
+  room(3,3,12,12);room(8,13,4,23);room(4,29,13,14);room(15,34,18,4);room(28,27,14,17);room(33,12,4,18);room(25,3,17,14);room(13,7,15,4);room(17,18,10,10);room(10,21,9,4);room(25,22,10,4);
+  at({id:'backCistern',type:'portal',x:5,y:5,to:'cistern',spawn:[37,38],name:'Sarnıca dön'});
+  at({id:'core',type:'core',x:35,y:6,name:'Kül kalbi'});
+  at({id:'returnHaven',type:'portal',x:39,y:6,to:'haven',spawn:[15,14],name:'Sığınağa geçit'});
+  chest('forgeWest',7,39,[['ash',1],['potion',3]],25);chest('forgeCenter',22,20,[['ember',1],['bow',1],['tonic',2]],20);chest('forgeEast',38,39,[['life',1],['potion',3]],30);
+  for(const [x,y] of [[3,3],[14,3],[25,3],[41,3],[4,29],[16,29],[28,27],[41,27],[17,18]])fire(x,y);
+  for(const [x,y] of [[9,17],[10,26],[21,8],[35,18],[22,35],[31,31]])at({id:`ftrap${x}_${y}`,type:'trap',x,y});
+  enemy('f1',3,11,11);enemy('f2',2,21,9);enemy('f3',4,9,33);enemy('f4',2,12,38);enemy('f5',3,21,24);enemy('f6',4,31,35);enemy('f7',2,38,33);enemy('f8',3,35,23);enemy('f9',2,28,12);enemy('fbat1',5,18,20);enemy('warden',4,34,10,true);
+  decor('fbox',5,12,'Boxes/2.png');decor('fshelf',5,31,'Bookshelf/2.png');decor('ftable',30,40,'Tables/1.png','Zanaat Masası');
+ }
+ return {zone,w,h,tiles,entities,enemies,blockers,spawn:zone==='haven'?[15*16,12*16]:[7*16,7*16]};
+}
+export function walkable(world:World,x:number,y:number,r=5,ignoreId?:string){
+ const tilesOk=[[-r,-r],[r,-r],[-r,r],[r,r]].every(([dx,dy])=>world.tiles[Math.floor((y+dy)/16)]?.[Math.floor((x+dx)/16)]===1);
+ if(!tilesOk)return false;
+ // Arka planda boyali mobilyanin uzerinden gecilmesin.
+ // Tam temas aninda kenar boyunca KAYMA kilitleniyordu (oyuncu tezgaha dayanip
+ // sola gidemiyordu). Kucuk bir pay ile birebir degme cakisma sayilmaz.
+ const E=0.01;
+ for(const [bx1,by1,bx2,by2] of world.blockers)
+  if(x+r>bx1*16+E&&x-r<bx2*16-E&&y+r>by1*16+E&&y-r<by2*16-E)return false;
+ return !world.entities.some(e=>{
+  if(e.id===ignoreId)return false;
+  if(e.type==='decor')return Math.hypot(e.x-x,e.y-y)<10;
+  if(e.type==='chest')return Math.hypot(e.x-x,e.y-y)<6;
+  return false;
+ });
+}
+export function lineOfSight(world:World,ax:number,ay:number,bx:number,by:number,targetId?:string){const n=Math.ceil(Math.hypot(bx-ax,by-ay)/8);for(let i=1;i<n-1;i++)if(!walkable(world,ax+(bx-ax)*i/n,ay+(by-ay)*i/n,0,targetId))return false;return true;}
