@@ -284,3 +284,15 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
   opacity:.62;
 }
 @container(max-width:850px){.quest-hint{top:124px!important}}
+
+
+/* ============ Ekrani tam kaplama ============ */
+/* Kabuk 16:9'a sabitti (width:min(100vw,177.7778dvh,1280px)); 20:9 telefonda
+   ekranin ortasina oturup yanlarda genis siyah bant birakiyordu ve kuculen
+   oyun alaninin yaninda HUD devasa duruyordu. Artik gorunur alani motor
+   ayarliyor (engine.ts gorus), kabuk da ekrani tam kapliyor. */
+.game-shell{
+  width:100vw!important;height:100dvh!important;
+  aspect-ratio:auto!important;max-height:none!important;
+  box-shadow:none!important;
+}
