@@ -24,14 +24,20 @@ from PIL import Image, ImageFilter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KARO = 32                 # 1 karo = 16 dunya birimi x 2 px/birim
-N = 30                    # 30x30 karo
-TUVAL = KARO * N          # 960
+# Kaynak gorseller HER ZAMAN kare geliyor ve bir kare = 30x30 karo. Uzun bir
+# mekan icin birden fazla kare ust uste eklenir, yani NY = 30 x parca sayisi.
+NX, NY = 30, 30
+PARCA_KARO = 30
 TABAN_ORAN = .45          # nesnenin alt bu orani ayak izi
 TABAN_TAVAN = 72          # ayak izi en fazla bu kadar yuksek (px) ~2.2 karo
 AYIR = 5                  # bilesen bulmadan once bu kadar asindir (nesneleri ayir)
 KARO_ESIK = .30           # karonun bu kadari doluysa engel
 ZEMIN_ISIK = 28           # bundan koyu = tuvalin disi (siyah kenar)
-KORIDOR = [(12, 0, 19, 8), (12, 22, 19, 30)]   # ust ve alt gecit: hep acik
+# Gecis agizlari: oradaki dekoratif taslar carpisma cikardigi icin yolu
+# kapatiyordu. Mekana gore elle tutulan tek liste - otomatik cikarim degil,
+# seviye tasarimi karari.
+GECITLER = {'haven': [(12, 0, 19, 8), (12, 22, 19, 30)]}
+KORIDOR = []
 
 
 def bilesenler(op, en_az=180):
@@ -99,7 +105,7 @@ def ayak_izi(alfa):
 
 
 def karolara(mask):
-    t = mask[:N*KARO, :N*KARO].reshape(N, KARO, N, KARO).mean(axis=(1, 3))
+    t = mask[:NY*KARO, :NX*KARO].reshape(NY, KARO, NX, KARO).mean(axis=(1, 3))
     return t > KARO_ESIK
 
 
@@ -107,16 +113,16 @@ def dikdortgenler(grid):
     """Yatay kosulari birlestirip dikey olarak da ayni enli komsulari yutar."""
     kutular = []
     kalan = grid.copy()
-    for y in range(N):
+    for y in range(NY):
         x = 0
-        while x < N:
+        while x < NX:
             if not kalan[y, x]:
                 x += 1; continue
             x2 = x
-            while x2 + 1 < N and kalan[y, x2 + 1]:
+            while x2 + 1 < NX and kalan[y, x2 + 1]:
                 x2 += 1
             y2 = y
-            while y2 + 1 < N and kalan[y2 + 1, x:x2+1].all():
+            while y2 + 1 < NY and kalan[y2 + 1, x:x2+1].all():
                 y2 += 1
             kalan[y:y2+1, x:x2+1] = False
             kutular.append((x, y, x2 + 1, y2 + 1))
@@ -124,13 +130,37 @@ def dikdortgenler(grid):
     return kutular
 
 
-def main(bg_yolu, prop_yolu):
-    bg = Image.open(bg_yolu).convert('RGBA').resize((TUVAL, TUVAL), Image.LANCZOS)
-    prop = Image.open(prop_yolu).convert('RGBA').resize((TUVAL, TUVAL), Image.LANCZOS)
+def dikey_ekle(yollar, kare_px):
+    """Kare parcalari YUKARIDAN ASAGIYA ust uste ekler.
+
+    Her parca once kendi kare olcusune indirgenir, sonra birlestirilir; onceden
+    birlestirip tek seferde olceklemek parcalarin oranini bozardi.
+    """
+    parcalar = [Image.open(y).convert('RGBA').resize((kare_px, kare_px), Image.LANCZOS)
+                for y in yollar]
+    tuval = Image.new('RGBA', (kare_px, kare_px * len(parcalar)), (0, 0, 0, 0))
+    for i, im in enumerate(parcalar):
+        tuval.paste(im, (0, i * kare_px))
+    return tuval
+
+
+def main(bg_yolu, prop_yolu, ad='haven'):
+    global NY
+    bgler = [y for y in bg_yolu.split(',') if y]
+    propler = [y for y in prop_yolu.split(',') if y]
+    if len(bgler) != len(propler):
+        sys.exit(f'parca sayilari tutmuyor: {len(bgler)} arkaplan / {len(propler)} prop')
+    NY = PARCA_KARO * len(bgler)
+    kare = PARCA_KARO * KARO
+    W, H = NX * KARO, NY * KARO
+    if len(bgler) > 1:
+        print(f'{len(bgler)} kare parca ust uste ekleniyor -> {NX}x{NY} karo')
+    bg = dikey_ekle(bgler, kare)
+    prop = dikey_ekle(propler, kare)
     sahne = Image.alpha_composite(bg, prop)
     os.makedirs(f'{ROOT}/public/assets/arkaplan', exist_ok=True)
-    sahne.convert('RGB').save(f'{ROOT}/public/assets/arkaplan/haven.png')
-    print(f'-> public/assets/arkaplan/haven.png  {TUVAL}x{TUVAL} ({N}x{N} karo)')
+    sahne.convert('RGB').save(f'{ROOT}/public/assets/arkaplan/{ad}.png')
+    print(f'-> public/assets/arkaplan/{ad}.png  {W}x{H} ({NX}x{NY} karo)')
 
     # yurunebilir alan: arka planin aydinlik kismi (siyah kenar = tuvalin disi)
     lum = np.asarray(bg.convert('L')).astype(float)
@@ -139,11 +169,11 @@ def main(bg_yolu, prop_yolu):
     engel &= zemin                      # zemin disinda engel aramaya gerek yok
     # Koridor agizlarindaki dekoratif taslar gecisi kapatiyordu; iki gecit
     # bilerek acik tutuluyor (seviye tasarimi karari, otomatik cikarim degil).
-    for x1, y1, x2, y2 in KORIDOR:
+    for x1, y1, x2, y2 in GECITLER.get(ad, KORIDOR):
         engel[y1:y2, x1:x2] = False
 
     ek = dikdortgenler(engel)
-    print(f'\nyurunebilir karo: {int(zemin.sum())}/{N*N}   engel karo: {int(engel.sum())}'
+    print(f'\nyurunebilir karo: {int(zemin.sum())}/{NX*NY}   engel karo: {int(engel.sum())}'
           f'   -> {len(ek)} dikdortgen')
 
     # dogrulama katmani
@@ -164,8 +194,8 @@ def main(bg_yolu, prop_yolu):
 
     print('\n--- world.ts icin ---')
     print(' const ZEMIN=[' + ','.join(
-        "'" + ''.join('1' if zemin[y, x] else '0' for x in range(N)) + "'"
-        for y in range(N)) + '];')
+        "'" + ''.join('1' if zemin[y, x] else '0' for x in range(NX)) + "'"
+        for y in range(NY)) + '];')
     print(' blockers.push(' + ','.join(f'[{a},{b},{c},{d}]' for a, b, c, d in ek) + ');')
     print(f' // ocak merkezleri (dunya birimi): ' + ', '.join(
         f'({x/2:.1f},{y/2:.1f})' for x, y in ocaklar))
@@ -173,5 +203,8 @@ def main(bg_yolu, prop_yolu):
 
 
 if __name__ == '__main__':
+    # kullanim: mekan_kur.py <arkaplan[,arkaplan2]> <prop[,prop2]> [ad]
+    #   kare parcalar virgulle, yukaridan asagiya sirayla verilir
     main(sys.argv[1] if len(sys.argv) > 1 else f'{ROOT}/background.jpeg',
-         sys.argv[2] if len(sys.argv) > 2 else f'{ROOT}/generated/prop/prop_saydam.png')
+         sys.argv[2] if len(sys.argv) > 2 else f'{ROOT}/generated/prop/prop_saydam.png',
+         sys.argv[3] if len(sys.argv) > 3 else 'haven')

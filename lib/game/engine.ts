@@ -31,6 +31,10 @@ export class Engine{
   *  varsa yatayda, fazla boy varsa dikeyde daha cok dunya gorunur, ama hicbir
   *  zaman 320x180'den AZ gorunmez - yoksa dar pencerede oyun alani kirpilirdi. */
  private gorus={en:320,boy:180};
+ /** Ucuruma dusme sayaci. 0'dan buyukken oyuncu kontrolu yok, sprite kucule
+  *  kucule asagi kayiyor; bitince olum. */
+ private dusus=0;
+ static readonly DUSUS=0.9;
  private sonImza='';
  private sahneSayac=0;
  private dizSayac=0;private dizX=0;private dizY=0;
@@ -53,7 +57,7 @@ export class Engine{
  private img(key:string,path:string){const im=new Image();im.src=path;this.images[key]=im;return new Promise<void>((resolve,reject)=>{im.onload=()=>resolve();im.onerror=()=>reject(new Error(path));})}
   private async loadAssets(){const jobs:Promise<void>[]=[];const optional:boolean[]=[];/** optional[i] === true olan isler ISTEGE BAGLI: eksikligi oyunu kirmaz.
   *  Karakter dongusu disindaki tum isler zorunlu sayilir. */
- const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};for(const id of [3,5,21,22,35])jobs.push(this.img('tile'+id,`/assets/dungeon/1%20Tiles/Tile_${String(id).padStart(2,'0')}.png`));jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);mark(false);for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?5:6);n++){const iste=(kind==='characters'&&n===5)||(kind==='enemies'&&n===6);for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death']){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death'])jobs.push(this.img(`characters1sword${dir}${action}`,`/assets/characters/1sword/${dir}_${action}.png`));for(const z of ['haven'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));for(const z of ['haven','cistern','forge'])for(let i=0;i<16;i++)jobs.push(this.img(`wang_${z}_${i}`,`/assets/dungeon/wang/${z}/wang_${i}.png`));for(const [key,name]of [['fire','Fire1'],['chest','Chest1_D'],['lever','Lever1'],['trap','Spikes'],['portal','Trapdoor_D']])jobs.push(this.img(key,`/assets/dungeon/3%20Animated%20objects/${name}.png`));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));for(const a of ['Tables/1.png','Tables/2.png','Chairs/1.png','Bookshelf/1.png','Bookshelf/2.png','Boxes/1.png','Boxes/2.png'])jobs.push(this.img(a,'/assets/dungeon/2%20Objects/'+a));mark(false);const result=await Promise.allSettled(jobs);
+ const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};for(const id of [3,5,21,22,35])jobs.push(this.img('tile'+id,`/assets/dungeon/1%20Tiles/Tile_${String(id).padStart(2,'0')}.png`));jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);mark(false);for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?5:6);n++){const iste=(kind==='characters'&&n===5)||(kind==='enemies'&&n===6);for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death']){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death'])jobs.push(this.img(`characters1sword${dir}${action}`,`/assets/characters/1sword/${dir}_${action}.png`));for(const z of ['haven','magara'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));for(const z of ['haven','cistern','forge'])for(let i=0;i<16;i++)jobs.push(this.img(`wang_${z}_${i}`,`/assets/dungeon/wang/${z}/wang_${i}.png`));for(const [key,name]of [['fire','Fire1'],['chest','Chest1_D'],['lever','Lever1'],['trap','Spikes'],['portal','Trapdoor_D']])jobs.push(this.img(key,`/assets/dungeon/3%20Animated%20objects/${name}.png`));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));for(const a of ['Tables/1.png','Tables/2.png','Chairs/1.png','Bookshelf/1.png','Bookshelf/2.png','Boxes/1.png','Boxes/2.png'])jobs.push(this.img(a,'/assets/dungeon/2%20Objects/'+a));mark(false);const result=await Promise.allSettled(jobs);
   // Rauf seti (characters/5, enemies/6) sonradan eklenecek; eksikligi oyunu kirmaz.
   const zorunlu=result.filter((_,i)=>!optional[i]);
   this.ready=zorunlu.every(r=>r.status==='fulfilled');if(!this.ready)this.onEvent({type:'message',text:'Bazı görseller yüklenemedi. Bağlantını kontrol edip sayfayı yenile.'});this.emit();}
@@ -156,14 +160,37 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   }
   return false;
  }
+ /** Tunelin sonuna varinca bolge degistirir, ucuruma girince dusurur.
+  *  Kapi nesnesine basmak yerine yuruyerek gecis: koridorun son karo siridi
+  *  tetikleyici. Hedef dogma noktasi bilerek tetikleyicinin disinda secildi,
+  *  yoksa varir varmaz geri gonderirdi. */
+ private bolgeKontrol(){
+  if(this.dusus>0)return;
+  const tx=this.state.x/16,ty=this.state.y/16;
+  for(const g of this.world.gecisler){const[x1,y1,x2,y2]=g.kutu;
+   if(tx>=x1&&tx<x2&&ty>=y1&&ty<y2){this.changeZone(g.to,g.spawn);return;}}
+  for(const[x1,y1,x2,y2]of this.world.ucurumlar){
+   if(tx>=x1&&tx<x2&&ty>=y1&&ty<y2){this.dusmeyeBasla();return;}}
+ }
+ private dusmeyeBasla(){
+  this.dusus=Engine.DUSUS;this.input={x:0,y:0,attack:false};
+  this.audio.play('hurt');this.notify('Ayağın boşluğa bastı…');
+ }
+ private dusmeBitti(){
+  this.dusus=0;this.state.hp=0;this.paused=true;
+  this.audio.play('death');this.state.journal.unshift('Sarnıç Ağzı’ndaki uçuruma düştün.');
+  this.onEvent({type:'death'});this.emit();
+ }
  private move(p:{x:number;y:number},dx:number,dy:number){
   if(walkable(this.world,p.x+dx,p.y)&&!this.carpisir(p.x,p.y,p.x+dx,p.y,null))p.x+=dx;
   if(walkable(this.world,p.x,p.y+dy)&&!this.carpisir(p.x,p.y,p.x,p.y+dy,null))p.y+=dy;
  }
   private burst(x:number,y:number,color:string,n:number){for(let i=0;i<n;i++)this.particles.push({x,y,vx:(Math.random()-.5)*55,vy:(Math.random()-.6)*55,life:.4+Math.random()*.4,color,size:1+Math.random()})}
   private float(x:number,y:number,text:string,color:string){let targetY=y;for(const f of this.floating){if(Math.abs(f.x-x)<24&&Math.abs(f.y-targetY)<10){targetY-=11;}}this.floating.push({x,y:targetY,text,life:1.1,color})}
-  private update(dt:number){this.tick+=dt;this.state.playtime+=dt;for(const key of ['attackTimer','dodgeTimer','dash','invulnerable','tonic','slash','trapCooldown']as const)this[key]=Math.max(0,this[key]-dt);
-   const kx=(this.keys.right?1:0)-(this.keys.left?1:0),ky=(this.keys.down?1:0)-(this.keys.up?1:0),kLen=Math.hypot(kx,ky),activeInput=kLen>0?{x:kx/kLen,y:ky/kLen}:this.input;const movement=this.dash>0?this.dashVector:activeInput;const length=Math.hypot(movement.x,movement.y);this.moving=length>.08;const speed=this.dash>0?205:44;if(this.moving){const dx=movement.x/Math.max(1,length),dy=movement.y/Math.max(1,length);this.face(dx,dy);this.move(this.state,dx*speed*dt,dy*speed*dt);this.yol+=speed*dt;if(this.tick-this.stepAt>.29){this.audio.play('step');this.stepAt=this.tick;}}if(this.input.attack)this.attack();
+  private update(dt:number){
+  if(this.dusus>0){this.dusus-=dt;if(this.dusus<=0)this.dusmeBitti();return;}
+  this.tick+=dt;this.state.playtime+=dt;for(const key of ['attackTimer','dodgeTimer','dash','invulnerable','tonic','slash','trapCooldown']as const)this[key]=Math.max(0,this[key]-dt);
+   const kx=(this.keys.right?1:0)-(this.keys.left?1:0),ky=(this.keys.down?1:0)-(this.keys.up?1:0),kLen=Math.hypot(kx,ky),activeInput=kLen>0?{x:kx/kLen,y:ky/kLen}:this.input;const movement=this.dash>0?this.dashVector:activeInput;const length=Math.hypot(movement.x,movement.y);this.moving=length>.08;const speed=this.dash>0?205:44;if(this.moving){const dx=movement.x/Math.max(1,length),dy=movement.y/Math.max(1,length);this.face(dx,dy);this.move(this.state,dx*speed*dt,dy*speed*dt);this.bolgeKontrol();this.yol+=speed*dt;if(this.tick-this.stepAt>.29){this.audio.play('step');this.stepAt=this.tick;}}if(this.input.attack)this.attack();
    this.fireBurnCooldown=Math.max(0,this.fireBurnCooldown-dt);
    if(this.fireBurnCooldown<=0){for(const e of this.world.entities)if(e.type==='fire'&&Math.hypot(e.x-this.state.x,e.y-this.state.y)<14){this.hurt(8);this.float(this.state.x,this.state.y-14,'Ateş yaktı!','#ff6b4a');this.fireBurnCooldown=.8;break;}}
    for(const m of this.mobs){if(m.hp<=0)continue;m.cool-=dt;m.hurt=Math.max(0,m.hurt-dt);if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.windup>0){m.windup-=dt;if(m.windup<=0){if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:25)){this.hurt(m.boss?30:10+m.kind*3);}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:1.15;}continue;}if(d<135&&visible){const range=m.kind===2?95:m.boss?34:20;if(d>range){const v=m.kind===3?34:m.kind===4?21:27;this.move(m,dx/d*v*dt,dy/d*v*dt);}if(d<=range&&m.cool<=0)m.windup=m.boss?.8:m.kind===2?.55:.4;}}
@@ -331,7 +358,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     const sy=this.sahneYuru.get(e.id);const g=this.gez.get(e.id);const yur=!!sy||(!!g&&g.bekle<=0&&Math.hypot(g.tx-e.x,g.ty-e.y)>1.5);const yd=sy?sy.dir:g?.dir??'D';const yf=sy?sy.flip:g?.flip??false;const yy=sy?sy.yol:(g?.yol||0);this.sprite(`characters${e.portrait}${yur?yd:'D'}${yur?'Walk':'Idle'}`,e.x,e.y,yur?Math.floor(yy/Engine.ADIM):Math.floor(time*5),32,32,yur&&yd==='S'&&yf,OYUNCU_OLCEK);const pending=e.id==='mira'?!this.state.flags.medicineDone:e.id==='boran'?!this.state.flags.ledgerDone:e.id==='ekin'?!this.state.ending:!this.state.flags.fugitive;const nw=this.label(e.name||'',e.x,e.y-30);if(pending)this.label('!',e.x-nw/2-5,e.y-30,'#e0453a');}
   }}));
   for(const m of this.mobs)actors.push({y:m.y,draw:()=>{c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const dir=Math.abs(dx)>Math.abs(dy)?'S':dy<0?'U':'D';this.sprite(`enemies${m.kind}${dir}${m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk'}`,m.x,m.y,Math.floor(time*7),32,32,dir==='S'&&dx<0,(m.boss?1.7:1)*OYUNCU_OLCEK);if(m.hp<m.max||m.boss){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');}}});
-   actors.push({y:this.state.y,draw:()=>{const s=this.state;c.fillStyle='#02081280';c.beginPath();c.ellipse(s.x,s.y+1,8.5*OYUNCU_OLCEK,2.8*OYUNCU_OLCEK,0,0,7);c.fill();const action=this.slash>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';this.sprite(this.kit()+this.direction+action,s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):Math.floor(time*(action==='Attack'?16:5)),32,32,this.direction==='S'&&this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);if(this.slash>0){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const angle=this.direction==='S'?(this.flip?Math.PI:0):this.direction==='U'?-Math.PI/2:Math.PI/2;c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK,angle-1.1,angle+1.1);c.stroke();}}});
+   actors.push({y:this.state.y,draw:()=>{const s=this.state;c.fillStyle='#02081280';c.beginPath();c.ellipse(s.x,s.y+1,8.5*OYUNCU_OLCEK,2.8*OYUNCU_OLCEK,0,0,7);c.fill();const action=this.slash>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';// Dusus: sprite kucule kucule asagi kayiyor, boslugun icine iniyormus gibi.
+  const dk=this.dusus>0?this.dusus/Engine.DUSUS:1;
+  this.sprite(this.kit()+this.direction+action,s.x,s.y+(1-dk)*11,action==='Walk'?Math.floor(this.yol/Engine.ADIM):Math.floor(time*(action==='Attack'?16:5)),32,32,this.direction==='S'&&this.flip,OYUNCU_OLCEK*(.22+.78*dk),this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);if(this.slash>0){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const angle=this.direction==='S'?(this.flip?Math.PI:0):this.direction==='U'?-Math.PI/2:Math.PI/2;c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK,angle-1.1,angle+1.1);c.stroke();}}});
   actors.sort((a,b)=>a.y-b.y).forEach(a=>a.draw());
   c.fillStyle=this.state.zone==='haven'?'#060e1924':'#070b1c42';c.fillRect(cx,cy,this.gorus.en,this.gorus.boy);
   for(const e of this.world.entities.filter(e=>e.type==='fire'||e.type==='core')){if(Math.abs(e.x-this.state.x)>230||Math.abs(e.y-this.state.y)>160)continue;const radius=48+Math.sin(time*3+e.x)*3;const glow=c.createRadialGradient(e.x,e.y-6,0,e.x,e.y-6,radius);glow.addColorStop(0,'#f7af3936');glow.addColorStop(.35,'#ee8e1815');glow.addColorStop(1,'#ee8e1800');c.fillStyle=glow;c.fillRect(e.x-radius,e.y-radius-6,radius*2,radius*2);}
