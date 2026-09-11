@@ -31,6 +31,7 @@ export class Engine{
   *  varsa yatayda, fazla boy varsa dikeyde daha cok dunya gorunur, ama hicbir
   *  zaman 320x180'den AZ gorunmez - yoksa dar pencerede oyun alani kirpilirdi. */
  private gorus={en:320,boy:180};
+ private sonImza='';
  private sahneSayac=0;
  private dizSayac=0;private dizX=0;private dizY=0;
  /** Teslim sahnesinde yuruyen NPC'lerin yonu ve aldigi yol. Dolasma sistemi
@@ -68,7 +69,28 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  setPaused(v:boolean){this.paused=v;this.input={x:0,y:0,attack:false};if(v)this.save();this.emit()}
  sound(s:Sound){this.audio.play(s)}
  save(){if(!this.state.started||this.state.hp<=0)return;try{localStorage.setItem(SAVE,JSON.stringify(this.state));this.saveStatus='Kaydedildi';}catch{this.saveStatus='Kayıt yapılamadı';}this.savedAt=this.tick;}
- emit(){this.onChange({state:structuredClone(this.state),near:this.nearest(),attackCooldown:this.attackTimer,dodgeCooldown:this.dodgeTimer,tonic:this.tonic,saveStatus:this.saveStatus,ready:this.ready})}
+ /** Arayuzun GERCEKTEN gosterdigi her seyin ozeti. Degismediyse React'e
+  *  dokunmuyoruz. Degerler ekranda nasil goruluyorsa oyle yuvarlaniyor:
+  *  can tam sayi, kacinma bir ondalik, sure dakika - yani ancak yazi degisirse
+  *  yeniden cizim olur. */
+ private imza(near:Entity|null){const s=this.state;
+  return [Math.round(s.hp),s.gold,s.xp,s.level,s.points,s.zone,s.ending,s.started,
+   s.skills.power,s.skills.vigor,s.skills.agility,
+   this.dodgeTimer.toFixed(1),Math.ceil(this.tonic),near?.id??'',this.ready,this.saveStatus,
+   Math.floor(s.playtime/60),s.journal.length,s.killed.length,s.opened.length,
+   JSON.stringify(s.inventory),JSON.stringify(s.equipment),JSON.stringify(s.flags)].join('|');
+ }
+ /** React'e yalnizca gorunen bir sey degistiginde haber verir.
+  *
+  *  Profil cikardi: kanvas cizimi toplam surenin %0.5'i, React agacini yeniden
+  *  kurmak %3.7'si idi. Motor saniyede 10 kez emit ediyordu ve her seferinde
+  *  structuredClone ile YENI bir state nesnesi uretiyordu; React de her sefer
+  *  butun HUD'u ve panelleri bastan kuruyordu. Bos bir odada dolasirken bile
+  *  100 ms'de bir tepe yapan bu is, telefonda takilma olarak hissediliyordu. */
+ emit(){const near=this.nearest();const im=this.imza(near);
+  if(im===this.sonImza)return;
+  this.sonImza=im;
+  this.onChange({state:structuredClone(this.state),near,attackCooldown:this.attackTimer,dodgeCooldown:this.dodgeTimer,tonic:this.tonic,saveStatus:this.saveStatus,ready:this.ready});}
  notify(text:string){this.onEvent({type:'message',text});}
  spawnDrop(x:number,y:number,kind:'wood'|'xp'|'gold'|'bow',amount:number){this.drops.push({id:`drop_${Date.now()}_${Math.random()}`,x,y,kind,amount,vx:(Math.random()-.5)*45,vy:(Math.random()-.6)*45,life:30});}
  nearest(){let near:Entity|null=null,best=40;for(const e of this.world.entities){if(['fire','trap'].includes(e.type))continue;if(e.type==='decor'&&!e.asset?.includes('Table')&&!e.asset?.startsWith('nesne/'))continue;if(e.type==='core'&&(this.state.inventory.core||this.state.ending))continue;const d=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(d<best&&lineOfSight(this.world,this.state.x,this.state.y,e.x,e.y,e.id)){near=e;best=d}}return near;}
