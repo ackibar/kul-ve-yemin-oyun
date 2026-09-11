@@ -462,15 +462,57 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 .title-content{opacity:0;transform:translateY(10px);transition:opacity .9s ease,transform .9s ease}
 .title-content.acik{opacity:1;transform:none}
 
-/* Panel biraz seffaf: cerceve ayri katmanda, yazi tam opak kalir */
-.title-content{position:relative;background:none!important;border:0!important;isolation:isolate;
-  padding:26px 38px 32px;max-width:min(680px,92vw)}
-.title-content::before{
-  content:'';position:absolute;inset:0;z-index:-1;box-sizing:border-box;
-  border:16px solid transparent;
-  border-image:url(/assets/ui/frame.png) 8 fill repeat;
-  opacity:.72;
-}
+/* Baslik panelinin CERCEVESI YOK: yazi ve dugmeler videonun uzerinde kendi
+   baslarina duruyor, boylece video kapanmiyor. */
+.title-content{position:relative;background:none!important;border:0!important;
+  padding:0;max-width:min(680px,92vw)}
+.title-content::before{content:none}
 /* Alt yazilar da videoyu kapatmasin */
 .title-screen footer{text-shadow:0 2px 6px #000a}
 @media (max-height:560px){.title-content{padding:18px 26px 22px}}
+
+
+/* ============ Ana menu: cercevesiz, acik renk ============ */
+.title-screen{justify-content:flex-start;padding-top:max(9vh,60px)}
+.title-screen h1{color:#f4e7cd!important;text-shadow:0 3px 0 #1a1109,0 0 22px #0009!important}
+.title-screen h1 i{color:#e0bc80!important}
+.title-screen .chapter-label{color:#e6c893!important;text-shadow:0 2px 4px #000a}
+.chapter-label span{background:#c2a87a!important}
+.title-screen .title-sub{color:#e8ded0!important;text-shadow:0 2px 5px #000b!important;margin-bottom:30px}
+
+/* Dugmeler: cerceve ayri katmanda ve yari saydam, yazi tam opak ve acik renk */
+.title-screen .menu-buttons button{
+  position:relative;isolation:isolate;
+  border:0!important;border-image:none!important;background:none!important;
+  color:#f6ecd9!important;text-shadow:0 2px 4px #000b;
+  padding:13px 20px!important;
+}
+.title-screen .menu-buttons button::before{
+  content:'';position:absolute;inset:0;z-index:-1;box-sizing:border-box;
+  border:8px solid transparent;
+  border-image:url(/assets/ui/frame_hud.png) 8 fill repeat;
+  opacity:.42;
+}
+.title-screen .menu-buttons .primary{color:#fff6e2!important;font-weight:700}
+.title-screen .menu-buttons .primary::before{
+  border-image:url(/assets/ui/frame_gold.png) 8 fill repeat;opacity:.58;
+}
+.title-screen .menu-buttons button:active::before{opacity:.72}
+.title-screen .menu-buttons button svg{color:inherit!important}
+@media (max-height:560px){.title-screen{padding-top:max(6vh,26px)}}
+
+
+/* ============ Ana menu: cerceve TAMAMEN kalksin ============ */
+/* border:0 yetmiyor - border-image'in "fill" kismi sifir kalinlikta bile
+   ortayi boyuyor. Acikca kapatilmasi gerekiyor. */
+.title-content{
+  border-image:none!important;border:0!important;
+  box-shadow:none!important;background:none!important;
+  padding:0!important;
+}
+/* Secenekler daha asagida ve daha saydam */
+.title-screen .title-sub{margin-bottom:clamp(34px,9vh,84px)!important}
+.title-screen .menu-buttons button::before{opacity:.28!important}
+.title-screen .menu-buttons .primary::before{opacity:.40!important}
+.title-screen .menu-buttons button:active::before{opacity:.55!important}
+@media (max-height:560px){.title-screen .title-sub{margin-bottom:26px!important}}
