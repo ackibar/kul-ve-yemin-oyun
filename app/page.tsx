@@ -44,7 +44,7 @@ export default function Home(){
  // sesli oynatmadigi icin once denenir, olmazsa ILK dokunusta acilir.
  useEffect(()=>{if(!menu)return;
   const ac=()=>{audio.current?.start();
-   const v=intro.current;if(v){v.muted=false;v.volume=.18;void v.play().catch(()=>{});}};
+   const v=intro.current;if(v){v.muted=false;v.volume=.55;void v.play().catch(()=>{});}};
   ac();
   const bir=()=>{ac();window.removeEventListener('pointerdown',bir);window.removeEventListener('keydown',bir);};
   window.addEventListener('pointerdown',bir);window.addEventListener('keydown',bir);

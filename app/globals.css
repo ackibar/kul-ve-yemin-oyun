@@ -516,3 +516,12 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 .title-screen .menu-buttons .primary::before{opacity:.40!important}
 .title-screen .menu-buttons button:active::before{opacity:.55!important}
 @media (max-height:560px){.title-screen .title-sub{margin-bottom:26px!important}}
+
+
+/* Secenekler yaziya yapisik durmasin: aradaki bosluk acildi, arkaplanlar
+   daha da saydamlasti. Kisa ekranda bosluk kisiliyor ki dugmeler tasmasin. */
+.title-screen .title-sub{margin-bottom:clamp(58px,17vh,150px)!important}
+.title-screen .menu-buttons button::before{opacity:.17!important}
+.title-screen .menu-buttons .primary::before{opacity:.30!important}
+.title-screen .menu-buttons button:active::before{opacity:.46!important}
+@media (max-height:560px){.title-screen .title-sub{margin-bottom:34px!important}}
