@@ -39,6 +39,17 @@ export class Engine{
  /** Rauf yoldasken vurus bekleme sayaci ve dusmanlarin ona vurma sayaci.
   *  Cani flags.raufCan'da string olarak tutuluyor ki kayitla birlikte gitsin. */
  private raufVur=0;private raufHasar=0;private sahneUyari=0;
+ /** Sarnicta yaratiklar alt kapidan dalga dalga geliyor. Sayac bir sonraki
+  *  dalganin gecikmesi; flags.dalga temizlenen dalga sayisi (kayitla gider). */
+ private dalgaSayac=0;
+ static readonly KAPI:[number,number]=[25,29];
+ static readonly DALGALAR:[1|2|3|4|5,number][][]=[
+  [[1,2]],                 // iki fare
+  [[5,2],[1,1]],           // yarasalar + fare
+  [[2,2],[1,2]],           // orumcekler
+  [[3,2],[2,1]],           // solucanlar
+  [[4,1],[1,2],[5,2]],     // kullenmis + kalabalik
+ ];
  static readonly RAUF_CAN=90;
  private uyku=0;private uykuDondu=false;
  static readonly UYKU=2.4;
