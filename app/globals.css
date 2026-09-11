@@ -421,3 +421,15 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
   color:#d8c8a6;opacity:.45;text-shadow:1px 1px 0 #1a1109;
 }
 @media (max-height:560px){.surum{font-size:9px;left:6px;bottom:3px}}
+
+
+/* Piksel ikonlar: cizgisel ikonlarin boyutlandirma kurallari img'e de uysun,
+   ama olcek TAM YARIYA insin (32 -> 16), yoksa piksel art bulanir. */
+.round img,.hud button img,.attack img{image-rendering:pixelated}
+.round.weapon img{transform:translateY(-6px)}
+.round.potion img{transform:translateY(-5px)}
+@media (max-height:560px){
+  .round img{width:18px!important;height:18px!important;transform:translateY(-6px)}
+  .attack img{width:24px!important;height:24px!important}
+  .hud button img{width:20px!important;height:20px!important}
+}
