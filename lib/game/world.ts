@@ -1,5 +1,5 @@
 import type {ItemId,Zone} from './data';
-export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number};
+export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number};
 export type EnemySpec={id:string;kind:1|2|3|4|5|6;x:number;y:number;boss?:boolean};
 export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[];enemies:EnemySpec[];spawn:[number,number];blockers:[number,number,number,number][];
  /** Uzerine BASINCA bolge degistiren kutular (karo birimi, x2/y2 haric).
@@ -7,10 +7,11 @@ export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[
  gecisler:{kutu:[number,number,number,number];to:Zone;spawn:[number,number]}[];
  /** Yurunebilir ama olumcul: icine giren asagi dusup olur. */
  ucurumlar:[number,number,number,number][]};
-export function makeWorld(zone:Zone):World{
+export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefined>):World{
  const kare=zone==='haven'||zone==='magara';
- const w=zone==='disari'?54:zone==='yikik'?20:kare?30:46,
-  h=zone==='disari'?30:zone==='yikik'?16:kare?30:48;
+ // Kare mekanlar 30x30: siginak, magara ve yikik. Kul Ovasi 54x30.
+ const kare30=kare||zone==='yikik';
+ const w=zone==='disari'?54:kare30?30:46,h=zone==='disari'?30:kare30?30:48;
  const tiles=Array.from({length:h},()=>Array<number>(w).fill(0));
  const room=(x:number,y:number,rw:number,rh:number)=>{for(let j=y;j<y+rh;j++)for(let i=x;i<x+rw;i++)tiles[j][i]=1};
  const entities:Entity[]=[],enemies:EnemySpec[]=[];
@@ -74,13 +75,16 @@ export function makeWorld(zone:Zone):World{
   blockers.push([18,9,21,13],[31,9,34,10],[43,9,45,11],[15,10,16,12],[17,10,18,15],[32,10,36,12],[40,10,41,12],[42,10,43,12],[45,10,46,12],[51,10,52,12],[9,11,10,12],[11,11,12,14],[14,11,15,13],[21,11,22,13],[36,11,37,12],[39,11,40,12],[41,11,42,12],[50,11,51,18],[7,12,9,13],[10,12,11,13],[12,12,14,14],[24,12,25,13],[34,12,36,14],[37,12,39,18],[47,12,48,13],[52,12,54,19],[8,13,9,14],[15,13,16,15],[18,13,19,14],[25,13,26,14],[31,13,32,15],[33,13,34,15],[36,13,37,18],[39,13,40,18],[51,13,52,19],[12,14,13,19],[14,14,15,15],[16,14,17,15],[19,14,20,19],[21,14,22,16],[32,14,33,15],[35,14,36,17],[40,14,41,17],[49,14,50,20],[8,15,9,17],[13,15,14,18],[20,15,21,20],[22,15,23,19],[41,15,42,17],[48,15,49,20],[1,16,3,17],[9,16,10,17],[15,16,16,18],[17,16,19,19],[23,16,24,18],[34,16,35,17],[42,16,43,17],[47,16,48,18],[0,17,1,19],[11,17,12,20],[14,17,15,19],[21,17,22,19],[1,18,2,19],[26,18,27,19],[41,18,42,20],[45,18,46,19],[7,19,8,20],[10,19,11,20],[16,19,18,20],[25,19,26,20],[39,19,41,20],[2,20,3,23],[1,21,2,23],[3,21,4,22],[50,22,51,24],[0,23,1,24],[3,23,4,24],[41,24,43,28],[44,24,45,27],[52,24,54,25],[2,25,3,26],[5,25,6,26],[10,25,11,26],[13,25,14,26],[43,25,44,26],[47,25,48,26],[7,26,8,27],[19,26,23,27],[37,26,38,27],[0,27,2,29],[10,27,14,30],[19,27,20,28],[21,27,24,29],[33,27,34,28],[40,27,41,30],[52,27,53,30],[6,28,10,30],[14,28,17,29],[39,28,40,30],[41,28,42,29],[53,28,54,30],[0,29,1,30],[4,29,6,30],[14,29,16,30],[22,29,24,30],[38,29,39,30],[43,29,46,30],[51,29,52,30]);
   gecis(24,29,31,30,'haven',[15,4]);   // geldigin agiz: uzerine basinca geri
   // Kemerli yikik kapi: kulun disinda kalan tek kapali mekan.
-  at({id:'yikikKapi',type:'portal',x:19.2,y:19.6,to:'yikik',spawn:[10,13],name:'Yıkığa gir',asset:'gizli'});
+  gecis(19,20,21,21,'yikik',[15,28]);   // kemerli kapi: uzerinden yuruyunce giriliyor
  }else if(zone==='yikik'){
-  // Kemerli kapinin ardindaki tek oda. Kul disarida kaldigi icin burada can
-  // erimiyor - Kul Ovasi'na cikmanin bir odulu olsun diye sandik kondu.
-  room(2,2,16,12);
-  at({id:'yikikCikis',type:'portal',x:10,y:13,to:'disari',spawn:[19,20],name:'Dışarı çık'});
-  chest('yikikSandik',10,4,[['guard',1],['potion',2],['wood',4]],45);
+  // Kul Ovasi'ndaki kemerli yikintinin ici (30x30). Zemin boyali sahne,
+  // carpisma da uzerine YESIL boyanmis maskeden okundu - burada yesil
+  // ENGEL demek, prop sayfalarindaki gibi "silinecek fon" degil.
+   const ZEMIN=['000000000000000000000000000000','000000000000000000000000000000','000000000000000000000000000000','000000000000000000000000000000','000000000000000000000000000000','000000000000000000000000000000','000000000000000000000000000000','000000000000000000000000000000','000000000000000000000000000000','000000000000001000000000000000','000000000011101101111111100000','000000000111111111111111100000','000000000011111111111111100000','000000000011111111111111000000','000000000011111111111110000000','110000001111111111111000000000','100000001111111111100000000000','100000001111111111000000000000','000000011111111110000000000000','000000100111111110101110000000','000000011111111111111111110000','000000000111111111111111110000','000000000001111111111111110000','000011111111111111111110110000','000000000000111111000000000000','000000000000111111000000000000','000000000000011111000000000000','000000000000011111000000000000','000000000000111111000000000000','000000000000111111000000000000'];
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
+  gecis(12,29,18,30,'disari',[19,21]);   // alt koridor: disariya cikis
+  // Rauf Alf'e teslim edildiyse sonu burasi oluyor.
+  if(flags?.rauf==='teslim')at({id:'raufCeset',type:'ceset',x:16,y:17,name:'Rauf'});
  }else if(zone==='magara'){
   // Sarnic Agzi: siginagin kapagindan inilen ilk karanlik. Tek parca boyali
   // sahne (public/assets/arkaplan/magara.png). Prop katmani YOK, o yuzden
@@ -96,8 +100,9 @@ export function makeWorld(zone:Zone):World{
   // asagi dusersin. Karolar bilerek yurunebilir birakildi.
   // Sinirlar goz karariyla degil, uzerine yesil boyanmis referanstan olculdu.
   ucurum(21,11,27,19);
-  // Ucurumun agzina varabilmek icin odanin sag kenari oraya kadar aciliyor.
-  room(19,11,3,8);
+  // Ucurumun DORT BIR YANI acik: kenarindan dolasilabilsin diye cevresi
+  // yurunebilir. Sag taraf kayalik ama gecis orada da kapali kalmasin.
+  room(19,9,10,12);
  }else if(zone==='cistern'){
   room(3,3,11,11);room(5,12,4,24);room(3,29,12,12);room(12,33,22,4);room(28,27,14,15);room(32,12,4,20);room(27,3,15,12);room(12,6,19,4);room(17,18,9,9);room(8,21,12,3);room(22,23,12,3);
   at({id:'backHaven',type:'portal',x:6,y:5,to:'magara',spawn:[14,25],name:'Yukarı çık'});

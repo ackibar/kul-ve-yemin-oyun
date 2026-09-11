@@ -6,6 +6,9 @@ const XF=2.5,EGRI_N=64;
 const [GIRIS,CIKIS]=(()=>{const a=new Float32Array(EGRI_N),b=new Float32Array(EGRI_N);for(let i=0;i<EGRI_N;i++){const p=i/(EGRI_N-1);a[i]=Math.sin(p*Math.PI/2);b[i]=Math.cos(p*Math.PI/2);}return[a,b]})();
 const PARCA='/assets/audio/three-steps-beneath.mp3';
 const ATES_SES='/assets/audio/fireplace.mp3';
+// Kul Ovasi'nin ruzgari: bolgeye cikinca acilan, girince kapanan dongu.
+const RUZGAR_SES='/assets/audio/wind.mp3';
+const RUZGAR_KAT=.55;
 // Ates ortam sesi TEK dongu olarak calar; her alev icin ayri kaynak acmak yerine
 // motor en yakin alevlere gore 0..1 arasi bir seviye veriyor. Boylece uc ocagin
 // yan yana oldugu sigginakta ses uc katina cikmiyor, sadece biraz doluyor.
@@ -26,10 +29,10 @@ const SENTEZ_KAT=.2,PARCA_KAT=.38;
 const HIZ=.9;
 export class GameAudio{
  private ctx:AudioContext|null=null;private musicBus:GainNode|null=null;private fxBus:GainNode|null=null;private timer:ReturnType<typeof setInterval>|null=null;private next=0;private beat=0;private zone='haven';private active=true;music=.45;effects=.65;
- private parca:AudioBuffer|null=null;private basla=0;private bitis=0;private calan:AudioBufferSourceNode[]=[];private bekleniyor=true;private ornek:Record<string,AudioBuffer>={};private ates:AudioBufferSourceNode|null=null;private atesKazanc:GainNode|null=null;private atesPan:StereoPannerNode|null=null;private muzikKat=SENTEZ_KAT;
- start(){if(!this.ctx){const C=window.AudioContext||(window as unknown as {webkitAudioContext:typeof AudioContext}).webkitAudioContext;if(!C)return;this.ctx=new C();this.musicBus=this.ctx.createGain();this.fxBus=this.ctx.createGain();const compressor=this.ctx.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=10;compressor.ratio.value=4;compressor.attack.value=.006;compressor.release.value=.18;const master=this.ctx.createGain();master.gain.value=1.45;compressor.connect(master);master.connect(this.ctx.destination);this.musicBus.connect(compressor);this.fxBus.connect(compressor);this.setVolumes(this.music,this.effects);void this.parcaYukle();void this.atesYukle();void this.ornekYukle();}void this.ctx.resume().catch(()=>{});if(!this.timer){this.next=this.ctx.currentTime+.05;this.timer=setInterval(()=>this.schedule(),100)}}
+ private parca:AudioBuffer|null=null;private basla=0;private bitis=0;private calan:AudioBufferSourceNode[]=[];private bekleniyor=true;private ornek:Record<string,AudioBuffer>={};private ruzgarKazanc:GainNode|null=null;private ates:AudioBufferSourceNode|null=null;private atesKazanc:GainNode|null=null;private atesPan:StereoPannerNode|null=null;private muzikKat=SENTEZ_KAT;
+ start(){if(!this.ctx){const C=window.AudioContext||(window as unknown as {webkitAudioContext:typeof AudioContext}).webkitAudioContext;if(!C)return;this.ctx=new C();this.musicBus=this.ctx.createGain();this.fxBus=this.ctx.createGain();const compressor=this.ctx.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=10;compressor.ratio.value=4;compressor.attack.value=.006;compressor.release.value=.18;const master=this.ctx.createGain();master.gain.value=1.45;compressor.connect(master);master.connect(this.ctx.destination);this.musicBus.connect(compressor);this.fxBus.connect(compressor);this.setVolumes(this.music,this.effects);void this.parcaYukle();void this.atesYukle();void this.ornekYukle();void this.ruzgarYukle();}void this.ctx.resume().catch(()=>{});if(!this.timer){this.next=this.ctx.currentTime+.05;this.timer=setInterval(()=>this.schedule(),100)}}
  setVolumes(m:number,f:number){this.music=m;this.effects=f;this.musicBus?.gain.setTargetAtTime(m*this.muzikKat,this.ctx!.currentTime,.08);this.fxBus?.gain.setTargetAtTime(f*.5,this.ctx!.currentTime,.02)}
- setZone(zone:string){if(this.zone!==zone){this.zone=zone;this.beat=0;}}
+ setZone(zone:string){if(this.zone!==zone){this.zone=zone;this.beat=0;this.ruzgarAyarla();}}
  pause(p:boolean){this.active=!p;if(this.ctx){if(p)void this.ctx.suspend().catch(()=>{});else{if(!this.parca)this.next=this.ctx.currentTime+.05;void this.ctx.resume().catch(()=>{});}}}
  private tone(freq:number,time:number,duration:number,volume:number,type:OscillatorType,bus:GainNode){if(!this.ctx)return;const o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,time);g.gain.setValueAtTime(0,time);g.gain.linearRampToValueAtTime(volume,time+.018);g.gain.exponentialRampToValueAtTime(.0001,time+duration);o.connect(g);g.connect(bus);o.start(time);o.stop(time+duration+.02);o.onended=()=>{o.disconnect();g.disconnect()};}
  private schedule(){if(!this.ctx||!this.musicBus||!this.active||this.ctx.state!=='running')return;if(this.parca){this.parcaPlanla();return;}if(this.bekleniyor)return;const t=this.ctx.currentTime;if(this.next<t-.5)this.next=t+.05;while(this.next<t+.3){const haven=this.zone==='haven',step=haven?.34:.255;const progress=haven?[146.83,130.81,116.54,130.81]:[110,103.83,98,103.83];const root=progress[Math.floor(this.beat/16)%4];const pattern=haven?[0,7,12,15,12,7,3,7]:[0,12,7,3,0,7,15,7];if(this.beat%2===0)this.tone(root*Math.pow(2,pattern[(this.beat/2)%8]/12),this.next,1.3,.24,'triangle',this.musicBus);if(this.beat%8===0){this.tone(root/2,this.next,step*10,.23,'sine',this.musicBus);this.tone(root*1.5,this.next,step*8,.08,'sine',this.musicBus);}if(!haven&&this.beat%4===0)this.tone(55,this.next,.17,.38,'sine',this.musicBus);if(haven&&this.beat%16===12)this.tone(root*4,this.next,1.8,.07,'sine',this.musicBus);this.next+=step;this.beat++}}
@@ -45,6 +48,18 @@ export class GameAudio{
    const r=await fetch(yol);if(!r.ok)continue;
    this.ornek[ad]=await this.ctx!.decodeAudioData(await r.arrayBuffer());
   }catch{/* yuklenemezse sentez karsiligi calar */}}
+ private async ruzgarYukle(){try{const r=await fetch(RUZGAR_SES);if(!r.ok)return;
+   const buf=await this.ctx!.decodeAudioData(await r.arrayBuffer());if(!this.ctx||!this.fxBus)return;
+   const d=buf.getChannelData(0),tara=Math.min(buf.length,buf.sampleRate);let b=0,e=buf.length-1;
+   while(b<tara&&Math.abs(d[b])<.0015)b++;while(e>buf.length-1-tara&&Math.abs(d[e])<.0015)e--;
+   const src=this.ctx.createBufferSource();src.buffer=buf;src.loop=true;
+   src.loopStart=b/buf.sampleRate;src.loopEnd=(e+1)/buf.sampleRate;
+   const g=this.ctx.createGain();g.gain.value=0;src.connect(g);g.connect(this.fxBus);src.start();
+   this.ruzgarKazanc=g;this.ruzgarAyarla();
+  }catch{/* ruzgar olmasa da oyun calisir */}}
+ /** Ruzgar yalnizca Kul Ovasi'nda duyulur; gecis 1.2 sn'de yumusakca olur. */
+ private ruzgarAyarla(){if(!this.ctx||!this.ruzgarKazanc)return;
+  this.ruzgarKazanc.gain.setTargetAtTime(this.zone==='disari'?RUZGAR_KAT:0,this.ctx.currentTime,.4);}
  private async atesYukle(){try{const r=await fetch(ATES_SES);if(!r.ok)return;
   const buf=await this.ctx!.decodeAudioData(await r.arrayBuffer());if(!this.ctx||!this.fxBus)return;
   const d=buf.getChannelData(0),tara=Math.min(buf.length,buf.sampleRate);let b=0,e=buf.length-1;
