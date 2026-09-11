@@ -12,7 +12,9 @@ Türkçe, yatay mobil için hazırlanmış tek oyunculu piksel aksiyon RPG. Vite
 
 Sol sanal çubuk: hareket. Sağ kılıç: basılı tutarak yakın dövüş ve otomatik yönelme. Rüzgâr: kısa dokunulmazlık veren kaçınma. Kalp: iksir. Alt orta düğme: yakın NPC, sandık, kol veya geçitle etkileşim. Üst portre: yetenekler; heybe: eşya kuşanma; defter: görev, harita ve kararlar.
 
-Son Sığınak'ta Mirna, Alf ve Undur. Unutulmuş Sarnıç'ta ilaç, Rauf ve ocak kapısı kolu. Kül Ocağı'nda Bekçi, kalp ve sığınağa dönüş geçidi. Üç görev, ilaç ve kaçak için farklı kararlar, iki ana son, beş seviye, 15 eşya tanımı, dört düşman davranışı, dokunmatik menüler.
+Son Sığınak'ta Mirna, Alf, Undur, Selvi ve Nil. Sarnıç Ağzı'nda uçurumun başında Tuhn. Unutulmuş Sarnıç'ta ilaç, Rauf ve ocak kapısı kolu. Kül Ovası'ndaki Yıkık Ev'de Ayaz. Kül Ocağı'nda Bekçi, kalp ve sığınağa dönüş geçidi. Üç ana görev ve bir yan görev; ilaç, kaçak, iki sır ve oyuncunun kendi sözleri için kararlar; son, oyuncunun ettiği yeminle kapanır (kapıyı beklemek, yukarıdakileri aramak ya da ocağı beslemek). Beş seviye, 16 eşya tanımı, dört düşman davranışı, dokunmatik menüler.
+
+Hikâyenin bütünlüğü (kim kime ne yemin etti, hangi karar neyi açar) `HIKAYE.md` dosyasında tutulur; yeni diyalog yazarken önce ona bak.
 
 Kayıt cihazdaki localStorage alanındadır (`kul-ve-yemin-save-v1`); sunucu hesabına senkronize edilmez. Ses kullanıcı etkileşimiyle başlar. Müzik tek parça bir 8-bit kayıttır (`public/assets/audio/`); dikişsiz dönmesi için döngü noktasında sabit güç (constant power) çapraz geçiş uygulanır. Ateş sesi konuma bağlıdır: alevlere yaklaştıkça yükselir, 8 karo uzaklıkta susar ve kaç ocak olursa olsun tek döngü çalar. Efektler Web Audio ile sentezlenir. Ekipmanlar istatistik ve savaş etkilerini değiştirir, kahramanın sprite görünümü sabittir.
 

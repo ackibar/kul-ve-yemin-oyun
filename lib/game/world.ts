@@ -48,6 +48,13 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
   blockers.push([7,5,8,6],[9,5,10,7],[21,5,25,10],[20,6,21,10],[10,7,12,9],[19,7,20,11],[4,8,10,10],[12,8,13,9],[17,8,19,9],[25,8,27,10],[3,9,4,13],[11,9,12,12],[18,9,19,10],[4,10,9,13],[12,10,13,12],[23,10,24,12],[20,11,22,13],[25,11,27,24],[4,13,6,14],[7,13,9,14],[23,13,25,19],[3,14,4,15],[22,15,23,19],[3,17,4,20],[4,18,6,24],[7,18,10,21],[6,19,7,24],[10,19,12,21],[20,19,21,21],[19,20,20,21],[21,20,22,21],[24,20,25,21],[7,22,12,24],[19,23,25,24]);
   at({id:'mira',type:'npc',x:9,y:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
+  // Selvi ust kapinin dibinde: cevrildigi kapidan uzaklasmiyor. Nil sag-alt
+  // ocagin yaninda. Ayaz indiyse ve Tuhn ucurumdan cekildiyse ikisi de o atesin
+  // basina gelir. `s` sprite olcegi: cocuklar icin ayni sheet kucuk cizilir.
+  at({id:'selvi',type:'npc',x:13,y:6,name:'Selvi',portrait:1});
+  at({id:'nil',type:'npc',x:18,y:21,name:'Nil',portrait:3,s:.7});
+  if(flags?.ayaz==='indi')at({id:'ayaz',type:'npc',x:16,y:21,name:'Ayaz',portrait:6,s:.85});
+  if(flags?.tuhn==='kaldi')at({id:'tuhn',type:'npc',x:19,y:22,name:'Tuhn',portrait:6});
   gecis(12,27,18,28,'magara',[15,5]);   // asagi inen tunelin sonu
   // Ust kapinin agzi ZEMIN esiginde karanlik kaldigi icin kapanmisti; koridor
   // elle aciliyor, disari cikis da onun ucunda.
@@ -85,6 +92,8 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   gecis(12,29,18,30,'disari',[19,21]);   // alt koridor: disariya cikis
   // Rauf Alf'e teslim edildiyse sonu burasi oluyor.
   if(flags?.rauf==='teslim')at({id:'raufCeset',type:'ceset',x:16,y:17,name:'Rauf'});
+  // Ayaz: Sare'nin "bekle" dedigi yer. Siginaga indiyse burada degil.
+  if(flags?.ayaz!=='indi')at({id:'ayaz',type:'npc',x:12,y:12,name:'Ayaz',portrait:6,s:.85});
  }else if(zone==='magara'){
   // Sarnic Agzi: siginagin kapagindan inilen ilk karanlik. Tek parca boyali
   // sahne (public/assets/arkaplan/magara.png). Prop katmani YOK, o yuzden
@@ -104,18 +113,24 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // yurunebilir. Sag taraf kayalik ama gecis orada da kapali kalmasin.
   room(19,9,10,12);
   // Ucurumun basinda duran adam. Atladiysa bir daha yok.
-  if(flags?.tuhn!=='atladi')at({id:'tuhn',type:'npc',x:20,y:15,name:'Tuhn',portrait:6});
+  // Atladiysa yok; indiyse siginakta, Nil'in atesinin basinda.
+  if(!flags?.tuhn)at({id:'tuhn',type:'npc',x:20,y:15,name:'Tuhn',portrait:6});
  }else if(zone==='cistern'){
-  room(3,3,11,11);room(5,12,4,24);room(3,29,12,12);room(12,33,22,4);room(28,27,14,15);room(32,12,4,20);room(27,3,15,12);room(12,6,19,4);room(17,18,9,9);room(8,21,12,3);room(22,23,12,3);
-  at({id:'backHaven',type:'portal',x:6,y:5,to:'magara',spawn:[14,25],name:'Yukarı çık'});
-  at({id:'toForge',type:'portal',x:39,y:38,to:'forge',spawn:[7,7],name:'Kül Ocağı',});
-  at({id:'rauf',type:'npc',x:38,y:11,name:'Rauf',portrait:5});
-  at({id:'gateLever',type:'lever',x:5,y:37,name:'Ocak kapısını aç'});
-  chest('medicineChest',38,6,[['medicine',1],['potion',2]],12);chest('cisternWest',10,34,[['chain',1],['bow',1],['potion',2]],24);chest('cisternCenter',21,20,[['wind',1],['tonic',1]],15);chest('cisternEast',37,30,[['guard',1],['potion',2]],20);
-  for(const [x,y] of [[3,3],[13,3],[27,3],[41,3],[3,29],[14,29],[28,27],[41,27],[17,18]])fire(x,y);
-  for(const [x,y] of [[6,17],[7,26],[20,8],[34,20],[24,34]])at({id:`trap${x}_${y}`,type:'trap',x,y});
-  enemy('c1',1,11,11);enemy('c2',1,17,8);enemy('c3',2,29,8);enemy('c4',1,35,8);enemy('c5',3,7,32);enemy('c6',2,11,37);enemy('c7',1,20,23);enemy('c8',3,32,32);enemy('c9',2,38,35);enemy('c10',1,34,24);enemy('bat1',5,15,15);enemy('bat2',5,25,25);
-  decor('cbox',4,11,'Boxes/1.png');decor('cchair',39,13,'Chairs/1.png');decor('ctable',31,5,'Tables/1.png','Zanaat Masası');decor('cshelf',29,29,'Bookshelf/1.png');
+  // Unutulmus Sarnic artik karo zindan degil, tek parca boyali magara (54x30).
+  // Carpisma uzerine YESIL boyanmis maskeden okundu; bu sayfada yesil magaranin
+  // DISINDAKI bosluk, yani engel.
+   const ZEMIN=['000011111111000000000000000000000000000000000000000000','000011111111000000000000000000000000000100000000000000','000011111111000011111111111111111111111111111110000000','000011111111000111111111111111111111111111111111110000','000011111110011111111111111111111111111111111111111000','000111111111111111111111111111111111111111111111111000','001111111111111111111111111111111111111111111111111100','001111111111111111111111111111111111111111111111111100','001111111111111111111111111111111111111111111111111100','011111111111111111111100010000010110100001111111111110','001111111111111111110000000000000000000000001011111100','001111111111111110001111111000000100000000000000111100','001111111111100101111111111111111111111110000000000100','001111111111101111111111111111111111111111111111100100','001111111111111111111111111111111111111111111111111100','011100011111111111111111111111111111111111111111111110','001111111111111111111111111111111111111111111111111100','001111111111111111111111111111111111111111111111111100','011111111111111111111111111111111111111111111111111110','001111111111111111111111111111111111111111111111111100','001111111111111111111111111111111111111111111111111100','001111111111111111111111111111111111111111111111111100','001111111111111111111111111111111111111111111111111100','001111111111111111111111111111111111111111111111111100','001111111111111111111111111111111111111111111111111100','000111111111111111111111111111111111111111111111111000','000111111111111111111111111111111111111111111111111000','000001111111111111111111111111111111111111111111110000','000000011101000001011011111111111111100001111000000000','000000000000000000000001001110100000000000000000000000'];
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
+  at({id:'backHaven',type:'portal',x:7,y:4,to:'magara',spawn:[14,25],name:'Yukarı çık'});
+  // Alttaki kapi hem yaratiklarin geldigi yer hem de ocaga inis.
+  at({id:'toForge',type:'portal',x:26,y:28,to:'forge',spawn:[7,7],name:'Kül Ocağı'});
+  at({id:'rauf',type:'npc',x:44,y:18,name:'Rauf',portrait:5});
+  at({id:'gateLever',type:'lever',x:5,y:24,name:'Ocak kapısını aç'});
+  chest('medicineChest',48,8,[['medicine',1],['potion',2]],12);
+  chest('cisternWest',6,20,[['chain',1],['bow',1],['potion',2]],24);
+  chest('cisternEast',49,24,[['guard',1],['potion',2]],20);
+  fire(10,16);fire(40,14);
+  // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).
  }else{
   room(3,3,12,12);room(8,13,4,23);room(4,29,13,14);room(15,34,18,4);room(28,27,14,17);room(33,12,4,18);room(25,3,17,14);room(13,7,15,4);room(17,18,10,10);room(10,21,9,4);room(25,22,10,4);
   at({id:'backCistern',type:'portal',x:5,y:5,to:'cistern',spawn:[37,38],name:'Sarnıca dön'});
