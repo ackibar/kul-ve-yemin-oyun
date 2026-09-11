@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM = '0.9';
+export const SURUM = '1.0';
 
 export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern' | 'forge';
 export type ItemId = 'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'core'|'wood'|'torch'|'arrow';
@@ -128,6 +128,13 @@ export const STORY:Record<string,Record<string,StoryNode>>={ rauf:{
    choices:[{label:'Ne çıktı oradan?',to:'4'},AYRIL]},
   '4':{text:'Kül. Sadece kül, öyle sandık. Ama kül yapışıyor. Nefese, taşa, insana. Bir süre sonra insanlar konuştuklarını hatırlamaz oldu. Şimdi yukarısı da öyle. Ben kapıyı açtım, gökyüzünü ben kararttım.',
    choices:[{label:'Kendini suçlama.',to:'5'},{label:'Kapı hâlâ açık mı?',to:'6'},AYRIL]},
+  'sir':{text:'Undur mu? O adam kâğıtla konuşur. Ne dedi?',
+   choices:[{label:'O kapı sen doğmadan önce açılmış. Sen son mandalı kaldırmışsın.',to:'sirSoyle'},
+            {label:'Boş ver. Önemli değildi.',to:'sirSakla'}]},
+  'sirSoyle':{text:'…On bir yıl. On bir yıl her sabah aynı cümleyle kalktım: gökyüzünü ben karattım. Şimdi diyorsun ki o cümle bile bana ait değil.\n\nBilmiyorum şimdi neyim. Ama bunu söyleyecek kadar gözümün içine baktın. Al şunu — nöbet anahtarım. Artık bir kapının değil, bir adamın anahtarı.',
+   choices:[AYRIL]},
+  'sirSakla':{text:'Öyle mi? Peki. Zaten kimse bana yeni bir şey söylemiyor.',
+   choices:[AYRIL]},
   '5':{text:'Suçlamıyorum. Sayıyorum. Farkı var. Bir gün birisi aşağı inip o kapıyı kapatacak. O zaman sayım biter.',
    choices:[{label:'Kapı hâlâ açık mı?',to:'6'},AYRIL]},
   '6':{text:'Açık. Kolu kırdım, menteşesini sökttüm, olmadı. O kapı kolla açılmıyor — yeminle açılıyor. Kapanması için de bir yemin gerek. Benimki tutmadı.',
@@ -143,7 +150,12 @@ export const STORY:Record<string,Record<string,StoryNode>>={ rauf:{
   '4':{text:'Metin “ilk yemin” diyor, fazlasını söylemiyor. Ocağı yakanlarla ocağın kendisi arasında bir anlaşma. Biri diğerini beslerken öteki uyuyacaktı. Uyanmış demek ki.',
    choices:[{label:'Alf kapıyı açtığını söylüyor.',to:'5'},AYRIL]},
   '5':{text:'Alf kendine fazla yükleniyor. O kapı on bir yıl önce değil, çok daha önce açıldı. O sadece son mandalı kaldırdı. Ama bunu ona söyleme — taşıdığı yük onu ayakta tutan tek şey.',
-   choices:[{label:'Ne yazıyorsun?',to:'2'},AYRIL]},
+   choices:[{label:'Bir adamın suçu ona ait. Söyleyeceğim.',to:'sir'},{label:'Susarım.',to:'sus'},
+            {label:'Ne yazıyorsun?',to:'2'},AYRIL]},
+  'sir':{text:'…Belki haklısın. Ben otuz yıl sakladım, taşıdığım da bu oldu. Söylersen kendi yükümü sana devretmiş olurum. Sen taşırsın, ben yazarım.',
+   choices:[AYRIL]},
+  'sus':{text:'Teşekkür ederim. Bazı doğrular bir adamı düzeltmez, sadece dağıtır. Onu ayakta tutan yanlış olsun.',
+   choices:[AYRIL]},
  },
 };
 
@@ -164,8 +176,9 @@ export function dialogue(s:State,id:string):Dialogue{
   text:s.flags.tuhn==='kaldi'?'Bugünlük indim. Yarını yarın düşünürüm.':'…',
   choices:[close]};
  if(id==='mira')return {who:'Mirna',role:'Sığınağın şifacısı',portrait:3,text:s.flags.medicineDone?(s.flags.medicine==='rauf'?'Bir hayat kurtardın. Buradakiler için başka bir yol bulacağız. Yaralarını sarayım.':'İlaç işe yaradı. Bu gece kimseyi kaybetmedik. Dinlen; yaralarını sarayım.'):s.flags.medicine==='rauf'?'Ellerin boş… ama yüzünde söylemek istediğin bir şey var.':s.inventory.medicine?'Buldun! Bir şişenin bu kadar ağır bir umut taşıyacağını düşünmezdim.':'Aşağıdaki sarnıçta bir doz ilaç kaldı. Burada ateşler içinde yatanlar var. Onu bana getirir misin?',choices:[{label:'Bana hikâyeni anlat.',action:'story:mira:1'},...(!s.flags.medicineStarted?[{label:'İlacı bulacağım.',action:'mira_start',note:'Görev · Bir doz umut'}]:[]),...(s.inventory.medicine?[{label:'İlaç senin. Hastaları iyileştir.',action:'mira_deliver',note:'+35 altın · Mirna’nın güveni'}]:[]),...(s.flags.medicine==='rauf'&&!s.flags.medicineDone?[{label:'İlacı yaralı birine verdim. Onu bırakamadım.',action:'mira_confess',note:'Kararını Mirna’ya anlat'}]:[]),{label:'Dinlen ve yaralarını sar.',action:'rest',note:'Canın tamamen yenilenir'},close]};
- if(id==='boran')return {who:'Alf',role:'Kapı muhafızı',portrait:2,text:s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Defter geri döndü, ama birkaç sayfa eksik. Bana her şeyi anlatmadığını biliyorum.':'Rauf teslim oldu. Açlık hırsızlığı açıklayabilir; bedelini ortadan kaldırmaz.'):s.inventory.ledger?'Defteri tanıdım. Peki onu çalan kişi?':'Erzak defterimiz kayıp. Rauf’u sarnıca inerken gördüm. Defteri getir. Ne olduğunu da öğren.',choices:[{label:'Bana hikâyeni anlat.',action:'story:boran:1'},...(!s.flags.ledgerStarted?[{label:'Rauf’u ve defteri bulacağım.',action:'boran_start',note:'Görev · Defterdeki isim'}]:[]),...(s.inventory.ledger?[{label:s.flags.fugitive==='protected'?'Defter terk edilmişti. Rauf’u görmedim.':'Rauf teslim olmayı kabul etti.',action:'boran_deliver',note:s.flags.fugitive==='protected'?'Rauf’u koru · Yaşam halkası':'Rauf’u teslim et · Muhafız kılıcı'}]:[]),{label:'Malzemelerine bakabilir miyim?',action:'shop'},close]};
- if(id==='ekin')return {who:'Undur',role:'Yeminlerin arşivcisi',portrait:4,text:s.ending?'Bir yemin, onu tutan insanlar kadar güçlüdür. Seninkinin izini bu taşlar uzun süre taşıyacak.':s.inventory.core?'Kalp elinde. Onunla aşağıdaki yarığı mühürleyebiliriz. Ya da gücünü sığınağa taşıyabiliriz; sıcaklık ve ışık, ama yanında tehlike de gelecek.':'Sarsıntılar artıyor. Kül Ocağı’ndaki Bekçi, eski kalbi koruyor. Onu getir. Bu sığınağın yarını hakkında bir karar vermemiz gerekecek.',choices:[{label:'Bana hikâyeni anlat.',action:'story:ekin:1'},...(!s.flags.coreStarted?[{label:'Kül kalbini getireceğim.',action:'ekin_start',note:'Ana görev · Kül ve yemin'}]:[]),...(s.inventory.core&&!s.ending?[{label:'Yarığı mühürle. Bu gücü geride bırakalım.',action:'ending_seal',note:'Güvenli bir gelecek · Bölüm sonu',disabled:!s.flags.medicineDone||!s.flags.ledgerDone},{label:'Kalbi sığınağa bağla. Karanlıkta yaşamayalım.',action:'ending_claim',note:'Güç ve sorumluluk · Bölüm sonu',disabled:!s.flags.medicineDone||!s.flags.ledgerDone},...(!s.flags.medicineDone||!s.flags.ledgerDone?[{label:'Önce Mirna ve Alf’le işlerimi tamamlamalıyım.',action:'close'}]:[])]:[]),close]};
+ if(id==='boran')return {who:'Alf',role:s.flags.alfSir==='soylendi'?'Eski kapı muhafızı':'Kapı muhafızı',portrait:2,text:s.flags.alfSir==='soylendi'?'Hâlâ buradayım. Nöbet yok ama duruyorum. İnsan bir şeye alışıyor.':s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Defter geri döndü, ama birkaç sayfa eksik. Bana her şeyi anlatmadığını biliyorum.':'Rauf teslim oldu. Açlık hırsızlığı açıklayabilir; bedelini ortadan kaldırmaz.'):s.inventory.ledger?'Defteri tanıdım. Peki onu çalan kişi?':'Erzak defterimiz kayıp. Rauf’u sarnıca inerken gördüm. Defteri getir. Ne olduğunu da öğren.',choices:[{label:'Bana hikâyeni anlat.',action:'story:boran:1'},
+  ...(s.flags.alfSir==='biliyorum'?[{label:'Undur’un sana söylemediği bir şey var.',action:'story:boran:sir',note:'Karar · Onbir yılın sahibi'}]:[]),...(!s.flags.ledgerStarted?[{label:'Rauf’u ve defteri bulacağım.',action:'boran_start',note:'Görev · Defterdeki isim'}]:[]),...(s.inventory.ledger?[{label:s.flags.fugitive==='protected'?'Defter terk edilmişti. Rauf’u görmedim.':'Rauf teslim olmayı kabul etti.',action:'boran_deliver',note:s.flags.fugitive==='protected'?'Rauf’u koru · Yaşam halkası':'Rauf’u teslim et · Muhafız kılıcı'}]:[]),{label:'Malzemelerine bakabilir miyim?',action:'shop'},close]};
+ if(id==='ekin')return {who:'Undur',role:'Yeminlerin arşivcisi',portrait:4,text:s.ending?(s.flags.alfSir==='soylendi'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf’inki yalanmış; sen söyledin, o da bıraktı. Bunu yazdım.':s.flags.alfSir==='sakladin'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf hâlâ kendi yükünü taşıyor — sayende. Bunu da yazdım.':'Bir yemin, onu tutan insanlar kadar güçlüdür. Seninkinin izini bu taşlar uzun süre taşıyacak.'):s.inventory.core?'Kalp elinde. Onunla aşağıdaki yarığı mühürleyebiliriz. Ya da gücünü sığınağa taşıyabiliriz; sıcaklık ve ışık, ama yanında tehlike de gelecek.':'Sarsıntılar artıyor. Kül Ocağı’ndaki Bekçi, eski kalbi koruyor. Onu getir. Bu sığınağın yarını hakkında bir karar vermemiz gerekecek.',choices:[{label:'Bana hikâyeni anlat.',action:'story:ekin:1'},...(!s.flags.coreStarted?[{label:'Kül kalbini getireceğim.',action:'ekin_start',note:'Ana görev · Kül ve yemin'}]:[]),...(s.inventory.core&&!s.ending?[{label:'Yarığı mühürle. Bu gücü geride bırakalım.',action:'ending_seal',note:'Güvenli bir gelecek · Bölüm sonu',disabled:!s.flags.medicineDone||!s.flags.ledgerDone},{label:'Kalbi sığınağa bağla. Karanlıkta yaşamayalım.',action:'ending_claim',note:'Güç ve sorumluluk · Bölüm sonu',disabled:!s.flags.medicineDone||!s.flags.ledgerDone},...(!s.flags.medicineDone||!s.flags.ledgerDone?[{label:'Önce Mirna ve Alf’le işlerimi tamamlamalıyım.',action:'close'}]:[])]:[]),close]};
  if(id==='rauf')return {who:'Rauf',role:'Yaralı kaçak',portrait:2,text:s.flags.fugitive==='reported'?'Teslim olacağım. Defterde kimlerin aç kaldığı yazıyor. Alf’e onu da okumasını söyle.':s.flags.medicine==='rauf'?'Nefes almak artık acıtmıyor. Bunu unutmayacağım. Batıdaki kol, ocağa giden kapıyı açar.': 'Erzağı çocuklara verdim. Defter bunu kanıtlıyor. Alf beni dinlemez… Bacağım da beni taşımaz. Bana yardım eder misin?',choices:[{label:'Bana hikâyeni anlat.',action:'story:rauf:1'},...(s.inventory.medicine&&s.flags.fugitive!=='reported'?[{label:'Bu ilacı al. Yaşaman gerek.',action:'rauf_heal',note:'Son ilacı harca · Mirna’ya götüremeyeceksin'}]:[]),...(!s.flags.fugitive?[{label:'Sırrını koruyacağım. Defteri bana ver.',action:'rauf_protect',note:'Rauf’u koru · Defteri al'},{label:'Defteri ver. Alf’e teslim olmalısın.',action:'rauf_report',note:'Rauf’u teslim et · Defteri al'}]:[]),close]};
  return {who:'Eski mühür',role:'Kül Ocağı',portrait:1,text:'Kalp hâlâ atıyor. Onu Undur’a götürmelisin.',choices:[close]};
 }
@@ -178,6 +191,18 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
    return {message:'Rauf’u korudun. Alf’e bir şey söylemedin.'};}
   if(dugum==='rauf:zorla'){s.flags.rauf='dovus';s.flags.talk='';
    return {message:'Rauf kılıcını çekti!',special:'close'};}
+  if(dugum==='ekin:sir'){s.flags.alfSir='biliyorum';s.flags.talk=dugum;
+   s.journal.unshift('Undur, Alf’in suçunun ondan önce başladığını söyledi. Söylemek sana kaldı.');
+   return {message:'Artık Alf’e söyleyebilirsin.'};}
+  if(dugum==='ekin:sus'){s.flags.alfSir='sakladin';s.flags.talk=dugum;
+   s.journal.unshift('Undur’un sırrını sakladın. Alf yükünü taşımaya devam edecek.');
+   return {message:''};}
+  if(dugum==='boran:sirSoyle'){s.flags.alfSir='soylendi';s.flags.talk=dugum;
+   addItem(s,'copper');
+   s.journal.unshift('Alf’e gerçeği söyledin. On bir yıllık cümlesi elinden gitti; nöbet anahtarını sana verdi.');
+   return {message:'Alf nöbet anahtarını verdi.'};}
+  if(dugum==='boran:sirSakla'){s.flags.alfSir='sakladin';s.flags.talk=dugum;
+   return {message:''};}
   if(dugum==='tuhn:kaldi'){s.flags.tuhn='kaldi';s.flags.talk=dugum;
    s.journal.unshift('Uçurumun başındaki adamı geri çektin. Adı Tuhn.');
    return {message:'Tuhn bir adım geri çekildi.'};}

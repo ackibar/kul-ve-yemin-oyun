@@ -525,3 +525,11 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 .title-screen .menu-buttons .primary::before{opacity:.30!important}
 .title-screen .menu-buttons button:active::before{opacity:.46!important}
 @media (max-height:560px){.title-screen .title-sub{margin-bottom:34px!important}}
+
+
+/* Bir tur daha: dugmeler biraz daha asagi, arkaplanlar biraz daha saydam. */
+.title-screen .title-sub{margin-bottom:clamp(78px,24vh,210px)!important}
+.title-screen .menu-buttons button::before{opacity:.10!important}
+.title-screen .menu-buttons .primary::before{opacity:.22!important}
+.title-screen .menu-buttons button:active::before{opacity:.38!important}
+@media (max-height:560px){.title-screen .title-sub{margin-bottom:46px!important}}
