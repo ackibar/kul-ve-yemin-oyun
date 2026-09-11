@@ -412,3 +412,12 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
   .inventory-heading{font-size:11px!important}
   .text-button{font-size:11px!important;padding:6px 10px!important}
 }
+
+
+/* Surum etiketi: sol alt kose, oyunun onune gecmeyecek kadar sonuk */
+.surum{
+  position:absolute;left:8px;bottom:4px;z-index:22;pointer-events:none;
+  font:400 11px 'Pixelify Sans',monospace;letter-spacing:1px;
+  color:#d8c8a6;opacity:.45;text-shadow:1px 1px 0 #1a1109;
+}
+@media (max-height:560px){.surum{font-size:9px;left:6px;bottom:3px}}

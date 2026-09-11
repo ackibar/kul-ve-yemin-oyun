@@ -1,5 +1,5 @@
 import type {ItemId,Zone} from './data';
-export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number};
+export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number};
 export type EnemySpec={id:string;kind:1|2|3|4|5|6;x:number;y:number;boss?:boolean};
 export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[];enemies:EnemySpec[];spawn:[number,number];blockers:[number,number,number,number][];
  /** Uzerine BASINCA bolge degistiren kutular (karo birimi, x2/y2 haric).
@@ -8,7 +8,8 @@ export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[
  /** Yurunebilir ama olumcul: icine giren asagi dusup olur. */
  ucurumlar:[number,number,number,number][]};
 export function makeWorld(zone:Zone):World{
- const kare=zone==='haven'||zone==='magara';const w=kare?30:46,h=kare?30:48;
+ const kare=zone==='haven'||zone==='magara';
+ const w=zone==='disari'?54:kare?30:46,h=zone==='disari'?30:kare?30:48;
  const tiles=Array.from({length:h},()=>Array<number>(w).fill(0));
  const room=(x:number,y:number,rw:number,rh:number)=>{for(let j=y;j<y+rh;j++)for(let i=x;i<x+rw;i++)tiles[j][i]=1};
  const entities:Entity[]=[],enemies:EnemySpec[]=[];
@@ -46,6 +47,10 @@ export function makeWorld(zone:Zone):World{
   blockers.push([7,5,8,6],[9,5,10,7],[21,5,25,10],[20,6,21,10],[10,7,12,9],[19,7,20,11],[4,8,10,10],[12,8,13,9],[17,8,19,9],[25,8,27,10],[3,9,4,13],[11,9,12,12],[18,9,19,10],[4,10,9,13],[12,10,13,12],[23,10,24,12],[20,11,22,13],[25,11,27,24],[4,13,6,14],[7,13,9,14],[23,13,25,19],[3,14,4,15],[22,15,23,19],[3,17,4,20],[4,18,6,24],[7,18,10,21],[6,19,7,24],[10,19,12,21],[20,19,21,21],[19,20,20,21],[21,20,22,21],[24,20,25,21],[7,22,12,24],[19,23,25,24]);
   at({id:'mira',type:'npc',x:9,y:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
   gecis(12,27,18,28,'magara',[15,5]);   // asagi inen tunelin sonu
+  // Ust kapinin agzi ZEMIN esiginde karanlik kaldigi icin kapanmisti; koridor
+  // elle aciliyor, disari cikis da onun ucunda.
+  for(let j=2;j<4;j++)for(let i=12;i<18;i++)tiles[j][i]=1;
+  gecis(12,2,18,3,'disari',[27,27]);    // ust kapi: kul ovasina cikis
   // Ocaklarda boyali ALEV yok, sadece kor ve odun var; animasyonlu alevi motor
   // buraya koyuyor. Konum ocak halkasinin prop bileseninden olculdu.
   // Capa: Fire1 sprite'i 32 birimlik hucrenin TAMAMINI dolduruyor ve sprite()
@@ -53,8 +58,19 @@ export function makeWorld(zone:Zone):World{
   // otursun diye y = merkez + halka_yuksekligi*0.35 - 6.
   entities.push({id:'alev0',type:'fire',x:190.8,y:171.9,s:1.16});entities.push({id:'alev1',type:'fire',x:334.0,y:190.6,s:1.16});entities.push({id:'alev2',type:'fire',x:327.2,y:323.4,s:1.13});
   decor('table2',22,10,'Tables/2.png','Zanaat Masası');
+  // Alt-soldaki yatak: etkilesim noktasi yatagin UST kenarinin hemen disinda,
+  // cunku yatagin kendisi engel ve icinden gorus hatti kurulamiyor.
+  entities.push({id:'yatak',type:'yatak',x:9.5*16,y:21.7*16,name:'Uyu'});
   chest('havenGift',14,22,[['copper',1],['bow',1],['arrow',25],['tonic',1]]);
-  }else if(zone==='magara'){
+  }else if(zone==='disari'){
+  // Kul Ovasi: siginakin ust kapisindan cikilan dis dunya. Yurunebilir alan
+  // ORTADA ARTI seklinde iki yol; gerisi kul. Kenarlara gorunmez duvar koymak
+  // yerine can hizla eriyor, yani oyuncu yolun sonunu goremeden geri donmek
+  // zorunda kaliyor - sinir hissettirilmeden konmus oluyor.
+  room(25,6,5,24);      // dikey kol
+  room(4,14,46,5);      // yatay kol
+  gecis(25,28,30,30,'haven',[15,4]);   // geldigin agiz: uzerine basinca geri
+ }else if(zone==='magara'){
   // Sarnic Agzi: siginagin kapagindan inilen ilk karanlik. Tek parca boyali
   // sahne (public/assets/arkaplan/magara.png). Prop katmani YOK, o yuzden
   // yurunebilir alan otomatik cikarilmadi - sahnenin sekli basit oldugu icin

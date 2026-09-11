@@ -5,7 +5,7 @@ import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/u
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogAction,AlertDialogCancel} from '@/components/ui/alert-dialog';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/tabs';
 import {Slider} from '@/components/ui/slider';
-import {ITEMS,ZONES,XP,newState,parseSave,stats,equip,buy,spendPoint,questList,dialogue,choose,addItem,type State,type ItemId} from '@/lib/game/data';
+import {ITEMS,ZONES,XP,newState,parseSave,stats,equip,buy,spendPoint,questList,dialogue,choose,addItem,type State,type ItemId,SURUM} from '@/lib/game/data';
 import {Engine,SAVE,type Snapshot} from '@/lib/game/engine';
 import {GameAudio} from '@/lib/game/audio';
 import {makeWorld} from '@/lib/game/world';
@@ -54,6 +54,7 @@ export default function Home(){
    <div className={`save-mark ${snapshot.saveStatus==='Kayıt yapılamadı'?'save-error':''}`}><Save size={12}/>{snapshot.saveStatus==='Kayıt yapılamadı'?'Kayıt yapılamıyor':'Cihaza otomatik kayıt'}</div>
    </>}
    {zoneFlash&&<div className="zone-flash" role="status" aria-live="polite">{zoneFlash}</div>}
+  <div className="surum">v{SURUM}</div>
   {notice&&<div className="game-notice" role="status" aria-live="polite"><span>◆</span>{notice}</div>}
    <Dialog open={panel!==null} onOpenChange={open=>{if(!open&&panel!=='death')closePanel();}}><DialogContent className={`game-dialog ${panel==='dialogue'?'conversation':''} ${panel==='ending'?'ending-dialog':''}`} showCloseButton={false}><header className="panel-header"><div><span className="eyebrow">{panel==='dialogue'?talk.role:panel==='shop'?`${s.gold} altın · Muhafız malzemeleri`:panel==='crafting'?`${s.inventory.wood||0} odun · ${s.gold} altın`:panel==='ending'?'BİRİNCİ BÖLÜM TAMAMLANDI':'KÜL VE YEMİN'}</span><DialogTitle>{title}</DialogTitle></div>{panel!=='death'&&<button className="close-panel" onClick={closePanel} aria-label="Kapat"><X size={22}/></button>}</header><DialogDescription className="sr-only">{panel==='dialogue'?'Bir yanıt seç. Tercihlerin hikâyeyi değiştirir.':'Oyun bu ekran açıkken duraklatılır.'}</DialogDescription><div className="panel-body">
    {panel==='dialogue'&&<div className="dialogue-layout"><div className="speech"><Portrait id={talk.portrait}/><p>{talk.text}</p></div><div className="choices">{talk.choices.map((choice,i)=><button key={choice.action+String(i)} disabled={choice.disabled} onClick={()=>applyChoice(choice.action)}><span className="choice-number">{String(i+1).padStart(2,'0')}</span><span>{choice.label}{choice.note&&<small>{choice.note}</small>}</span><ChevronRight size={18}/></button>)}</div></div>}
