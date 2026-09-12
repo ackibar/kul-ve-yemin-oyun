@@ -35,6 +35,10 @@ ISLER = {
                  ('Attack', 6, 'rearing up and striking forward with the front legs, '
                                'then settling back down')],
 }
+# Orumcek yon basina AYRI gorselden animasyonlaniyor (dondurme calismiyordu).
+# Ayni tarifler, farkli baslangic karesi.
+for _y in ('u', 's'):
+    ISLER[f'orumcek2{_y}'] = ISLER['orumcek2']
 
 
 def uret(ad):
