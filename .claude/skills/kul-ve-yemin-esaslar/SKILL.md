@@ -243,7 +243,11 @@ onları **oyuncuyla aynı y sıralamasına** sokuyor (`type:'perde'` → actors
 listesi). Arkasına geçen oyuncu bezin ardında kalır; içinden geçilmez (dip
 çizgisinde ince blocker) ve arkasında durulabilsin diye bir karo zemin açılır.
 Arka plan olduğu gibi durur, üstüne birebir aynı pikseller biner — duruşta
-hiçbir fark yok. **Arkaya geçebilmek için karoyu açmak yetmez:**
+hiçbir fark yok. Cep **en az oyuncunun çarpışma kutusu kadar derin** olmalı (yarıçap 5 birim =
+0.625 karo) ve bezin dip çizgisinin hemen üstünde kalmalı: daha yukarıda
+oyuncunun kafası ipin üstünden taşıyor, "bezin içinde" gibi duruyor (ölçüm:
+bez 3.2 karo, oyuncu 2.7 karo). Engel dip çizgisinin ALTINA konur.
+**Arkaya geçebilmek için karoyu açmak yetmez:**
 boyalı duvarın `blockers` kutusu hâlâ engelliyor; `delik()` o kutuyu keser
 (kesişeni en fazla dört parçaya böler) ve cep **açık zemine kadar** uzatılır,
 yoksa kutunun kalan parçası yolu kapatıyor. Aynı yöntem her "arkasına geçilsin" istenen boyalı nesne için

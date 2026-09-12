@@ -85,10 +85,24 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
    /* Cep ACIK ZEMINE KADAR uzatilir: yalnizca bezin arkasini oymak yetmiyordu,
       cevredeki engel kutusunun kalan parcasi yolu kapatiyordu. */
    delik(...cep);
-   blockers.push([tx-en/2,ty-.3,tx+en/2,ty+.15]);       // bezin dip cizgisi
+   /* Engel bezin dip cizgisinin ALTINDA. Once cizginin ustundeydi ve cep de
+      yukarida kaliyordu; oyuncu bezin ortasina cikinca kafasi ipin uzerinden
+      tasip "bezin icinde" gibi duruyordu. Olcum: bezin dikey araligi 3.2 karo,
+      oyuncu 2.7 karo - tamamen ardinda kalmasi icin y'si dip cizgisinin en cok
+      0.5 karo ustunde olmali. Cep o bant, engel hemen altinda. */
+   blockers.push([tx-en/2,ty,tx+en/2,ty+.45]);
   };
-  perde('sol',6.41,13.59,4.1,[4.3,11.7,9.3,13.3]);
-  perde('sag',24.66,18.59,3.25,[21.6,16.9,26.4,18.3]);
+  /* Cep SIG: bezin dip cizgisinin hemen ustunde ince bir serit. Once bir kare
+     boyunda acilmisti, oyuncu bezin ortasina kadar cikip "bezin icinde" gibi
+     duruyordu (kafasi ipin uzerinden tasiyordu). Serit daraltilinca oyuncunun
+     tum govdesi bezin dikey araligina giriyor ve tamamen ardinda kaliyor. */
+  /* Cep en az oyuncunun carpisma kutusu kadar derin olmali (yaricap 5 birim =
+     0.625 karo); 0.53'te oyuncu ice giremiyordu. */
+  perde('sol',6.41,13.59,4.1,[4.35,12.85,9.35,13.58]);
+  perde('sag',24.66,18.59,3.25,[21.7,17.85,26.45,18.58]);
+  /* Cep acilirken bezlerin ARASINDAKI boyali odun/moloz yiginin carpismasi da
+     silinmisti - oyuncu odunun icinden geciyordu. Geri konuyor. */
+  blockers.push([7.15,12.85,8.45,13.58]);
   at({id:'mira',type:'npc',x:9,y:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
   // Elvi ust kapinin dibinde: cevrildigi kapidan uzaklasmiyor. Lin sag-alt
   // ocagin yaninda. Tiga indiyse ve Tuhn ucurumdan cekildiyse ikisi de o atesin
