@@ -186,10 +186,12 @@ Yaratıklarda alfa ağırlık merkezi. Referans, aynı yönün mevcut Idle kares
   24 satırından kırpılır; figürü hücrenin tepesine oturt.
 - Düşman portresi gerekiyorsa `enemies/N/D_Idle.png` → `characters/M/`
   kopyala (son muhafız = 15).
-- **Renk vurgusunu açıkça iste.** Yalnız "muted ash-grey palette" yazınca
-  model hiç renk koymuyor: Lin doygunluk 0.025 ile tamamen gri çıktı
-  (Mirna 0.143). "a FADED EMBER-ORANGE shawl — the ONLY colour on her"
-  deyince 0.087'ye çıktı. Tek sıcak vurgu kuralı buradan geliyor.
+- **Tarife "muted ash-grey palette / soot-stained" YAZMA.** Model bunu birebir
+  alıp her şeyi griye çeviriyordu (Uslu ham doygunluk 0.035, Lin 0.112).
+  Sahneye oturtmak **ton uyumunun işi**: ölçüldü, `aktor_uyum` doygunluğu
+  yalnızca %10-22 kırpıyor (Obruk 0.309 → 0.248). Yani kaynak RENKLİ gelmeli;
+  her karakterin kıyafet renkleri tek tek adlandırılır ("OLIVE GREEN coat,
+  MUSTARD YELLOW shirt"). Renk sonra kısılır, gri olan sonradan renklenmez.
 - **Duruş karikatürleştirebilir**: iki kolu iki yana açık Uslu çizgi film
   gibiydi; "standing calmly, one hand raised beside the shoulder in a small
   greeting wave" ile düzeldi. Tuhaflık duruşta değil yüzde kalsın.
@@ -308,4 +310,4 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 
 ---
 
-*Son güncelleme: 2026-09-12, v6.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v6.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

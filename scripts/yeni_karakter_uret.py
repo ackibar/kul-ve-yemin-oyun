@@ -10,8 +10,14 @@ import pxl
 from pxl_state import wait
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ORTAK = ('muted ash-grey palette, soot-stained, single dark outline, '
-         'NO backpack, NO satchel, NO straps across the chest, NO modern clothing, human')
+# RENK: tarife "muted ash-grey palette, soot-stained" yazmak HER SEYI griye
+# ceviriyordu (olculdu: Uslu ham doygunluk 0.035, Lin 0.112 - Obruk 0.309).
+# Sahneye oturtmak ton uyumunun isi, uretimin degil: aktor_uyum doygunlugu
+# yalnizca %10-22 kirpiyor, yani kaynak RENKLI gelmeli. Her karakterin
+# kiyafet renkleri tek tek yazilir; kul/is/gri kelimeleri tarife GIRMEZ.
+ORTAK = ('single dark outline, basic shading, no background, human, '
+         'NO backpack, NO bag, NO satchel, NO bedroll, NO pouches, '
+         'NO straps or belts across the chest, NO modern clothing')
 # Kafa orani: ilk turda Lin ve Uslu'nun kafasi govdeye gore cok buyuk cikti
 # (kullanici: "anime kizi gibi"). Mannequin sablonu kucuk figurlerde kafayi
 # buyutuyor; oran acikca yazilmali.
@@ -22,12 +28,13 @@ KISI = {
     # 3. tur: 2. tur tamamen griydi (olculdu: doygunluk 0.025, Mirna 0.143).
     # "muted ash-grey" tek basina yazilinca model hic renk koymuyor; vurgu
     # ACIKCA istenmeli. Lin atesi sondurmeyen cocuk - vurgusu koz turuncusu.
-    'nil3': ('a thin eight year old girl, small and slight, a plain patched woolen dress '
-             'over rough leggings, a FADED EMBER-ORANGE knitted shawl tied across her '
-             'shoulders - the shawl is the ONLY colour on her and everything else stays '
-             'ash-grey, hair pulled back in a tight messy braid, soot smudges on her face, '
-             'holding a short charred stick like a tally marker, stubborn set jaw, standing '
-             'very straight' + ORAN + ', ' + ORTAK, 151),
+    # 4. tur: renkler tek tek adlandirildi, "kul/gri" kelimesi yok.
+    'nil4': ('a thin eight year old girl, small and slight, wearing a dark INDIGO BLUE '
+             'patched woolen dress over warm BROWN leggings, a thick RUST RED knitted shawl '
+             'tied across her shoulders, worn leather shoes, chestnut brown hair pulled back '
+             'in a tight messy braid, a smudge of dirt on one cheek, holding a short charred '
+             'stick like a tally marker, stubborn set jaw, standing very straight'
+             + ORAN + ', ' + ORTAK, 161),
     'ayaz': ('a thin fourteen year old boy, too-large hand-me-down coat with frayed '
              'cuffs hanging past his hands, cloth wrapped around his shins, tousled '
              'hair, hollow tired eyes, a dented metal canteen hanging from his belt, '
@@ -40,13 +47,14 @@ KISI = {
     # 3. tur: iki kolu iki yana acik duruş karikaturlestiriyordu. Artik sakin
     # duruyor, tek eli yaninda kucuk bir SELAM veriyor; tuhafligi durusunda
     # degil yuzunde kalsin.
-    'uslu3': ('a scrawny man in his forties, gaunt narrow face with sunken cheeks and '
-              'restless wide eyes, a crooked half-smile, unkempt greasy hair full of ash in '
-              'flat tangled strands close to the skull, a torn city coat over a ragged shirt '
-              'with one sleeve missing, bare feet, standing calmly upright with one hand '
-              'raised beside his shoulder in a small friendly greeting wave and the other arm '
-              'hanging loose at his side; NO leaves, NO plants, NO twigs, NOT a forest hermit, '
-              'NOT a druid, arms are NOT flung out wide' + ORAN + ', ' + ORTAK, 193),
+    'uslu4': ('a scrawny man in his forties, gaunt narrow face with sunken cheeks and '
+              'restless wide eyes, a crooked half-smile, unkempt greasy dark hair in flat '
+              'tangled strands close to the skull, wearing a worn OLIVE GREEN long city coat '
+              'over a faded MUSTARD YELLOW shirt and dark brown trousers, bare feet, standing '
+              'calmly upright with one hand raised beside his shoulder in a small friendly '
+              'greeting wave and the other arm hanging loose at his side; NO leaves, NO '
+              'plants, NO twigs, NOT a forest hermit, NOT a druid, arms are NOT flung out wide'
+              + ORAN + ', ' + ORTAK, 203),
     'selvi': ('a hard-faced woman in her late thirties, wrapped in many mismatched '
               'layers of cloth and blankets against cold, a scarf covering her neck, '
               'weathered wind-burned face, cracked lips, arms folded tight, standing '
