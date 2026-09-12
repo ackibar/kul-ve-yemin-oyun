@@ -306,6 +306,10 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly DUSMAN_CAPA:Record<number,number>={7:31};
  /** Ciz olcegi. Trol bir mini-patron: oyuncudan belirgin buyuk gorunmeli. */
  static readonly DUSMAN_OLCEK:Record<number,number>={7:1.7};
+ /** Alevin yakma yaricapi (dunya birimi) ve tur basina hasar. Oyuncunun
+  *  hasari ayri (8) cunku zirh savunmasi ondan dusuluyor. */
+ static readonly ATES_YARICAP=14;
+ static readonly ATES_HASAR=10;
  static readonly CARP_MOB=14;
  private *karakterler(ben:string|null,mobDahil=false){
   if(ben!==null)yield{x:this.state.x,y:this.state.y,r:Engine.CARP};
@@ -369,6 +373,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(d<34){const h=Math.round(26*(1-d/34)+14);m.hp-=h;m.hurt=.17;m.burn=3;
     this.float(m.x,m.y-12,String(h),'#ffb066');if(m.hp<=0)this.kill(m);}}
  }
+ /** Nokta bir alevin yakma yaricapinda mi. Ates artik oyuncu disindakileri de
+  *  yaktigi icin hem hasar turunde hem NPC hedef seciminde kullaniliyor. */
+ private atesteMi(x:number,y:number){
+  return this.world.entities.some(e=>e.type==='fire'&&
+   Math.hypot(e.x-x,e.y-y)<Engine.ATES_YARICAP*(e.s??1));
+ }
  private burst(x:number,y:number,color:string,n:number){for(let i=0;i<n;i++)this.particles.push({x,y,vx:(Math.random()-.5)*55,vy:(Math.random()-.6)*55,life:.4+Math.random()*.4,color,size:1+Math.random()})}
   private float(x:number,y:number,text:string,color:string){let targetY=y;for(const f of this.floating){if(Math.abs(f.x-x)<24&&Math.abs(f.y-targetY)<10){targetY-=11;}}this.floating.push({x,y:targetY,text,life:1.1,color})}
   private update(dt:number){
@@ -405,7 +415,35 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
       size:1,g:3});}
    }
    this.fireBurnCooldown=Math.max(0,this.fireBurnCooldown-dt);
-   if(this.fireBurnCooldown<=0){for(const e of this.world.entities)if(e.type==='fire'&&Math.hypot(e.x-this.state.x,e.y-this.state.y)<14){if(ITEMS[this.state.equipment.armor].atesBagisik){this.fireBurnCooldown=.8;break;}this.hurt(8);this.float(this.state.x,this.state.y-14,'Ateş yaktı!','#ff6b4a');this.fireBurnCooldown=.8;break;}}
+   if(this.fireBurnCooldown<=0){
+    // --- Ates herkesi yakar ---
+    // Once yalnizca oyuncuyu yakiyordu: dusmanin alevin icinden gecip hicbir
+    // sey olmamasi tuhaftı ve oyuncunun ateşi taktik olarak kullanmasini
+    // engelliyordu. Tek sayac, tek tur: hem oyuncu hem yaratiklar hem yoldas.
+    let yandi=false;
+    for(const e of this.world.entities){
+     if(e.type!=='fire')continue;
+     const r=Engine.ATES_YARICAP*(e.s??1);
+     if(Math.hypot(e.x-this.state.x,e.y-this.state.y)<r){
+      if(!ITEMS[this.state.equipment.armor].atesBagisik){
+       this.hurt(8);this.float(this.state.x,this.state.y-14,'Ateş yaktı!','#ff6b4a');}
+      yandi=true;}
+     for(const m of this.mobs){
+      if(m.hp<=0||Math.hypot(e.x-m.x,e.y-m.y)>=r)continue;
+      m.hp-=Engine.ATES_HASAR;m.hurt=.17;m.burn=Math.max(m.burn,1.5);
+      this.float(m.x,m.y-12,String(Engine.ATES_HASAR),'#ff9e5e');
+      if(m.hp<=0){if(m.id==='rauf')this.raufDizCok();else this.kill(m);}
+      yandi=true;}
+     // Yoldas Rauf'un kendi cani var; o da yanar.
+     const yoldas=this.state.flags.rauf==='takip'?this.world.entities.find(x=>x.id==='rauf'):null;
+     if(yoldas&&Math.hypot(e.x-yoldas.x,e.y-yoldas.y)<r){
+      const kalan=Math.max(0,(Number(this.state.flags.raufCan)||0)-Engine.ATES_HASAR);
+      this.state.flags.raufCan=String(Math.round(kalan));
+      this.float(yoldas.x,yoldas.y-16,'−'+Engine.ATES_HASAR,'#ff9e5e');
+      yandi=true;}
+    }
+    if(yandi)this.fireBurnCooldown=.8;
+   }
    for(const m of this.mobs){if(m.hp<=0)continue;m.cool-=dt;m.hurt=Math.max(0,m.hurt-dt);if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.windup>0){m.windup-=dt;if(m.windup<=0){/* Ses uzakliga gore kisiliyor: ekranin obur ucundaki bir yaratik yanindaki
      kadar yuksek vurmamali. */this.audio.play('dusmanVur',Math.max(0,1-d/190));if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:25)){this.hurt(m.boss?30:10+m.kind*3);}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:1.15;}continue;}if(d<135&&visible){m.aci=Math.atan2(dy,dx);const range=m.kind===2?95:m.boss?34:20;if(d>range){const v=m.kind===4?21:27;this.move(m,dx/d*v*dt,dy/d*v*dt,m.id,true);}if(d<=range&&m.cool<=0)m.windup=m.boss?.8:m.kind===2?.55:.4;}else if(!m.boss){// Oyuncu uzaktayken yaratiklar cakili duruyordu; magara olu gorunuyordu.
     // Doguş yerinin cevresinde yavasca dolasirlar - takip hizinin yarisi.
@@ -650,7 +688,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      g.bekle=1.6+Math.random()*3.4;
      const a=Math.random()*Math.PI*2,r=10+Math.random()*22;
      const nx=g.hx+Math.cos(a)*r,ny=g.hy+Math.sin(a)*r;
-     if(walkable(this.world,nx,ny,6,e.id)){g.tx=nx;g.ty=ny;}
+     // Ates artik herkesi yaktigi icin NPC'ler alevin icini hedef secmiyor.
+     // Canlari olmadigi icin yanarak olemezler; dogru davranis kacinmak.
+     if(walkable(this.world,nx,ny,6,e.id)&&!this.atesteMi(nx,ny)){g.tx=nx;g.ty=ny;}
      continue;
     }
     const hiz=11,sx=dx/uz*hiz*dt,sy=dy/uz*hiz*dt;g.yol+=hiz*dt;
