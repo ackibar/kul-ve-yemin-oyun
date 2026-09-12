@@ -27,6 +27,14 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BOY, FEET = 64, 62
+# Oyuncu hucresi 80 SATIR: figur bazi karelerde 65-70 satir (kilic+mesale
+# guneyde 70), 64'luk hucrede tepeden kesiliyordu ("kafasi kesiliyor").
+# Ayak 78'de; motor capa 39 (satir = 2*capa). NPC'ler 64/62'de kalir.
+OYUNCU_BOY, OYUNCU_FEET = 80, 78
+
+
+def boyut(en):
+    return (OYUNCU_BOY, OYUNCU_FEET) if en == OYUNCU_EN else (BOY, FEET)
 # Oyuncu 8 yonde ciziliyor: uc ana yon + iki capraz, bati tarafi motorda
 # aynalaniyor. NPC'ler yalnizca ilk uc yonu kullaniyor.
 YON = {'south': 'D', 'north': 'U', 'east': 'S',
@@ -229,7 +237,7 @@ def capalar(im):
 
 def otur(kare, hedef_x, hedef_y, en):
     c = capalar(kare)
-    out = Image.new('RGBA', (en, BOY), (0, 0, 0, 0))
+    out = Image.new('RGBA', (en, boyut(en)[0]), (0, 0, 0, 0))
     if not c:
         return out, 0
     dx, dy = round(hedef_x - c[0]), round(hedef_y - c[1])
@@ -257,10 +265,10 @@ def referans(slot, g, en):
         if k.width % en:
             raise SystemExit(f'{yol} hucre eni {en} degil ({k.width}px). '
                              f'Once: python3 scripts/hucre_genislet.py {slot} {en}')
-        c = capalar(k.crop((0, 0, en, BOY)))
+        c = capalar(k.crop((0, 0, en, boyut(en)[0])))
         if c:
             return c
-    return en / 2, FEET
+    return en / 2, boyut(en)[1]
 
 
 def donus_kareleri(cid, kl):
@@ -333,7 +341,7 @@ def kur(setad):
                 kareler, atilan = alevsiz_onu_at(kareler)
             if (setad, aksiyon) in ATIS_BASA:
                 kareler = atisi_basa_al(kareler)
-            sh = Image.new('RGBA', (en * len(kareler), BOY), (0, 0, 0, 0))
+            sh = Image.new('RGBA', (en * len(kareler), boyut(en)[0]), (0, 0, 0, 0))
             tasma = 0
             for i, k in enumerate(kareler):
                 hucre, t = otur(k, hx, hy, en)

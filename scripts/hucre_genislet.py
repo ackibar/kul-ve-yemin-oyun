@@ -15,7 +15,7 @@ import os, shutil, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import aktor_uyum
 from PIL import Image
-from v3_kur import capalar, BOY, FEET
+from v3_kur import capalar, BOY, FEET, OYUNCU_BOY
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HAM = os.path.join(ROOT, '_arsiv/uretim/asset_backup_ton_oncesi')
@@ -30,18 +30,19 @@ def genislet(slot, yeni_en):
             continue
         yol = f'{ham}/{f}'
         im = Image.open(yol).convert('RGBA')
-        if im.height != BOY:
+        if im.height not in (BOY, OYUNCU_BOY):
             continue                      # sheet degil (kaynak gorsel)
+        boy = im.height
         eski = next((c for c in (yeni_en, 64, 80) if im.width % c == 0), None)
         if eski is None or eski == yeni_en:
             continue
         n = im.width // eski
-        out = Image.new('RGBA', (yeni_en * n, BOY), (0, 0, 0, 0))
+        out = Image.new('RGBA', (yeni_en * n, boy), (0, 0, 0, 0))
         for i in range(n):
-            k = im.crop((i * eski, 0, i * eski + eski, BOY))
+            k = im.crop((i * eski, 0, i * eski + eski, boy))
             c = capalar(k)
             dx = round(yeni_en / 2 - c[0]) if c else (yeni_en - eski) // 2
-            hucre = Image.new('RGBA', (yeni_en, BOY), (0, 0, 0, 0))
+            hucre = Image.new('RGBA', (yeni_en, boy), (0, 0, 0, 0))
             hucre.paste(k, (dx, 0))
             out.paste(hucre, (i * yeni_en, 0))
         out.save(yol)

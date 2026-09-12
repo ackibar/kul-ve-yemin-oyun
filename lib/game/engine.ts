@@ -72,6 +72,9 @@ export class Engine{
   *  yalnizca oyuncunun kilici savrulurken 64 px'lik kareye sigmiyordu, ucu
   *  kirpiliyordu. Yukseklik ve capa (31) degismedi, yani ayaklar yerinde. */
  static readonly OYUNCU_EN=40;
+ /** Oyuncu hucre boyu 80px (fh=40): figur bazi karelerde 65-70 satir, 64'te kafa kesiliyordu. Ayak satiri 78 -> capa 39. */
+ static readonly OYUNCU_BOY=40;
+ static readonly OYUNCU_CAPA=39;
  /** Okun ciziminde kullanilan gogus yuksekligi (yalnizca gorsel). */
  static readonly OK_YUKSEK=17;
  /** Tepeden cizilmis yaratiklar ve sprite'larinin DOGAL bakis acisi (radyan,
@@ -833,7 +836,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   private sprite(key:string,x:number,y:number,frame=0,fw?:number,fh?:number,flip=false,scale=1,alpha=1,donder=0,capa?:number){const im=this.images[key];if(!im?.naturalWidth)return;const w=fw||im.width/R,h=fh||im.height/R;const count=Math.floor(im.width/(w*R));const c=this.ctx;c.save();c.globalAlpha=alpha;c.translate(Math.round(x),Math.round(y));const actor=key.startsWith('characters')||key.startsWith('enemies');/* Capa hucre icinde zemin cizgisinin satirini belirliyor (satir = 2*capa).
    Dusmanlarda 21 idi, yani sprite en fazla 42 satir yuksek olabiliyordu;
    62 satirlik trolun ust yarisi kirpiliyordu. Buyuk dusmanlar kendi
-   capasini geciyor. */const anchor=capa??(actor?(key.startsWith('characters')?31:key.startsWith('enemies1')?22:21):h);/* Tepeden gorulen yaratiklar icin: yon ayri sheet degil DONDURME. Capa
+   capasini geciyor. *//* Oyuncu setleri (characters1, 1sword, 1mesale...; characters10+ DEGIL) 80 satirlik hucrede. */const oyuncuSet=/^characters1(?!\d)/.test(key);const anchor=capa??(actor?(oyuncuSet?Engine.OYUNCU_CAPA:key.startsWith('characters')?31:key.startsWith('enemies1')?22:21):h);/* Tepeden gorulen yaratiklar icin: yon ayri sheet degil DONDURME. Capa
    ayakta oldugu icin cizim dikdortgeninin MERKEZI etrafinda dondurulur,
    yoksa yaratik ayaklarinin ucundan savruluyor. */if(donder){const my=(-anchor+h/2)*scale;c.translate(0,my);c.rotate(donder);c.translate(0,-my);}if(flip)c.scale(-1,1);const top=actor?-anchor*scale:-h*scale+6;c.drawImage(im,(frame%count)*w*R,0,w*R,h*R,-w*scale/2,top,w*scale,h*scale);c.restore()}
   /** Isim etiketi: kutu YOK (yuzleri kapatiyordu). Okunurluk icin metin once
@@ -879,7 +882,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    actors.push({y:this.state.y,draw:()=>{const s=this.state;c.fillStyle='#02081280';c.beginPath();c.ellipse(s.x,s.y+1,8.5*OYUNCU_OLCEK,2.8*OYUNCU_OLCEK,0,0,7);c.fill();const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';// Dusus: sprite kucule kucule asagi kayiyor, boslugun icine iniyormus gibi.
   // Dusus: kucuIme YOK, karakter bir anda kayboluyor.
   const dusuyor=this.dusus>0;
-  if(!dusuyor)this.sprite(this.poz(action),s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?Math.floor((this.vurusSure-this.vurusPoz)*16):Math.floor(time*5),Engine.OYUNCU_EN,32,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const v=this.yonVektor(),angle=Math.atan2(v.y,v.x);c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-1.1,angle+1.1);c.stroke();}}});
+  if(!dusuyor)this.sprite(this.poz(action),s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?Math.floor((this.vurusSure-this.vurusPoz)*16):Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const v=this.yonVektor(),angle=Math.atan2(v.y,v.x);c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-1.1,angle+1.1);c.stroke();}}});
   actors.sort((a,b)=>a.y-b.y).forEach(a=>a.draw());
   c.fillStyle=this.state.zone==='haven'?'#060e1924':'#070b1c42';c.fillRect(cx,cy,this.gorus.en,this.gorus.boy);
   this.karanlik(cx,cy,time);

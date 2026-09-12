@@ -133,8 +133,10 @@ script eski yedeği yeniden basar ve **yeni sanatı sessizce geri alır**
 GİRMEZ.
 
 **Ölçek:** 1 karo = 16 dünya birimi = 32 sanat px, motor 2× okur (`R=2`).
-Karakter hücresi 64 (oyuncu 80: kılıç savrulunca sığmıyordu). Çapa: ayak
-çizgisi satır 62 (`anchor 31`); düşmanlar 42 satır (`21`) — daha uzun
+Karakter hücresi 64×64; **oyuncu 80×80** (genişlik: kılıç savrulunca
+sığmıyordu; yükseklik: figür bazı karelerde 65-70 satır, 64'te kafa
+kesiliyordu — `hucre_yukselt.py`, ayak 78, `OYUNCU_CAPA 39`; HUD portresi
+64'lük `portre.png`'den). NPC çapası: ayak çizgisi satır 62 (`anchor 31`); düşmanlar 42 satır (`21`) — daha uzun
 düşman için `DUSMAN_CAPA` (trol) ya da Entity `capa` (oturan kral). Sprite
 yoğunluğu arka planla aynı olmalı; ölçekle büyütme, kaynağı büyüt.
 
@@ -256,4 +258,4 @@ kondu. Uzaklıkla kısılır.
 
 ---
 
-*Son güncelleme: 2026-09-12, v5.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v5.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
