@@ -57,6 +57,17 @@ YAY_VUR_ARKA = ('seen from behind, raises a curved wooden hunting bow and draws 
                 'stick out clearly to the left and right of the silhouette, then '
                 'releases the arrow forward away from the camera')
 
+# Yandan bakista tek elle ok atiyordu (fiziksel olarak imkansiz) ve yay yatay
+# durdugu icin arbalete benziyordu. Yan gorunum icin duruş acikca yazildi:
+# yay DIKEY, sol kol ileri uzanmis, sag el kirişte.
+YAY_VUR_YAN = ('seen from the side, holds a tall curved wooden bow UPRIGHT and VERTICAL '
+               'in the outstretched left hand, and pulls the bowstring straight back to '
+               'the cheek with the right hand, so BOTH hands are clearly on the weapon - '
+               'one on the bow grip, one on the string - then releases the arrow '
+               'forward; the bow is never held horizontally and never fired one-handed')
+# NOT: ayni "dikey yay" tarifi YURUYUSTE ters tepti - yay tamamen kayboldu
+# (dogu karelerinde bbox 21..35, yani govde kadar). Yuruyus genel tarifte
+# (gogus hizasinda capraz) kaliyor; dikey duruş yalnizca saldiri icin.
 RAUF_VUR = ('swings the sword down and across in a diagonal cut in front of the body, '
             'then pulls it back to a ready guard; the sword is a solid steel blade and '
             'stays gripped in the hand in every frame')
@@ -75,7 +86,8 @@ OZEL = {('kilic', 'Attack', 'east'): KILIC_VUR_YAN,
         ('rauf', 'Attack', 'east'): KILIC_VUR_YAN,
         ('kilic', 'Attack', 'north'): KILIC_VUR_ARKA,
         ('rauf', 'Attack', 'north'): KILIC_VUR_ARKA,
-        ('yay', 'Attack', 'north'): YAY_VUR_ARKA}
+        ('yay', 'Attack', 'north'): YAY_VUR_ARKA,
+        ('yay', 'Attack', 'east'): YAY_VUR_YAN}
 
 SETLER = {
     'kilic': ('pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILIC_YUR), ('Attack', 6, KILIC_VUR)]),

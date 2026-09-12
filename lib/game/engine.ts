@@ -161,7 +161,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(isBow){const arrowCount=s.inventory.arrow||0;if(arrowCount<=0){this.vurusPoz=0;this.notify('Okun kalmadı! Sarnıç kapağının yanındaki sandıktan, Alf’ten veya diğer sandıklardan ok bulabilirsin.');return;}removeItem(s,'arrow');this.audio.play('swing');const damage=stats(s).attack+(this.tonic>0?8:0);let targets=this.mobs.filter(m=>Math.hypot(m.x-s.x,m.y-s.y)<160&&lineOfSight(this.world,s.x,s.y,m.x,m.y));targets.sort((a,b)=>Math.hypot(a.x-s.x,a.y-s.y)-Math.hypot(b.x-s.x,b.y-s.y));let vx=0,vy=0;if(targets[0]){const d=Math.hypot(targets[0].x-s.x,targets[0].y-s.y)||1;vx=(targets[0].x-s.x)/d*170;vy=(targets[0].y-s.y)/d*170;this.face(targets[0].x-s.x,targets[0].y-s.y);}else{const dirX=this.direction==='S'?(this.flip?-1:1):0;const dirY=this.direction==='U'?-1:this.direction==='D'?1:0;vx=dirX*170;vy=dirY*170;}// Ok govdenin ONUNDEN cikar: merkezden dogunca sirttan firlamis gibi
    // gorunuyordu. Atis yonunde 9 birim ilerden baslatiliyor.
    {const hz=Math.hypot(vx,vy)||1;
-    this.shots.push({x:s.x+vx/hz*9,y:s.y-4+vy/hz*9,vx,vy,life:1.3,damage,isHero:true});};this.save();this.emit();return;}
+    // Ileri pay: 9 birimken ok govdenin UZERINDE ciziliyordu. Cizim OK_YUKSEK
+    // kadar yukari kaydigi icin asagi atista ok, ayak hizasindan 17 birim
+    // yukarida yani tam sirtta beliriyordu; temizlenmesi icin pay OK_YUKSEK'i
+    // gecmeli. Hedef daha yakinsa pay kisalir, yoksa ok hedefin arkasinda
+    // dogup isabet etmezdi.
+    const ileri=targets[0]?Math.max(9,Math.min(20,Math.hypot(targets[0].x-s.x,targets[0].y-s.y)*.6)):20;
+    this.shots.push({x:s.x+vx/hz*ileri,y:s.y-4+vy/hz*ileri,vx,vy,life:1.3,damage,isHero:true});};this.save();this.emit();return;}
    this.slash=.2;this.audio.play('swing');
    const decors=this.world.entities.filter(e=>((e.type==='decor'&&!e.asset?.includes('Table'))||(e.type==='chest'&&s.opened.includes(e.id)))&&Math.hypot(e.x-s.x,e.y-s.y)<38);
    for(const d of decors){

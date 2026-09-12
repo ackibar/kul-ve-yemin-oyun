@@ -58,7 +58,11 @@ ATIS_BASA = {('yay', 'Attack')}
 # Esik bbox GENISLIGINDEN: yaysiz kare yalnizca govde kadar dar, yayli kare
 # kollari disina tasiyor. Olculen guney yuruyusu 33..59, dogu 21..46.
 ONDEN_AT = {('yay', 'Walk'), ('yay', 'Attack')}
-AT_ESIK = 0.45
+# Esik 0.45'ti; saldirida yay DIKEY tutuldugu icin bbox'i genisletmiyor ve
+# iyi kareler de atiliyordu. Piksel sayisi denendi ve DAHA KOTU ayirdi
+# (yatay yayli kare 1532, yaysiz kare 1460 - %5 fark, siralamayi bile
+# tutturmuyor). Genislik dogru olcut, pay dusuruldu.
+AT_ESIK = 0.30
 
 
 def yaysiz_onu_at(kareler):
