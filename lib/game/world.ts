@@ -1,5 +1,5 @@
 import type {ItemId,Zone} from './data';
-export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset'|'perde';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number};
+export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
 export type EnemySpec={id:string;kind:1|2|4|5|6|7|8|9|10;x:number;y:number;boss?:boolean};
@@ -52,57 +52,6 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   const ZEMIN=['000000000000000000000000000000','000000000000000000000000000000','000000000000100001000000000000','000000000000110011000000000000','000001111111111111111111110000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000000000001111111100000000000','000000000000111111000000000000','000000000000111111000000000000','000000000000111111000000000000','000000000000000000000000000000','000000000000000000000000000000'];
   for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
   blockers.push([7,5,8,6],[9,5,10,7],[21,5,25,10],[20,6,21,10],[10,7,12,9],[19,7,20,11],[4,8,10,10],[12,8,13,9],[17,8,19,9],[25,8,27,10],[3,9,4,13],[11,9,12,12],[18,9,19,10],[4,10,9,13],[12,10,13,12],[23,10,24,12],[20,11,22,13],[25,11,27,24],[4,13,6,14],[7,13,9,14],[23,13,25,19],[3,14,4,15],[22,15,23,19],[3,17,4,20],[4,18,6,24],[7,18,10,21],[6,19,7,24],[10,19,12,21],[20,19,21,21],[19,20,20,21],[21,20,22,21],[24,20,25,21],[7,22,12,24],[19,23,25,24]);
-  /* ASILI BEZLER - UST KATMAN. Sahnenin kendi boyali perdeleri; pikselleri
-     arka plandan kesilip ayri sprite yapildi (public/assets/nesne/perde_*.png)
-     ve motor bunlari OYUNCUYLA AYNI y siralamasina sokuyor: perdenin arkasina
-     gecen oyuncu bezin ARDINDA kalir. Arka plan oldugu gibi duruyor, ustune
-     birebir ayni pikseller biniyor, yani durur halde hicbir fark yok.
-     Icinden gecilmez: bezin dip cizgisine ince engel konur. Arkasinda
-     durulabilsin diye bezin gerisinde bir karoluk zemin acilir. */
-  /** Mevcut engel kutularindan bir dikdortgeni OYAR. Perdenin arkasi boyali
-   *  duvarin engel kutusunun icinde kaliyordu: karoyu yurunebilir yapmak
-   *  yetmedi, engeli de delmek gerekti. Kesisen kutu en fazla dort parcaya
-   *  bolunur (ust/alt/sol/sag), kalanlar aynen durur. */
-  const delik=(dx1:number,dy1:number,dx2:number,dy2:number)=>{
-   for(let i=blockers.length-1;i>=0;i--){
-    const [bx1,by1,bx2,by2]=blockers[i];
-    if(bx2<=dx1||bx1>=dx2||by2<=dy1||by1>=dy2)continue;   // kesismiyor
-    blockers.splice(i,1);
-    if(by1<dy1)blockers.push([bx1,by1,bx2,dy1]);
-    if(by2>dy2)blockers.push([bx1,dy2,bx2,by2]);
-    const ky1=Math.max(by1,dy1),ky2=Math.min(by2,dy2);
-    if(bx1<dx1)blockers.push([bx1,ky1,dx1,ky2]);
-    if(bx2>dx2)blockers.push([dx2,ky1,bx2,ky2]);
-   }
-   for(let j=Math.floor(dy1);j<=Math.ceil(dy2)-1;j++)
-    for(let i=Math.floor(dx1);i<=Math.ceil(dx2)-1;i++)
-     if(tiles[j]?.[i]!==undefined)tiles[j][i]=1;
-  };
-  /** Asili bez: ust katman sprite'i + dip cizgisinde engel + ARKASINDA cep.
-   *  Cep hem karo hem engel duzeyinde acilir, yoksa arkaya gecilemiyor. */
-  const perde=(id:string,tx:number,ty:number,en:number,cep:[number,number,number,number])=>{
-   entities.push({id,type:'perde',x:tx*16,y:ty*16,asset:`perde_${id}`});
-   /* Cep ACIK ZEMINE KADAR uzatilir: yalnizca bezin arkasini oymak yetmiyordu,
-      cevredeki engel kutusunun kalan parcasi yolu kapatiyordu. */
-   delik(...cep);
-   /* Engel bezin dip cizgisinin ALTINDA. Once cizginin ustundeydi ve cep de
-      yukarida kaliyordu; oyuncu bezin ortasina cikinca kafasi ipin uzerinden
-      tasip "bezin icinde" gibi duruyordu. Olcum: bezin dikey araligi 3.2 karo,
-      oyuncu 2.7 karo - tamamen ardinda kalmasi icin y'si dip cizgisinin en cok
-      0.5 karo ustunde olmali. Cep o bant, engel hemen altinda. */
-   blockers.push([tx-en/2,ty,tx+en/2,ty+.45]);
-  };
-  /* Cep SIG: bezin dip cizgisinin hemen ustunde ince bir serit. Once bir kare
-     boyunda acilmisti, oyuncu bezin ortasina kadar cikip "bezin icinde" gibi
-     duruyordu (kafasi ipin uzerinden tasiyordu). Serit daraltilinca oyuncunun
-     tum govdesi bezin dikey araligina giriyor ve tamamen ardinda kaliyor. */
-  /* Cep en az oyuncunun carpisma kutusu kadar derin olmali (yaricap 5 birim =
-     0.625 karo); 0.53'te oyuncu ice giremiyordu. */
-  perde('sol',6.41,13.59,4.1,[4.35,12.85,9.35,13.58]);
-  perde('sag',24.66,18.59,3.25,[21.7,17.85,26.45,18.58]);
-  /* Cep acilirken bezlerin ARASINDAKI boyali odun/moloz yiginin carpismasi da
-     silinmisti - oyuncu odunun icinden geciyordu. Geri konuyor. */
-  blockers.push([7.15,12.85,8.45,13.58]);
   at({id:'mira',type:'npc',x:9,y:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
   // Elvi ust kapinin dibinde: cevrildigi kapidan uzaklasmiyor. Lin sag-alt
   // ocagin yaninda. Tiga indiyse ve Tuhn ucurumdan cekildiyse ikisi de o atesin
