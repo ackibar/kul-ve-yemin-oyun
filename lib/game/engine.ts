@@ -393,7 +393,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly KARANLIK:Record<string,number>={haven:0,magara:.82,cistern:0,disari:0,yikik:0};
  /** Mesale suresi (sn) ve yaricaplari: mesaleli / mesalesiz oyuncu, ates, fener. */
  static readonly MESALE_SURE=90;
- static readonly ISIK={mesale:208,cip:26,ates:64,fener:40,yanan:26,ok:18};
+ static readonly ISIK={mesale:104,cip:26,ates:64,fener:40,yanan:26,ok:18};
  /** Fener tasiyan bu mesafede soner ve etrafa Bogulmus birakir. */
  static readonly FENER_MENZIL=46;
  static readonly GOLGE:Record<number,number>={1:9,2:8,4:8,5:11,6:8,7:18,8:9,9:5,10:10};
@@ -893,7 +893,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      mesalesi de ayni sicakligi versin, yoksa isik haritasi deligi soguk gri kaliyor. */
   {const sicak=(x:number,y:number,r:number)=>{const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'#f7af3930');g.addColorStop(.4,'#ee8e1812');g.addColorStop(1,'#ee8e1800');c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2);};
    for(const [x,y,r] of this.world.isiklar)sicak(x,y,r*.9+Math.sin(time*3+x)*3);
-   if(this.mesale>0)sicak(this.state.x,this.state.y-16,(this.mesaleElde()?120:50)+Math.sin(time*4)*4);}
+   if(this.mesale>0)sicak(this.state.x,this.state.y-16,(this.mesaleElde()?70:36)+Math.sin(time*4)*3);}
   for(const e of this.world.entities.filter(e=>e.type==='fire'||e.type==='core')){if(Math.abs(e.x-this.state.x)>230||Math.abs(e.y-this.state.y)>160)continue;const radius=48+Math.sin(time*3+e.x)*3;const glow=c.createRadialGradient(e.x,e.y-6,0,e.x,e.y-6,radius);glow.addColorStop(0,'#f7af3936');glow.addColorStop(.35,'#ee8e1815');glow.addColorStop(1,'#ee8e1800');c.fillStyle=glow;c.fillRect(e.x-radius,e.y-radius-6,radius*2,radius*2);}
   for(const d of this.drops){c.save();c.translate(d.x,d.y);if(d.kind==='wood'){c.fillStyle='#b87c4c';c.fillRect(-3,-2,6,4);c.fillStyle='#6e4729';c.fillRect(-2,-1,4,2);}else if(d.kind==='xp'){const p=2.5+Math.sin(time*10)*.8;c.fillStyle='#8ee675';c.beginPath();c.arc(0,0,p,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(0,0,p*.5,0,Math.PI*2);c.fill();}else if(d.kind==='gold'){c.fillStyle='#ffd700';c.beginPath();c.arc(0,0,2.5,0,Math.PI*2);c.fill();c.fillStyle='#b89200';c.fillRect(-.8,-.8,1.6,1.6);}else if(d.kind==='bow'){c.strokeStyle='#c78d4c';c.lineWidth=1.5;c.beginPath();c.arc(0,0,5,-Math.PI/2,Math.PI/2);c.stroke();c.strokeStyle='#dedede';c.lineWidth=0.8;c.beginPath();c.moveTo(0,-5);c.lineTo(0,5);c.stroke();}c.restore();}
   for(const s of this.shots){if(s.isHero){c.save();/* Ok ayaklardan cikiyor gibi duruyordu. shot.y'yi yukseltmek YANLIS olurdu:
