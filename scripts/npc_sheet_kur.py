@@ -7,6 +7,8 @@ kullanim: npc_sheet_kur.py <id_adi> <slot>
 import glob, json, os, shutil, sys, urllib.request, zipfile
 sys.path.insert(0, os.path.dirname(__file__))
 import pxl
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import aktor_uyum
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -60,6 +62,7 @@ def kur(ad, slot):
                 sh.paste(f, (i * CELL, 0))
             sh.save(f'{hedef}/{g}_{isim}.png')
     print(f'  characters/{slot} <- {ad} (yurume {"var" if anim else "YOK"})')
+    aktor_uyum.klasor(hedef)   # yeni kadro daima sahnenin tonuna oturtulur
 
 
 if __name__ == '__main__':

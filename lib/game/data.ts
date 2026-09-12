@@ -1,6 +1,10 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM = '1.6';
+export const SURUM = '1.7';
+/** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
+ *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
+ *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
+export const ASAMA = 'alpha';
 
 export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern' | 'forge';
 export type ItemId = 'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'core'|'wood'|'torch'|'arrow'|'kurdele';

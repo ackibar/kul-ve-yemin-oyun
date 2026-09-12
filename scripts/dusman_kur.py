@@ -12,6 +12,8 @@ Kucuk yaratiklar TEPEDEN gorulduğu icin ayni gorunum uc yone de veriliyor;
 motor yan yonu zaten aynaliyor.
 """
 import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import aktor_uyum
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -66,6 +68,7 @@ def kur(ad, slot):
         sayfa([otur(durus)], f'{hedef}/{y}_Idle.png')
         sayfa([otur(durus, (0, 3), .9)], f'{hedef}/{y}_Death.png')
     print(f'  enemies/{slot:<2} <- {ad}')
+    aktor_uyum.klasor(hedef)   # yeni kadro daima sahnenin tonuna oturtulur
 
 
 if __name__ == '__main__':

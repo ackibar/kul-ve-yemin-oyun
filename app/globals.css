@@ -611,3 +611,9 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 
 /* Cevirme uyarisindaki kacis kapisi */
 .rotate-screen .dikey-gec{margin-top:26px;padding:12px 20px!important;font-size:15px!important}
+
+/* Asama etiketi: surum numarasindan daha sonik dursun, ama okunur kalsin. */
+.surum .asama{
+  padding:0 4px;border:1px solid currentColor;border-radius:2px;
+  font-size:.82em;letter-spacing:.5px;text-transform:uppercase;opacity:.9;
+}

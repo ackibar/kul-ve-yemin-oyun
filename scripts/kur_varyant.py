@@ -3,6 +3,8 @@
 kullanim: python3 scripts/kur_varyant.py <kaynak_klasor> <hedef_klasor>
 """
 import glob, json, os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import aktor_uyum
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -74,6 +76,7 @@ def build(src_dir, out_dir):
                 sh.paste(f, (i * CELL, 0))
             sh.save(f'{out_dir}/{g}_{action}.png')
             log.append((f'{g}_{action}', tag))
+    aktor_uyum.klasor(out_dir)   # yeni kadro daima sahnenin tonuna oturtulur
     return log
 
 

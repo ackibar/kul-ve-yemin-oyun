@@ -15,6 +15,15 @@ Yontem: palet takasi DEGIL, uc yumusak sikistirma.
      kaybolmaz (bkz. tone_transfer.py'daki ayni ders).
 
 Silueti degistirmez: yalnizca alfasi olan piksellerin rengi yeniden esler.
+
+Kullanim:
+    python3 scripts/aktor_uyum.py                       tum kadroyu yeniden isler
+    python3 scripts/aktor_uyum.py public/assets/characters/10   tek klasor
+
+Her iki durumda da HAM sheet asset_backup_ton_oncesi/ altina alinir ve derece
+daima oradan uretilir, yani ayni klasoru tekrar calistirmak tonu ust uste
+bindirmez. Yeni bir karakter kurulduktan sonra klasor modu cagrilmalidir -
+npc_sheet_kur.py / dusman_kur.py / kur_varyant.py bunu kendiliginden yapiyor.
 """
 import math, os, shutil, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -66,25 +75,52 @@ def isle(src, dst):
     im.save(dst)
 
 
+def _derece(ham_kok):
+    """ham_kok altindaki her png'yi public/assets'teki esine dereceler."""
+    n = 0
+    for kok, _, dosyalar in os.walk(ham_kok):
+        for f in sorted(dosyalar):
+            if not f.endswith('.png'):
+                continue
+            src = os.path.join(kok, f)
+            dst = os.path.join(HEDEF, os.path.relpath(src, KAYNAK))
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            isle(src, dst)
+            n += 1
+    return n
+
+
+def klasor(yol):
+    """Tek bir aktor klasorunu dereceler. Yeni kurulan karakter icin bu cagrilir.
+
+    Klasor pristine yedekte yoksa ONCE oraya alinir: public/assets'teki kopya o
+    anda hala ham oldugu icin dogru kaynak odur. Zaten varsa yedege dokunulmaz,
+    derece yine ham halden uretilir - tekrar cagirmak guvenlidir.
+    """
+    yol = os.path.abspath(yol)
+    ilgi = os.path.relpath(yol, HEDEF)
+    ham = os.path.join(KAYNAK, ilgi)
+    yeni = not os.path.isdir(ham)
+    if yeni:
+        os.makedirs(os.path.dirname(ham), exist_ok=True)
+        shutil.copytree(yol, ham)
+    n = _derece(ham)
+    print(f'  ton uyumu: {ilgi} ({n} sheet{", ham yedege alindi" if yeni else ""})')
+
+
 def main():
     if not os.path.isdir(KAYNAK):
         os.makedirs(KAYNAK)
         for k in KLASORLER:
             shutil.copytree(os.path.join(HEDEF, k), os.path.join(KAYNAK, k))
         print(f'pristine yedek alindi -> {os.path.relpath(KAYNAK, ROOT)}')
-    n = 0
-    for k in KLASORLER:
-        for kok, _, dosyalar in os.walk(os.path.join(KAYNAK, k)):
-            for f in dosyalar:
-                if not f.endswith('.png'):
-                    continue
-                src = os.path.join(kok, f)
-                dst = os.path.join(HEDEF, os.path.relpath(src, KAYNAK))
-                os.makedirs(os.path.dirname(dst), exist_ok=True)
-                isle(src, dst)
-                n += 1
+    n = sum(_derece(os.path.join(KAYNAK, k)) for k in KLASORLER)
     print(f'{n} sheet islendi, {len(_C)} benzersiz renk')
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) > 1:
+        for y in sys.argv[1:]:
+            klasor(y)
+    else:
+        main()
