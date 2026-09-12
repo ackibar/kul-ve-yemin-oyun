@@ -90,6 +90,17 @@ YUMRUK_VUR = ('throws a strong straight punch forward with the leading fist, sho
               'turning into the blow, then pulls the arm back to a boxing guard; both '
               'hands are bare fists and hold no weapon of any kind')
 
+# Balta seti icin ayri bir karakter DURUMU basilmadi (20 uretim): yay setinde
+# ogrenildi ki v3 uretken oldugu icin tarif yeterince israrciysa silahi kendisi
+# ciziyor. Baslangic karesi silahsiz TABAN karakter.
+BALTA_VUR = ('raises a large heavy two-handed splitting axe over the shoulder and brings '
+             'it down in a wide arc across the body, then pulls it back to a ready '
+             'stance; the axe has a broad steel head on a long wooden haft and is '
+             'gripped in both hands in every single frame')
+BALTA_YUR = ('walks forward with a steady stride, legs alternating clearly, carrying a '
+             'large two-handed axe resting on the shoulder; the broad axe head is '
+             'clearly visible above the shoulder in every single frame')
+
 RAUF_YUR = ('walks forward with a steady stride, legs alternating clearly, the sword '
             'held down at the side in one hand the whole time')
 KUL_YUR = ('shambles forward with a heavy uneven stride, legs dragging, both arms '
@@ -123,7 +134,19 @@ BASLANGIC = {('yay', 'Walk', 'south-east'): ('Attack', 'south-east', 2),
              # tutuluyordu, capraz yonlerde ise elde. Donerken durus degismesin.
              ('yay', 'Walk', 'south'): ('Attack', 'south', 2),
              ('yay', 'Walk', 'east'): ('Attack', 'east', 5),
-             ('yay', 'Walk', 'north'): ('Attack', 'north', 5)}
+             ('yay', 'Walk', 'north'): ('Attack', 'north', 5),
+             # Balta yuruyusu de saldiri karesinden basliyor: taban karakterin
+             # donus karesinde balta yok, oradan baslayinca yuruyuste silah
+             # kaybolur. Secilen kareler baltanin omuzda DIK durdugu anlar.
+             ('balta', 'Walk', 'south'): ('Attack', 'south', 3),
+             ('balta', 'Walk', 'north'): ('Attack', 'north', 2),
+             ('balta', 'Walk', 'east'): ('Attack', 'east', 2),
+             ('balta', 'Walk', 'south-east'): ('Attack', 'south-east', 1),
+             ('balta', 'Walk', 'north-east'): ('Attack', 'north-east', 3)}
+BALTA_YUR_HAZIR = ('walks forward with a steady stride, legs alternating clearly, while '
+                   'keeping the large two-handed axe held exactly as in the starting '
+                   'pose, resting against the shoulder; the axe never leaves the hands '
+                   'and its broad head is visible in every single frame')
 YAY_YUR_HAZIR = ('walks forward with a steady stride, legs alternating clearly, while '
                  'keeping the wooden bow held up in both hands exactly as in the '
                  'starting pose, ready to shoot; the bow never leaves the hands and is '
@@ -148,6 +171,7 @@ SETLER = {
     'kullenmis': ('pixellab/id_kullenmis.txt', [('Walk', 8, KUL_YUR), ('Attack', 6, KUL_VUR)]),
     # Silahsiz set: kilic varyantinin degil TABAN karakterin kendisi.
     'yumruk': ('pixellab/gezgin/id.txt',      [('Walk', 8, YUMRUK_YUR), ('Attack', 6, YUMRUK_VUR)]),
+    'balta':  ('pixellab/gezgin/id.txt',      [('Attack', 6, BALTA_VUR), ('Walk', 8, BALTA_YUR)]),
 }
 
 
@@ -183,7 +207,7 @@ def uret(setad, sadece_yon=None, sadece_aksiyon=None):
                     open(f'{ham}/{ka}_{ky}_{ki:02d}.png', 'rb').read()).decode()
                 r = pxl.call('/characters/animations', {
                     'character_id': cid, 'mode': 'v3', 'animation_name': f'{setad}-{aksiyon}',
-                    'action_description': YAY_YUR_HAZIR, 'directions': [y],
+                    'action_description': (BALTA_YUR_HAZIR if setad=='balta' else YAY_YUR_HAZIR), 'directions': [y],
                     'custom_start_frame': {'type': 'base64', 'base64': ham64},
                     'frame_count': n, 'keep_first_frame': True, 'seed': 21})
                 kuyruk.append((aksiyon, [j for j in (r.get('background_job_ids') or []) if j]))

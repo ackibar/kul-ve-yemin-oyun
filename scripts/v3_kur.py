@@ -47,6 +47,7 @@ ID_DOSYA = {'kilic': 'pixellab/gezgin/id_kilic.txt',
             'kullenmis': 'pixellab/id_kullenmis.txt',
             'yay': 'pixellab/gezgin/id_yay.txt',
             'yumruk': 'pixellab/gezgin/id.txt',
+            'balta': 'pixellab/gezgin/id.txt',
             'rauf': 'pixellab/id_rauf.txt',
             'rauf6': 'pixellab/id_rauf.txt'}
 
@@ -61,6 +62,8 @@ SETLER = {
     'rauf6': ('enemies/6',         'enemies/6',         NPC_EN, {}, None),
     # Silahsiz set. Ana yonlerin Idle/Hurt/Death'i eski boru hattindan zaten
     # var ve calisiyor; yalnizca yeni caprazlar icin uretilir.
+    'balta': ('characters/1balta', 'characters/1sword', OYUNCU_EN,
+              {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),
     'yumruk': ('characters/1', 'characters/1', OYUNCU_EN,
                {'Idle': 4, 'Hurt': 2, 'Death': 8}, ['south-east', 'north-east']),
     # Insansi dusmanlar. Motor bunlardan Walk/Attack/Hurt ciziyor; capraz
