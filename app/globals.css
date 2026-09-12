@@ -617,3 +617,37 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
   padding:0 4px;border:1px solid currentColor;border-radius:2px;
   font-size:.82em;letter-spacing:.5px;text-transform:uppercase;opacity:.9;
 }
+
+/* ---- Alt kenar payi -------------------------------------------------------
+   Butun kontroller telefonun alt sinirina degiyordu. Sebep kalip hatasi:
+   her yerde `max(Npx, env(safe-area-inset-bottom))` yazilmis. max() ikisinin
+   BUYUGUNU aliyor, yani home gostergeli telefonda bosluk 34px'te kaliyor ve
+   tasarim payi hic eklenmiyor; gosterge yoksa da yalnizca taban deger kaliyor.
+   Dogrusu ikisinin TOPLAMI: calc(taban + env(...)).
+   Tek blokta toplandi, cunku taban degerler dort ayri medya sorgusuna
+   dagilmisti; buradan silmek eski davranisa dondurur. */
+:root{--alt-pay:env(safe-area-inset-bottom,0px)}
+
+.joystick{bottom:calc(34px + var(--alt-pay))}
+.actions{bottom:calc(34px + var(--alt-pay))}
+.interact{bottom:calc(46px + var(--alt-pay))}
+.save-mark{bottom:calc(12px + var(--alt-pay))}
+.title-screen footer{bottom:calc(18px + var(--alt-pay))}
+
+/* Dar yukseklikli yatay (katlanir/kucuk telefon): pay kisalir ama korunur. */
+/* Taban degerler bilerek yuksek: Android'de jest cubugu varken bile
+   safe-area-inset-bottom 0 gelebiliyor, yani tek dayanak taban deger. */
+@media (max-height:450px) and (orientation:landscape){
+  .joystick{bottom:calc(26px + var(--alt-pay))}
+  .actions{bottom:calc(26px + var(--alt-pay))}
+  .interact{bottom:calc(36px + var(--alt-pay))}
+}
+@media (max-height:560px){
+  .joystick{bottom:calc(26px + var(--alt-pay))!important}
+  .actions{bottom:calc(26px + var(--alt-pay))!important}
+  .interact{bottom:calc(36px + var(--alt-pay))!important}
+}
+/* Dikey mod: alt serit zaten dar, yine de gosterge uzerine binmesin. */
+.game-shell.dikey .joystick{bottom:calc(32px + var(--alt-pay))!important}
+.game-shell.dikey .actions{bottom:calc(32px + var(--alt-pay))}
+.game-shell.dikey .interact{bottom:calc(132px + var(--alt-pay))}
