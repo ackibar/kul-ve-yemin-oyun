@@ -41,7 +41,9 @@ def merkez(k):
 # ekranda `-capa + r*0.5` birime denk geliyor; golge (y=0) icin r = 2*capa.
 # Kareler hucre ORTASINA (32) oturtulunca yaratik golgesinin 7 birim ustunde
 # havada duruyordu - ekranda acikca ayriydi.
-CAPA = {1: 22, 2: 21, 5: 21, 7: 21}   # engine.sprite() ile ayni
+# engine.sprite() ile AYNI olmali. Trol buyuk oldugu icin 31: capa 21 iken
+# zemin cizgisi 42. satira denk geliyor ve 62 satirlik sprite'in ustu kirpiliyor.
+CAPA = {1: 22, 2: 21, 5: 21, 7: 31}
 # Yerden yukseklik (art satiri). Yarasa UCUYOR: golgesi altinda gorunmeli,
 # govdesi havada durmali. Yerdeki yaratiklarda 0, yani karin cizgisi zemine
 # oturur ve golgenin yalnizca kenari disari tasar.
