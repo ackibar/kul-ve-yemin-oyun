@@ -177,8 +177,9 @@ maskelenir. Boyalı mobilyanın çarpışması elle (`blockers`). Photoshop
 katman sözleşmesi: `zemin` / `<ad>@engel` / `@gecilir` / `@ates` / `@ust`.
 
 **Işık haritası (2026-09-12):** `Engine.KARANLIK[mekan]` 0–1; 0 ise eski
-düz tint aynen kalır (kullanıcı mevcut mekânların havasını beğendi, hepsi 0;
-yalnız Sarnıç Ağzı .82 deneme). Ekran dışı tuvale karanlık basılır, her ışık
+düz tint aynen kalır. **Şu an hepsi 0** — Sarnıç Ağzı .82 ile denendi,
+deneme bitince geri alındı; sistem duruyor, yeni karanlık mekân gelince
+değer yazmak yetiyor. Ekran dışı tuvale karanlık basılır, her ışık
 `destination-out` radyal gradientle delik açar: ateş entity'leri, boyalı
 duvar ışıkları (`World.isiklar`, arka plandaki sıcak-parlak piksel
 kümelerinden ölçülür), fener taşıyan, yanan düşman, ateş oku, oyuncu
@@ -276,4 +277,4 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 
 ---
 
-*Son güncelleme: 2026-09-12, v5.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v6.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

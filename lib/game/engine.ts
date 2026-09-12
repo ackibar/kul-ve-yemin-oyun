@@ -399,9 +399,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Kralin cani. Ekranda GOSTERILMEZ: vurup vurmamak oyuncunun olcusu. */
  static readonly KRAL_CAN=90;
  /** Mekan basina karanlik (0 = mevcut duz tint, 1 = zifiri). Kullanici mevcut
-  *  mekanlarin havasini begendi: hepsi 0 kaldi, sistem yalnizca Sarnic Agzi'nda
-  *  deneniyor. Yeni karanlik mekanlar geldikce buraya yazilir. */
- static readonly KARANLIK:Record<string,number>={haven:0,magara:.82,cistern:0,disari:0,yikik:0};
+  *  mekanlarin havasini begendi: hepsi 0, yani isik katmani hic devreye girmiyor
+  *  ve mekanlar eski haliyle duruyor. Sarnic Agzi .82 ile denendi, deneme
+  *  bitince geri alindi. Yeni karanlik mekan geldiginde buraya degeri yazilir
+  *  (0'dan buyuk olmasi yeterli) ve varsa duvar mesaleleri World.isiklar'a. */
+ static readonly KARANLIK:Record<string,number>={haven:0,magara:0,cistern:0,disari:0,yikik:0};
  /** Mesale suresi (sn) ve yaricaplari: mesaleli / mesalesiz oyuncu, ates, fener. */
  static readonly MESALE_SURE=90;
  static readonly ISIK={mesale:104,cip:26,ates:64,fener:40,yanan:26,ok:18};
