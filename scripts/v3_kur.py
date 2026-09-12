@@ -42,12 +42,22 @@ OYUNCU_EN, NPC_EN = 80, 64
 # set -> (hedef slot, referans slot, hucre eni, donus karesinden uretilecekler)
 # set -> (hedef slot, referans slot, hucre eni, {aksiyon: kare} durus isleri,
 #         durus uretilecek yonler; None = hepsi)
+# PixelLab karakter id'si: silahsiz set taban karakterin kendisi.
+ID_DOSYA = {'kilic': 'pixellab/gezgin/id_kilic.txt',
+            'yay': 'pixellab/gezgin/id_yay.txt',
+            'yumruk': 'pixellab/gezgin/id.txt',
+            'rauf': 'pixellab/id_rauf.txt'}
+
 SETLER = {
     # Kilicli sette ana yonlerin Idle/Hurt/Death'i zaten var ve calisiyor;
     # yalnizca yeni caprazlar icin uretilir.
     'kilic': ('characters/1sword', 'characters/1sword', OYUNCU_EN,
               {'Idle': 4, 'Hurt': 2, 'Death': 8}, ['south-east', 'north-east']),
     'rauf':  ('characters/5',      'characters/5',      NPC_EN, {}, None),
+    # Silahsiz set. Ana yonlerin Idle/Hurt/Death'i eski boru hattindan zaten
+    # var ve calisiyor; yalnizca yeni caprazlar icin uretilir.
+    'yumruk': ('characters/1', 'characters/1', OYUNCU_EN,
+               {'Idle': 4, 'Hurt': 2, 'Death': 8}, ['south-east', 'north-east']),
     'yay':   ('characters/1bow',   'characters/1sword', OYUNCU_EN,
               {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),
 }
@@ -193,10 +203,15 @@ def kur(setad):
     if not os.path.isdir(f'{ROOT}/public/assets/{slot}'):
         os.makedirs(f'{ROOT}/public/assets/{slot}')
 
+    # Donus kareleri yalnizca bir yonun yuruyus karesi yoksa gerekiyor; pesin
+    # indirmek silahsiz sette id dosyasi baska adda oldugu icin patliyordu.
     rot = {}
-    if durus_isleri:
-        cid = open(f'{ROOT}/pixellab/gezgin/id_{setad}.txt').read().strip()
-        rot = donus_kareleri(cid, f'{ROOT}/pixellab/v3/{setad}_sheet')
+
+    def donusler():
+        if not rot:
+            cid = open(f'{ROOT}/{ID_DOSYA[setad]}').read().strip()
+            rot.update(donus_kareleri(cid, f'{ROOT}/pixellab/v3/{setad}_sheet'))
+        return rot
 
     aksiyonlar = sorted({os.path.basename(f).split('_')[0] for f in glob.glob(f'{kaynak}/*.png')})
     rapor = []
@@ -215,8 +230,8 @@ def kur(setad):
                 if (setad, 'Walk') in ONDEN_AT:
                     kk = yaysiz_onu_at(kk)[0]
                 durus_k = kk[0]
-            elif yon in rot:
-                durus_k = rot[yon]
+            else:
+                durus_k = donusler().get(yon)
         for ad, n in durus_isleri.items():
             if durus_k is not None:
                 isler.append((ad, [durus_k] * n))

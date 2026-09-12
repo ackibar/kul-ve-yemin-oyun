@@ -81,6 +81,15 @@ YAY_VUR_IKI_EL = ('holds a tall curved wooden bow UPRIGHT and VERTICAL in the '
                   'forward; the bow is never held horizontally and never fired '
                   'one-handed')
 
+# Silahsiz mod: eller bos. "no weapon" acikca yazilmazsa model aliskanlikla
+# eline bir sey tutusturuyor.
+YUMRUK_YUR = ('walks forward with a steady stride, legs alternating clearly and arms '
+              'swinging naturally at the sides; both hands are completely empty, '
+              'holding no weapon of any kind')
+YUMRUK_VUR = ('throws a strong straight punch forward with the leading fist, shoulder '
+              'turning into the blow, then pulls the arm back to a boxing guard; both '
+              'hands are bare fists and hold no weapon of any kind')
+
 RAUF_VUR = ('swings the sword down and across in a diagonal cut in front of the body, '
             'then pulls it back to a ready guard; the sword is a solid steel blade and '
             'stays gripped in the hand in every frame')
@@ -129,6 +138,8 @@ SETLER = {
     'kilic': ('pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILIC_YUR), ('Attack', 6, KILIC_VUR)]),
     'yay':   ('pixellab/gezgin/id_yay.txt',   [('Walk', 8, YAY_YUR),   ('Attack', 6, YAY_VUR)]),
     'rauf':  ('pixellab/id_rauf.txt',         [('Attack', 6, RAUF_VUR)]),
+    # Silahsiz set: kilic varyantinin degil TABAN karakterin kendisi.
+    'yumruk': ('pixellab/gezgin/id.txt',      [('Walk', 8, YUMRUK_YUR), ('Attack', 6, YUMRUK_VUR)]),
 }
 
 
