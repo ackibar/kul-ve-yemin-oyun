@@ -97,7 +97,7 @@ kendileri koymuş olur. Modern isim yok.
 | Obruk | Sarnıç Ağzı (geçici) | kileri dolu soylu, 2.5× fiyat | obrukSaygi (bey), obrukSir, tac |
 | Karga / Çakal | Obruk'un yanı | paralı askerler; Karga kileri sayıyor: 21 hafta | obrukDepo |
 | Uslu | Sığınak | fırtınadan dönen deli, 8 soru, son çakıl | usluSoru |
-| Kral (Ongun) | Sığınak köşesi | hiç konuşmaz, vurulabilir, çubuk yok | kralGoruldu, kral (oldu), kralCan, kralMuhafizHaber |
+| Kral (Ongun) | Sığınak batı köşesi (geçici) | hiç konuşmaz, vurulabilir, çubuk yok | kralGoruldu, kral (oldu), kralCan, kralMuhafizHaber |
 | Son muhafız | Kül Ovası | kralın son adamı, mini-boss, önce konuşur | muhafiz (gecti/dovus/oldu) |
 
 Eski adlar (kodda kalan id'ler): mira=Mirna, boran=Alf, ekin=Undur,
@@ -277,4 +277,4 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 
 ---
 
-*Son güncelleme: 2026-09-12, v6.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v6.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

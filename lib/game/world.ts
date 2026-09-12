@@ -57,9 +57,13 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   at({id:'selvi',type:'npc',x:13,y:6,name:'Elvi',portrait:9});
   at({id:'nil',type:'npc',x:18,y:21,name:'Lin',portrait:7,s:.8});
   // Kral: sol ust kosede oturur, kimse bakmaz. Uslu ortada dolasir.
-  // Kral: vurulabilir (engine kralHasar). Oldurulduyse kosede cesedi kalir.
-  if(flags?.kral==='oldu')at({id:'kralCeset',type:'ceset',x:5,y:6,name:'Kral',asset:'kral_ceset'});
-  else at({id:'kral',type:'npc',x:5,y:6,name:'Kral',portrait:13,sabit:true,capa:KRAL_CAPA,s:.72});
+  /* Kral: vurulabilir (engine kralHasar). Oldurulduyse kosede cesedi kalir.
+     Yeri (5,6) idi: haritanin sol UST cebi, 22 adim uzakta ve ancak ust
+     kenardan dolasarak giriliyordu - oyuncu oraya hic ugramiyordu. Ana odanin
+     bati koseligine alindi (13 adim, Mirna'nin hemen yaninda): gorulen ama
+     kimsenin ugramadigi bir kose. Kendi mekani yapilinca oraya tasinacak. */
+  if(flags?.kral==='oldu')at({id:'kralCeset',type:'ceset',x:5,y:17,name:'Kral',asset:'kral_ceset'});
+  else at({id:'kral',type:'npc',x:5,y:17,name:'Kral',portrait:13,sabit:true,capa:KRAL_CAPA,s:.72});
   at({id:'uslu',type:'npc',x:14,y:19,name:'Uslu',portrait:14});
   if(flags?.ayaz==='indi')at({id:'ayaz',type:'npc',x:16,y:21,name:'Tiga',portrait:8,s:.9});
   if(flags?.tuhn==='kaldi')at({id:'tuhn',type:'npc',x:19,y:22,name:'Tuhn',portrait:6});
