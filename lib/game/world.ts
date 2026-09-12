@@ -140,7 +140,10 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).
  }else{
   room(3,3,12,12);room(8,13,4,23);room(4,29,13,14);room(15,34,18,4);room(28,27,14,17);room(33,12,4,18);room(25,3,17,14);room(13,7,15,4);room(17,18,10,10);room(10,21,9,4);room(25,22,10,4);
-  at({id:'backCistern',type:'portal',x:5,y:5,to:'cistern',spawn:[37,38],name:'Sarnıca dön'});
+  // Donus noktasi [37,38] idi: sarnic 54x30, yani 38. satir HARITA DISI -
+  // oyuncu ocaktan donunce yurunemeyen bosluga dusuyordu. Ocak kapisinin
+  // (31,27) hemen ustune alindi.
+  at({id:'backCistern',type:'portal',x:5,y:5,to:'cistern',spawn:[31,26],name:'Sarnıca dön'});
   at({id:'core',type:'core',x:35,y:6,name:'Kül kalbi'});
   at({id:'returnHaven',type:'portal',x:39,y:6,to:'haven',spawn:[15,14],name:'Sığınağa geçit'});
   chest('forgeWest',7,39,[['ash',1],['potion',3]],25);chest('forgeCenter',22,20,[['ember',1],['bow',1],['tonic',2]],20);chest('forgeEast',38,39,[['life',1],['potion',3]],30);

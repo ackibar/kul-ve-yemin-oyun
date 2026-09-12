@@ -1,0 +1,132 @@
+"""v3 (metin) animasyonu uretir ve ham kareleri diske yazar.
+
+Neden sablon degil: iskelet sablonu eldeki nesneyi dusuruyor - kilicli
+karakterde `cross-punch` kilici 48->30 px'e dusuruyor, oyunda Rauf'un
+"kilicla yumruk atmasi" tam olarak bu. v3 karakterin DONUS karesinden
+basladigi icin elindeki silah karede kaliyor. Olculdu: 1 uretim/yon,
+yani sablonla ayni fiyat.
+
+kullanim: python3 scripts/v3_anim.py <set>    (set: kilic | yay | rauf)
+"""
+import base64, io, json, os, sys, time
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pxl
+from PIL import Image
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+YONLER = ['south', 'north', 'east']          # bati, motorda 'east'in aynasi
+
+# Tarifler dogrudan olculdu: "geniş yatay savurma" deyince model kilici isik
+# huzmesine cevirdi. Silahin MADDESINI ("solid steel blade") ve elde kaldigini
+# acikca yazmak gerekiyor.
+KILIC_VUR = ('raises the sword overhead with both hands and chops straight down in '
+             'front of the body, then lifts it back to a ready guard; the sword is a '
+             'solid steel blade and stays gripped in the hand in every frame')
+# Yandan bakista ayni tarif kilici asagidan yukari savurttu, ters ve tuhaf
+# duruyordu. Yan gorunumde kesme yonunu acikca yazmak gerekiyor.
+KILIC_VUR_YAN = ('lifts the sword high above the head and swings it down in a strong '
+                 'overhead arc, the blade travelling from top to bottom and ending '
+                 'pointed at the ground in front, then raises it back to guard; the '
+                 'sword is a solid steel blade and stays gripped in the hand in '
+                 'every frame')
+KILIC_YUR = ('walks forward with a steady stride, legs alternating clearly, arms '
+             'swinging slightly, the sword held down at the side in the right hand '
+             'the whole time')
+# Yay durumunun DONUS karesinde yay yok - sadece sirttaki okluk tuttu. Bu tarif
+# tek yonle sinandi: v3 uretken oldugu icin yayi 2. kareden itibaren kendisi
+# ciziyor, yani 20 uretimlik ikinci bir durum basmaya gerek kalmadi.
+YAY_VUR = ('pulls a curved wooden hunting bow up into both hands, nocks an arrow, draws '
+           'the bowstring back to the cheek, then releases; the wooden bow with its taut '
+           'string is clearly visible in the hands from the second frame onward')
+YAY_YUR = ('walks forward with a steady stride, legs alternating clearly, carrying a '
+           'curved wooden hunting bow down at one side, the bow visible in the hand in '
+           'every frame')
+# Arkadan bakista ilk denemede yay hic gorunmedi - yalnizca sirttaki okluk
+# vardi. Yayin govdenin iki yanindan TASMASI gerektigi acikca yazildi.
+YAY_VUR_ARKA = ('seen from behind, raises a curved wooden hunting bow and draws the '
+                'string back, the bow held up in front of the body so its two limbs '
+                'stick out clearly to the left and right of the silhouette, then '
+                'releases the arrow forward away from the camera')
+
+RAUF_VUR = ('swings the sword down and across in a diagonal cut in front of the body, '
+            'then pulls it back to a ready guard; the sword is a solid steel blade and '
+            'stays gripped in the hand in every frame')
+
+# Arkadan bakista "onunde asagi kes" tarifi kilici SIRTA savurttu: model
+# kamerayi degil govdeyi referans aliyor. Kuzeyde yonu kameraya gore yazmak
+# gerekiyor - "ileri, kameradan UZAGA".
+KILIC_VUR_ARKA = ('seen from behind, raises the sword above the head and swings it '
+                  'forward and away from the camera, the blade going over the head and '
+                  'down in front of the body; the blade never swings back toward the '
+                  'viewer or behind the back; the sword is a solid steel blade and '
+                  'stays gripped in the hand in every frame')
+
+# Yon bazli tarif ezmesi: (set, aksiyon, yon) -> tarif
+OZEL = {('kilic', 'Attack', 'east'): KILIC_VUR_YAN,
+        ('rauf', 'Attack', 'east'): KILIC_VUR_YAN,
+        ('kilic', 'Attack', 'north'): KILIC_VUR_ARKA,
+        ('rauf', 'Attack', 'north'): KILIC_VUR_ARKA,
+        ('yay', 'Attack', 'north'): YAY_VUR_ARKA}
+
+SETLER = {
+    'kilic': ('pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILIC_YUR), ('Attack', 6, KILIC_VUR)]),
+    'yay':   ('pixellab/gezgin/id_yay.txt',   [('Walk', 8, YAY_YUR),   ('Attack', 6, YAY_VUR)]),
+    'rauf':  ('pixellab/id_rauf.txt',         [('Attack', 6, RAUF_VUR)]),
+}
+
+
+def bekle(joblar, etiket):
+    for i in range(240):
+        d = [pxl.call(f'/background-jobs/{j}') for j in joblar]
+        st = [x.get('status') for x in d]
+        if i % 6 == 0:
+            print(f'  {i*5:3d}sn {etiket} {st}', flush=True)
+        if all(s in ('completed', 'succeeded', 'done', 'failed', 'error') for s in st):
+            return d
+        time.sleep(5)
+    return d
+
+
+def uret(setad, sadece_yon=None, sadece_aksiyon=None):
+    id_yol, isler = SETLER[setad]
+    cid = open(f'{ROOT}/{id_yol}').read().strip()
+    ham = f'{ROOT}/pixellab/v3/{setad}'
+    os.makedirs(ham, exist_ok=True)
+    once = pxl.balance()[0]
+    kuyruk = []
+    for aksiyon, n, tarif in isler:
+        if sadece_aksiyon and aksiyon != sadece_aksiyon:
+            continue
+        # Ayni tarif her yonde ayni durmuyor; ozel tarifi olan yonler ayri basilir.
+        gruplar = {}
+        for y in (sadece_yon or YONLER):
+            gruplar.setdefault(OZEL.get((setad, aksiyon, y), tarif), []).append(y)
+        for t, yonler in gruplar.items():
+            r = pxl.call('/characters/animations', {
+                'character_id': cid, 'mode': 'v3', 'animation_name': f'{setad}-{aksiyon}',
+                'action_description': t, 'directions': yonler,
+                'frame_count': n, 'keep_first_frame': True, 'seed': 21})
+            kuyruk.append((aksiyon, [j for j in (r.get('background_job_ids') or []) if j]))
+            print(f'{setad}/{aksiyon} {yonler}: {len(kuyruk[-1][1])} is kuyrukta')
+    for aksiyon, joblar in kuyruk:
+        for d in bekle(joblar, f'{setad}/{aksiyon}'):
+            son = d.get('last_response') or {}
+            yon = son.get('direction')
+            if d.get('status') != 'completed' or not yon:
+                print(f'  !! {setad}/{aksiyon} {yon or "?"} basarisiz: {d.get("status")}')
+                continue
+            for i, g in enumerate(son.get('images') or []):
+                Image.open(io.BytesIO(base64.b64decode(g['base64'].split(',')[-1]))) \
+                     .convert('RGBA').save(f'{ham}/{aksiyon}_{yon}_{i:02d}.png')
+            print(f'  {setad}/{aksiyon} {yon}: {len(son.get("images") or [])} kare')
+    time.sleep(4)
+    print(f'{setad} bitti. maliyet={once-pxl.balance()[0]:.0f} uretim')
+
+
+if __name__ == '__main__':
+    # python3 scripts/v3_anim.py kilic            -> tum set
+    # python3 scripts/v3_anim.py kilic:Attack:east -> tek yon yeniden
+    for arg in sys.argv[1:]:
+        p = arg.split(':')
+        uret(p[0], sadece_yon=[p[2]] if len(p) > 2 else None,
+             sadece_aksiyon=p[1] if len(p) > 1 else None)

@@ -48,3 +48,4 @@ next-env.d.ts
 /.openai/
 tsconfig.tsbuildinfo
 /asset_backup_ton_oncesi/
+__pycache__/
