@@ -14,7 +14,11 @@ import pxl
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-YONLER = ['south', 'north', 'east']          # bati, motorda 'east'in aynasi
+# Motor batiyi 'east'in aynasi olarak ciziyor, bu yuzden yalnizca sag yarim
+# uretilir. Caprazlar da ayni mantikla: south-east/north-east basilir,
+# south-west/north-west aynalanir.
+YONLER = ['south', 'north', 'east']
+CAPRAZ = ['south-east', 'north-east']
 
 # Tarifler dogrudan olculdu: "geniş yatay savurma" deyince model kilici isik
 # huzmesine cevirdi. Silahin MADDESINI ("solid steel blade") ve elde kaldigini
@@ -68,6 +72,15 @@ YAY_VUR_YAN = ('seen from the side, holds a tall curved wooden bow UPRIGHT and V
 # NOT: ayni "dikey yay" tarifi YURUYUSTE ters tepti - yay tamamen kayboldu
 # (dogu karelerinde bbox 21..35, yani govde kadar). Yuruyus genel tarifte
 # (gogus hizasinda capraz) kaliyor; dikey duruş yalnizca saldiri icin.
+# Caprazda "seen from the side" ifadesi kafa karistiriyor; iki el sarti aynen
+# kaliyor, bakis acisi tarifi cikariliyor.
+YAY_VUR_IKI_EL = ('holds a tall curved wooden bow UPRIGHT and VERTICAL in the '
+                  'outstretched left hand and pulls the bowstring straight back to the '
+                  'cheek with the right hand, so BOTH hands are clearly on the weapon - '
+                  'one on the bow grip, one on the string - then releases the arrow '
+                  'forward; the bow is never held horizontally and never fired '
+                  'one-handed')
+
 RAUF_VUR = ('swings the sword down and across in a diagonal cut in front of the body, '
             'then pulls it back to a ready guard; the sword is a solid steel blade and '
             'stays gripped in the hand in every frame')
@@ -87,7 +100,11 @@ OZEL = {('kilic', 'Attack', 'east'): KILIC_VUR_YAN,
         ('kilic', 'Attack', 'north'): KILIC_VUR_ARKA,
         ('rauf', 'Attack', 'north'): KILIC_VUR_ARKA,
         ('yay', 'Attack', 'north'): YAY_VUR_ARKA,
-        ('yay', 'Attack', 'east'): YAY_VUR_YAN}
+        ('yay', 'Attack', 'east'): YAY_VUR_YAN,
+        # Caprazlar: asagi-sag kameraya donuk, yukari-sag sirti donuk.
+        ('yay', 'Attack', 'south-east'): YAY_VUR_IKI_EL,
+        ('yay', 'Attack', 'north-east'): YAY_VUR_ARKA,
+        ('kilic', 'Attack', 'north-east'): KILIC_VUR_ARKA}
 
 SETLER = {
     'kilic': ('pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILIC_YUR), ('Attack', 6, KILIC_VUR)]),
@@ -149,5 +166,5 @@ if __name__ == '__main__':
     # python3 scripts/v3_anim.py kilic:Attack:east -> tek yon yeniden
     for arg in sys.argv[1:]:
         p = arg.split(':')
-        uret(p[0], sadece_yon=[p[2]] if len(p) > 2 else None,
+        uret(p[0], sadece_yon=p[2].split(',') if len(p) > 2 else None,
              sadece_aksiyon=p[1] if len(p) > 1 else None)

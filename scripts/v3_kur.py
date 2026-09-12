@@ -27,7 +27,10 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BOY, FEET = 64, 62
-YON = {'south': 'D', 'north': 'U', 'east': 'S'}
+# Oyuncu 8 yonde ciziliyor: uc ana yon + iki capraz, bati tarafi motorda
+# aynalaniyor. NPC'ler yalnizca ilk uc yonu kullaniyor.
+YON = {'south': 'D', 'north': 'U', 'east': 'S',
+       'south-east': 'DS', 'north-east': 'US'}
 HAM = os.path.join(ROOT, 'asset_backup_ton_oncesi')
 
 # Hucre GENISLIGI aksiyona gore degisiyor. Olculdu: kilic savurusunda kol disa
@@ -37,11 +40,16 @@ HAM = os.path.join(ROOT, 'asset_backup_ton_oncesi')
 OYUNCU_EN, NPC_EN = 80, 64
 
 # set -> (hedef slot, referans slot, hucre eni, donus karesinden uretilecekler)
+# set -> (hedef slot, referans slot, hucre eni, {aksiyon: kare} durus isleri,
+#         durus uretilecek yonler; None = hepsi)
 SETLER = {
-    'kilic': ('characters/1sword', 'characters/1sword', OYUNCU_EN, {}),
-    'rauf':  ('characters/5',      'characters/5',      NPC_EN,    {}),
+    # Kilicli sette ana yonlerin Idle/Hurt/Death'i zaten var ve calisiyor;
+    # yalnizca yeni caprazlar icin uretilir.
+    'kilic': ('characters/1sword', 'characters/1sword', OYUNCU_EN,
+              {'Idle': 4, 'Hurt': 2, 'Death': 8}, ['south-east', 'north-east']),
+    'rauf':  ('characters/5',      'characters/5',      NPC_EN, {}, None),
     'yay':   ('characters/1bow',   'characters/1sword', OYUNCU_EN,
-              {'Idle': 4, 'Hurt': 2, 'Death': 8}),
+              {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),
 }
 
 
@@ -51,6 +59,15 @@ SETLER = {
 # olarak okunuyor. Atis karesi sabit degil (guneyde 5., doguda 3.), bu yuzden
 # elle yazilmiyor: en GENIS bbox'li kare atis anidir (yay + ucan ok).
 ATIS_BASA = {('yay', 'Attack')}
+
+# Yedek yon: model bazi yonlerde silahi bir turlu cizmiyor. Yayli asagi-capraz
+# yuruyusu iki kez basildi, ikisinde de yay cikmadi (bbox 34..40; yayli kare
+# 50+ olurdu). Ucuncu denemeye uretim yakmak yerine en yakin CALISAN yonun
+# kareleri kullanilir - perspektif farki, yayin kaybolmasindan iyi.
+# Yukari-caprazda ise yay kademe kademe yukseliyor ve son karelerde kafanin
+# ustunde boynuz gibi duruyordu; kuzey yuruyusu (ayni sirt gorunumu) saglam.
+YEDEK_YON = {('yay', 'Walk', 'south-east'): 'south',
+             ('yay', 'Walk', 'north-east'): 'north'}
 
 # keep_first_frame=True karakterin DONUS karesini kare 0 olarak sakliyor; yayli
 # sette o karede yay yok ve model yayi ancak 2-3 kare sonra ciziyor. Sonuc:
@@ -65,12 +82,17 @@ ONDEN_AT = {('yay', 'Walk'), ('yay', 'Attack')}
 AT_ESIK = 0.30
 
 
+# Animasyon bu sayidan kisa birakilmaz: yukari-capraz yay saldirisinda yayin
+# genisligi kademeli arttigi icin esik 7 kareden 2'sini birakmisti.
+EN_AZ_KARE = 4
+
+
 def yaysiz_onu_at(kareler):
     g = [k.getbbox() for k in kareler]
     en = [(b[2] - b[0]) if b else 0 for b in g]
     esik = min(en) + (max(en) - min(en)) * AT_ESIK
     i = 0
-    while i < len(en) - 2 and en[i] < esik:
+    while i < len(en) - EN_AZ_KARE and en[i] < esik:
         i += 1
     return kareler[i:], i
 
@@ -123,6 +145,10 @@ def referans(slot, g, en):
     gecerken karakter yatayda ziplar. Yeni genislige tasinirken kafa
     merkezi yeni ortaya kaydirilir."""
     yol = f'{ROOT}/public/assets/{slot}/{g}_Idle.png'
+    if not os.path.exists(yol):
+        # Yeni capraz yonun henuz Idle'i yok; kafa merkezi yonler arasi cok az
+        # degistigi icin (olculdu: D 31.9, S 33.6) 'D' referans alinir.
+        yol = f'{ROOT}/public/assets/{slot}/D_Idle.png'
     if os.path.exists(yol):
         k = Image.open(yol).convert('RGBA')
         if k.width % en:
@@ -151,7 +177,7 @@ def donus_kareleri(cid, kl):
 
 
 def kur(setad):
-    slot, ref_slot, en, durus_isleri = SETLER[setad]
+    slot, ref_slot, en, durus_isleri, durus_yonler = SETLER[setad]
     kaynak = f'{ROOT}/pixellab/v3/{setad}'
     ham_kl = f'{HAM}/{slot}'
     os.makedirs(ham_kl, exist_ok=True)
@@ -167,13 +193,14 @@ def kur(setad):
     rapor = []
     for yon, g in YON.items():
         hx, hy = referans(ref_slot, g, en)
-        isler = [(a, sorted(glob.glob(f'{kaynak}/{a}_{yon}_*.png'))) for a in aksiyonlar]
+        isler = [(a, sorted(glob.glob(
+            f'{kaynak}/{a}_{YEDEK_YON.get((setad, a, yon), yon)}_*.png'))) for a in aksiyonlar]
         # Durus/hasar/olum icin DONUS karesi kullanilamiyor: yayli sette o karede
         # yay yok, yani dururken yay kaybolup yuruyunce geri geliyordu. Bunun
         # yerine yaysiz onu atilmis yuruyusun ilk karesi kullanilir.
         durus_k = None
-        if durus_isleri:
-            y = sorted(glob.glob(f'{kaynak}/Walk_{yon}_*.png'))
+        if durus_isleri and (durus_yonler is None or yon in durus_yonler):
+            y = sorted(glob.glob(f'{kaynak}/Walk_{YEDEK_YON.get((setad, "Walk", yon), yon)}_*.png'))
             if y:
                 kk = [Image.open(x).convert('RGBA') for x in y]
                 if (setad, 'Walk') in ONDEN_AT:
