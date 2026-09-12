@@ -481,7 +481,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
       this.sahneYuru.delete('tuhn');
       // Ses HEMEN degil: ucurum derin. Once sessizlik, sonra asagidan bogur
       // bir ses ve rahatsiz olan yarasalar. Sayac asagida isleniyor.
-      this.notify('Tuhn bir adım attı. Ses gelmedi.');
+      this.notify('Tuhn bir adım attı. Karanlık onu aldı.');
       this.tuhnSayac=1.2;
       this.save();this.emit();}
     }
