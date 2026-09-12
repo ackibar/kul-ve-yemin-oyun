@@ -533,3 +533,78 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 .title-screen .menu-buttons .primary::before{opacity:.22!important}
 .title-screen .menu-buttons button:active::before{opacity:.38!important}
 @media (max-height:560px){.title-screen .title-sub{margin-bottom:46px!important}}
+
+
+/* ============ Dikey (portre) mod ============ */
+/* Ayarlardan "Dikey" secilirse cevirme uyarisi cikmaz ve yerlesim dikey
+   ekrana gore kurulur. Motor gorus alanini zaten ekran oranindan hesapliyor
+   (engine.ts gorus), o yuzden burada yalnizca ARAYUZ yeniden diziliyor. */
+.yon-secim{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.yon-secim>span{display:flex;align-items:center;gap:8px}
+.yon-secim>div{display:flex;gap:8px}
+.yon-secim .text-button.secili{
+  border-image:url(/assets/ui/frame_gold.png) 8 fill repeat!important;color:#2e2011!important}
+
+.game-shell.dikey .hud{top:max(14px,env(safe-area-inset-top));left:10px;right:10px;gap:6px;align-items:flex-start}
+/* Rozetin olculerine dokunulmuyor: dikeyde ekran 412px genis, masaustu
+   rozeti (208px) zaten siginiyor. Ezmeye calisinca cerceve icerige gore
+   buyumuyor ve yazilar disari tasiyordu. */
+/* DIKKAT: hero-badge de .hud icinde bir <button>. Hariç tutulmazsa 38px'e
+   sikisip icerigi disari tasiyor (ayni hata yatay modda da yasanmisti). */
+.game-shell.dikey .hud-nav button{width:38px!important;height:38px!important}
+.game-shell.dikey .hud-nav button img{width:20px!important;height:20px!important}
+.game-shell.dikey .hud-nav{gap:5px}
+.game-shell.dikey .zone-title{display:none}          /* dar ekranda rozetle carpisiyordu */
+.game-shell.dikey .quest-hint{top:132px!important;left:10px;max-width:64vw;padding:8px 10px!important}
+.game-shell.dikey .quest-hint b{font-size:13px!important}
+.game-shell.dikey .quest-hint>span{font-size:11px!important}
+
+/* Kumanda: joystick solda, aksiyonlar sagda, ikisi de ALTTA ve kucuk */
+.game-shell.dikey .joystick{width:88px!important;height:88px!important;
+  left:max(14px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom))}
+.game-shell.dikey .joystick>div{width:38px!important;height:38px!important}
+.game-shell.dikey .actions{right:max(12px,env(safe-area-inset-right));
+  bottom:max(16px,env(safe-area-inset-bottom));gap:8px;align-items:flex-end}
+.game-shell.dikey .utility-actions{flex-direction:row;gap:8px}
+.game-shell.dikey .round{min-width:46px!important;min-height:46px!important}
+.game-shell.dikey .round.potion,.game-shell.dikey .round.weapon,
+.game-shell.dikey .round.dodge{width:46px!important;height:46px!important;
+  min-width:46px!important;min-height:46px!important}
+.game-shell.dikey .round img,.game-shell.dikey .round svg{width:18px!important;height:18px!important}
+.game-shell.dikey .round small{font-size:8px!important;line-height:11px!important;bottom:4px!important}
+.game-shell.dikey .attack{width:64px!important;height:64px!important;min-width:64px!important}
+.game-shell.dikey .attack img{width:26px!important;height:26px!important}
+.game-shell.dikey .attack span{font-size:9px!important}
+.game-shell.dikey .interact{bottom:118px;min-height:42px;font-size:13px}
+.game-shell.dikey .control-caption{display:none}
+.game-shell.dikey .save-mark{display:none}
+
+/* Paneller dar ekrana gore: max-height kurallari dikeyde tetiklenmiyor */
+@media (orientation:portrait) and (max-width:620px){
+  .game-dialog,.new-game-dialog{border-width:8px!important;
+    width:calc(100vw - 20px)!important;max-width:none!important;
+    max-height:calc(100dvh - 100px)!important}
+  .panel-header{padding:12px 14px 8px!important}
+  .panel-header h2{font-size:17px!important}
+  .eyebrow{font-size:10px!important}
+  .close-panel{width:34px!important;height:34px!important}
+  .panel-body{padding:10px 14px 12px!important;font-size:12px!important}
+  .speech{gap:9px!important;margin-bottom:8px!important}
+  .speech .portrait{width:46px!important;height:46px!important;
+    background-size:491px 123px!important;background-position:-38px 0!important}
+  .speech p{font-size:12px!important;line-height:1.5!important}
+  .choices button{min-height:34px!important;padding:6px 9px!important;font-size:11px!important}
+  .choice-number{font-size:9px!important;padding-right:7px!important}
+  .choices small{font-size:9px!important}
+  .inventory-layout,.map-layout,.pause-layout,.settings-layout{grid-template-columns:1fr!important}
+  .item-grid{grid-template-columns:repeat(4,1fr)!important}
+  .item-cell{width:auto!important;height:auto!important;min-height:0!important;padding:5px 3px!important}
+  .item-cell img{width:22px!important;height:22px!important}
+  .item-cell span{font-size:9px!important;line-height:1.2}
+  .item-cell small{font-size:8px!important}
+  .title-screen h1{font-size:34px!important;white-space:nowrap}
+  .title-screen .title-sub{margin-bottom:40px!important}
+}
+
+/* Dikeyde surum etiketi joystick'in altinda kaliyordu */
+.game-shell.dikey~.surum,.game-shell.dikey .surum{display:none}
