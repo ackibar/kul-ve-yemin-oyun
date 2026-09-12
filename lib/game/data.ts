@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='4.9';
+export const SURUM='5.0';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -10,7 +10,7 @@ export const ASAMA = 'alpha';
 // mekandi. Bekci, Kul kalbi ve iki son da onunla birlikte cikti; oyunun
 // sonu yeni bir mekanla bastan kurulacak.
 export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern';
-export type ItemId = 'okzehir'|'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'wood'|'torch'|'arrow'|'kurdele';
+export type ItemId = 'tuzet'|'durusu'|'petek'|'muhur'|'okzehir'|'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'wood'|'torch'|'arrow'|'kurdele';
 /** Item alanlari. attack/defense/hp dogrudan stats()'e girer; asagidakiler
  *  motorun tek tek okudugu DAVRANIS bayraklaridir - her yeni item icin kod
  *  yazmak yerine burada tanimlanir.
@@ -39,7 +39,7 @@ export type ItemId = 'okzehir'|'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunya
  *   alan       - tek vurusta kac dusmana isabet eder (yoksa 1). Varsayilan
  *                TEK hedef: eskiden her silah menzildeki herkese birden
  *                vuruyordu ve kalabalik savaslar fazla kolaydi. */
-export type Item = {id:ItemId;name:string;kind:'weapon'|'armor'|'ring'|'ammo'|'consumable'|'quest';description:string;rarity:'Sıradan'|'Nadir'|'Eşsiz'|'Görev';icon:string;attack?:number;defense?:number;hp?:number;price:number;menzilli?:boolean;hiz?:number;okHasar?:number;atesBagisik?:boolean;altinKat?:number;canGoster?:boolean;menzil?:number;arkadan?:number;sersemlet?:number;okHiz?:number;yakar?:number;delici?:boolean;ceker?:boolean;zehir?:number;kulKalkan?:number;yavaslik?:number;oldurunceCan?:number;kurtarma?:number;alan?:number;sprite?:string};
+export type Item = {id:ItemId;name:string;kind:'weapon'|'armor'|'ring'|'ammo'|'consumable'|'quest';description:string;rarity:'Sıradan'|'Nadir'|'Eşsiz'|'Görev';icon:string;attack?:number;defense?:number;hp?:number;price:number;menzilli?:boolean;hiz?:number;okHasar?:number;atesBagisik?:boolean;altinKat?:number;canGoster?:boolean;menzil?:number;arkadan?:number;sersemlet?:number;okHiz?:number;yakar?:number;delici?:boolean;ceker?:boolean;zehir?:number;kulKalkan?:number;yavaslik?:number;oldurunceCan?:number;kurtarma?:number;alan?:number;iyilesme?:number;sprite?:string};
 export const ITEMS:Record<ItemId,Item>={
  // Silahsiz mod bir "esya" olarak tutuluyor: boylece silah secme ekraninda
  // digerleriyle ayni sirada cikiyor ve kusanma akisi degismiyor.
@@ -78,6 +78,12 @@ export const ITEMS:Record<ItemId,Item>={
  kavanoz:{id:'kavanoz',name:'Köz kavanozu',kind:'consumable',description:'Baktığın yöne fırlatılır; düştüğü yerde patlar ve yakar.',rarity:'Nadir',icon:'flame',price:26},
  toz:{id:'toz',name:'Kül tozu',kind:'consumable',description:'8 saniye boyunca düşmanlar seni göremez.',rarity:'Nadir',icon:'wind',price:24},
  bileme:{id:'bileme',name:'Bileme taşı',kind:'consumable',description:'30 saniye boyunca %25 daha hızlı vurursun.',rarity:'Nadir',icon:'sword',price:18},
+ /* Obruk'un kileri: kul yagmadan onceki GERCEK yiyecek. Baska hicbir
+  *  saticida yok, bu yuzden fiyatlari da baska bir dunyadan. */
+ tuzet:{id:'tuzet',name:'Tuzlu et',kind:'consumable',description:'Gerçek et. 60 can yeniler. Tadı kül yağmadan önceki dünyadan kalma.',rarity:'Nadir',icon:'heart',price:26},
+ durusu:{id:'durusu',name:'Duru su',kind:'consumable',description:'Külsüz su. 25 can yeniler ve 30 saniye Kül Ovası canını eritemez.',rarity:'Nadir',icon:'potion',price:30},
+ petek:{id:'petek',name:'Bal peteği',kind:'consumable',description:'20 can, ardından 15 saniye boyunca her saniye 4 can. Yavaş ama uzun.',rarity:'Nadir',icon:'potion',price:34,iyilesme:15},
+ muhur:{id:'muhur',name:'Obruk mührü',kind:'ring',description:'Bir soylunun mühür yüzüğü. Kimse tanımıyor artık — altın hâlâ tanıyor: bulduğun altın %35 artar.',rarity:'Eşsiz',icon:'ring',price:120,altinKat:1.35},
  potion:{id:'potion',name:'Can iksiri',kind:'consumable',description:'45 can yeniler. Savaş sırasında da içilebilir.',rarity:'Sıradan',icon:'potion',price:12},
  tonic:{id:'tonic',name:'Köz toniği',kind:'consumable',description:'20 saniye boyunca +8 saldırı.',rarity:'Nadir',icon:'flame',price:20},
  wood:{id:'wood',name:'Odun',kind:'consumable',description:'Ateşin yanına gidip yakarak meşale yapabilirsin.',rarity:'Sıradan',icon:'book',price:5},
@@ -96,7 +102,17 @@ export function removeItem(s:State,id:ItemId){if(!s.inventory[id])return false;s
 export function gainXp(s:State,n:number){s.xp+=n;let leveled=false;while(s.level<5&&s.xp>=XP[s.level]){s.level++;s.points++;leveled=true;}if(leveled){s.hp=stats(s).maxHp;s.journal.unshift(`Seviye ${s.level}: yeni bir yetenek puanı kazandın.`)}return leveled;}
 export function equip(s:State,id:ItemId){if(!s.inventory[id])return false;const kind=ITEMS[id].kind;if(kind!=='weapon'&&kind!=='armor'&&kind!=='ring'&&kind!=='ammo')return false;if(kind==='ammo')s.equipment.ok=id;else s.equipment[kind]=id;s.hp=Math.min(s.hp,stats(s).maxHp);return true;}
 export function spendPoint(s:State,key:keyof State['skills']){if(s.points<1||!['power','vigor','agility'].includes(key))return false;s.points--;s.skills[key]++;if(key==='vigor')s.hp+=18;return true;}
-export function buy(s:State,id:ItemId){const item=ITEMS[id];if(!['potion','tonic','bileme','merhem','kavanoz','toz','chain','copper','guard','bow','arrow','tatar','kemik','yelek','gozu','mizrak','balta','hancer','topuz','pelerin','okates','okzehir','okdelici','okcengel'].includes(id)||s.gold<item.price)return false;if(item.kind!=='consumable'&&s.inventory[id])return false;s.gold-=item.price;addItem(s,id,id==='arrow'?10:ITEMS[id].kind==='ammo'?6:1);return true;}
+/** Saticilar. `zam` fiyat carpani: Alf malzemeyi maliyetine verir (1),
+ *  Obruk dunyanin sonundan kar eder (2.5). Liste ayni zamanda satin alma
+ *  YETKISI: bir esya hangi saticinin listesindeyse yalnizca ondan alinir. */
+export const SATICILAR:Record<string,{liste:ItemId[];zam:number}>={
+ boran:{liste:['potion','tonic','bileme','merhem','kavanoz','toz','chain','copper','guard','bow','arrow','tatar','kemik','yelek','gozu','mizrak','balta','hancer','topuz','pelerin','okates','okzehir','okdelici','okcengel'],zam:1},
+ obruk:{liste:['tuzet','durusu','petek','muhur','ash','ocakz','kavanoz'],zam:2.5},
+};
+/** Obruk'a "bey" diyen oyunciya daha az zam yapar: kibri satin alinabilir. */
+export function zamOrani(s:State,satici:string){const z=SATICILAR[satici]?.zam??1;return satici==='obruk'&&s.flags.obrukSaygi==='bey'?z-.35:z;}
+export const fiyat=(s:State,id:ItemId,satici:string)=>Math.round(ITEMS[id].price*zamOrani(s,satici));
+export function buy(s:State,id:ItemId,satici='boran'){const item=ITEMS[id];const v=SATICILAR[satici];if(!v||!v.liste.includes(id))return false;const p=fiyat(s,id,satici);if(s.gold<p)return false;if(item.kind!=='consumable'&&s.inventory[id])return false;s.gold-=p;addItem(s,id,id==='arrow'?10:ITEMS[id].kind==='ammo'?6:1);return true;}
 export function questList(s:State){return [
  {id:'medicine',title:'Bir doz umut',done:!!s.flags.medicineDone,active:!!s.flags.medicineStarted,step:s.flags.medicineDone?(s.flags.medicine==='rauf'?'Rauf’u kurtardın. Mirna kararını öğrendi.':'İlaç sığınağın hastalarına ulaştı.'):s.flags.medicine==='rauf'?'Kararını Mirna’ya anlat.':s.inventory.medicine?'İlacı Mirna’ya götür veya yaralı Rauf’u ver.':'Sarnıcın kuzeydoğu odasındaki ilacı bul.'},
  {id:'ledger',title:'Defterdeki isim',done:!!s.flags.ledgerDone,active:!!s.flags.ledgerStarted,step:s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Rauf’u sırrını korudun.':'Rauf’u muhafızlara teslim ettin.'):s.inventory.ledger?'Defteri Alf’e götür.': 'Sarnıcın doğusunda Rauf’u bul. Hikâyesini dinle ve ne yapacağına karar ver.'},
@@ -151,7 +167,56 @@ export type StoryNode={text:string;choices:{label:string;to:string|null;
  /** Secenek yalnizca bu kosul saglaninca gorunur (baska bir NPC'den ogrenilen bilgi gibi). */
  if?:(s:State)=>boolean}[]};
 const AYRIL={label:'Gitmem gerek.',to:null};
-export const STORY:Record<string,Record<string,StoryNode>>={ rauf:{
+export const STORY:Record<string,Record<string,StoryNode>>={
+ /* Obruk: kul yagmadan once kimsenin inanmadigi seye inanip herkesin kilerini
+  *  ucuza toplamis soylu. Kimseyle paylasmiyor, satiyor - hem de altina.
+  *  'altin' dugumu oyunun altin ekonomisinin dunya ici gerekcesi: altin
+  *  gercekten ise yaramaz, ama Obruk onu istedigi surece eski dunya duruyormus
+  *  gibi yapabiliyor. Iki parali askeri var; ucreti ETLE odeniyor ve kiler
+  *  bitiyor - Karga bunu sayiyor, Obruk saymaktan korkuyor. */
+ obruk:{
+  '1':{text:'Kapıda dikilme, gölgen sofranın üstüne düşüyor. …Aşağıdan mısın? Ellerin boş. Boş ellilerle işim olmaz — ama bakmak bedava. Sadece bakmak; oraya dikkat et.',
+   choices:[{label:'Sen kimsin?',to:'2'},{label:'Bunların hepsi senin mi?',to:'mal'},{label:'Neden altın istiyorsun?',to:'altin'},AYRIL]},
+  '2':{text:'Obruk derler. Yüzüme değil, arkamdan. Asıl adım sülalemle beraber külün altında kaldı; çağıran kalmayınca isim de ölüyormuş, bunu burada öğrendim. Eskiden “bey” derlerdi. …De hadi. Bir kere. Bedava.',
+   choices:[{label:'Bey.',to:'bey'},{label:'Obruk.',to:'obruk'},AYRIL]},
+  'bey':{text:'Gördün mü, ağzın yanmadı. Otur demeyeceğim — oturacak yerim yok, hepsi dolu. Ama senden bir parça az alırım. Yalnız senden. Kimseye söyleme, ucuz adam sanırlar.',
+   choices:[{label:'Bunların hepsi senin mi?',to:'mal'},AYRIL]},
+  'obruk':{text:'Obruk. …Evet. Yerin çöktüğü, içine ne atarsan at dolmadığı yer. Bu adı bana açlar taktı; aç adamın dili keskin olur. Kızmıyorum. Ad koymak bedava, et değil.',
+   choices:[{label:'Bunların hepsi senin mi?',to:'mal'},{label:'Neden altın istiyorsun?',to:'altin'},AYRIL]},
+  'mal':{text:'Hepsi benim. Kül yağmadan önce herkes küpünü, tarlasını, kızının çeyizini satıyordu — korkan ucuza satar. Ben korkmadım, aldım. Şimdi korkmayanın kileri dolu. Buna hırsızlık diyorlar; ben pazarlık diyorum. İkisi de imzalıydı.',
+   choices:[{label:'Sığınakta aç insanlar var.',to:'mirna'},{label:'Adamların kim?',to:'adam'},AYRIL]},
+  'altin':{text:'Altının kıymeti mi? Hiç. Ne yenir, ne yakılır, ne su tutar. …Ama altın istendiği sürece pazar vardır, pazar durduğu sürece ben varım. Senden et istersem yarın biri benden et ister. Altın istersem hâlâ eski dünyadayız demektir. O dünyada ben beyim. Öbüründe bir çuval yağım.',
+   choices:[{label:'Eski dünya bitti.',to:'altin2'},AYRIL]},
+  'altin2':{text:'…Biliyorum. Her gece biliyorum. Sabah unutuyorum. Sen de unut; unutursan bana ucuza gelirsin.',
+   choices:[{label:'Adamların kim?',to:'adam'},AYRIL]},
+  'mirna':{text:'Şifacı geldi. Bir kez. “Hastalar var” dedi; ben de “var” dedim, doğruydu. Sonra fiyatı söyledim. Bir daha gelmedi. Bedava veren adamın kileri iki hafta sürer, benimki on bir yıldır duruyor. Hangimiz akıllı?',
+   choices:[{label:'İnsanlar ölüyor.',to:'mirna2'},AYRIL]},
+  'mirna2':{text:'İnsanlar benden önce de ölüyordu, benden sonra da ölecek. Aradaki çukuru ben kazmadım. …Yeter. Alacaksan al, konuşacaksan başkasını bul; konuşmak beni acıktırıyor.',
+   choices:[{label:'Adamların kim?',to:'adam'},AYRIL]},
+  'adam':{text:'Karga ile Çakal. Adlarını ben koymadım, kendileri koymuş — kendine leş adı koyan adam ucuza çalışır. Haftada iki avuç tuzlu et, bir tas duru su. Sadakat bu kadar tutuyor. Beni sevmiyorlar; sevmelerine gerek yok, aç kalmamaları yeter.',
+   choices:[{label:'Ya et biterse?',to:'adam2'},AYRIL]},
+  'adam2':{text:'…Bitmez. Bu soruyu bir daha sorma. Sorarsan düşünürüm, düşünürsem sayarım, sayarsam uyuyamam. Git şimdi.',
+   choices:[AYRIL]},
+  // Karga'nin sirri: oyuncu kileri saydigini ogrendiyse burayi acabilir.
+  'ihbar':{text:'…Karga mı? Saydı mı? Kaç hafta dedi? …Hayır. Söyleme. Söylersen bilirim; bilirsem gece uyanık kalırım, uyanık kalan adam hata yapar. …Söyle.',
+   choices:[{label:'Yirmi bir hafta.',to:'ihbarSoyle'},{label:'Hiçbir şey saymadı.',to:'ihbarSakla'}]},
+  'ihbarSoyle':{text:'Yirmi bir. …Yirmi bir hafta. Al şunu, say diye değil, sus diye veriyorum. Bir de şunu bil: bir adamın kaç hafta ömrü kaldığını bilmek, o adamı zaten bir kere öldürmektir.',
+   choices:[AYRIL]},
+  'ihbarSakla':{text:'Saymadı demek. …Güzel. Sayan adam ilerisini düşünüyor demektir, ileriyi düşünen uşak uşak kalmaz. Sen de saymamış ol.',
+   choices:[AYRIL]},
+ },
+ /* Karga: parali asker. Konusan olan o; Cakal tek cumlelik. */
+ karga:{
+  '1':{text:'Dur. …Tamam, durdun. Silahını da öyle gevşek tut. Bey misafir sevmez, parayı sever; ikisinin arasında biz duruyoruz.',
+   choices:[{label:'Ona neden çalışıyorsun?',to:'2'},{label:'Adın neden Karga?',to:'ad'},AYRIL]},
+  '2':{text:'Karnım için. Haftada iki avuç tuzlu et, bir tas su. Dışarıda bunun yarısı için adam kesiyorlar; ben kesmiyorum bile, sadece duruyorum. İyi iş.',
+   choices:[{label:'Kiler biterse ne olacak?',to:'3'},{label:'Adın neden Karga?',to:'ad'},AYRIL]},
+  '3':{text:'Kileri ben sayıyorum. O saymıyor — sayamıyor; saymak yemek gibi değil, doyurmuyor. Yirmi bir hafta. …Bunu duymadın. Duyduysan ona söyleme; söylersen ben de bir şey söylerim, o zaman ikimiz de aç kalırız.',
+   choices:[AYRIL]},
+  'ad':{text:'Leş nerede, ben oradayım. Utanılacak bir yanı yok; leş de birinin yemeğidir. Çakal’ın adını sorma, cevap vermez. Zaten hiçbir şeye vermez.',
+   choices:[{label:'Ona neden çalışıyorsun?',to:'2'},AYRIL]},
+ },
+ rauf:{
   '1':{text:'Sen de mi geldin? Hep gelirler. Bakma bacağıma, yürüyebiliyorum. Yürüyebiliyordum. Ne istiyorsun benden?',
    choices:[{label:'Neden buradasın?',to:'2'},{label:'Alf seni arıyor.',to:'alf1'},AYRIL]},
   '2':{text:'Kaçtım. Söylemesi kolay. Birlikteydim, nöbetteydim, sonra bir sabah yürüdüm ve durmadım. Sebebini sorarsan gülersin.',
@@ -236,7 +301,13 @@ export const STORY:Record<string,Record<string,StoryNode>>={ rauf:{
 
  mira:{
   '1':{text:'Hikâyem mi? Ben bu sığınağın ilk gecesini gördüm. Yukarıda gökyüzü kül rengine döndüğünde, buraya yetmiş kişi indik. Şimdi on dokuzuz.',
-   choices:[{label:'Ne oldu yukarıda?',to:'2'},{label:'Diğerlerine ne oldu?',to:'3'},AYRIL]},
+   choices:[{label:'Ne oldu yukarıda?',to:'2'},{label:'Diğerlerine ne oldu?',to:'3'},
+    {label:'Yukarıda kileri dolu bir adam var.',to:'obruk',if:s=>!!s.flags.talkObruk},AYRIL]},
+  // Obruk'la konusulduysa acilir: sifaci ona GITTI ve fiyat duydu.
+  'obruk':{text:'Obruk. …Adını duymak bile yoruyor. İki kış önce gittim; kapısında iki adam vardı, girmeme izin verdiler, çıkmama da. Hastalar için un istedim, o fiyat söyledi. O fiyatı ödeyecek altınım olsaydı hastalarım zaten ayakta olurdu.',
+   choices:[{label:'Onu ikna edebilirim.',to:'obruk2'},{label:'Diğerlerine ne oldu?',to:'3'},AYRIL]},
+  'obruk2':{text:'Deneme. Yalvaran insanın karşısında kendini büyük hissediyor; ona o tadı verme. …Ama bir gün adamları onu bırakırsa kapısı kendiliğinden açılır. O günü beklemeye ilaç demek doğru mu, bilmiyorum. Ben yine de bekliyorum.',
+   choices:[AYRIL]},
   '2':{text:'Kimse tam olarak bilmiyor. Bir sabah ufuk turuncuydu, öğlene kadar kararmıştı. Kül yağmaya başladı ve durmadı. Kuyular kurudu, hayvanlar öldü. Biz aşağı indik çünkü başka yer kalmamıştı.',
    choices:[{label:'Kül nereden geliyor?',to:'4'},{label:'Diğerlerine ne oldu?',to:'3'},AYRIL]},
   '3':{text:'Kimi hastalıktan. Kimi yukarı çıkmak istedi ve dönmedi. Kimi de… sarnıçta bir şey var. İnenlerin hepsi geri gelmedi. Ben artık kimseyi göndermiyorum, kendim gidemediğim için de burada bekliyorum.',
@@ -266,7 +337,10 @@ export const STORY:Record<string,Record<string,StoryNode>>={ rauf:{
  },
  boran:{
   '1':{text:'Anlatacak ne var? Kılıç taşıdım, insanlar öldü, ben ölmedim. Muhafızdım. Sonra koruyacak bir şey kalmadı, ben de burada kaldım.',
-   choices:[{label:'Rauf’u kendin arasana.',to:'yemin'},{label:'Neyi koruyordun?',to:'2'},{label:'Neden bu kadar yorgunsun?',to:'3'},AYRIL]},
+   choices:[{label:'Rauf’u kendin arasana.',to:'yemin'},{label:'Neyi koruyordun?',to:'2'},{label:'Neden bu kadar yorgunsun?',to:'3'},
+    {label:'Obruk’un iki silahlı adamı var.',to:'obruk',if:s=>!!s.flags.talkObruk},AYRIL]},
+  'obruk':{text:'Biliyorum. İki adamı var. Ben kapıda tek başımayım, onun sofrasında iki mızrak duruyor. Eskiden buna düzensizlik derdim; şimdi düzen bu. Uzun olanı tanırım — savaşta vasat askerdir, kıtlıkta iyidir. Bana kalsa ikisini de alırdım. Ama ben et veremiyorum, yemin veriyorum; yemin karın doyurmuyor.',
+   choices:[{label:'Neyi koruyordun?',to:'2'},AYRIL]},
   '2':{text:'Kül Ocağı’nı. Aşağıda, sarnıcın da altında. Orada bir şey yanıyor ve yüzyıllardır yanıyor. Bizim işimiz kimsenin içeri girmemesiydi. Kimsenin çıkmaması olduğunu sonra anladık.',
    choices:[{label:'Ne çıktı oradan?',to:'4'},{label:'Neden bu kadar yorgunsun?',to:'3'},AYRIL]},
   '3':{text:'Çünkü on bir yıl nöbet tuttum ve on birinci yılda kapıyı ben açtım. Emirdi. Emri veren adam artık yok, ben varım. Uykuda bile ayaktayım sanki.',
@@ -450,6 +524,26 @@ export function dialogue(s:State,id:string):Dialogue{
  if(id==='raufCeset')return {who:'Rauf',role:'Kül Ovası’nda',portrait:5,
   text:s.flags.kurdeleAlindi?'Bileği boş. Kül üstünü örtmeye başladı bile.':'Alf temiz iş çıkarmış. Bileğinde kurdele hâlâ duruyor; yanında küle parmakla yazılmış bir isim var, yarısı savrulmuş. Kızının olmalı.',
   choices:[...(!s.flags.kurdeleAlindi?[{label:'Kurdeleyi al.',action:'ceset_kurdele',note:'Kırmızı kurdele'}]:[]),close]};
+ /* Obruk ve iki parali askeri. Yeri SIMDILIK Sarnic Agzi: kendi odasi
+  *  uretilince oraya tasinacak (bkz. world.ts magara bolumu). */
+ if(id==='obruk'){
+  const bey=s.flags.obrukSaygi==='bey';
+  return {who:'Obruk',role:bey?'Kendi kapısının beyi':'Kileri dolu adam',portrait:10,
+   text:s.flags.obrukSir==='soylendi'?'Sen… sen bana o sayıyı söyledin. O gün bugündür geceleri sayıyorum. Yüzünü görünce yine sayıyorum. Al malını, git.'
+    :s.flags.obrukSir==='sakladin'?'Yine sen. Sormadığın bir şey vardı, sormadan gittin. Öyle adamları severim; ucuza gelmezler ama uyutmazlar da.'
+    :s.flags.talkObruk?'Yine sen. Bir şey alacak mısın, yoksa hava mı alıyorsun? Burada hava da bedava değil; kokusu etten geliyor.'
+    :'Kapıda dikilme. …Konuşacaksan konuş, alacaksan al. İkisi aynı fiyat değil.',
+   choices:[{label:'Konuşalım.',action:'story:obruk:1'},
+    ...(s.flags.obrukDepo==='biliyorum'&&!s.flags.obrukSir?[{label:'Adamın kileri sayıyor.',action:'story:obruk:ihbar',note:'Karar · Karga’nın sırrı'}]:[]),
+    {label:'Malına bakayım.',action:'shop:obruk',note:bey?'Beye yakışır fiyat':'Fiyatlar iki buçuk kat'},close]};}
+ if(id==='karga')return {who:'Karga',role:'Obruk’un adamı',portrait:11,
+  text:s.flags.obrukSir==='soylendi'?'Bey bu hafta kilere iki kez indi. İki kez. …Sen bir şey söyledin, değil mi? Söyleme, bilmek istemiyorum. Bilirsem bir şey yapmam gerekir.'
+   :s.flags.obrukDepo==='biliyorum'?'Sayıyı biliyorsun. Ağzını da benim gibi kapalı tut, ikimiz de kışı görelim.'
+   :'Yaklaşma demedim. Ama durdurmadım da. Aradaki farkı bilen adam uzun yaşar.',
+  choices:[{label:'Konuşalım.',action:'story:karga:1'},close]};
+ if(id==='cakal')return {who:'Çakal',role:'Obruk’un adamı',portrait:12,
+  text:s.flags.obrukDepo==='biliyorum'?'…Karga çok konuşuyor.':'Ben konuşmam. Karga konuşur. İkimize bir ağız yeter.',
+  choices:[close]};
  if(id==='mira')return {who:'Mirna',role:'Sığınağın şifacısı',portrait:3,text:(s.flags.medicineDone?(s.flags.medicine==='rauf'?'Bir hayat kurtardın. Buradakiler için başka bir yol bulacağız. Yaralarını sarayım.':'İlaç işe yaradı. Bu gece kimseyi kaybetmedik. Dinlen; yaralarını sarayım.'):s.flags.medicine==='rauf'?'Ellerin boş… ama yüzünde söylemek istediğin bir şey var.':s.inventory.medicine?'Buldun! Bir şişenin bu kadar ağır bir umut taşıyacağını düşünmezdim.':'Aşağıdaki sarnıçta bir doz ilaç kaldı. Burada ateşler içinde yatanlar var. Onu bana getirir misin?'),choices:[{label:'Bana hikâyeni anlat.',action:'story:mira:1'},...(!s.flags.medicineStarted?[{label:'İlacı bulacağım.',action:'mira_start',note:'Görev · Bir doz umut'}]:[]),...(s.inventory.medicine?[{label:'İlaç senin. Hastaları iyileştir.',action:'mira_deliver',note:'+35 altın · Mirna’nın güveni'}]:[]),...(s.flags.medicine==='rauf'&&!s.flags.medicineDone?[{label:'İlacı yaralı birine verdim. Onu bırakamadım.',action:'mira_confess',note:'Kararını Mirna’ya anlat'}]:[]),{label:'Dinlen ve yaralarını sar.',action:'rest',note:'Canın tamamen yenilenir'},close]};
  if(id==='boran')return {who:'Alf',role:s.flags.alfSir==='soylendi'?'Eski kapı muhafızı':'Kapı muhafızı',portrait:2,text:s.flags.alfSir==='soylendi'?'Yeminim bir yalanın üstüne kuruluymuş. Demek ki artık bu kapıdan geçebilirim. Nereye gideceğimi bilmiyorum ama gidebilirim.':s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Defter geri döndü, adam dönmedi. Onu gördüğünü biliyorum. Bir gün bana bunu neden yaptığını anlatırsın.':'Rauf’u getirdin. Gerisi benimle onun arasında. Sana borçluyum — ama teşekkür edemem.'):s.inventory.ledger?'Defteri tanıdım. Peki adam? Rauf nerede?':'Birliğimden bir adam kaçtı. Rauf. Aşağıda, sarnıcın doğusunda bir yerde. Nöbet defterimi de aldı — birliğin yeminleri onda yazılı; onun adı da, üstü çizili. Çizen bendim. Onu bul ve bana getir. Defteri de. Ben gidemem; sebebini sorarsan anlatırım.',choices:[{label:'Bana hikâyeni anlat.',action:'story:boran:1'},
   ...(s.inventory.kurdele?[{label:'Rauf’un bileğindeki kurdele. Kızınınmış.',action:'alf_kurdele',note:'Kurdeleyi Alf’e ver'}]:[]),
@@ -460,7 +554,7 @@ export function dialogue(s:State,id:string):Dialogue{
  if(id==='rauf')return {who:'Rauf',role:'Yaralı kaçak',portrait:5,text:s.flags.fugitive==='reported'?'Teslim olacağım. Defteri de götür; adımın altına ne yazdıysa bir de yüzüme okusun.':s.flags.medicine==='rauf'?'Nefes almak artık acıtmıyor. Bunu unutmayacağım. Batıdaki kol, ocağa giden kapıyı açar.': 'Alf’in nöbet defteri bende. Adım içinde, üstü çizili — ben çizmedim, o çizdi. Ocak kapısını açık bulunca içeri girdim; bacağım burada bitti. Alf beni dinlemez. Bana yardım eder misin?',choices:[{label:'Bana hikâyeni anlat.',action:'story:rauf:1'},...(s.inventory.medicine&&s.flags.fugitive!=='reported'?[{label:'Bu ilacı al. Yaşaman gerek.',action:'rauf_heal',note:'Son ilacı harca · Mirna’ya götüremeyeceksin'}]:[]),close]};
  return {who:'Eski mühür',role:'Kül Ocağı',portrait:1,text:'Kalp hâlâ atıyor. Onu Undur’a götürmelisin.',choices:[close]};
 }
-export function choose(s:State,action:string):{message:string;special?:'close'|'shop'|'ending';leveled?:boolean}{
+export function choose(s:State,action:string):{message:string;special?:'close'|'shop'|'ending';leveled?:boolean;satici?:string}{
  // Hikaye dugumleri: story:<npc>:<dugum>
  if(action.startsWith('story:')&&action!=='story:bitir'){
   const dugum=action.slice(6);
@@ -470,6 +564,21 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
   // agacindaki "Burada kal / Benimle geleceksin". Oyuncu ayni karari iki kez
   // veriyor, ustelik birbiriyle celisebiliyordu. Ana diyalogdaki cift
   // kaldirildi; defter de karar anında geliyor.
+  // Obruk'a "bey" demek kalici bir indirim acar: kibri satin alinabilir.
+  if(dugum==='obruk:bey'){s.flags.obrukSaygi='bey';s.flags.talk=dugum;s.flags.talkObruk=true;
+   return {message:'Obruk’un yüzü yumuşadı. Fiyatları senin için biraz indi.'};}
+  if(dugum==='obruk:obruk'){s.flags.obrukSaygi='obruk';s.flags.talk=dugum;s.flags.talkObruk=true;
+   return {message:''};}
+  if(dugum==='karga:3'){s.flags.obrukDepo='biliyorum';s.flags.talk=dugum;
+   s.journal.unshift('Karga kileri sayıyor: yirmi bir hafta. Obruk bunu bilmiyor.');
+   return {message:'Kilerin ne kadar dayanacağını öğrendin.'};}
+  if(dugum==='obruk:ihbarSoyle'){s.flags.obrukSir='soylendi';s.flags.talk=dugum;s.gold+=30;
+   s.journal.unshift('Obruk’a kilerin sayıldığını söyledin. Susman için 30 altın verdi.');
+   return {message:'Obruk 30 altın verdi. Eli titriyordu.'};}
+  if(dugum==='obruk:ihbarSakla'){s.flags.obrukSir='sakladin';s.flags.talk=dugum;
+   s.journal.unshift('Karga’nın saydığını Obruk’tan sakladın.');
+   return {message:''};}
+  if(dugum==='obruk:1'){s.flags.talkObruk=true;s.flags.talk=dugum;return {message:''};}
   if(dugum==='rauf:kal'){s.flags.rauf='korundu';s.flags.talk=dugum;
    s.flags.fugitive='protected';s.flags.ledgerStarted=true;addItem(s,'ledger');
    return {message:'Rauf’u korudun. Defteri sana verdi; Alf’e adını söylemeyeceksin.'};}
@@ -556,6 +665,8 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
  case 'close':return {message:'',special:'close'};
  case 'story:bitir':s.flags.talk='';return {message:''};
  case 'shop':return {message:'',special:'shop'};
+  // shop:<satici> - hangi kisinin tezgahi acilacak. Sade 'shop' Alf demek.
+  case 'shop:obruk':return {message:'',special:'shop',satici:'obruk'};
  case 'rest':s.hp=stats(s).maxHp;message='Dinlendin. Canın tamamen yenilendi.';break;
  case 'mira_start':if(s.flags.medicineStarted)return {message:''};s.flags.medicineStarted=true;message='Yeni görev: Bir doz umut.';break;
  case 'boran_start':if(s.flags.ledgerStarted)return {message:''};s.flags.ledgerStarted=true;message='Yeni görev: Defterdeki isim.';break;

@@ -1,5 +1,5 @@
 import type {ItemId,Zone} from './data';
-export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number};
+export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
 export type EnemySpec={id:string;kind:1|2|4|5|6|7;x:number;y:number;boss?:boolean};
@@ -128,6 +128,13 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // Ucurumun basinda duran adam. Atladiysa bir daha yok.
   // Atladiysa yok; indiyse siginakta, Lin'in atesinin basinda.
   if(!flags?.tuhn)at({id:'tuhn',type:'npc',x:20,y:15,name:'Tuhn',portrait:6});
+  /* Obruk ve iki parali askeri. YER GECICI: adamin kendi odasi uretilince
+     oraya tasinacak. Simdilik Sarnic Agzi'nin bati duvari - siginakla sarnic
+     arasindaki tek yol buradan geciyor, yani gecen herkes onunden geciyor.
+     Karga ve Cakal onu ARADA tutacak sekilde duruyor. */
+  at({id:'obruk',type:'npc',x:6,y:13,name:'Obruk',portrait:10,s:1.25,sabit:true});
+  at({id:'karga',type:'npc',x:5,y:10,name:'Karga',portrait:11,sabit:true});
+  at({id:'cakal',type:'npc',x:5,y:16,name:'Çakal',portrait:12,sabit:true});
  }else if(zone==='cistern'){
   // Unutulmus Sarnic artik karo zindan degil, tek parca boyali magara (54x30).
   // Carpisma uzerine YESIL boyanmis maskeden okundu; bu sayfada yesil magaranin
