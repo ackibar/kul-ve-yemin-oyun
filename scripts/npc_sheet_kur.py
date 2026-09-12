@@ -62,7 +62,7 @@ def kur(ad, slot):
                 sh.paste(f, (i * CELL, 0))
             sh.save(f'{hedef}/{g}_{isim}.png')
     print(f'  characters/{slot} <- {ad} (yurume {"var" if anim else "YOK"})')
-    aktor_uyum.klasor(hedef)   # yeni kadro daima sahnenin tonuna oturtulur
+    aktor_uyum.klasor(hedef, ham_yenile=True)   # yeni kadro daima sahnenin tonuna oturtulur
 
 
 if __name__ == '__main__':

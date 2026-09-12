@@ -90,22 +90,29 @@ def _derece(ham_kok):
     return n
 
 
-def klasor(yol):
+def klasor(yol, ham_yenile=False):
     """Tek bir aktor klasorunu dereceler. Yeni kurulan karakter icin bu cagrilir.
 
     Klasor pristine yedekte yoksa ONCE oraya alinir: public/assets'teki kopya o
     anda hala ham oldugu icin dogru kaynak odur. Zaten varsa yedege dokunulmaz,
     derece yine ham halden uretilir - tekrar cagirmak guvenlidir.
+
+    ham_yenile=True: cagiran az once public/assets'e YENI ham sheet yazdi, yani
+    yedekteki kopya artik eskimis. Bu bayrak olmadan derece eski yedekten
+    uretilip yeni sanati sessizce geri aliyordu - orumcek yenilendiginde tam
+    olarak bu oldu. Sanat ureten her kurulum script'i bunu True gecmeli.
     """
     yol = os.path.abspath(yol)
     ilgi = os.path.relpath(yol, HEDEF)
     ham = os.path.join(KAYNAK, ilgi)
     yeni = not os.path.isdir(ham)
-    if yeni:
+    if yeni or ham_yenile:
+        shutil.rmtree(ham, ignore_errors=True)
         os.makedirs(os.path.dirname(ham), exist_ok=True)
         shutil.copytree(yol, ham)
     n = _derece(ham)
-    print(f'  ton uyumu: {ilgi} ({n} sheet{", ham yedege alindi" if yeni else ""})')
+    not_ = ', ham yedege alindi' if yeni else (', ham yedek yenilendi' if ham_yenile else '')
+    print(f'  ton uyumu: {ilgi} ({n} sheet{not_})')
 
 
 def main():

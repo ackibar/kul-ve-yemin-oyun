@@ -68,7 +68,7 @@ def kur(ad, slot):
         sayfa([otur(durus)], f'{hedef}/{y}_Idle.png')
         sayfa([otur(durus, (0, 3), .9)], f'{hedef}/{y}_Death.png')
     print(f'  enemies/{slot:<2} <- {ad}')
-    aktor_uyum.klasor(hedef)   # yeni kadro daima sahnenin tonuna oturtulur
+    aktor_uyum.klasor(hedef, ham_yenile=True)   # yeni kadro daima sahnenin tonuna oturtulur
 
 
 if __name__ == '__main__':

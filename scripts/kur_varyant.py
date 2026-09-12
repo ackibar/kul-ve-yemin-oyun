@@ -76,7 +76,7 @@ def build(src_dir, out_dir):
                 sh.paste(f, (i * CELL, 0))
             sh.save(f'{out_dir}/{g}_{action}.png')
             log.append((f'{g}_{action}', tag))
-    aktor_uyum.klasor(out_dir)   # yeni kadro daima sahnenin tonuna oturtulur
+    aktor_uyum.klasor(out_dir, ham_yenile=True)   # yeni kadro daima sahnenin tonuna oturtulur
     return log
 
 

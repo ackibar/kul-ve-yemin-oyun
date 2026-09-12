@@ -1,6 +1,8 @@
 import type {ItemId,Zone} from './data';
 export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number};
-export type EnemySpec={id:string;kind:1|2|3|4|5|6;x:number;y:number;boss?:boolean};
+// kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
+// cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
+export type EnemySpec={id:string;kind:1|2|4|5|6;x:number;y:number;boss?:boolean};
 export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[];enemies:EnemySpec[];spawn:[number,number];blockers:[number,number,number,number][];
  /** Uzerine BASINCA bolge degistiren kutular (karo birimi, x2/y2 haric).
   *  Kapi nesnesine basmak yerine tunelden yuruyerek gecmek icin. */
@@ -39,7 +41,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  };
  const decor=(id:string,x:number,y:number,asset:string,name?:string)=>at({id,type:'decor',x,y,asset,name:name||(asset.includes('Table')?'Zanaat Masası':undefined)});
  const chest=(id:string,x:number,y:number,items:[ItemId,number][],gold=0)=>at({id,type:'chest',x,y,items,gold,name:'Sandık'});
- const enemy=(id:string,kind:1|2|3|4|5|6,x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
+ const enemy=(id:string,kind:1|2|4|5|6,x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
  if(zone==='haven'){
   // Zemin ve carpisma ARTIK ELLE YAZILMIYOR: yeni mekan tek sahne gorseli +
   // ayri prop sayfasi olarak geldi, ikisi de scripts/mekan_kur.py ile islendi.
@@ -149,7 +151,8 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   chest('forgeWest',7,39,[['ash',1],['potion',3]],25);chest('forgeCenter',22,20,[['ember',1],['bow',1],['tonic',2]],20);chest('forgeEast',38,39,[['life',1],['potion',3]],30);
   for(const [x,y] of [[3,3],[14,3],[25,3],[41,3],[4,29],[16,29],[28,27],[41,27],[17,18]])fire(x,y);
   for(const [x,y] of [[9,17],[10,26],[21,8],[35,18],[22,35],[31,31]])at({id:`ftrap${x}_${y}`,type:'trap',x,y});
-  enemy('f1',3,11,11);enemy('f2',2,21,9);enemy('f3',4,9,33);enemy('f4',2,12,38);enemy('f5',3,21,24);enemy('f6',4,31,35);enemy('f7',2,38,33);enemy('f8',3,35,23);enemy('f9',2,28,12);enemy('fbat1',5,18,20);enemy('warden',4,34,10,true);
+  // Ocaktaki solucanlar yarasa ve fareyle degistirildi (kind 3 kaldirildi).
+  enemy('f1',5,11,11);enemy('f2',2,21,9);enemy('f3',4,9,33);enemy('f4',2,12,38);enemy('f5',1,21,24);enemy('f6',4,31,35);enemy('f7',2,38,33);enemy('f8',5,35,23);enemy('f9',2,28,12);enemy('fbat1',5,18,20);enemy('warden',4,34,10,true);
   decor('fbox',5,12,'Boxes/2.png');decor('fshelf',5,31,'Bookshelf/2.png');decor('ftable',30,40,'Tables/1.png','Zanaat Masası');
  }
  return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,spawn:zone==='haven'?[15*16,14*16]:[7*16,7*16]};

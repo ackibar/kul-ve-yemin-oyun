@@ -44,9 +44,11 @@ OYUNCU_EN, NPC_EN = 80, 64
 #         durus uretilecek yonler; None = hepsi)
 # PixelLab karakter id'si: silahsiz set taban karakterin kendisi.
 ID_DOSYA = {'kilic': 'pixellab/gezgin/id_kilic.txt',
+            'kullenmis': 'pixellab/id_kullenmis.txt',
             'yay': 'pixellab/gezgin/id_yay.txt',
             'yumruk': 'pixellab/gezgin/id.txt',
-            'rauf': 'pixellab/id_rauf.txt'}
+            'rauf': 'pixellab/id_rauf.txt',
+            'rauf6': 'pixellab/id_rauf.txt'}
 
 SETLER = {
     # Kilicli sette ana yonlerin Idle/Hurt/Death'i zaten var ve calisiyor;
@@ -54,10 +56,18 @@ SETLER = {
     'kilic': ('characters/1sword', 'characters/1sword', OYUNCU_EN,
               {'Idle': 4, 'Hurt': 2, 'Death': 8}, ['south-east', 'north-east']),
     'rauf':  ('characters/5',      'characters/5',      NPC_EN, {}, None),
+    # Rauf hem NPC (characters/5) hem dusman (enemies/6) olarak ayni sanati
+    # kullaniyor; ayni ham karelerden ikinci slot da kurulur.
+    'rauf6': ('enemies/6',         'enemies/6',         NPC_EN, {}, None),
     # Silahsiz set. Ana yonlerin Idle/Hurt/Death'i eski boru hattindan zaten
     # var ve calisiyor; yalnizca yeni caprazlar icin uretilir.
     'yumruk': ('characters/1', 'characters/1', OYUNCU_EN,
                {'Idle': 4, 'Hurt': 2, 'Death': 8}, ['south-east', 'north-east']),
+    # Insansi dusmanlar. Motor bunlardan Walk/Attack/Hurt ciziyor; capraz
+    # yonlerin Hurt'u uretilmedi (0.17 sn goruntuleniyor, dusmanPoz ana yone
+    # dusuyor). Idle/Death hic cizilmiyor ama eksik gorsel uyarisi cikmasin
+    # diye ana yonlerde zaten var.
+    'kullenmis': ('enemies/4', 'enemies/4', NPC_EN, {}, None),
     'yay':   ('characters/1bow',   'characters/1sword', OYUNCU_EN,
               {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),
 }
@@ -197,7 +207,8 @@ def donus_kareleri(cid, kl):
 
 def kur(setad):
     slot, ref_slot, en, durus_isleri, durus_yonler = SETLER[setad]
-    kaynak = f'{ROOT}/pixellab/v3/{setad}'
+    # rauf6 kendi uretimini yapmaz, rauf'un ham karelerini kullanir.
+    kaynak = f'{ROOT}/pixellab/v3/{"rauf" if setad == "rauf6" else setad}'
     ham_kl = f'{HAM}/{slot}'
     os.makedirs(ham_kl, exist_ok=True)
     if not os.path.isdir(f'{ROOT}/public/assets/{slot}'):
