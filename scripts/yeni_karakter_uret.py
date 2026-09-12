@@ -15,9 +15,15 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Sahneye oturtmak ton uyumunun isi, uretimin degil: aktor_uyum doygunlugu
 # yalnizca %10-22 kirpiyor, yani kaynak RENKLI gelmeli. Her karakterin
 # kiyafet renkleri tek tek yazilir; kul/is/gri kelimeleri tarife GIRMEZ.
+# MODERN KIYAFET: "NO modern clothing" yazmak yetmiyor, tarifteki kelime
+# belirleyici - "city coat" deyince model yakali dugmeli bir palto cizdi.
+# Giysiler donem dili ile adlandirilmali: tunik, cuppe, dokuma sal, sargi.
 ORTAK = ('single dark outline, basic shading, no background, human, '
+         'rough hand-woven pre-industrial clothing, '
          'NO backpack, NO bag, NO satchel, NO bedroll, NO pouches, '
-         'NO straps or belts across the chest, NO modern clothing')
+         'NO straps or belts across the chest, '
+         'NO modern clothing, NO lapels, NO collars with buttons, NO zippers, '
+         'NO jeans, NO sneakers, NO suit jacket')
 # Kafa orani: ilk turda Lin ve Uslu'nun kafasi govdeye gore cok buyuk cikti
 # (kullanici: "anime kizi gibi"). Mannequin sablonu kucuk figurlerde kafayi
 # buyutuyor; oran acikca yazilmali.
@@ -35,30 +41,38 @@ KISI = {
              'in a tight messy braid, a smudge of dirt on one cheek, holding a short charred '
              'stick like a tally marker, stubborn set jaw, standing very straight'
              + ORAN + ', ' + ORTAK, 161),
-    'ayaz': ('a thin fourteen year old boy, too-large hand-me-down coat with frayed '
-             'cuffs hanging past his hands, cloth wrapped around his shins, tousled '
-             'hair, hollow tired eyes, a dented metal canteen hanging from his belt, '
-             'shoulders hunched from waiting, ' + ORTAK, 43),
-    # Uslu: kulun icinden donen deli. Herkes cok ciddi; o degil. Dolasir,
-    # o yuzden yurume sablonu da gerekiyor (2 + 3 = 5 uretim).
-    # 2. tur: ilki "orman kackini" gibi cikti (kulaginda kuru bitki, kabarik sac
-    # kutlesi kafayi buyutuyordu). Bu sefer SIGINAK delisi: sac dagnik ama yatik,
-    # kiyafet sokak kiyafeti, bitki yok.
-    # 3. tur: iki kolu iki yana acik duruş karikaturlestiriyordu. Artik sakin
-    # duruyor, tek eli yaninda kucuk bir SELAM veriyor; tuhafligi durusunda
-    # degil yuzunde kalsin.
-    'uslu4': ('a scrawny man in his forties, gaunt narrow face with sunken cheeks and '
+    # 3. tur. KONTROLLU DENEY (seed 251): tarifi yalin govde + duz tunige
+    # indirince sirt TERTEMIZ geldi. Yani cantayi "NO backpack" demeyi unutmak
+    # degil, GEZGIN cagristiran ayrintilar getiriyor: boyna dolanmis ATKI
+    # (arkadan bohca gibi okunuyor), "cloth WRAPPED around the shins",
+    # "hand-me-down / frayed", "worn boots" ve "HUNCHED shoulders" (yuk
+    # tasiyormus gibi). Bunlar cikarildi, karakterin kimligi baska yollarla
+    # verildi: fazla buyuk tunik, bos eller, dimdik durus.
+    'ayaz4': ('a thin fourteen year old boy standing straight in a too-large DARK TEAL BLUE '
+              'linen tunic whose sleeves hang past his hands, plain RUST BROWN trousers, '
+              'barefoot, short tousled dark hair, hollow tired eyes, empty hands hanging at '
+              'his sides' + ORAN + ', ' + ORTAK, 261),
+    # Elvi'nin ilk tarifi "battaniye katmanlarina SARINMIS" diyordu - cantayi
+    # dogrudan o cagiriyordu. Katmanlar gitti, yerine tek parca uzun cuppe.
+    'selvi4': ('a hard-faced woman in her late thirties standing straight in a long heavy '
+               'DEEP PLUM PURPLE wool robe over a MOSS GREEN under-dress, a high closed '
+               'collar, weathered wind-burned face, cracked lips, arms folded across her '
+               'chest, unmoving' + ORAN + ', ' + ORTAK, 271),
+    'uslu5': ('a scrawny man in his forties, gaunt narrow face with sunken cheeks and '
               'restless wide eyes, a crooked half-smile, unkempt greasy dark hair in flat '
-              'tangled strands close to the skull, wearing a worn OLIVE GREEN long city coat '
-              'over a faded MUSTARD YELLOW shirt and dark brown trousers, bare feet, standing '
-              'calmly upright with one hand raised beside his shoulder in a small friendly '
-              'greeting wave and the other arm hanging loose at his side; NO leaves, NO '
-              'plants, NO twigs, NOT a forest hermit, NOT a druid, arms are NOT flung out wide'
-              + ORAN + ', ' + ORTAK, 203),
-    'selvi': ('a hard-faced woman in her late thirties, wrapped in many mismatched '
-              'layers of cloth and blankets against cold, a scarf covering her neck, '
-              'weathered wind-burned face, cracked lips, arms folded tight, standing '
-              'guard-like and unmoving, one muted rust-red rag among the grey, ' + ORTAK, 47),
+              'tangled strands close to the skull, wearing a long patched coarse wool tunic '
+              'in faded OLIVE GREEN that reaches below the knees, tied at the waist with a '
+              'frayed rope belt, a MUSTARD YELLOW undershirt showing at the collar, one '
+              'sleeve torn away, strips of cloth wrapped around his shins, bare feet, '
+              'standing calmly upright with one hand raised beside his shoulder in a small '
+              'friendly greeting wave and the other arm hanging loose; NO leaves, NO plants, '
+              'NO twigs, NOT a forest hermit, NOT a druid, arms are NOT flung out wide'
+              + ORAN + ', ' + ORTAK, 233),
+    'selvi2': ('a hard-faced woman in her late thirties, wearing a heavy DEEP PLUM PURPLE '
+               'wool coat over a MOSS GREEN dress, a thick cream-coloured scarf wrapped '
+               'around her neck, weathered wind-burned face, cracked lips, arms folded tight '
+               'across her chest, standing guard-like and unmoving, her back is completely '
+               'EMPTY and she carries nothing on it' + ORAN + ', ' + ORTAK, 221),
 }
 
 
