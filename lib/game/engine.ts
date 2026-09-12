@@ -129,7 +129,7 @@ export class Engine{
  private img(key:string,path:string){const im=new Image();im.src=path;this.images[key]=im;return new Promise<void>((resolve,reject)=>{im.onload=()=>resolve();im.onerror=()=>reject(new Error(path));})}
   private async loadAssets(){const jobs:Promise<void>[]=[];const optional:boolean[]=[];/** optional[i] === true olan isler ISTEGE BAGLI: eksikligi oyunu kirmaz.
   *  Karakter dongusu disindaki tum isler zorunlu sayilir. */
- const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);jobs.push(this.img('ceset','/assets/characters/5/D_Corpse.png'));optional.push(true);jobs.push(this.img('kral_ceset','/assets/characters/13/D_Corpse.png'));optional.push(true);jobs.push(this.img('characters13DTac','/assets/characters/13/D_Tac.png'));optional.push(true);mark(false);/* YALNIZCA CIZILEN sheet'ler yukleniyor. Olculdu: NPC'lerde sprite cagrisi tek
+ const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);jobs.push(this.img('ceset','/assets/characters/5/D_Corpse.png'));optional.push(true);jobs.push(this.img('kral_ceset','/assets/characters/13/D_Corpse.png'));optional.push(true);jobs.push(this.img('characters13DTac','/assets/characters/13/D_Tac.png'));optional.push(true);jobs.push(this.img('characters13DEl','/assets/characters/13/D_El.png'));optional.push(true);mark(false);/* YALNIZCA CIZILEN sheet'ler yukleniyor. Olculdu: NPC'lerde sprite cagrisi tek
    yerde ve sadece Idle/Walk uretiyor; dusmanlarda eylem yalnizca Walk/Attack/
    Hurt olabiliyor (Idle/Death hic cizilmiyor). Once hepsi yukleniyordu: 180
    gereksiz istek. Yeni bir cizim yolu eklenirse bu listeler genisletilir. */
@@ -401,8 +401,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Kralin tac hareketi: her KRAL_DONGU saniyede bir oynar (Tac sayfasinin
   *  suresi kadar), aradaki zaman bas sallama (Idle). */
  static readonly KRAL_DONGU=26;
+ /** Kral oturdugu icin hareketi goze batiyor: iki kucuk hareket arasinda bu
+  *  kadar saniye HAREKETSIZ durur, bas sallama ile el hareketi donusumlu gelir. */
+ static readonly KRAL_SALLA=9;
  /** Kralin kare hizi: 5 fps'te hareketleri seyirtiyordu. */
- static readonly KRAL_FPS=4;
+ static readonly KRAL_FPS=7;
+ /** Ilgili sayfanin kare sayisi (yuklenmediyse 0). */
+ private kareSay(k:string){const im=this.images[k];return im?.naturalWidth?Math.floor(im.naturalWidth/128):0;}
  /** Mekan basina karanlik (0 = mevcut duz tint, 1 = zifiri). Kullanici mevcut
   *  mekanlarin havasini begendi: hepsi 0, yani isik katmani hic devreye girmiyor
   *  ve mekanlar eski haliyle duruyor. Sarnic Agzi .82 ile denendi, deneme
@@ -897,12 +902,21 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      this.sprite('rauf_kneel',e.x,e.y,ilerleme,32,32,false,OYUNCU_OLCEK);
      const nw0=this.label(e.name||'',e.x,e.y-30);void nw0;return;}
     /* Kral oturuyor: yurumez, arada bir taci cikarip geri takar. */
-    if(e.id==='kral'){const tac=this.images['characters13DTac'];const n=tac?.naturalWidth?Math.floor(tac.naturalWidth/128):0;
-     const t=time%Engine.KRAL_DONGU,sure=n/Engine.KRAL_FPS;
+    if(e.id==='kral'){const F=Engine.KRAL_FPS;
+     /* Dongu: once tac (26 sn'de bir), sonra sirayla bas sallama / el hareketi,
+        aralarda HAREKETSIZ. Once bekleme sheet'e kare cogaltarak konuyordu ama
+        oturan figurde tekrar goze batiyor, sure kodda ayarlanabilir olmali. */
+     const nTac=this.kareSay('characters13DTac'),nIdle=this.kareSay('characters13DIdle'),nEl=this.kareSay('characters13DEl');
+     const t=time%Engine.KRAL_DONGU,tacSure=nTac/F;
+     let sayfa='characters13DIdle',kare=0;
+     if(nTac&&t<tacSure){sayfa='characters13DTac';kare=Math.floor(t*F);}
+     else{const u=t-tacSure,d=Math.floor(u/Engine.KRAL_SALLA),i=u%Engine.KRAL_SALLA;
+      /* Tek turlarda el, cift turlarda bas. */
+      const el=nEl>0&&d%2===1;sayfa=el?'characters13DEl':'characters13DIdle';
+      const n=el?nEl:nIdle;kare=i*F<n?Math.floor(i*F):0;}
      /* Kral 128'lik hucrede: fw/fh 64 verilir, boylece sanat pikseli digerleriyle
         AYNI yogunlukta cizilir (64*olcek/128 = 32*olcek/64) ama figur iki kat buyuk. */
-     if(n&&t<sure)this.sprite('characters13DTac',e.x,e.y,Math.floor(t*Engine.KRAL_FPS),64,64,false,OL,1,0,e.capa);
-     else this.sprite('characters13DIdle',e.x,e.y,Math.floor(time*Engine.KRAL_FPS),64,64,false,OL,1,0,e.capa);
+     this.sprite(sayfa,e.x,e.y,kare,64,64,false,OL,1,0,e.capa);
      /* Etiket 128'lik hucreye gore: 64'luk yukseklik (-30) figurun gogsunde kaliyordu. */const nwK=this.label(e.name||'',e.x,e.y-58*(e.s||1));void nwK;return;}
     const sy=this.sahneYuru.get(e.id);const g=this.gez.get(e.id);const yur=!!sy||(!!g&&g.bekle<=0&&Math.hypot(g.tx-e.x,g.ty-e.y)>1.5);const yd=sy?sy.dir:g?.dir??'D';const yf=sy?sy.flip:g?.flip??false;const yy=sy?sy.yol:(g?.yol||0);this.sprite(`characters${e.portrait}${yur?yd:'D'}${yur?'Walk':'Idle'}`,e.x,e.y,yur?Math.floor(yy/Engine.ADIM):Math.floor(time*5),32,32,yur&&yd==='S'&&yf,OL,1,0,e.capa);const pending=bekleyen(this.state,e.id);/* Unlem isimle AYNI yukseklikte olmali: isim olcekle (e.s) yukseliyordu,
    unlem sabit -30'daydi, kucuk karakterlerde (Lin s=0.8) kayik duruyordu. */const etiketY=e.y-30*(e.s||1);const nw=this.label(e.name||'',e.x,etiketY);if(pending)this.label('!',e.x-nw/2-5,etiketY,'#e0453a');}

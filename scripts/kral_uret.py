@@ -47,7 +47,9 @@ def uret():
 # (Engine.KRAL_FPS) ve taci ELINDEYKEN kareler cogaltilir - oyuncu onun taca
 # baktigi ani gorsun diye. Taci elde olan kareler ALTIN pikselin y'sinden
 # bulunur (baste ~12, kucaginda ~30).
-DURAK_IDLE = 8      # bas salladiktan sonra kac kare hareketsiz dursun
+# Bekleme artik SHEET'te degil motorda (Engine.KRAL_SALLA): kral oturdugu icin
+# tekrar goze batiyor, dinlenme suresi kodda ayarlanabilir olmali.
+DURAK_IDLE = 0
 DURAK_TAC = 5       # taca bakarken her kare kac kat uzasin
 
 
@@ -76,15 +78,13 @@ def kur():
     Idle = bas sallama, Tac = taci cikarip geri takma (motor arada bir oynatir).
     """
     kareler = {}
-    for ad, hedef_ad in (('idle', 'Idle'), ('tac', 'Tac')):
+    for ad, hedef_ad in (('idle', 'Idle'), ('el', 'El'), ('tac', 'Tac')):
         fs = sorted(glob.glob(f'{HAM}/anim_{ad}_*.png'))
         if not fs:
             print(f'  !! {ad} kareleri yok'); sys.exit(1)
         ks = [Image.open(f).convert('RGBA') for f in fs]
         if hedef_ad == 'Tac':
             ks = bekletme(ks)
-        else:
-            ks = ks + [ks[-1]] * DURAK_IDLE      # bas sallamadan sonra dinlenme
         kareler[hedef_ad] = ks
     hedef = f'{ROOT}/public/assets/characters/{SLOT}'
     os.makedirs(hedef, exist_ok=True)
@@ -104,8 +104,8 @@ def kur():
         tek.paste(kareler['Idle'][0], (0, 0))
         tek.save(f'{hedef}/{g}_Walk.png')
     aktor_uyum.klasor(hedef, ham_yenile=True)
-    print(f'  characters/{SLOT}: Idle {len(kareler["Idle"])} kare, Tac {len(kareler["Tac"])} kare; '
-          f'zemin satiri {zemin} -> world.ts KRAL_CAPA={zemin/2:g}')
+    print('  characters/%d: %s; zemin satiri %d -> world.ts KRAL_CAPA=%g'
+          % (SLOT, ', '.join(f'{k} {len(v)} kare' for k, v in kareler.items()), zemin, zemin / 2))
 
 
 if __name__ == '__main__':

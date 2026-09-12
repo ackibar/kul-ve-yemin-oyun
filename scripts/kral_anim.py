@@ -27,6 +27,12 @@ ISLER = {
     'idle': (6, 'sitting still on the chair, the head dips slowly forward once and lifts '
                 'back up, a small tired nod, the shoulders rise and fall slightly with '
                 'breathing, the hands stay resting on the knees'),
+    # Kral oturdugu icin ayni hareket surekli tekrarlaninca goze batiyor; bas
+    # sallamayla donusumlu oynasin diye ikinci bir kucuk hareket.
+    'el':   (8, 'sitting still, slowly lifts one hand off his knee a little, the fingers '
+                'open and close once as if reaching for something that is not there, then '
+                'the hand sinks back onto the knee; the head and the rest of the body barely '
+                'move'),
     'tac':  (14, 'raises both hands very slowly, lifts the iron crown off his head, holds '
                  'it low in front of his chest and looks down at it, then raises it back up '
                  'and sets it on his head again and lowers the hands to his lap; he stays '

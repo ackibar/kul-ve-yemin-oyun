@@ -176,8 +176,8 @@ Yaratıklarda alfa ağırlık merkezi. Referans, aynı yönün mevcut Idle kares
   görsel + metin): tarifte "the chair and the whole body stay in exactly the
   same place, nothing slides sideways" şart — ölçüldü, her karede taban satırı
   60'ta kaldı, o yüzden kareler bbox'a göre YENİDEN OTURTULMAZ (oturtulursa el
-  kalkınca gövde aşağı kayar). Kral: `D_Idle` baş sallama +
-  duraklama, `D_Tac` tacı çıkarıp takma; motor 26 sn'de bir Tac'ı **4 fps**
+  kalkınca gövde aşağı kayar). Kral: `D_Idle` baş sallama, `D_El` el
+  hareketi, `D_Tac` tacı çıkarıp takma; motor 26 sn'de bir Tac'ı **7 fps**
   ile oynatır (5 fps'te seyirtiyordu) ve taç elindeyken kareler kurulumda
   çoğaltılır (altın pikselin y'sinden bulunur) — duraklama sheet'te, kodda
   değil. Oturan figürde **önden bakış** şart: tarifte sandalyeyi ÖNCE ve
@@ -186,6 +186,13 @@ Yaratıklarda alfa ağırlık merkezi. Referans, aynı yönün mevcut Idle kares
   24 satırından kırpılır; figürü hücrenin tepesine oturt.
 - Düşman portresi gerekiyorsa `enemies/N/D_Idle.png` → `characters/M/`
   kopyala (son muhafız = 15).
+- **Renk vurgusunu açıkça iste.** Yalnız "muted ash-grey palette" yazınca
+  model hiç renk koymuyor: Lin doygunluk 0.025 ile tamamen gri çıktı
+  (Mirna 0.143). "a FADED EMBER-ORANGE shawl — the ONLY colour on her"
+  deyince 0.087'ye çıktı. Tek sıcak vurgu kuralı buradan geliyor.
+- **Duruş karikatürleştirebilir**: iki kolu iki yana açık Uslu çizgi film
+  gibiydi; "standing calmly, one hand raised beside the shoulder in a small
+  greeting wave" ile düzeldi. Tuhaflık duruşta değil yüzde kalsın.
 - **Kafa oranı**: mannequin şablonu küçük figürlerde kafayı büyütüyor (Lin
   "anime kızı" gibi çıkmıştı). `ORAN` sabitini ekle: "realistic body
   proportions with a SMALL head, the head is small compared to the shoulders,
@@ -301,4 +308,4 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 
 ---
 
-*Son güncelleme: 2026-09-12, v6.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v6.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
