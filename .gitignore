@@ -47,3 +47,4 @@ next-env.d.ts
 /asset_backup_original/
 /.openai/
 tsconfig.tsbuildinfo
+/asset_backup_ton_oncesi/
