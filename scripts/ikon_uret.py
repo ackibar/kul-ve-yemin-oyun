@@ -24,6 +24,22 @@ TARIF = {
     'yelek':  'a light hunter vest of dark leather with a quiver strap across it',
     'gozu':   'a plain iron ring set with a dull grey ash-coloured eye-shaped stone',
     'bileme': 'a rectangular grey whetstone with a worn leather grip band',
+    'mizrak':  'a long ash-grey spear with a narrow steel head and wrapped shaft',
+    'balta':   'a heavy two-handed splitting axe with a broad chipped blade',
+    'hancer':  'a slim dark dagger with a blackened blade and wrapped grip',
+    'topuz':   'a heavy iron flanged mace with a short thick handle',
+    'yemin':   'a straight knightly sword with a plain crossguard and a red cord tied to the grip',
+    'uzunyay': 'a tall wooden longbow, slim curved limbs, taut string',
+    'okates':  'a single arrow with a burning orange-tipped head',
+    'okdelici':'a single arrow with a long narrow armour-piercing steel head',
+    'okcengel':'a single arrow with a barbed hook head and a thin rope coiled at the shaft',
+    'pelerin': 'a hooded grey travelling cloak folded, ash dusted',
+    'ocakz':   'a heavy blackened plate cuirass with soot marks',
+    'kanm':    'a dark iron ring set with a deep red blood-coloured stone',
+    'yeminh':  'a plain pale silver ring with a thin engraved band, no stone',
+    'merhem':  'a small clay jar of pale salve with a linen bandage wrapped round it',
+    'kavanoz': 'a glass jar filled with glowing orange embers, cork stopper',
+    'toz':     'a small leather pouch spilling fine grey ash powder',
 }
 
 

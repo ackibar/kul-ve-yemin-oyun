@@ -135,9 +135,9 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   at({id:'toForge',type:'portal',x:31,y:27,to:'forge',spawn:[7,7],name:'Kül Ocağı'});
   at({id:'rauf',type:'npc',x:44,y:18,name:'Rauf',portrait:5});
   at({id:'gateLever',type:'lever',x:5,y:24,name:'Ocak kapısını aç'});
-  chest('medicineChest',48,8,[['medicine',1],['potion',2]],12);
-  chest('cisternWest',6,20,[['chain',1],['bow',1],['potion',2]],24);
-  chest('cisternEast',49,24,[['guard',1],['potion',2]],20);
+  chest('medicineChest',48,8,[['medicine',1],['potion',2],['toz',2]],12);
+  chest('cisternWest',6,20,[['chain',1],['bow',1],['potion',2],['yeminh',1]],24);
+  chest('cisternEast',49,24,[['guard',1],['potion',2],['uzunyay',1],['okdelici',8]],20);
   fire(10,16);fire(40,14);
   // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).
  }else{
@@ -148,7 +148,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   at({id:'backCistern',type:'portal',x:5,y:5,to:'cistern',spawn:[31,26],name:'Sarnıca dön'});
   at({id:'core',type:'core',x:35,y:6,name:'Kül kalbi'});
   at({id:'returnHaven',type:'portal',x:39,y:6,to:'haven',spawn:[15,14],name:'Sığınağa geçit'});
-  chest('forgeWest',7,39,[['ash',1],['potion',3]],25);chest('forgeCenter',22,20,[['ember',1],['bow',1],['tonic',2]],20);chest('forgeEast',38,39,[['life',1],['potion',3]],30);
+  chest('forgeWest',7,39,[['ash',1],['potion',3],['ocakz',1]],25);chest('forgeCenter',22,20,[['ember',1],['yemin',1],['tonic',2],['kavanoz',2]],20);chest('forgeEast',38,39,[['life',1],['potion',3],['okates',10],['merhem',2]],30);
   for(const [x,y] of [[3,3],[14,3],[25,3],[41,3],[4,29],[16,29],[28,27],[41,27],[17,18]])fire(x,y);
   for(const [x,y] of [[9,17],[10,26],[21,8],[35,18],[22,35],[31,31]])at({id:`ftrap${x}_${y}`,type:'trap',x,y});
   // Ocaktaki solucanlar yarasa ve fareyle degistirildi (kind 3 kaldirildi).

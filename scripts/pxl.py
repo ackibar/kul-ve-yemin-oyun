@@ -44,7 +44,10 @@ def walk_images(obj, out_dir, prefix='img', found=None):
     found = [] if found is None else found
     if isinstance(obj, dict):
         for k, v in obj.items():
-            if k in ('base64', 'image', 'data') and isinstance(v, str) and len(v) > 500:
+            # Esik 500'du: 32x32'lik sade bir ikon (duz zeminde ince mizrak)
+            # bunun altina sikisiyor ve gorsel sessizce atlaniyordu.
+            # 120 hala kisa kimlik/etiket alanlarini disarida birakiyor.
+            if k in ('base64', 'image', 'data') and isinstance(v, str) and len(v) > 120:
                 p = os.path.join(out_dir, f'{prefix}_{len(found)}.png')
                 save_b64(v, p); found.append(p)
             else:
