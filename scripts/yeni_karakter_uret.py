@@ -22,6 +22,12 @@ KISI = {
              'cuffs hanging past his hands, cloth wrapped around his shins, tousled '
              'hair, hollow tired eyes, a dented metal canteen hanging from his belt, '
              'shoulders hunched from waiting, ' + ORTAK, 43),
+    # Uslu: kulun icinden donen deli. Herkes cok ciddi; o degil. Dolasir,
+    # o yuzden yurume sablonu da gerekiyor (2 + 3 = 5 uretim).
+    'uslu': ('a scrawny wild-eyed middle-aged man, hair sticking straight out in every '
+             'direction and full of ash, a wide lopsided grin, mismatched rags with one '
+             'sleeve missing, a small dead plant tucked behind one ear, bare feet, both '
+             'arms flung out as if asking a question, ' + ORTAK, 83),
     'selvi': ('a hard-faced woman in her late thirties, wrapped in many mismatched '
               'layers of cloth and blankets against cold, a scarf covering her neck, '
               'weathered wind-burned face, cracked lips, arms folded tight, standing '

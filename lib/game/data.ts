@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='5.0';
+export const SURUM='5.1';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -10,7 +10,7 @@ export const ASAMA = 'alpha';
 // mekandi. Bekci, Kul kalbi ve iki son da onunla birlikte cikti; oyunun
 // sonu yeni bir mekanla bastan kurulacak.
 export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern';
-export type ItemId = 'tuzet'|'durusu'|'petek'|'muhur'|'okzehir'|'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'wood'|'torch'|'arrow'|'kurdele';
+export type ItemId = 'cakil'|'tuzet'|'durusu'|'petek'|'muhur'|'okzehir'|'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'wood'|'torch'|'arrow'|'kurdele';
 /** Item alanlari. attack/defense/hp dogrudan stats()'e girer; asagidakiler
  *  motorun tek tek okudugu DAVRANIS bayraklaridir - her yeni item icin kod
  *  yazmak yerine burada tanimlanir.
@@ -88,11 +88,12 @@ export const ITEMS:Record<ItemId,Item>={
  tonic:{id:'tonic',name:'Köz toniği',kind:'consumable',description:'20 saniye boyunca +8 saldırı.',rarity:'Nadir',icon:'flame',price:20},
  wood:{id:'wood',name:'Odun',kind:'consumable',description:'Ateşin yanına gidip yakarak meşale yapabilirsin.',rarity:'Sıradan',icon:'book',price:5},
  torch:{id:'torch',name:'Meşale',kind:'consumable',description:'60 saniye boyunca karanlık zindanları aydınlatır.',rarity:'Nadir',icon:'flame',price:15},
+ cakil:{id:'cakil',name:'Dünyanın son çakılı',kind:'quest',description:'Uslu öyle diyor. Ağır değil; ağırlığı unvanında. Ne işe yaradığını Uslu da bilmiyor.',rarity:'Görev',icon:'gem',price:0},
  medicine:{id:'medicine',name:'Son ilaç',kind:'quest',description:'Tek bir doz. Mirna’nın hastaları mı, yaralı kaçak mı?',rarity:'Görev',icon:'potion',price:0},
  ledger:{id:'ledger',name:'Nöbet defteri',kind:'quest',description:'Ocak muhafızlarının yemin defteri. Rauf’un adı çizili. Alf bunu bekliyor.',rarity:'Görev',icon:'book',price:0},
  kurdele:{id:'kurdele',name:'Kırmızı kurdele',kind:'quest',description:'Rauf’un bileğinden. Kızınındı. Alf bunu hiç görmedi.',rarity:'Görev',icon:'ring',price:0},
 };
-export const ZONES:Record<Zone,{name:string;subtitle:string;danger:string}>={haven:{name:'Son Sığınak',subtitle:'Ateşin hâlâ yandığı yer',danger:'Güvenli bölge'},disari:{name:'Kül Ovası',subtitle:'Örtünün altında kalan dünya',danger:'Ölümcül · uzun kalma'},yikik:{name:'Yıkık Ev',subtitle:'Külün giremediği tek oda',danger:'Kapalı · güvenli'},magara:{name:'Sarnıç Ağzı',subtitle:'Sığınağın altındaki ilk karanlık',danger:'Tenha'},cistern:{name:'Unutulmuş Sarnıç',subtitle:'Taşların hatırladığı sırlar',danger:'Seviye 1–3'}};
+export const ZONES:Record<Zone,{name:string;subtitle:string;danger:string}>={haven:{name:'Son Sığınak',subtitle:'Ateşin hâlâ yandığı yer',danger:'Güvenli bölge'},disari:{name:'Kül Ovası',subtitle:'Fırtınanın altında kalan dünya',danger:'Fırtına · nefes alınmaz'},yikik:{name:'Yıkık Ev',subtitle:'Külün giremediği tek oda',danger:'Kapalı · güvenli'},magara:{name:'Sarnıç Ağzı',subtitle:'Sığınağın altındaki ilk karanlık',danger:'Tenha'},cistern:{name:'Unutulmuş Sarnıç',subtitle:'Taşların hatırladığı sırlar',danger:'Seviye 1–3'}};
 export interface State {version:1;started:boolean;zone:Zone;x:number;y:number;hp:number;xp:number;level:number;gold:number;points:number;skills:{power:number;vigor:number;agility:number};inventory:Partial<Record<ItemId,number>>;equipment:{weapon:ItemId;armor:ItemId;ring:ItemId|null;ok?:ItemId};flags:Record<string,boolean|string>;opened:string[];killed:string[];journal:string[];playtime:number;ending:string|null;}
 export const XP=[0,100,260,490,790];
 export const newState=():State=>({version:1,started:true,zone:'haven',x:15*16,y:14*16,hp:100,xp:0,level:1,gold:18,points:0,skills:{power:0,vigor:0,agility:0},inventory:{yumruk:1,rusty:1,leather:1,potion:3},equipment:{weapon:'rusty',armor:'leather',ring:null,ok:'arrow'},flags:{},opened:[],killed:[],journal:['Son Sığınak’a vardın. Önce şifacı Mirna ile konuş.'],playtime:0,ending:null});
@@ -168,6 +169,43 @@ export type StoryNode={text:string;choices:{label:string;to:string|null;
  if?:(s:State)=>boolean}[]};
 const AYRIL={label:'Gitmem gerek.',to:null};
 export const STORY:Record<string,Record<string,StoryNode>>={
+ /* Uslu: firtinaya cikip geri donen deli. Herkes cok ciddi, o degil. Tuhaf
+  *  sorular sorar; cevabin sonucu yok, sadece cevabi var. Sorular sirayla
+  *  doner (flags.usluSoru), yedincisinde dunyanin son cakilini verir. */
+ uslu:{
+  'soru1':{text:'Kül yağıyor ya. Peki kül nereye yağıyor, biz altındayken? Daha aşağı mı? O zaman en dipteki adam bize ne diyor?',
+   choices:[{label:'Hiçbir şey demiyor.',to:'c1a'},{label:'Bilmiyorum.',to:'c1b'}]},
+  'c1a':{text:'Doğru. Çünkü ağzı dolu.',choices:[AYRIL]},
+  'c1b':{text:'Ben de. O yüzden soruyorum. Sormak bedava. Obruk’a sorma ama; o bunu da satar.',choices:[AYRIL]},
+  'soru2':{text:'Sen hiç bir taşa isim koydun mu? Ben koydum. Adı Tuhn. …Yok yok, o başka Tuhn. Bu taş daha az konuşuyor.',
+   choices:[{label:'Taşlar konuşmaz.',to:'c2a'},{label:'Senin adın ne?',to:'c2b'}]},
+  'c2a':{text:'Bu da öyle diyor.',choices:[AYRIL]},
+  'c2b':{text:'Uslu. Kendim koydum, kimse koymadı diye. Beğenmedin mi? Sana da bir tane koyayım: Ayakkabı. Çünkü ayakkabın var. Ayakkabısız adam soru soramaz, ayağı üşür.',choices:[AYRIL]},
+  'soru3':{text:'Alf’in kılıcı var, Mirna’nın ilacı var, Obruk’un eti var. Senin neyin var?',
+   choices:[{label:'Yeminim var.',to:'c3a'},{label:'Kılıcım var.',to:'c3b'}]},
+  'c3a':{text:'Yemin mi. …O yenmiyor ama iyi yakıyor, Undur öyle diyor. Belki kışın işe yarar.',choices:[AYRIL]},
+  'c3b':{text:'Onu herkes görüyor. Görünmeyen neyin var diye sordum aslında. …Neyse, unuttum.',choices:[AYRIL]},
+  'soru4':{text:'Dışarı çıktım. Fırtınaya. Fırtına bana üç soru sordu, üçüne de cevap verdim, o yüzden sesim böyle. Sen hiç bir fırtınaya cevap verdin mi?',
+   choices:[{label:'Ne sordu?',to:'c4a'},{label:'Fırtına soru sormaz.',to:'c4b'}]},
+  'c4a':{text:'Hatırlamıyorum. Cevapları hatırlıyorum: evet, hayır ve “biraz”. Sırasını karıştırdım. Belki o yüzden.',choices:[AYRIL]},
+  'c4b':{text:'Bunu fırtınaya söyle. Ben söyledim, kızdı.',choices:[AYRIL]},
+  'soru5':{text:'Gündüz mü şimdi, gece mi? Kimse bilmiyor. Ben bir sistem buldum: Lin’in ateşi yanıyorsa gündüz. Hep yanıyor. Demek hep gündüz. Peki uyuyanlar neden uyuyor?',
+   choices:[{label:'Yorgunlar.',to:'c5a'},{label:'Sen uyuyor musun?',to:'c5b'}]},
+  'c5a':{text:'Gündüz uyumak ayıp değil. Gece uyumak ayıp değil. İkisi de yokken uyumak — işte o cesaret.',choices:[AYRIL]},
+  'c5b':{text:'Sırayla. Önce sol göz, sonra sağ. Kül ikisine birden giremez.',choices:[AYRIL]},
+  'soru6':{text:'Kral konuşmuyor. Ben hep konuşuyorum. İkimizi toplasan normal bir adam eder. Bölsen ne olur?',
+   choices:[{label:'Yarım adam.',to:'c6a'},{label:'Saçma.',to:'c6b'}]},
+  'c6a':{text:'İki tane yarım. Biri taçlı, biri taçsız. Ben taçsız olanı aldım, daha hafif.',choices:[AYRIL]},
+  'c6b':{text:'Saçma şeyler ağır değildir, o yüzden ben hep saçma taşıyorum. Sen ne taşıyorsun? …Söyleme. Gördüm. Ağır.',choices:[AYRIL]},
+  'soru7':{text:'Bir çakıl buldum. Külün altından çıkardım. Bence dünyanın son çakılı. Sana vereyim mi?',
+   choices:[{label:'Ver.',to:'cakilVer'},{label:'Sende kalsın.',to:'c7b'}]},
+  'cakilVer':{text:'Al. Kaybetme; kaybedersen dünyanın son çakılını kaybeden adam olursun, o unvan ağırdır.',choices:[AYRIL]},
+  'c7b':{text:'Peki. Ama bil ki reddettin. Çakıl bunu unutmaz; çakılların hafızası iyidir, taş oldukları için.',choices:[AYRIL]},
+  'soru8':{text:'Sığınak neden “son”? Bir sonrakinin olmayacağını nereden biliyorlar? Belki bir sonraki bizden habersizdir, biz de ondan. İki “son” sığınak, birbirinden habersiz. Sence hangisi haklı?',
+   choices:[{label:'İkisi de.',to:'c8a'},{label:'Sadece burası var.',to:'c8b'}]},
+  'c8a':{text:'Undur’a söyle bunu yazsın. Yazmaz. Ben söyledim, “şiir değil bu” dedi. Şiir olsa yazacaktı demek.',choices:[AYRIL]},
+  'c8b':{text:'Sen de mi. Herkes böyle diyor. Herkes haklı olamaz; o kadar haklı adam buraya sığmaz.',choices:[AYRIL]},
+ },
  /* Obruk: kul yagmadan once kimsenin inanmadigi seye inanip herkesin kilerini
   *  ucuza toplamis soylu. Kimseyle paylasmiyor, satiyor - hem de altina.
   *  'altin' dugumu oyunun altin ekonomisinin dunya ici gerekcesi: altin
@@ -176,7 +214,10 @@ export const STORY:Record<string,Record<string,StoryNode>>={
   *  bitiyor - Karga bunu sayiyor, Obruk saymaktan korkuyor. */
  obruk:{
   '1':{text:'Kapıda dikilme, gölgen sofranın üstüne düşüyor. …Aşağıdan mısın? Ellerin boş. Boş ellilerle işim olmaz — ama bakmak bedava. Sadece bakmak; oraya dikkat et.',
-   choices:[{label:'Sen kimsin?',to:'2'},{label:'Bunların hepsi senin mi?',to:'mal'},{label:'Neden altın istiyorsun?',to:'altin'},AYRIL]},
+   choices:[{label:'Sen kimsin?',to:'2'},{label:'Bunların hepsi senin mi?',to:'mal'},{label:'Neden altın istiyorsun?',to:'altin'},
+    {label:'Sığınaktaki kralı tanıyor musun?',to:'kral',if:s=>!!s.flags.kralGoruldu},AYRIL]},
+  'kral':{text:'Kral mı? Tacı var, kileri yok. Ben kilerimle beyim, o tacıyla hiç. Aramızdaki fark şu: ben aç değilim. …Eskiden sofrasında otururdum. Ekmeği bana o verirdi. Şimdi ben kimseye vermiyorum; bunu ondan öğrendim, tersinden.',
+   choices:[AYRIL]},
   '2':{text:'Obruk derler. Yüzüme değil, arkamdan. Asıl adım sülalemle beraber külün altında kaldı; çağıran kalmayınca isim de ölüyormuş, bunu burada öğrendim. Eskiden “bey” derlerdi. …De hadi. Bir kere. Bedava.',
    choices:[{label:'Bey.',to:'bey'},{label:'Obruk.',to:'obruk'},AYRIL]},
   'bey':{text:'Gördün mü, ağzın yanmadı. Otur demeyeceğim — oturacak yerim yok, hepsi dolu. Ama senden bir parça az alırım. Yalnız senden. Kimseye söyleme, ucuz adam sanırlar.',
@@ -302,7 +343,18 @@ export const STORY:Record<string,Record<string,StoryNode>>={
  mira:{
   '1':{text:'Hikâyem mi? Ben bu sığınağın ilk gecesini gördüm. Yukarıda gökyüzü kül rengine döndüğünde, buraya yetmiş kişi indik. Şimdi on dokuzuz.',
    choices:[{label:'Ne oldu yukarıda?',to:'2'},{label:'Diğerlerine ne oldu?',to:'3'},
-    {label:'Yukarıda kileri dolu bir adam var.',to:'obruk',if:s=>!!s.flags.talkObruk},AYRIL]},
+    {label:'Yukarıda kileri dolu bir adam var.',to:'obruk',if:s=>!!s.flags.talkObruk},
+    {label:'Köşedeki taçlı adam kim?',to:'kral',if:s=>!!s.flags.kralGoruldu},
+    {label:'Dışarısı hep böyle miydi?',to:'firtina'},AYRIL]},
+  'kral':{text:'Yazdım onu da. Sayı olarak. İsmini yazmadım; tek istediği buydu, ilk gece — yazmamam. O geceden beri ağzından başka bir şey çıkmadı. Yetmiş kişiyle indi, on dokuzla oturuyor; sayıyı benden iyi biliyor, çünkü her ölende gözleri kapıya gidiyor.',
+   choices:[{label:'Neden konuşmuyor?',to:'kral2'},AYRIL]},
+  'kral2':{text:'Sorma bana. Undur’a sor; o eskiyi bilir. Ben şunu bilirim: bir adam konuşmayı bırakıyorsa ya söyleyecek sözü bitmiştir ya da söylediği son söz çok pahalıya patlamıştır.',
+   choices:[AYRIL]},
+  // Firtina: uc hafta oncesine kadar bez sarip cikilirdi. Artik kul yagmiyor, esiyor.
+  'firtina':{text:'Hayır. Üç hafta öncesine kadar bez sarıp çıkılırdı — zor ama çıkılırdı, Tuhn odun getirirdi. Sonra rüzgâr döndü. Şimdi kül yağmıyor, kül esiyor; bezden geçiyor, dişten geçiyor. Güneş zaten gelmiyordu. Şimdi hava da gelmiyor.',
+   choices:[{label:'Dışarı çıkan oldu mu?',to:'firtina2'},AYRIL]},
+  'firtina2':{text:'Bir kişi. Uslu. Geri geldi; kimse gelmez sanıyorduk. Geldi ama… yarısı geldi. Kalanı dışarıda soru soruyor herhâlde. Onunla konuşursan anlarsın.',
+   choices:[AYRIL]},
   // Obruk'la konusulduysa acilir: sifaci ona GITTI ve fiyat duydu.
   'obruk':{text:'Obruk. …Adını duymak bile yoruyor. İki kış önce gittim; kapısında iki adam vardı, girmeme izin verdiler, çıkmama da. Hastalar için un istedim, o fiyat söyledi. O fiyatı ödeyecek altınım olsaydı hastalarım zaten ayakta olurdu.',
    choices:[{label:'Onu ikna edebilirim.',to:'obruk2'},{label:'Diğerlerine ne oldu?',to:'3'},AYRIL]},
@@ -338,7 +390,14 @@ export const STORY:Record<string,Record<string,StoryNode>>={
  boran:{
   '1':{text:'Anlatacak ne var? Kılıç taşıdım, insanlar öldü, ben ölmedim. Muhafızdım. Sonra koruyacak bir şey kalmadı, ben de burada kaldım.',
    choices:[{label:'Rauf’u kendin arasana.',to:'yemin'},{label:'Neyi koruyordun?',to:'2'},{label:'Neden bu kadar yorgunsun?',to:'3'},
-    {label:'Obruk’un iki silahlı adamı var.',to:'obruk',if:s=>!!s.flags.talkObruk},AYRIL]},
+    {label:'Obruk’un iki silahlı adamı var.',to:'obruk',if:s=>!!s.flags.talkObruk},
+    {label:'Köşedeki taçlı adam kim?',to:'kral',if:s=>!!s.flags.kralGoruldu},AYRIL]},
+  // "Emri veren adam artik yok" - Alf'in agzindaki cumle. Adam orada oturuyor;
+  // Alf onu emir veren adam saymiyor, o yuzden bakmiyor.
+  'kral':{text:'…Köşedeki mi. Onu tanımıyorum. Tanıdığım adam emir verirdi; o adam artık yok. Köşede oturan birinin emrine uymak zorunda değilim. Bu yüzden ona bakmıyorum.',
+   choices:[{label:'Kapıyı açma emrini o mu verdi?',to:'kral2'},AYRIL]},
+  'kral2':{text:'Sana kim söyledi? …Fark etmez. Evet. On bir yıl önce, yukarısı kışa girerken. “Aşağıda sıcak var, kapıyı açın” dedi. Ben açtım. O sustu. İkimiz de aynı kapıyı taşıyoruz; ben konuşarak, o susarak. Hangisi daha ağır, bilmiyorum.',
+   choices:[{label:'Neden bu kadar yorgunsun?',to:'3'},AYRIL]},
   'obruk':{text:'Biliyorum. İki adamı var. Ben kapıda tek başımayım, onun sofrasında iki mızrak duruyor. Eskiden buna düzensizlik derdim; şimdi düzen bu. Uzun olanı tanırım — savaşta vasat askerdir, kıtlıkta iyidir. Bana kalsa ikisini de alırdım. Ama ben et veremiyorum, yemin veriyorum; yemin karın doyurmuyor.',
    choices:[{label:'Neyi koruyordun?',to:'2'},AYRIL]},
   '2':{text:'Kül Ocağı’nı. Aşağıda, sarnıcın da altında. Orada bir şey yanıyor ve yüzyıllardır yanıyor. Bizim işimiz kimsenin içeri girmemesiydi. Kimsenin çıkmaması olduğunu sonra anladık.',
@@ -375,7 +434,14 @@ export const STORY:Record<string,Record<string,StoryNode>>={
  },
  ekin:{
   '1':{text:'Ben mi? Ben yazıyorum. Kimse okumayacak ama yazıyorum. Otuz yıl arşivdeydim, şimdi arşiv benim başımın altında bir çuval kâğıt.',
-   choices:[{label:'Ne yazıyorsun?',to:'2'},{label:'Küller hakkında ne biliyorsun?',to:'3'},AYRIL]},
+   choices:[{label:'Ne yazıyorsun?',to:'2'},{label:'Küller hakkında ne biliyorsun?',to:'3'},
+    {label:'Köşedeki taçlı adam kim?',to:'kral',if:s=>!!s.flags.kralGoruldu},AYRIL]},
+  'kral':{text:'Ongun. Bereket demek. Yazdım, gülmedim. Yukarının kralıydı; taç babasından, babasınınkinden. Kış geldiğinde ambarlar boştu, eski metinler “aşağıda uyuyan bir sıcak var” diyordu. Metni ona ben okudum.',
+   choices:[{label:'Kapıyı o mu açtırdı?',to:'kral2'},AYRIL]},
+  'kral2':{text:'Emri o verdi, mandalı Alf kaldırdı, metni ben okudum. Üç kişiyiz; biri sustu, biri kapıda kaldı, biri yazıyor. Kül üçümüzün de üstüne aynı yağdı. …Tacı hâlâ başında. Kimse almıyor. Alan taşımak zorunda kalır.',
+   choices:[{label:'Alf bunu biliyor mu?',to:'kral3'},AYRIL]},
+  'kral3':{text:'Alf her şeyi biliyor ve hiçbirini kabul etmiyor. Ona sorarsan “o adam artık yok” der. Haklı da. Emir veren adam sustuğu gece bitti; oturan, kalanı.',
+   choices:[AYRIL]},
   '2':{text:'İsimleri. Ölenlerin isimlerini. Bir de yukarıda kalanların. Birisi bir gün çıkıp da “burada kimler vardı” diye sorarsa, cevabı olsun diye.',
    choices:[{label:'Küller hakkında ne biliyorsun?',to:'3'},AYRIL]},
   '3':{text:'Eski metinlerde kül bir ceza değil, bir bekleme hâli olarak geçer. Bir şey sözünü tutmadığında dünya külü örtü gibi çeker üstüne, söz tutulana kadar bekler. Masal sanıyordum. Sonra gökyüzü karardı.',
@@ -407,7 +473,11 @@ export const STORY:Record<string,Record<string,StoryNode>>={
  // Bu siginakta yeminini tutan tek kisi; yemini karsi tarafa bagli degil.
  nil:{
   '1':{text:'Yukarıda. Sara teyzeyle su aramaya gitti. On bir gün oldu; şu direğe on bir çentik attım. Herkes “döner” diyor ama gözleri başka yere bakıyor. Sen de mi öyle bakacaksın?',
-   choices:[{label:'Bakmayacağım. Ne yapmamı istersin?',to:'soz'},{label:'Belki dönmez.',to:'belki'},AYRIL]},
+   choices:[{label:'Bakmayacağım. Ne yapmamı istersin?',to:'soz'},{label:'Belki dönmez.',to:'belki'},
+    {label:'Köşedeki taçlı amca kim?',to:'kral',if:s=>!!s.flags.kralGoruldu},AYRIL]},
+  // Cocuk, krala iyi davranan tek kisi. Kralin ellerini uzattigi tek yer.
+  'kral':{text:'Kral amca. Ona ateşten köz götürüyorum, ısınsın diye. Konuşmuyor ama ellerini uzatıyor. Alf amca “götürme” diyor, ben götürüyorum. Ağabeyim de “söndürme” dedi; ikisi aynı şey bence.',
+   choices:[AYRIL]},
   'belki':{text:'Biliyorum. Alf amca da “dönmez” dedi, sonra özür diledi. Dönmese de söndürmem. Söz ona verildi; ona geri verilmeden bitmez.',
    choices:[{label:'Ne yapmamı istersin?',to:'soz'},AYRIL]},
   'soz':{text:'Yukarı çıkan tek sensin. Onu görürsen söyle: ateş yanıyor. Bu kadar. Söz verir misin?',
@@ -524,6 +594,24 @@ export function dialogue(s:State,id:string):Dialogue{
  if(id==='raufCeset')return {who:'Rauf',role:'Kül Ovası’nda',portrait:5,
   text:s.flags.kurdeleAlindi?'Bileği boş. Kül üstünü örtmeye başladı bile.':'Alf temiz iş çıkarmış. Bileğinde kurdele hâlâ duruyor; yanında küle parmakla yazılmış bir isim var, yarısı savrulmuş. Kızının olmalı.',
   choices:[...(!s.flags.kurdeleAlindi?[{label:'Kurdeleyi al.',action:'ceset_kurdele',note:'Kırmızı kurdele'}]:[]),close]};
+ // Uslu: soru sirasi flags.usluSoru'da doner. Cevabin sonucu yok, cevabi var.
+ if(id==='uslu'){
+  const n=(Number(s.flags.usluSoru||0)%8)+1;
+  return {who:'Uslu',role:'Fırtınadan dönen',portrait:14,
+   text:s.inventory.cakil?'Çakıl duruyor mu? …Bakma, yüzünden belli, duruyor. Yeni bir sorum var, ister misin?'
+    :s.flags.usluSoru?'Yine sen! Bir sorum daha var. Cevabı bilmiyorum, o yüzden sana soruyorum; sen de bilmiyorsan iki kişi olduk, iki kişi bir sığınak eder.'
+    :'Dur. Sen yeni misin? Yeni adamlar sorulara daha iyi cevap verir, eskilerin cevapları küllenmiş. Bir sorum var.',
+   choices:[{label:'Sor.',action:`story:uslu:soru${n}`,note:'Uslu’nun sorusu'},close]};}
+ // Kral: hic konusmuyor. Metin onun sessizligini anlatir; oyuncu baskalarindan
+ // ogrendikce sessizlik degisir (kaynak sayisi kral* bayraklarindan).
+ if(id==='kral'){
+  const bilgi=['kralMirna','kralAlf','kralUndur','kralLin','kralObruk'].filter(k=>s.flags[k]).length;
+  return {who:'Kral',role:'Küllerin kralı',portrait:13,
+   text:s.flags.kralAlf&&s.flags.kralUndur?'Elini kaldırıyor, yarım. Bir emir verir gibi. Sonra eli düşüyor. Kimseye emir vermiyor artık; elin hatırladığı bu.'
+    :bilgi>=2?'Sana bakıyor. Uzun. Sonra elini tacına götürüyor; düzeltmiyor, sadece orada olduğunu kontrol ediyor. Hâlâ orada. Bir şey demiyor.'
+    :bilgi>=1?'Gözlerini kaldırıyor. Tacın altında kül var, sakalında kül var. Bir şey demiyor; demeyeceğini artık biliyorsun.'
+    :'Köşede oturuyor. Başında paslı bir taç; gözleri ateşe değil duvara bakıyor. Sen konuşunca kıpırdamıyor.',
+   choices:[{label:'Onu rahat bırak.',action:'kral_bak'}]};}
  /* Obruk ve iki parali askeri. Yeri SIMDILIK Sarnic Agzi: kendi odasi
   *  uretilince oraya tasinacak (bkz. world.ts magara bolumu). */
  if(id==='obruk'){
@@ -565,6 +653,15 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
   // veriyor, ustelik birbiriyle celisebiliyordu. Ana diyalogdaki cift
   // kaldirildi; defter de karar anında geliyor.
   // Obruk'a "bey" demek kalici bir indirim acar: kibri satin alinabilir.
+  // Uslu'nun sorulari: soruya GIRINCE sira ilerler, cevap serbest.
+  if(/^uslu:soru\d$/.test(dugum)){s.flags.usluSoru=String(Number(s.flags.usluSoru||0)+1);s.flags.talk=dugum;return {message:''};}
+  if(dugum==='uslu:cakilVer'){s.flags.talk=dugum;if(!s.inventory.cakil){addItem(s,'cakil');s.journal.unshift('Uslu sana dünyanın son çakılını verdi. Ne işe yaradığını o da bilmiyor.');}return {message:'Dünyanın son çakılı heybende.'};}
+  // Kral kaynaklari: kimden ogrenildigi bayrakla tutulur, kralin sessizligi buna gore degisir.
+  if(dugum==='mira:kral'){s.flags.kralMirna=true;s.flags.talk=dugum;return {message:''};}
+  if(dugum==='boran:kral2'){s.flags.kralAlf=true;s.flags.talk=dugum;s.journal.unshift('Alf söyledi: kapıyı açma emrini köşedeki adam vermiş. Kral.');return {message:''};}
+  if(dugum==='ekin:kral'){s.flags.kralUndur=true;s.flags.talk=dugum;s.journal.unshift('Undur kralın adını söyledi: Ongun. Bereket demek.');return {message:''};}
+  if(dugum==='nil:kral'){s.flags.kralLin=true;s.flags.talk=dugum;return {message:''};}
+  if(dugum==='obruk:kral'){s.flags.kralObruk=true;s.flags.talk=dugum;return {message:''};}
   if(dugum==='obruk:bey'){s.flags.obrukSaygi='bey';s.flags.talk=dugum;s.flags.talkObruk=true;
    return {message:'Obruk’un yüzü yumuşadı. Fiyatları senin için biraz indi.'};}
   if(dugum==='obruk:obruk'){s.flags.obrukSaygi='obruk';s.flags.talk=dugum;s.flags.talkObruk=true;
@@ -664,6 +761,7 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
  switch(action){
  case 'close':return {message:'',special:'close'};
  case 'story:bitir':s.flags.talk='';return {message:''};
+ case 'kral_bak':s.flags.kralGoruldu=true;return {message:'',special:'close'};
  case 'shop':return {message:'',special:'shop'};
   // shop:<satici> - hangi kisinin tezgahi acilacak. Sade 'shop' Alf demek.
   case 'shop:obruk':return {message:'',special:'shop',satici:'obruk'};

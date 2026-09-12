@@ -1,5 +1,5 @@
 import type {ItemId,Zone} from './data';
-export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean};
+export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
 export type EnemySpec={id:string;kind:1|2|4|5|6|7;x:number;y:number;boss?:boolean};
@@ -9,6 +9,8 @@ export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[
  gecisler:{kutu:[number,number,number,number];to:Zone;spawn:[number,number]}[];
  /** Yurunebilir ama olumcul: icine giren asagi dusup olur. */
  ucurumlar:[number,number,number,number][]};
+/** Kralin oturan sprite'inin zemin satiri/2; scripts/kral_uret.py kurunca yazar. */
+const KRAL_CAPA=31;
 export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefined>):World{
  const kare=zone==='haven'||zone==='magara';
  // Kare mekanlar 30x30: siginak, magara ve yikik. Kul Ovasi 54x30.
@@ -57,6 +59,9 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // basina gelir. `s` sprite olcegi: cocuklar icin ayni sheet kucuk cizilir.
   at({id:'selvi',type:'npc',x:13,y:6,name:'Elvi',portrait:9});
   at({id:'nil',type:'npc',x:18,y:21,name:'Lin',portrait:7,s:.8});
+  // Kral: sol ust kosede oturur, kimse bakmaz. Uslu ortada dolasir.
+  at({id:'kral',type:'npc',x:5,y:6,name:'Kral',portrait:13,sabit:true,capa:KRAL_CAPA,s:.72});
+  at({id:'uslu',type:'npc',x:14,y:19,name:'Uslu',portrait:14});
   if(flags?.ayaz==='indi')at({id:'ayaz',type:'npc',x:16,y:21,name:'Tiga',portrait:8,s:.9});
   if(flags?.tuhn==='kaldi')at({id:'tuhn',type:'npc',x:19,y:22,name:'Tuhn',portrait:6});
   gecis(12,27,18,28,'magara',[15,5]);   // asagi inen tunelin sonu
