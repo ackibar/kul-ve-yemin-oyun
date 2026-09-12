@@ -84,14 +84,18 @@ export class Engine{
  static readonly DUSMAN_FPS=(eylem:string)=>eylem==='Attack'?15:11;
  /** Yaratiklarin yon gosterme YONTEMI. Hepsini dondurmek yanlisti: sprite'lar
   *  ayni bakis acisiyla cizilmemis.
-  *   'tam'   - gercekten tepeden (orumcek). Dondurmek dogru, 360 yon verir.
+  *   'tam'   - gercekten tepeden ve RADYAL SIMETRIK olan icin. Su an kimse
+  *             kullanmiyor: orumcek simetrik sanilmisti ama bacaklari alt
+  *             yarida toplanmis, 90-180 derece dondurulunce tek bacak
+  *             uzerinde duruyor gibi oluyordu. Ayrica piksel sanatini ara
+  *             acilarda dondurmek bacaklari kopuk noktalara ceviriyor.
   *             `aci` = sprite'in dogal bakis acisi (radyan, 0 = saga).
   *   'yan'   - yandan-usten (fare). Dondurulunce sirtustu donuyordu; bunun
   *             yerine yatayda AYNALANIR, dikey bilesen kucuk bir egime cevrilir.
-  *   'sabit' - onden cizilmis (yarasa: kafa yukarida, yuzu bize donuk).
-  *             Herhangi bir dondurme kafayi asagi ceviriyor; hic dondurulmez. */
+  *   'sabit' - sabit bakisla cizilmis (yarasa onden, kafa yukarida; orumcek
+  *             asagi bakar). Dondurulmez; yon bilgisini animasyon tasir. */
  static readonly YARATIK:Record<number,{mod:'tam'|'yan'|'sabit';aci?:number}>=
-  {1:{mod:'yan'},2:{mod:'tam',aci:Math.PI/2},5:{mod:'sabit'}};
+  {1:{mod:'yan'},2:{mod:'sabit'},5:{mod:'sabit'}};
  /** 'yan' yaratiklarin dikey egim siniri (radyan). Daha fazlasi yine yatiriyor. */
  static readonly EGIM=Math.PI/6;
  static readonly DUSUS=0.5;
@@ -264,16 +268,22 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly CARP=13;
  /** ben=null ise hareket eden OYUNCU demektir (o zaman kendisi engel sayilmaz),
   *  aksi halde hareket eden NPC'dir ve oyuncu da engeldir. */
- private *karakterler(ben:string|null){
-  if(ben!==null)yield{x:this.state.x,y:this.state.y};
-  for(const e of this.world.entities)if(e.type==='npc'&&e.id!==ben)yield e;
+ /** Govde yaricapi: yaratiklar insanlardan kucuk, daha sik durabilirler. */
+ static readonly CARP_MOB=14;
+ private *karakterler(ben:string|null,mobDahil=false){
+  if(ben!==null)yield{x:this.state.x,y:this.state.y,r:Engine.CARP};
+  for(const e of this.world.entities)if(e.type==='npc'&&e.id!==ben)yield{x:e.x,y:e.y,r:Engine.CARP};
+  // Dusmanlar hicbir carpisma listesinde yoktu, yani suru tek bir yigin
+  // halinde ust uste binerek geliyordu. Yalnizca DUSMAN hareketinde acilir:
+  // oyuncunun icinden gecebilmesi degismesin diye.
+  if(mobDahil)for(const m of this.mobs)if(m.hp>0&&m.id!==ben)yield{x:m.x,y:m.y,r:m.boss?Engine.CARP:Engine.CARP_MOB};
  }
  /** Yalnizca YAKLASAN hareket engellenir. Duz "yakinsa durdur" deseydik ic ice
   *  girmis iki karakter birbirine kilitlenip yerinden kimildayamazdi. */
- private carpisir(px:number,py:number,nx:number,ny:number,ben:string|null){
-  for(const o of this.karakterler(ben)){
+ private carpisir(px:number,py:number,nx:number,ny:number,ben:string|null,mobDahil=false){
+  for(const o of this.karakterler(ben,mobDahil)){
    const d=Math.hypot(o.x-nx,o.y-ny);
-   if(d<Engine.CARP&&d<Math.hypot(o.x-px,o.y-py))return true;
+   if(d<o.r&&d<Math.hypot(o.x-px,o.y-py))return true;
   }
   return false;
  }
@@ -298,9 +308,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   this.state.hp=0;this.paused=true;this.audio.play('death');
   this.state.journal.unshift(not);this.onEvent({type:'death'});this.emit();
  }
- private move(p:{x:number;y:number},dx:number,dy:number){
-  if(walkable(this.world,p.x+dx,p.y)&&!this.carpisir(p.x,p.y,p.x+dx,p.y,null))p.x+=dx;
-  if(walkable(this.world,p.x,p.y+dy)&&!this.carpisir(p.x,p.y,p.x,p.y+dy,null))p.y+=dy;
+ private move(p:{x:number;y:number},dx:number,dy:number,ben:string|null=null,mobDahil=false){
+  if(walkable(this.world,p.x+dx,p.y)&&!this.carpisir(p.x,p.y,p.x+dx,p.y,ben,mobDahil))p.x+=dx;
+  if(walkable(this.world,p.x,p.y+dy)&&!this.carpisir(p.x,p.y,p.x,p.y+dy,ben,mobDahil))p.y+=dy;
  }
   private burst(x:number,y:number,color:string,n:number){for(let i=0;i<n;i++)this.particles.push({x,y,vx:(Math.random()-.5)*55,vy:(Math.random()-.6)*55,life:.4+Math.random()*.4,color,size:1+Math.random()})}
   private float(x:number,y:number,text:string,color:string){let targetY=y;for(const f of this.floating){if(Math.abs(f.x-x)<24&&Math.abs(f.y-targetY)<10){targetY-=11;}}this.floating.push({x,y:targetY,text,life:1.1,color})}
@@ -333,14 +343,22 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    }
    this.fireBurnCooldown=Math.max(0,this.fireBurnCooldown-dt);
    if(this.fireBurnCooldown<=0){for(const e of this.world.entities)if(e.type==='fire'&&Math.hypot(e.x-this.state.x,e.y-this.state.y)<14){this.hurt(8);this.float(this.state.x,this.state.y-14,'Ateş yaktı!','#ff6b4a');this.fireBurnCooldown=.8;break;}}
-   for(const m of this.mobs){if(m.hp<=0)continue;m.cool-=dt;m.hurt=Math.max(0,m.hurt-dt);if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.windup>0){m.windup-=dt;if(m.windup<=0){if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:25)){this.hurt(m.boss?30:10+m.kind*3);}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:1.15;}continue;}if(d<135&&visible){m.aci=Math.atan2(dy,dx);const range=m.kind===2?95:m.boss?34:20;if(d>range){const v=m.kind===4?21:27;this.move(m,dx/d*v*dt,dy/d*v*dt);}if(d<=range&&m.cool<=0)m.windup=m.boss?.8:m.kind===2?.55:.4;}else if(!m.boss){// Oyuncu uzaktayken yaratiklar cakili duruyordu; magara olu gorunuyordu.
+   for(const m of this.mobs){if(m.hp<=0)continue;m.cool-=dt;m.hurt=Math.max(0,m.hurt-dt);if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.windup>0){m.windup-=dt;if(m.windup<=0){if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:25)){this.hurt(m.boss?30:10+m.kind*3);}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:1.15;}continue;}if(d<135&&visible){m.aci=Math.atan2(dy,dx);const range=m.kind===2?95:m.boss?34:20;if(d>range){const v=m.kind===4?21:27;this.move(m,dx/d*v*dt,dy/d*v*dt,m.id,true);}if(d<=range&&m.cool<=0)m.windup=m.boss?.8:m.kind===2?.55:.4;}else if(!m.boss){// Oyuncu uzaktayken yaratiklar cakili duruyordu; magara olu gorunuyordu.
     // Doguş yerinin cevresinde yavasca dolasirlar - takip hizinin yarisi.
     m.gezBekle=(m.gezBekle??0)-dt;
     if(m.gezBekle<=0||m.gezX===undefined){const a=Math.random()*Math.PI*2,r=18+Math.random()*44;
      m.gezX=m.homeX+Math.cos(a)*r;m.gezY=m.homeY+Math.sin(a)*r;m.gezBekle=1.6+Math.random()*2.4;}
     const gx=m.gezX-m.x,gy=(m.gezY??m.homeY)-m.y,gd=Math.hypot(gx,gy);
-    if(gd>3){m.aci=Math.atan2(gy,gx);const v=(m.kind===4?21:27)*.45;this.move(m,gx/gd*v*dt,gy/gd*v*dt);}
-    else m.gezBekle=Math.min(m.gezBekle,.4);}}
+    if(gd>3){m.aci=Math.atan2(gy,gx);const v=(m.kind===4?21:27)*.45;this.move(m,gx/gd*v*dt,gy/gd*v*dt,m.id,true);}
+    else m.gezBekle=Math.min(m.gezBekle,.4);}
+   // Ayrisma. "Yalnizca yaklasani engelle" kurali tek basina yigini cozmuyor:
+   // ayni yone giden iki yaratigin mesafesi sabit kaldigi icin hareket serbest
+   // kaliyor ve ust uste dogmus olanlar ust uste kaliyor. Kucuk bir itme
+   // kuvveti onlari yavasca acar; itme carpisma kontrolsuz uygulanir ki iki
+   // yaratik birbirini kilitlemesin.
+   for(const o of this.mobs){if(o===m||o.hp<=0)continue;
+    const ax=m.x-o.x,ay=m.y-o.y,ad=Math.hypot(ax,ay);
+    if(ad>.01&&ad<Engine.CARP_MOB){const it=(Engine.CARP_MOB-ad)*2.4*dt;this.move(m,ax/ad*it,ay/ad*it);}}}
    this.mobs=this.mobs.filter(m=>m.hp>0);
    for(const shot of this.shots){shot.life-=dt;shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;if(!walkable(this.world,shot.x,shot.y,2))shot.life=0;if(shot.isHero){for(const d of this.world.entities.filter(e=>(e.type==='decor'&&!e.asset?.includes('Table'))||(e.type==='chest'&&this.state.opened.includes(e.id)))){if(Math.hypot(shot.x-d.x,shot.y-d.y)<16){shot.life=0;const currentHp=(this.decorHp[d.id]??3)-1;this.decorHp[d.id]=currentHp;if(currentHp<=0){delete this.decorHp[d.id];this.world.entities=this.world.entities.filter(e=>e.id!==d.id);this.burst(d.x,d.y,d.type==='chest'?'#b88a52':'#8b5a2b',16);this.audio.play('hit');this.spawnDrop(d.x,d.y,'wood',1);this.notify(d.type==='chest'?'Boş sandığı kırdın: +1 Odun':'Ahşap eşyayı kırdın: +1 Odun');}else{this.burst(d.x,d.y,d.type==='chest'?'#b88a52':'#8b5a2b',5);this.audio.play('hit');}break;}}for(const m of this.mobs){if(m.hp>0&&Math.hypot(shot.x-m.x,shot.y-m.y)<14){shot.life=0;m.hp-=shot.damage;m.hurt=.17;this.float(m.x,m.y-12,String(shot.damage),'#95e086');this.burst(m.x,m.y,'#c76b5d',6);this.audio.play('hit');const d=Math.hypot(m.x-this.state.x,m.y-this.state.y)||1;this.move(m,(m.x-this.state.x)/d*(m.boss?5:18),(m.y-this.state.y)/d*(m.boss?5:18));if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);break;}}}else if(Math.hypot(shot.x-this.state.x,shot.y-this.state.y)<9){shot.life=0;this.hurt(shot.damage);}}this.shots=this.shots.filter(s=>s.life>0);
    for(const e of this.world.entities){if(e.type==='trap'){const active=this.trapActive(e);const wasActive=this.activeTraps.has(e.id);if(active&&!wasActive){this.activeTraps.add(e.id);const dist=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(dist<100)this.audio.play('trap',1-dist/100);}else if(!active&&wasActive){this.activeTraps.delete(e.id);}if(this.trapCooldown<=0&&active&&Math.hypot(e.x-this.state.x,e.y-this.state.y)<10){this.hurt(15);this.trapCooldown=1;break;}}}
@@ -375,7 +393,8 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
       const [kx,ky]=Engine.KAPI;let n=0;
       for(const [kind,adet] of Engine.DALGALAR[gecen])for(let i=0;i<adet;i++){
        const max=([0,34,42,0,80,24,72][kind]);
-       let sx=kx*16+8+(Math.random()-.5)*26,sy=ky*16+8+(Math.random()-.5)*10;
+       // Yayilim genisletildi: hepsi ayni noktaya dogunca ust uste basliyorlardi.
+       let sx=kx*16+8+(Math.random()-.5)*54,sy=ky*16+8+(Math.random()-.5)*16;
        for(let k=0;k<10&&!walkable(this.world,sx,sy);k++)sy-=8;
        this.mobs.push({id:`dalga${gecen}_${n++}`,kind,x:sx,y:sy,hp:max,max,
         cool:.8+Math.random(),windup:0,burn:0,hurt:0,homeX:sx,homeY:sy});}

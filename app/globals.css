@@ -651,3 +651,17 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 .game-shell.dikey .joystick{bottom:calc(32px + var(--alt-pay))!important}
 .game-shell.dikey .actions{bottom:calc(32px + var(--alt-pay))}
 .game-shell.dikey .interact{bottom:calc(132px + var(--alt-pay))}
+
+/* ---- "Vazgeç" düğmesi --------------------------------------------------
+   Hiçbir çerçeve listesinde yoktu: shadcn'in koyu zemini kalıyor, üstüne de
+   parşömen mürekkebi (koyu) yazılıyordu - metin hiç okunmuyordu. Pastel bir
+   kırmızıya alındı. `fill` BİLEREK yok: fill merkezi de resimden boyuyor ve
+   arka plan rengi görünmüyor; fill'siz kullanınca çerçeve piksel resminden,
+   merkez ise renkten geliyor. */
+.confirm-actions [data-slot=alert-dialog-cancel]{
+  background:#c4837c!important;
+  border:8px solid transparent!important;border-radius:0!important;
+  border-image:url(/assets/ui/frame_in.png) 8 repeat!important;
+  color:#2b1512!important;font-weight:700;
+}
+.confirm-actions [data-slot=alert-dialog-cancel]:hover{background:#d1928b!important}

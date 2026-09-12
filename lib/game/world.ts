@@ -52,12 +52,12 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
   blockers.push([7,5,8,6],[9,5,10,7],[21,5,25,10],[20,6,21,10],[10,7,12,9],[19,7,20,11],[4,8,10,10],[12,8,13,9],[17,8,19,9],[25,8,27,10],[3,9,4,13],[11,9,12,12],[18,9,19,10],[4,10,9,13],[12,10,13,12],[23,10,24,12],[20,11,22,13],[25,11,27,24],[4,13,6,14],[7,13,9,14],[23,13,25,19],[3,14,4,15],[22,15,23,19],[3,17,4,20],[4,18,6,24],[7,18,10,21],[6,19,7,24],[10,19,12,21],[20,19,21,21],[19,20,20,21],[21,20,22,21],[24,20,25,21],[7,22,12,24],[19,23,25,24]);
   at({id:'mira',type:'npc',x:9,y:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
-  // Selvi ust kapinin dibinde: cevrildigi kapidan uzaklasmiyor. Nil sag-alt
-  // ocagin yaninda. Ayaz indiyse ve Tuhn ucurumdan cekildiyse ikisi de o atesin
+  // Selvi ust kapinin dibinde: cevrildigi kapidan uzaklasmiyor. Lin sag-alt
+  // ocagin yaninda. Tiga indiyse ve Tuhn ucurumdan cekildiyse ikisi de o atesin
   // basina gelir. `s` sprite olcegi: cocuklar icin ayni sheet kucuk cizilir.
   at({id:'selvi',type:'npc',x:13,y:6,name:'Selvi',portrait:9});
-  at({id:'nil',type:'npc',x:18,y:21,name:'Nil',portrait:7,s:.8});
-  if(flags?.ayaz==='indi')at({id:'ayaz',type:'npc',x:16,y:21,name:'Ayaz',portrait:8,s:.9});
+  at({id:'nil',type:'npc',x:18,y:21,name:'Lin',portrait:7,s:.8});
+  if(flags?.ayaz==='indi')at({id:'ayaz',type:'npc',x:16,y:21,name:'Tiga',portrait:8,s:.9});
   if(flags?.tuhn==='kaldi')at({id:'tuhn',type:'npc',x:19,y:22,name:'Tuhn',portrait:6});
   gecis(12,27,18,28,'magara',[15,5]);   // asagi inen tunelin sonu
   // Ust kapinin agzi ZEMIN esiginde karanlik kaldigi icin kapanmisti; koridor
@@ -100,8 +100,8 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   gecis(12,29,18,30,'disari',[19,21]);   // alt koridor: disariya cikis
   // Rauf Alf'e teslim edildiyse sonu burasi oluyor.
   if(flags?.rauf==='teslim')at({id:'raufCeset',type:'ceset',x:16,y:17,name:'Rauf'});
-  // Ayaz: Sare'nin "bekle" dedigi yer. Siginaga indiyse burada degil.
-  if(flags?.ayaz!=='indi')at({id:'ayaz',type:'npc',x:12,y:12,name:'Ayaz',portrait:8,s:.9});
+  // Tiga: Sara'nın "bekle" dedigi yer. Siginaga indiyse burada degil.
+  if(flags?.ayaz!=='indi')at({id:'ayaz',type:'npc',x:12,y:12,name:'Tiga',portrait:8,s:.9});
  }else if(zone==='magara'){
   // Sarnic Agzi: siginagin kapagindan inilen ilk karanlik. Tek parca boyali
   // sahne (public/assets/arkaplan/magara.png). Prop katmani YOK, o yuzden
@@ -121,7 +121,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // yurunebilir. Sag taraf kayalik ama gecis orada da kapali kalmasin.
   room(19,9,10,12);
   // Ucurumun basinda duran adam. Atladiysa bir daha yok.
-  // Atladiysa yok; indiyse siginakta, Nil'in atesinin basinda.
+  // Atladiysa yok; indiyse siginakta, Lin'in atesinin basinda.
   if(!flags?.tuhn)at({id:'tuhn',type:'npc',x:20,y:15,name:'Tuhn',portrait:6});
  }else if(zone==='cistern'){
   // Unutulmus Sarnic artik karo zindan degil, tek parca boyali magara (54x30).
