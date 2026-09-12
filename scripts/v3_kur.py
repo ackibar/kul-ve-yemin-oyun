@@ -93,7 +93,9 @@ YEDEK_YON = {}
 # yururken yay arada kayboluyordu. Bu kareler atilir - uretim harcamadan.
 # Esik bbox GENISLIGINDEN: yaysiz kare yalnizca govde kadar dar, yayli kare
 # kollari disina tasiyor. Olculen guney yuruyusu 33..59, dogu 21..46.
-ONDEN_AT = {('yay', 'Walk'), ('yay', 'Attack')}
+# Baltada da ayni sorun: ilk 1-2 karede balta henuz one cikmamis, sirtta
+# dik duruyor ve vurus o karelerde 'sirtinda tasiyor' gibi okunuyor.
+ONDEN_AT = {('yay', 'Walk'), ('yay', 'Attack'), ('balta', 'Attack')}
 # Esik 0.45'ti; saldirida yay DIKEY tutuldugu icin bbox'i genisletmiyor ve
 # iyi kareler de atiliyordu. Piksel sayisi denendi ve DAHA KOTU ayirdi
 # (yatay yayli kare 1532, yaysiz kare 1460 - %5 fark, siralamayi bile

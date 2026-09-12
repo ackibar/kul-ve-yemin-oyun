@@ -93,10 +93,14 @@ YUMRUK_VUR = ('throws a strong straight punch forward with the leading fist, sho
 # Balta seti icin ayri bir karakter DURUMU basilmadi (20 uretim): yay setinde
 # ogrenildi ki v3 uretken oldugu icin tarif yeterince israrciysa silahi kendisi
 # ciziyor. Baslangic karesi silahsiz TABAN karakter.
-BALTA_VUR = ('raises a large heavy two-handed splitting axe over the shoulder and brings '
-             'it down in a wide arc across the body, then pulls it back to a ready '
-             'stance; the axe has a broad steel head on a long wooden haft and is '
-             'gripped in both hands in every single frame')
+# Ilk tarif ("omuza kaldirir ve indirir") karelerin cogunu KALDIRMA fazina
+# harciyordu: 7 karenin 5'inde balta sirtta dik duruyor, yalnizca son ikisi
+# savurus. Yeni tarif animasyonu zaten havada BASLATIYOR ve baltanin govdenin
+# ONUNDE kalmasini sart kosuyor.
+BALTA_VUR = ('already holding a large heavy two-handed axe raised high overhead, swings '
+             'it down in a heavy arc in front of the body and follows through low, then '
+             'lifts it back up; the broad steel axe head is out in FRONT of the body in '
+             'every single frame and never rests on the back or the shoulder')
 BALTA_YUR = ('walks forward with a steady stride, legs alternating clearly, carrying a '
              'large two-handed axe resting on the shoulder; the broad axe head is '
              'clearly visible above the shoulder in every single frame')
@@ -138,11 +142,13 @@ BASLANGIC = {('yay', 'Walk', 'south-east'): ('Attack', 'south-east', 2),
              # Balta yuruyusu de saldiri karesinden basliyor: taban karakterin
              # donus karesinde balta yok, oradan baslayinca yuruyuste silah
              # kaybolur. Secilen kareler baltanin omuzda DIK durdugu anlar.
+             # Indisler saldiri tarifi degisince yenilendi: baltanin acikca
+             # elde oldugu ilk kareler.
              ('balta', 'Walk', 'south'): ('Attack', 'south', 3),
              ('balta', 'Walk', 'north'): ('Attack', 'north', 2),
              ('balta', 'Walk', 'east'): ('Attack', 'east', 2),
              ('balta', 'Walk', 'south-east'): ('Attack', 'south-east', 1),
-             ('balta', 'Walk', 'north-east'): ('Attack', 'north-east', 3)}
+             ('balta', 'Walk', 'north-east'): ('Attack', 'north-east', 1)}
 BALTA_YUR_HAZIR = ('walks forward with a steady stride, legs alternating clearly, while '
                    'keeping the large two-handed axe held exactly as in the starting '
                    'pose, resting against the shoulder; the axe never leaves the hands '
