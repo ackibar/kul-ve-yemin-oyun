@@ -30,3 +30,19 @@ ama yeni asset üretemezsin.
 
 `dist/` ve `node_modules/` silinse bile iki komutla geri gelir:
 `npm install && npm run build`
+
+---
+
+## Masaüstündeki diğer klasörler
+
+| Klasör / dosya | Ne |
+|---|---|
+| `Kul-ve-Yemin/` | **Gerçek proje.** GitHub ve Vercel'e bağlı olan bu |
+| `Kul-ve-Yemin 2/` | 11 Eylül'den kalma eski kopya, git'e bağlı değil, kullanılmıyor — silinebilir |
+| `Kul-ve-Yemin-zemin/` | Sığınak zemin/prop kaynak görselleri; oyuna aktarıldı — silinebilir |
+| `ash-covered_underground-kilic/` | PixelLab'den inen kılıçlı karakter paketi; kuruldu — silinebilir |
+| `8bit-*.wav`, `death.wav`, `outside`, `intro.mp4` | Ses/video kaynakları; `public/assets/audio` ve `video` altına dönüştürüldü — silinebilir |
+| `Ekran Resmi *.png` | Bana gönderdiğin ekran görüntüleri — silinebilir |
+| `Generate_*`, `Convert_*` | Üretilen ham görseller; kullanılanlar oyuna aktarıldı — silinebilir |
+
+Oyunun çalışması için masaüstünde **yalnızca `Kul-ve-Yemin/` gerekli.**
