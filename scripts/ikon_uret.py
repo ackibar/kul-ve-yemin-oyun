@@ -31,6 +31,7 @@ TARIF = {
     'yemin':   'a straight knightly sword with a plain crossguard and a red cord tied to the grip',
     'uzunyay': 'a tall wooden longbow, slim curved limbs, taut string',
     'okates':  'a single arrow with a burning orange-tipped head',
+    'okzehir': 'a single arrow with a dripping green venom-coated head, faint sickly green glow',
     'okdelici':'a single arrow with a long narrow armour-piercing steel head',
     'okcengel':'a single arrow with a barbed hook head and a thin rope coiled at the shaft',
     'pelerin': 'a hooded grey travelling cloak folded, ash dusted',

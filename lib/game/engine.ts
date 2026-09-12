@@ -11,10 +11,10 @@ import {bekleyen} from './data';
 /** Oyuncunun bakis yonu. 'S' yan, 'DS' asagi-capraz, 'US' yukari-capraz;
  *  bati tarafi bunlarin aynasi (flip). NPC/dusmanlar 3 yonde kaliyor. */
 type Yon='U'|'D'|'S'|'DS'|'US';
-type Mob=EnemySpec&{hp:number;max:number;cool:number;windup:number;burn:number;hurt:number;homeX:number;homeY:number;gezX?:number;gezY?:number;gezBekle?:number;aci?:number;sersem?:number};
+type Mob=EnemySpec&{hp:number;max:number;cool:number;windup:number;burn:number;hurt:number;homeX:number;homeY:number;gezX?:number;gezY?:number;gezBekle?:number;aci?:number;sersem?:number;zehir?:number;zehirTik?:number};
 type Particle={x:number;y:number;vx:number;vy:number;life:number;color:string;size:number;g?:number};
 type Floating={x:number;y:number;text:string;life:number;color:string};
-type Shot={x:number;y:number;vx:number;vy:number;life:number;damage:number;isHero?:boolean;yakar?:number;delici?:boolean;ceker?:boolean;gecti?:string[]};
+type Shot={x:number;y:number;vx:number;vy:number;life:number;damage:number;isHero?:boolean;yakar?:number;zehir?:number;delici?:boolean;ceker?:boolean;gecti?:string[]};
 export type Drop={id:string;x:number;y:number;kind:'wood'|'xp'|'gold'|'bow';amount:number;vx:number;vy:number;life:number};
 export type Snapshot={state:State;near:Entity|null;attackCooldown:number;dodgeCooldown:number;tonic:number;saveStatus:string;ready:boolean};
 export type GameEvent={type:'dialogue'|'death'|'message'|'zone';id?:string;text?:string};
@@ -227,7 +227,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     // gecmeli. Hedef daha yakinsa pay kisalir, yoksa ok hedefin arkasinda
     // dogup isabet etmezdi.
     const ileri=targets[0]?Math.max(9,Math.min(20,Math.hypot(targets[0].x-s.x,targets[0].y-s.y)*.6)):20;
-    this.shots.push({x:s.x+vx/hz*ileri,y:s.y-4+vy/hz*ileri,vx,vy,life:1.3,damage,isHero:true,yakar:okTur.yakar,delici:okTur.delici,ceker:okTur.ceker,gecti:okTur.delici?[]:undefined});};this.save();this.emit();return;}
+    this.shots.push({x:s.x+vx/hz*ileri,y:s.y-4+vy/hz*ileri,vx,vy,life:1.3,damage,isHero:true,yakar:okTur.yakar,zehir:okTur.zehir,delici:okTur.delici,ceker:okTur.ceker,gecti:okTur.delici?[]:undefined});};this.save();this.emit();return;}
    this.slash=.2;this.audio.play('swing');
    const decors=this.world.entities.filter(e=>((e.type==='decor'&&!e.asset?.includes('Table'))||(e.type==='chest'&&s.opened.includes(e.id)))&&Math.hypot(e.x-s.x,e.y-s.y)<38);
    for(const d of decors){
@@ -308,6 +308,10 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly DUSMAN_OLCEK:Record<number,number>={7:1.7};
  /** Alevin yakma yaricapi (dunya birimi) ve tur basina hasar. Oyuncunun
   *  hasari ayri (8) cunku zirh savunmasi ondan dusuluyor. */
+ /** Zehir: saniye basina hasar ve hedefin hiz carpani. Ates 3 sn x 3 hasar
+  *  (9); zehir 8 sn x 2 (16) ama daha yavas gelir ve hedefi agirlastirir. */
+ static readonly ZEHIR_HASAR=2;
+ static readonly ZEHIR_YAVAS=.7;
  static readonly ATES_YARICAP=14;
  static readonly ATES_HASAR=10;
  static readonly CARP_MOB=14;
@@ -444,14 +448,19 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     }
     if(yandi)this.fireBurnCooldown=.8;
    }
-   for(const m of this.mobs){if(m.hp<=0)continue;m.cool-=dt;m.hurt=Math.max(0,m.hurt-dt);if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.windup>0){m.windup-=dt;if(m.windup<=0){/* Ses uzakliga gore kisiliyor: ekranin obur ucundaki bir yaratik yanindaki
-     kadar yuksek vurmamali. */this.audio.play('dusmanVur',Math.max(0,1-d/190));if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:25)){this.hurt(m.boss?30:10+m.kind*3);}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:1.15;}continue;}if(d<135&&visible){m.aci=Math.atan2(dy,dx);const range=m.kind===2?95:m.boss?34:20;if(d>range){const v=m.kind===4?21:27;this.move(m,dx/d*v*dt,dy/d*v*dt,m.id,true);}if(d<=range&&m.cool<=0)m.windup=m.boss?.8:m.kind===2?.55:.4;}else if(!m.boss){// Oyuncu uzaktayken yaratiklar cakili duruyordu; magara olu gorunuyordu.
+   for(const m of this.mobs){if(m.hp<=0)continue;m.cool-=dt;m.hurt=Math.max(0,m.hurt-dt);if(m.zehir&&m.zehir>0){m.zehir-=dt;m.hp-=Engine.ZEHIR_HASAR*dt;
+    // Sayilar her karede degil saniyede bir yaziliyor; yoksa ekran doluyor.
+    m.zehirTik=(m.zehirTik??0)+dt;
+    if(m.zehirTik>=1){m.zehirTik=0;this.float(m.x,m.y-12,String(Engine.ZEHIR_HASAR),'#9fd47a');}
+    if(m.hp<=0){if(m.id==='rauf')this.raufDizCok();else this.kill(m);continue;}}
+   if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.windup>0){m.windup-=dt;if(m.windup<=0){/* Ses uzakliga gore kisiliyor: ekranin obur ucundaki bir yaratik yanindaki
+     kadar yuksek vurmamali. */this.audio.play('dusmanVur',Math.max(0,1-d/190));if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:25)){this.hurt(m.boss?30:10+m.kind*3);}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:1.15;}continue;}if(d<135&&visible){m.aci=Math.atan2(dy,dx);const range=m.kind===2?95:m.boss?34:20;if(d>range){const v=(m.kind===4?21:27)*(m.zehir&&m.zehir>0?Engine.ZEHIR_YAVAS:1);this.move(m,dx/d*v*dt,dy/d*v*dt,m.id,true);}if(d<=range&&m.cool<=0)m.windup=m.boss?.8:m.kind===2?.55:.4;}else if(!m.boss){// Oyuncu uzaktayken yaratiklar cakili duruyordu; magara olu gorunuyordu.
     // Doguş yerinin cevresinde yavasca dolasirlar - takip hizinin yarisi.
     m.gezBekle=(m.gezBekle??0)-dt;
     if(m.gezBekle<=0||m.gezX===undefined){const a=Math.random()*Math.PI*2,r=18+Math.random()*44;
      m.gezX=m.homeX+Math.cos(a)*r;m.gezY=m.homeY+Math.sin(a)*r;m.gezBekle=1.6+Math.random()*2.4;}
     const gx=m.gezX-m.x,gy=(m.gezY??m.homeY)-m.y,gd=Math.hypot(gx,gy);
-    if(gd>3){m.aci=Math.atan2(gy,gx);const v=(m.kind===4?21:27)*.45;this.move(m,gx/gd*v*dt,gy/gd*v*dt,m.id,true);}
+    if(gd>3){m.aci=Math.atan2(gy,gx);const v=(m.kind===4?21:27)*.45*(m.zehir&&m.zehir>0?Engine.ZEHIR_YAVAS:1);this.move(m,gx/gd*v*dt,gy/gd*v*dt,m.id,true);}
     else m.gezBekle=Math.min(m.gezBekle,.4);}
    // Ayrisma. "Yalnizca yaklasani engelle" kurali tek basina yigini cozmuyor:
    // ayni yone giden iki yaratigin mesafesi sabit kaldigi icin hareket serbest
@@ -462,7 +471,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     const ax=m.x-o.x,ay=m.y-o.y,ad=Math.hypot(ax,ay);
     if(ad>.01&&ad<Engine.CARP_MOB){const it=(Engine.CARP_MOB-ad)*2.4*dt;this.move(m,ax/ad*it,ay/ad*it);}}}
    this.mobs=this.mobs.filter(m=>m.hp>0);
-   for(const shot of this.shots){shot.life-=dt;shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;const kavanoz=shot.gecti?.[0]==='*kavanoz';if(!walkable(this.world,shot.x,shot.y,2))shot.life=0;if(kavanoz){if(shot.life<=0)this.kavanozPatla(shot.x,shot.y);continue;}if(shot.isHero){for(const d of this.world.entities.filter(e=>(e.type==='decor'&&!e.asset?.includes('Table'))||(e.type==='chest'&&this.state.opened.includes(e.id)))){if(Math.hypot(shot.x-d.x,shot.y-d.y)<16){shot.life=0;const currentHp=(this.decorHp[d.id]??3)-1;this.decorHp[d.id]=currentHp;if(currentHp<=0){delete this.decorHp[d.id];this.world.entities=this.world.entities.filter(e=>e.id!==d.id);this.burst(d.x,d.y,d.type==='chest'?'#b88a52':'#8b5a2b',16);this.audio.play('hit');this.spawnDrop(d.x,d.y,'wood',1);this.notify(d.type==='chest'?'Boş sandığı kırdın: +1 Odun':'Ahşap eşyayı kırdın: +1 Odun');}else{this.burst(d.x,d.y,d.type==='chest'?'#b88a52':'#8b5a2b',5);this.audio.play('hit');}break;}}for(const m of this.mobs){if(m.hp>0&&Math.hypot(shot.x-m.x,shot.y-m.y)<14){shot.life=0;m.hp-=shot.damage;m.hurt=.17;this.float(m.x,m.y-12,String(shot.damage),'#95e086');this.burst(m.x,m.y,'#c76b5d',6);this.audio.play('hit');const d=Math.hypot(m.x-this.state.x,m.y-this.state.y)||1;this.move(m,(m.x-this.state.x)/d*(m.boss?5:18),(m.y-this.state.y)/d*(m.boss?5:18));if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);break;}}}else if(Math.hypot(shot.x-this.state.x,shot.y-this.state.y)<9){shot.life=0;this.hurt(shot.damage);}}this.shots=this.shots.filter(s=>s.life>0);
+   for(const shot of this.shots){shot.life-=dt;shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;const kavanoz=shot.gecti?.[0]==='*kavanoz';if(!walkable(this.world,shot.x,shot.y,2))shot.life=0;if(kavanoz){if(shot.life<=0)this.kavanozPatla(shot.x,shot.y);continue;}if(shot.isHero){for(const d of this.world.entities.filter(e=>(e.type==='decor'&&!e.asset?.includes('Table'))||(e.type==='chest'&&this.state.opened.includes(e.id)))){if(Math.hypot(shot.x-d.x,shot.y-d.y)<16){shot.life=0;const currentHp=(this.decorHp[d.id]??3)-1;this.decorHp[d.id]=currentHp;if(currentHp<=0){delete this.decorHp[d.id];this.world.entities=this.world.entities.filter(e=>e.id!==d.id);this.burst(d.x,d.y,d.type==='chest'?'#b88a52':'#8b5a2b',16);this.audio.play('hit');this.spawnDrop(d.x,d.y,'wood',1);this.notify(d.type==='chest'?'Boş sandığı kırdın: +1 Odun':'Ahşap eşyayı kırdın: +1 Odun');}else{this.burst(d.x,d.y,d.type==='chest'?'#b88a52':'#8b5a2b',5);this.audio.play('hit');}break;}}for(const m of this.mobs){if(m.hp>0&&Math.hypot(shot.x-m.x,shot.y-m.y)<14){/* Ok TURLERI burada isliyor. Bu blok eskiden sadeydi: ok turu bayraklari
+        (yakar/zehir/delici/ceker) atista mermiye yaziliyordu ama isabette hic
+        okunmuyordu - yani Ates, Delici ve Cengelli ok sade ok gibi davraniyordu. */if(shot.gecti){if(shot.gecti.includes(m.id))continue;shot.gecti.push(m.id);}else shot.life=0;m.hp-=shot.damage;m.hurt=.17;if(shot.yakar)m.burn=Math.max(m.burn,shot.yakar);if(shot.zehir){m.zehir=Math.max(m.zehir??0,shot.zehir);this.float(m.x,m.y-24,'ZEHİR','#9fd47a');}this.float(m.x,m.y-12,String(shot.damage),'#95e086');this.burst(m.x,m.y,'#c76b5d',6);this.audio.play('hit');const d=Math.hypot(m.x-this.state.x,m.y-this.state.y)||1;/* Cengelli ok geri itmek yerine CEKER: itme yonu tersine cevrilir. */const it=shot.ceker?-22:(m.boss?5:18);this.move(m,(m.x-this.state.x)/d*it,(m.y-this.state.y)/d*it);if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);if(!shot.gecti)break;}}}else if(Math.hypot(shot.x-this.state.x,shot.y-this.state.y)<9){shot.life=0;this.hurt(shot.damage);}}this.shots=this.shots.filter(s=>s.life>0);
    for(const e of this.world.entities){if(e.type==='trap'){const active=this.trapActive(e);const wasActive=this.activeTraps.has(e.id);if(active&&!wasActive){this.activeTraps.add(e.id);const dist=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(dist<100)this.audio.play('trap',1-dist/100);}else if(!active&&wasActive){this.activeTraps.delete(e.id);}if(this.trapCooldown<=0&&active&&Math.hypot(e.x-this.state.x,e.y-this.state.y)<10){this.hurt(15);this.trapCooldown=1;break;}}}
    for(const d of this.drops){d.life-=dt;d.vx*=.84;d.vy*=.84;d.x+=d.vx*dt;d.y+=d.vy*dt;const dist=Math.hypot(this.state.x-d.x,this.state.y-4-d.y);if(dist<65){const speed=160*(1-dist/65)+50;d.x+=(this.state.x-d.x)/dist*speed*dt;d.y+=(this.state.y-4-d.y)/dist*speed*dt;}if(dist<10){d.life=0;if(d.kind==='wood'){addItem(this.state,'wood',d.amount);this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} Odun`,'#dca574');}else if(d.kind==='xp'){if(gainXp(this.state,d.amount)){this.audio.play('level');this.notify(`Seviye ${this.state.level}! Yetenek puanını karakter ekranında kullan.`);this.burst(this.state.x,this.state.y,'#e7cb76',25);}else this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} XP`,'#b9dca5');}else if(d.kind==='gold'){const r=this.state.equipment.ring;d.amount=Math.round(d.amount*(r?ITEMS[r].altinKat||1:1));this.state.gold+=d.amount;this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} Altın`,'#f2d480');}else if(d.kind==='bow'){addItem(this.state,'bow',1);addItem(this.state,'arrow',30);this.audio.play('level');this.notify('Avcı yayı ve 30 ok aldın! Q veya R ile yaya geçebilirsin.');this.float(d.x,d.y-8,'+1 YAY & +30 OK','#f2d480');}this.save();this.emit();}}this.drops=this.drops.filter(d=>d.life>0);
    for(const p of this.particles){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.g??40)*dt;}this.particles=this.particles.filter(p=>p.life>0);for(const f of this.floating){f.life-=dt;f.y-=12*dt;}this.floating=this.floating.filter(f=>f.life>0);
