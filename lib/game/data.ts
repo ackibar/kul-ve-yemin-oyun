@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='5.3';
+export const SURUM='5.4';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -10,7 +10,7 @@ export const ASAMA = 'alpha';
 // mekandi. Bekci, Kul kalbi ve iki son da onunla birlikte cikti; oyunun
 // sonu yeni bir mekanla bastan kurulacak.
 export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern';
-export type ItemId = 'tac'|'migfer'|'cakil'|'tuzet'|'durusu'|'petek'|'muhur'|'okzehir'|'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'wood'|'torch'|'arrow'|'kurdele';
+export type ItemId = 'elmesale'|'tac'|'migfer'|'cakil'|'tuzet'|'durusu'|'petek'|'muhur'|'okzehir'|'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'wood'|'torch'|'arrow'|'kurdele';
 /** Item alanlari. attack/defense/hp dogrudan stats()'e girer; asagidakiler
  *  motorun tek tek okudugu DAVRANIS bayraklaridir - her yeni item icin kod
  *  yazmak yerine burada tanimlanir.
@@ -43,6 +43,9 @@ export type Item = {id:ItemId;name:string;kind:'weapon'|'armor'|'ring'|'ammo'|'c
 export const ITEMS:Record<ItemId,Item>={
  // Silahsiz mod bir "esya" olarak tutuluyor: boylece silah secme ekraninda
  // digerleriyle ayni sirada cikiyor ve kusanma akisi degismiyor.
+ /* Yanan mesale ELDE: torch kullanilinca envantere girer ve kusanilir, sonunce
+  *  cikar. Zayif vurur ama tutusturur. Satilmaz, dusmez. */
+ elmesale:{id:'elmesale',name:'Elde meşale',kind:'weapon',description:'Yanan meşale. Zayıf vurur ama tutuşturur; karanlıkta yolunu açar.',rarity:'Sıradan',icon:'flame',attack:5,price:0,sprite:'mesale',yakar:2},
  yumruk:{id:'yumruk',name:'Çıplak eller',kind:'weapon',description:'Silah yok. Zayıf ama hızlı. +2 saldırı.',rarity:'Sıradan',icon:'hand',attack:2,price:0},
  rusty:{id:'rusty',name:'Yıpranmış kılıç',kind:'weapon',description:'Sığınaktan kalan son hatıra. +10 saldırı.',rarity:'Sıradan',icon:'sword',attack:10,price:0},
  guard:{id:'guard',name:'Muhafız kılıcı',kind:'weapon',description:'Alf’in sözü kadar sağlam. +17 saldırı.',rarity:'Nadir',icon:'sword',attack:17,price:65},

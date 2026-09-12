@@ -121,6 +121,39 @@ MUH_YUR = ('marches forward with slow heavy armoured steps, carrying the long st
 MUH_VUR = ('raises the long straight sword high in both hands and brings it down in a '
            'heavy vertical cut in front of the body, then returns to guard; the sword is '
            'a solid steel blade and stays gripped in the hands in every frame')
+# Mesale: taban karakter (silahsiz) sol elinde yanan mesaleyle. Donus karesinde
+# mesale YOK; yay gibi tarife guvenerek basiliyor (yayda 2. kareden itibaren
+# cizmisti). Alev her karede gorunur olmali, yoksa yururken sonuyor.
+MESALE_YUR = ('walks forward with a steady stride, legs alternating clearly, holding a '
+              'burning wooden torch raised in the left hand at shoulder height; the torch '
+              'is a short wooden stick with a bright orange flame on top and it stays '
+              'gripped in the hand with the flame clearly visible in every single frame')
+MESALE_VUR = ('swings the burning wooden torch across in a wide arc in front of the body '
+              'from one side to the other and pulls it back; the torch stays gripped in the '
+              'hand and its bright orange flame is clearly visible in every single frame')
+# Yandan bakista model mesaleyi YERE YAYILAN alev dalgasina cevirdi ve karakteri
+# turuncuya boyadi (kilictaki isik huzmesi hatasinin aynisi). Alevin boyutu ve
+# yerde ates olmadigi acikca yazilinca duzeldi.
+MESALE_VUR_YAN = ('swings a short wooden torch in a quick arc in front of the body from '
+                  'high to low and pulls it back to the side; the torch is a small stick '
+                  'with a SMALL fist-sized orange flame on its tip, the flame never grows, '
+                  'never trails and never touches the ground, there is NO fire on the '
+                  'ground and NO glow on the clothes, the clothes stay dark grey; the '
+                  'torch stays gripped in the hand in every frame')
+# Kilic + mesale: sag elde kilic, sol elde kucuk alevli mesale. Kilic tarifleri
+# aynen, sonuna mesale cumlesi eklenir (yan/arka icin de).
+MES_EK = ('; the left hand keeps holding a short wooden torch up at shoulder height, away '
+          'from the swing, with a SMALL fist-sized orange flame that never grows, never '
+          'trails and never touches the ground, no glow on the clothes; both the steel '
+          'sword and the torch stay gripped in every single frame')
+KILICMES_YUR = ('walks forward with a steady stride, legs alternating clearly, the sword held '
+                'down at the side in the right hand and a short burning wooden torch held up '
+                'in the left hand at shoulder height; the torch has a SMALL fist-sized orange '
+                'flame that never grows and never touches the ground; both the steel sword '
+                'and the torch stay gripped in every single frame')
+MESALE_VUR_ARKA = ('seen from behind, swings the burning wooden torch forward and away from '
+                   'the camera in an arc in front of the body, never back toward the viewer; '
+                   'the torch stays gripped and its orange flame is visible in every frame')
 KUL_VUR = ('lunges forward and swings both clawed arms down and across at the target, '
            'then pulls them back; the body leans into the blow')
 
@@ -183,7 +216,15 @@ OZEL = {('kilic', 'Attack', 'east'): KILIC_VUR_YAN,
         ('kilic', 'Attack', 'north-east'): KILIC_VUR_ARKA,
         ('muhafiz', 'Attack', 'east'): KILIC_VUR_YAN,
         ('muhafiz', 'Attack', 'north'): KILIC_VUR_ARKA,
-        ('muhafiz', 'Attack', 'north-east'): KILIC_VUR_ARKA}
+        ('muhafiz', 'Attack', 'north-east'): KILIC_VUR_ARKA,
+        ('mesale', 'Attack', 'east'): MESALE_VUR_YAN,
+        ('kilicmesale', 'Attack', 'east'): KILIC_VUR_YAN + MES_EK,
+        # Guney-dogu saldirisinda mesale hic cizilmedi; tarif once mesaleyi kurar.
+        ('kilicmesale', 'Attack', 'south-east'): ('holding a short burning wooden torch up in the left hand with a small orange flame, ' + KILIC_VUR + MES_EK),
+        ('kilicmesale', 'Attack', 'north'): ('seen from behind, holding a short burning wooden torch up in the left hand, its small orange flame visible above the shoulder, ' + KILIC_VUR_ARKA + MES_EK),
+        ('kilicmesale', 'Attack', 'north-east'): KILIC_VUR_ARKA + MES_EK,
+        ('mesale', 'Attack', 'north'): MESALE_VUR_ARKA,
+        ('mesale', 'Attack', 'north-east'): MESALE_VUR_ARKA}
 
 SETLER = {
     'kilic': ('_arsiv/uretim/pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILIC_YUR), ('Attack', 6, KILIC_VUR)]),
@@ -195,6 +236,8 @@ SETLER = {
     # Silahsiz set: kilic varyantinin degil TABAN karakterin kendisi.
     'yumruk': ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Walk', 8, YUMRUK_YUR), ('Attack', 6, YUMRUK_VUR)]),
     'balta':  ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Attack', 6, BALTA_VUR), ('Walk', 8, BALTA_YUR)]),
+    'mesale': ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Walk', 8, MESALE_YUR), ('Attack', 6, MESALE_VUR)]),
+    'kilicmesale': ('_arsiv/uretim/pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILICMES_YUR), ('Attack', 6, KILIC_VUR + MES_EK)]),
 }
 
 

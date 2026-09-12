@@ -184,6 +184,18 @@ kümelerinden ölçülür), fener taşıyan, yanan düşman, ateş oku, oyuncu
 zanaat masasında 2 odun. Yeni karanlık mekân gelince KARANLIK'a değer ve
 `isiklar`'a fener konumları yazılır.
 
+**Meşale (2026-09-12):** yalnız `KARANLIK>0` mekânlarda yakılır (aydınlıkta
+tüketilmez, uyarı). Yanınca `elmesale` geçici silahı envantere girer;
+kılıç tutuyorsan meşale sol ele gelir (`1swordmesale` seti), silahsızsan
+tek başına (`1mesale`, vuruşu tutuşturur); yay/balta iki el ister, meşale
+kemerde kalır ve ışık yarıya iner (`mesaleElde()`). Q döngüsünde meşale
+çıplak elin yerini alır. Süre `flags.mesaleKalan`'da kayda girer. Işık
+merkezi ayak değil gövde ortası (y-16). Meşaleli setlerde ilk kareler
+dönüş karesinden geldiği için meşalesiz: `v3_kur` ALEV_AT alev pikseline
+göre kırpar; ton uyumu alevi de küle çevirdiği için `alev_geri` ham
+alev piksellerini geri koyar. Yan/arka saldırıda model meşaleyi yere
+yayılan aleve çevirdi → "SMALL fist-sized flame, NO fire on the ground".
+
 **Arayüz:** parşömen. Çerçeveler CSS değil 9 dilim piksel resmi
 (`frame*.png`, dilim 8, kalınlık dilimin katı). `border-image … fill`
 merkezi de boyar. "Vazgeç" pastel kırmızı (okunmuyordu). Alt güvenli alan
@@ -244,4 +256,4 @@ kondu. Uzaklıkla kısılır.
 
 ---
 
-*Son güncelleme: 2026-09-12, v5.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v5.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

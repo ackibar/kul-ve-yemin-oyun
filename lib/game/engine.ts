@@ -118,7 +118,7 @@ export class Engine{
  /** NPC dolasmasi: kisa bir yuruyus, sonra bekleme, sonra tekrar. Ev konumundan
   *  fazla uzaklasmazlar ki gorev icin bulunabilir kalsinlar. */
  private gez=new Map<string,{hx:number;hy:number;tx:number;ty:number;bekle:number;dir:'D'|'U'|'S';flip:boolean;yol:number}>();
- private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
+ private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
  private keys={up:false,down:false,left:false,right:false};
  private handleKeyDown=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(this.paused)return;if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=true;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=true;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=true;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=true;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=true;if(e.repeat)return;if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK')this.dodge();if(e.code==='KeyE')this.interact();if(e.code==='KeyQ'||e.code==='KeyR')this.toggleWeapon();};
  private handleKeyUp=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=false;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=false;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=false;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=false;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=false;};
@@ -133,7 +133,7 @@ export class Engine{
 /* '1' (silahsiz) de burada: caprazlari uretilmisti ama yalnizca ana yon
    dongusunde yukleniyordu, yani silahsiz modda capraz sheet'ler hic
    kullanilmiyordu - poz() sessizce ana yone dusuyordu. */
-for(const set of ['1','1sword','1bow','1balta'])for(const dir of ['D','U','S','DS','US'])for(const action of ['Idle','Walk','Attack','Hurt','Death']){jobs.push(this.img(`characters${set}${dir}${action}`,`/assets/characters/${set}/${dir}_${action}.png`));optional.push(dir==='DS'||dir==='US');}for(const z of ['haven','magara','disari','yikik','cistern'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));for(const z of ['haven','cistern'])for(let i=0;i<16;i++)jobs.push(this.img(`wang_${z}_${i}`,`/assets/dungeon/wang/${z}/wang_${i}.png`));/* 'portal' (Trapdoor_D) kaldirildi: kapak sprite'i yalnizca boyali arka
+for(const set of ['1','1sword','1bow','1balta','1mesale','1swordmesale'])for(const dir of ['D','U','S','DS','US'])for(const action of ['Idle','Walk','Attack','Hurt','Death']){jobs.push(this.img(`characters${set}${dir}${action}`,`/assets/characters/${set}/${dir}_${action}.png`));/* Mesale seti sonradan uretildi; eksikse oyun acilmaya devam etsin (kit() tabana duser). */optional.push(dir==='DS'||dir==='US'||set.endsWith('mesale'));}for(const z of ['haven','magara','disari','yikik','cistern'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));for(const z of ['haven','cistern'])for(let i=0;i<16;i++)jobs.push(this.img(`wang_${z}_${i}`,`/assets/dungeon/wang/${z}/wang_${i}.png`));/* 'portal' (Trapdoor_D) kaldirildi: kapak sprite'i yalnizca boyali arka
    plani olmayan mekanda ciziliyordu, oyle bir mekan kalmadi. */
 for(const [key,name]of [['fire','Fire1'],['lever','Lever1'],['trap','Spikes']])jobs.push(this.img(key,`/assets/dungeon/3%20Animated%20objects/${name}.png`));/* Sandik artik CraftPix setinden degil: oyunun paletinde uretilmis iki
    kareli kendi sheet'i (0 kapali, 1 acik). */jobs.push(this.img('chest','/assets/nesne/sandik.png'));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));mark(false);const result=await Promise.allSettled(jobs);
@@ -147,7 +147,7 @@ for(const [key,name]of [['fire','Fire1'],['lever','Lever1'],['trap','Spikes']])j
   if(s.flags.rauf==='takip'){let r=this.world.entities.find(x=>x.id==='rauf');
    if(!r){r={id:'rauf',type:'npc',x:0,y:0,name:'Rauf',portrait:5};this.world.entities.push(r);}
    r.x=s.x-14;r.y=s.y+6;}
-if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x-this.gorus.en/2,y:s.y-this.gorus.boy/2};this.resetMobs();this.attackTimer=this.dodgeTimer=this.dash=this.invulnerable=this.tonic=0;this.input={x:0,y:0,attack:false};this.audio.setZone(s.zone);this.emit();}
+if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x-this.gorus.en/2,y:s.y-this.gorus.boy/2};this.resetMobs();/* Mesale kayitta kaldiysa yanmaya devam eder. */this.mesale=Number(this.state.flags.mesaleKalan||0);this.attackTimer=this.dodgeTimer=this.dash=this.invulnerable=this.tonic=0;this.input={x:0,y:0,attack:false};this.audio.setZone(s.zone);this.emit();}
  start(){this.audio.start();this.paused=false;this.save();this.emit()}
  setPaused(v:boolean){this.paused=v;this.input={x:0,y:0,attack:false};if(v)this.save();this.emit()}
  sound(s:Sound){this.audio.play(s)}
@@ -199,24 +199,37 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    /* Obruk'un kileri. Tuzlu et oyunun en guclu tek seferlik iyilesmesi;
       bedeli de ona gore (26 altin, ustune iki bucuk kat zam). */
    /* Mesale: eskiden tanimliydi ama hicbir yerde kullanilmiyordu (olu esya). */
-   else if(id==='torch'){if(!removeItem(this.state,id))return false;this.mesale=Engine.MESALE_SURE;this.notify(`Meşale yandı: ${Engine.MESALE_SURE} saniye ışık.`);}
+   else if(id==='torch'){if(!(Engine.KARANLIK[this.state.zone]>0)){this.notify('Burası zaten aydınlık; meşaleyi karanlık bir yer için sakla.');return false;}
+    if(!removeItem(this.state,id))return false;this.mesale=Engine.MESALE_SURE;this.state.flags.mesaleKalan=String(Engine.MESALE_SURE);
+    /* Mesale ELE alinir: gecici silah 'elmesale' envantere girer ve kusanilir; sonunce cikar. */
+    const s=this.state;if(s.equipment.weapon!=='elmesale')this.mesaleOnce=s.equipment.weapon;if(!s.inventory.elmesale)addItem(s,'elmesale',1);
+    /* Kilic tutuyorsa mesale sol ele gelir (kilic+mesale seti); yay/balta/ciplak eldeyse mesale tek basina kusanilir. */
+    const w=ITEMS[s.equipment.weapon];if(s.equipment.weapon==='yumruk'||w.menzilli||w.sprite)s.equipment.weapon='elmesale';
+    this.notify(`Meşale yandı: ${Engine.MESALE_SURE} saniye ışık. Q ile silahına dönebilirsin.`);}
    else if(id==='tuzet'){if(this.state.hp>=stats(this.state).maxHp){this.notify('Canın zaten dolu.');return false;}if(!removeItem(this.state,id))return false;this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+60);this.float(this.state.x,this.state.y-10,'+60','#8cdda5');}
    else if(id==='durusu'){if(!removeItem(this.state,id))return false;this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+25);this.kulKoru=30;this.float(this.state.x,this.state.y-10,'+25','#8cdda5');this.notify('Duru su: 30 saniye kül canını eritmeyecek.');}
    else if(id==='petek'){if(!removeItem(this.state,id))return false;this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+20);this.petek=15;this.notify('Bal peteği: 15 saniye boyunca yavaşça iyileşiyorsun.');}else if(id==='kavanoz'){if(this.paused)return false;if(!removeItem(this.state,id))return false;/* Kavanoz bir SHOT olarak gidiyor: carpisma, duvar kontrolu ve cizim zaten
    o boru hattinda. Hasari yok (0), isi patlama aninda yapiliyor. */const v=this.yonVektor();this.shots.push({x:this.state.x+v.x*12,y:this.state.y-4+v.y*12,vx:v.x*120,vy:v.y*120,life:.55,damage:0,isHero:true,gecti:['*kavanoz']});this.notify('Köz kavanozu fırlatıldı.');}else return false;this.audio.play('drink');this.save();this.emit();return true;}
  /** Kusanilan silaha gore sprite takimi. Varyant yuklenmemisse silahsiz
   *  sete duser; boylece eksik asset karakteri gorunmez yapmaz. */
- private kit(){const w=this.state.equipment.weapon;const v=ITEMS[w].sprite??(ITEMS[w].menzilli?'bow':w==='yumruk'?'':'sword');/* Kontrol daima 'D' uzerinden: capraz yonde sheet olmayabilir ve set varken yedege dusmek yanlis olur. */return this.images['characters1'+v+'DIdle']?.naturalWidth?'characters1'+v:'characters1';}
+ private kit(){const w=this.state.equipment.weapon;const v=ITEMS[w].sprite??(ITEMS[w].menzilli?'bow':w==='yumruk'?'':'sword');
+  /* Mesale yaniyorsa ve bos el varsa (silahsiz ya da tek elli kilic) o setin
+     mesaleli varyanti cizilir: '' -> 1mesale, 'sword' -> 1swordmesale. Yay ve
+     balta iki el ister; mesale kemerde kalir, sprite degismez. */
+  if(this.mesale>0&&(v===''||v==='sword')&&this.images['characters1'+v+'mesaleDIdle']?.naturalWidth)return 'characters1'+v+'mesale';
+  /* Kontrol daima 'D' uzerinden: capraz yonde sheet olmayabilir ve set varken yedege dusmek yanlis olur. */return this.images['characters1'+v+'DIdle']?.naturalWidth?'characters1'+v:'characters1';}
+ /** Mesale ELDE mi (sprite'ta gorunuyor mu)? Kemerdeyse isik yariya iner. */
+ private mesaleElde(){return this.mesale>0&&this.kit().endsWith('mesale');}
  /** Silah dongusu: en guclu kilic -> yay (varsa) -> ciplak el -> bastan.
   *  Once yay yoksa tus hic calismiyordu; artik yaysiz oyuncu da silahsiz
   *  moda gecebiliyor. */
  toggleWeapon(){if(this.paused||!this.ready)return;const s=this.state;
-  const sahip=(Object.keys(s.inventory)as ItemId[]).filter(id=>ITEMS[id].kind==='weapon'&&id!=='yumruk');
+  const sahip=(Object.keys(s.inventory)as ItemId[]).filter(id=>ITEMS[id].kind==='weapon'&&id!=='yumruk'&&id!=='elmesale');
   const guclu=(l:ItemId[])=>l.sort((a,b)=>(ITEMS[b].attack||0)-(ITEMS[a].attack||0))[0];
   /* Dongu: en guclu kilic -> en guclu menzilli -> ciplak el. Menzilli silah
      artik tek degil (avci yayi, tatar yayi), o yuzden tur bazinda seciliyor. */
   const kilic=guclu(sahip.filter(id=>!ITEMS[id].menzilli)),yay=guclu(sahip.filter(id=>ITEMS[id].menzilli));
-  const sira:ItemId[]=[];if(kilic)sira.push(kilic);if(yay)sira.push(yay);sira.push('yumruk');
+  const sira:ItemId[]=[];if(kilic)sira.push(kilic);if(yay)sira.push(yay);/* Mesale yaniyorsa ciplak elin yerini alir. */if(s.inventory.elmesale)sira.push('elmesale');else sira.push('yumruk');
   const next=sira[(sira.indexOf(s.equipment.weapon)+1)%sira.length];
   this.notify(ITEMS[next].menzilli?`${ITEMS[next].name} kuşanıldı (Menzilli ok modu). Kalan ok: ${s.inventory.arrow||0}`
    :next==='yumruk'?'Silahını kaldırdın. Çıplak ellerle dövüşüyorsun.'
@@ -256,7 +269,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    carpanla ciziliyor ki gorsel menzille tutsun. */const eris=38*(silah.menzil??1);let targets=this.mobs.filter(m=>Math.hypot(m.x-s.x,m.y-s.y)<eris&&lineOfSight(this.world,s.x,s.y,m.x,m.y));targets.sort((a,b)=>Math.hypot(a.x-s.x,a.y-s.y)-Math.hypot(b.x-s.x,b.y-s.y));if(targets[0])this.face(targets[0].x-s.x,targets[0].y-s.y);/* Varsayilan TEK hedef. Once her silah menzildeki herkese birden
      vuruyordu; kalabalik dalgalar tek savurusla eriyordu. Alan hasari
      artik silaha ozel bir ozellik (Yarma baltasi). */for(const m of targets.slice(0,silah.alan??1)){let damage=stats(s).attack+(this.tonic>0?8:0);/* Arkadan vurus: dusmanin bakis yonu ile ona giden yon AYNI taraftaysa
-   (ic carpim pozitif) sirtini donmus demektir. */if(silah.arkadan&&m.aci!==undefined){const vx=m.x-s.x,vy=m.y-s.y,n=Math.hypot(vx,vy)||1;if((Math.cos(m.aci)*vx+Math.sin(m.aci)*vy)/n>.35){damage=Math.round(damage*silah.arkadan);this.float(m.x,m.y-22,'SIRTTAN!','#ffd1a3');}}m.hp-=damage;m.hurt=.17;if(silah.sersemlet)m.sersem=silah.sersemlet;if(s.equipment.weapon==='ember')m.burn=3;if(s.equipment.weapon==='blood')s.hp=Math.min(stats(s).maxHp,s.hp+3);this.float(m.x,m.y-12,String(damage),'#ffdaa3');this.burst(m.x,m.y,'#c76b5d',8);this.audio.play('hit');const d=Math.hypot(m.x-s.x,m.y-s.y)||1;this.move(m,(m.x-s.x)/d*5,(m.y-s.y)/d*5);if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);}this.kralKilic(s);this.emit();}
+   (ic carpim pozitif) sirtini donmus demektir. */if(silah.arkadan&&m.aci!==undefined){const vx=m.x-s.x,vy=m.y-s.y,n=Math.hypot(vx,vy)||1;if((Math.cos(m.aci)*vx+Math.sin(m.aci)*vy)/n>.35){damage=Math.round(damage*silah.arkadan);this.float(m.x,m.y-22,'SIRTTAN!','#ffd1a3');}}m.hp-=damage;m.hurt=.17;if(silah.sersemlet)m.sersem=silah.sersemlet;if(s.equipment.weapon==='ember')m.burn=3;if(silah.yakar)m.burn=Math.max(m.burn,silah.yakar);if(s.equipment.weapon==='blood')s.hp=Math.min(stats(s).maxHp,s.hp+3);this.float(m.x,m.y-12,String(damage),'#ffdaa3');this.burst(m.x,m.y,'#c76b5d',8);this.audio.play('hit');const d=Math.hypot(m.x-s.x,m.y-s.y)||1;this.move(m,(m.x-s.x)/d*5,(m.y-s.y)/d*5);if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);}this.kralKilic(s);this.emit();}
   /** Fener tasiyan: saldirmaz. Oyuncu yaklasinca isik soner ve etrafa
    *  Bogulmus dolar - firtinada isiga gidenin basina gelen bu. Uzaktayken
    *  oyuncudan yavasca uzaklasir, yani pesinden gidersin. */
@@ -298,11 +311,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    g.globalCompositeOperation='destination-out';
    const del=(x:number,y:number,r:number,guc=1)=>{if(x<cx-r||x>cx+en+r||y<cy-r||y>cy+boy+r)return;
     const gr=g.createRadialGradient(x-cx,y-cy,0,x-cx,y-cy,r);
-    gr.addColorStop(0,`rgba(0,0,0,${guc})`);gr.addColorStop(.3,`rgba(0,0,0,${guc*.88})`);gr.addColorStop(.65,`rgba(0,0,0,${guc*.4})`);gr.addColorStop(1,'rgba(0,0,0,0)');
+    /* Yumusak gecis: dort ara durak, kenara dogru uzun kuyruk. */gr.addColorStop(0,`rgba(0,0,0,${guc})`);gr.addColorStop(.25,`rgba(0,0,0,${guc*.92})`);gr.addColorStop(.55,`rgba(0,0,0,${guc*.55})`);gr.addColorStop(.8,`rgba(0,0,0,${guc*.18})`);gr.addColorStop(1,'rgba(0,0,0,0)');
     g.fillStyle=gr;g.fillRect(x-cx-r,y-cy-r,r*2,r*2);};
    const s=this.state;const tit=(x:number)=>1+Math.sin(time*9+x)*.04+Math.sin(time*23+x*.7)*.02;
    // Oyuncu: mesaleyle genis, mesalesiz yalnizca cevresi (iki adim).
-   del(s.x,s.y-6,(this.mesale>0?Engine.ISIK.mesale*(this.mesale<6?.5+this.mesale/12:1):Engine.ISIK.cip)*tit(s.x));
+   /* Merkez ayak degil govde ortasi: sprite y'nin ustune ciziliyor, y-6'da isik karakterin altinda kaliyordu. */
+   del(s.x,s.y-16,(this.mesale>0?Engine.ISIK.mesale*(this.mesaleElde()?1:.5)*(this.mesale<6?.5+this.mesale/12:1):Engine.ISIK.cip)*tit(s.x));
    for(const e of this.world.entities)if(e.type==='fire'||e.type==='core')del(e.x,e.y-6,Engine.ISIK.ates*tit(e.x));
    for(const [x,y,r] of this.world.isiklar)del(x,y,r*tit(x));
    for(const m of this.mobs){if(m.hp<=0)continue;if(m.kind===9)del(m.x,m.y-14,Engine.ISIK.fener*tit(m.x));else if(m.burn>0)del(m.x,m.y-8,Engine.ISIK.yanan);}
@@ -373,7 +387,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly KARANLIK:Record<string,number>={haven:0,magara:.82,cistern:0,disari:0,yikik:0};
  /** Mesale suresi (sn) ve yaricaplari: mesaleli / mesalesiz oyuncu, ates, fener. */
  static readonly MESALE_SURE=90;
- static readonly ISIK={mesale:78,cip:22,ates:64,fener:40,yanan:26,ok:18};
+ static readonly ISIK={mesale:104,cip:26,ates:64,fener:40,yanan:26,ok:18};
  /** Fener tasiyan bu mesafede soner ve etrafa Bogulmus birakir. */
  static readonly FENER_MENZIL=46;
  static readonly GOLGE:Record<number,number>={1:9,2:8,4:8,5:11,6:8,7:18,8:9,9:5,10:10};
@@ -481,6 +495,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   {const r=this.state.equipment.ring,k=r?ITEMS[r].kurtarma||0:0;const en=stats(this.state).maxHp;
    if(k&&!this.halka&&this.state.hp>0&&this.state.hp<en/3){this.halka=true;this.state.hp=Math.min(en,this.state.hp+k);
     this.float(this.state.x,this.state.y-18,'YEMİN TUTTU','#f0d59a');this.audio.play('level');this.emit();}}for(const key of ['attackTimer','dodgeTimer','dash','invulnerable','tonic','bileme','merhem','petek','kulKoru','yavas','mesale','gizli','slash','vurusPoz','trapCooldown']as const)this[key]=Math.max(0,this[key]-dt);
+  /* Mesale sondu: elden cikar, onceki silaha don. Kalan sure kayda da yazilir
+     ki sayfa yenilenince mesale elde ama sonuk kalmasin. */
+  {const s=this.state;if(this.mesale>0)s.flags.mesaleKalan=String(Math.ceil(this.mesale));
+   else if(s.inventory.elmesale){delete s.flags.mesaleKalan;removeItem(s,'elmesale');
+    if(s.equipment.weapon==='elmesale')s.equipment.weapon=(this.mesaleOnce!=='elmesale'&&s.inventory[this.mesaleOnce])?this.mesaleOnce:'yumruk';
+    this.notify('Meşale söndü.');this.emit();}}
    const kx=(this.keys.right?1:0)-(this.keys.left?1:0),ky=(this.keys.down?1:0)-(this.keys.up?1:0),kLen=Math.hypot(kx,ky),activeInput=kLen>0?{x:kx/kLen,y:ky/kLen}:this.input;const movement=this.dash>0?this.dashVector:activeInput;const length=Math.hypot(movement.x,movement.y);this.moving=length>.08;/* Ocak zirhinin agirligi (yavaslik) da tanimliydi ama kullanilmiyordu. */
    const speed=(this.dash>0?205:44)*(ITEMS[this.state.equipment.armor].yavaslik??1)*(this.yavas>0?.6:1);if(this.moving){const dx=movement.x/Math.max(1,length),dy=movement.y/Math.max(1,length);this.face(dx,dy);this.move(this.state,dx*speed*dt,dy*speed*dt);this.bolgeKontrol();this.yol+=speed*dt;if(this.tick-this.stepAt>.29){this.audio.play('step');this.stepAt=this.tick;}}if(this.input.attack)this.attack();
    // --- Kul Ovasi: can erimesi + ruzgarda savrulan kul ---
@@ -867,7 +887,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      mesalesi de ayni sicakligi versin, yoksa isik haritasi deligi soguk gri kaliyor. */
   {const sicak=(x:number,y:number,r:number)=>{const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'#f7af3930');g.addColorStop(.4,'#ee8e1812');g.addColorStop(1,'#ee8e1800');c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2);};
    for(const [x,y,r] of this.world.isiklar)sicak(x,y,r*.9+Math.sin(time*3+x)*3);
-   if(this.mesale>0)sicak(this.state.x,this.state.y-8,54+Math.sin(time*4)*3);}
+   if(this.mesale>0)sicak(this.state.x,this.state.y-16,(this.mesaleElde()?70:36)+Math.sin(time*4)*3);}
   for(const e of this.world.entities.filter(e=>e.type==='fire'||e.type==='core')){if(Math.abs(e.x-this.state.x)>230||Math.abs(e.y-this.state.y)>160)continue;const radius=48+Math.sin(time*3+e.x)*3;const glow=c.createRadialGradient(e.x,e.y-6,0,e.x,e.y-6,radius);glow.addColorStop(0,'#f7af3936');glow.addColorStop(.35,'#ee8e1815');glow.addColorStop(1,'#ee8e1800');c.fillStyle=glow;c.fillRect(e.x-radius,e.y-radius-6,radius*2,radius*2);}
   for(const d of this.drops){c.save();c.translate(d.x,d.y);if(d.kind==='wood'){c.fillStyle='#b87c4c';c.fillRect(-3,-2,6,4);c.fillStyle='#6e4729';c.fillRect(-2,-1,4,2);}else if(d.kind==='xp'){const p=2.5+Math.sin(time*10)*.8;c.fillStyle='#8ee675';c.beginPath();c.arc(0,0,p,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(0,0,p*.5,0,Math.PI*2);c.fill();}else if(d.kind==='gold'){c.fillStyle='#ffd700';c.beginPath();c.arc(0,0,2.5,0,Math.PI*2);c.fill();c.fillStyle='#b89200';c.fillRect(-.8,-.8,1.6,1.6);}else if(d.kind==='bow'){c.strokeStyle='#c78d4c';c.lineWidth=1.5;c.beginPath();c.arc(0,0,5,-Math.PI/2,Math.PI/2);c.stroke();c.strokeStyle='#dedede';c.lineWidth=0.8;c.beginPath();c.moveTo(0,-5);c.lineTo(0,5);c.stroke();}c.restore();}
   for(const s of this.shots){if(s.isHero){c.save();/* Ok ayaklardan cikiyor gibi duruyordu. shot.y'yi yukseltmek YANLIS olurdu:

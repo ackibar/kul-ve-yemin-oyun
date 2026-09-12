@@ -51,7 +51,9 @@ ID_DOSYA = {'kilic': '_arsiv/uretim/pixellab/gezgin/id_kilic.txt',
             'rauf': '_arsiv/uretim/pixellab/id_rauf.txt',
             'rauf6': '_arsiv/uretim/pixellab/id_rauf.txt',
             'bogulmus': '_arsiv/uretim/pixellab/id_bogulmus.txt',
-            'muhafiz': '_arsiv/uretim/pixellab/id_muhafiz.txt'}
+            'muhafiz': '_arsiv/uretim/pixellab/id_muhafiz.txt',
+            'mesale': '_arsiv/uretim/pixellab/gezgin/id.txt',
+            'kilicmesale': '_arsiv/uretim/pixellab/gezgin/id_kilic.txt'}
 
 SETLER = {
     # Kilicli sette ana yonlerin Idle/Hurt/Death'i zaten var ve calisiyor;
@@ -75,6 +77,11 @@ SETLER = {
     'kullenmis': ('enemies/4', 'enemies/4', NPC_EN, {}, None),
     'bogulmus':  ('enemies/8', 'enemies/8', NPC_EN, {}, None),
     'muhafiz':   ('enemies/10','enemies/10',NPC_EN, {}, None),
+    # Mesaleli set: referans kilicli setin Idle'i (mod gecisinde ziplamasin).
+    'mesale': ('characters/1mesale', 'characters/1sword', OYUNCU_EN,
+              {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),
+    'kilicmesale': ('characters/1swordmesale', 'characters/1sword', OYUNCU_EN,
+              {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),
     'yay':   ('characters/1bow',   'characters/1sword', OYUNCU_EN,
               {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),
 }
@@ -133,6 +140,64 @@ def yaysiz_onu_at(kareler):
     while j - i > EN_AZ_KARE and en[j - 1] < esik:
         j -= 1
     return kareler[i:j], i + (len(en) - j)
+
+
+# Mesale: silahi olculen genislik degil ALEV. Ilk kare donus karesi (mesale yok),
+# kuzeyde ilk uc kare de yok. Alev pikseli (parlak turuncu) 5'in altindaysa
+# kare bastan/sondan atilir. (set, aksiyon) -> bu kural.
+ALEV_AT = {('mesale', 'Walk'), ('mesale', 'Attack'), ('kilicmesale', 'Walk'), ('kilicmesale', 'Attack')}
+ALEV_ESIK = 1  # guney yuruyusunde alev 1-5 px: tek piksel bile mesale var demek
+
+
+def alev_px(k):
+    px = k.load(); n = 0
+    for y in range(k.height):
+        for x in range(k.width):
+            r, g, b, a = px[x, y]
+            # Sari alevler (r,g yuksek) de sayilsin; eski kural yalnizca turuncuyu goruyordu.
+            if a and r > 190 and g > 90 and b < 140 and r - b > 70:
+                n += 1
+    return n
+
+
+def alevsiz_onu_at(kareler):
+    al = [alev_px(k) for k in kareler]
+    i, j = 0, len(al)
+    while j - i > EN_AZ_KARE and al[i] < ALEV_ESIK:
+        i += 1
+    while j - i > EN_AZ_KARE and al[j - 1] < ALEV_ESIK:
+        j -= 1
+    return kareler[i:j], i + (len(al) - j)
+
+
+def alev_geri(slot):
+    """Ton uyumu alevi de kule cevirdi (oyunda beyaz-gri bir leke kaldi). Sahne
+    tonuna cekilmis sheet'te ham karenin ALEV pikselleri oldugu gibi geri konur;
+    tek sicak renk kurali zaten alevi disarida tutuyor."""
+    import os
+    for f in sorted(glob.glob(f'{ROOT}/public/assets/{slot}/*.png')):
+        ham_y = f'{HAM}/{slot}/{os.path.basename(f)}'
+        if not os.path.exists(ham_y):
+            continue
+        son, ham = Image.open(f).convert('RGBA'), Image.open(ham_y).convert('RGBA')
+        ps, ph = son.load(), ham.load()
+        # Iki asama: siki kural alevi bulur (turuncu), sonra onun 2 px cevresinde
+        # gevsek kural sari-beyaz CEKIRDEGI de alir. Gevsek kural tek basina
+        # yuzu/teni de yakalardi; cevreyle sinirlanmasi bu yuzden.
+        W, H = ham.size
+        siki = [[bool(ph[x, y][3]) and ph[x, y][0] > 170 and ph[x, y][1] > 70 and ph[x, y][2] < 120 and ph[x, y][0] - ph[x, y][2] > 80
+                 for x in range(W)] for y in range(H)]
+        n = 0
+        for y in range(H):
+            for x in range(W):
+                r, g, b, a = ph[x, y]
+                if not a:
+                    continue
+                if siki[y][x] or (r > 200 and g > 140 and r - b > 40 and any(
+                        siki[yy][xx] for yy in range(max(0, y-2), min(H, y+3)) for xx in range(max(0, x-2), min(W, x+3)))):
+                    ps[x, y] = (r, g, b, a); n += 1
+        son.save(f)
+    print(f'  {slot}: alev pikselleri geri kondu')
 
 
 def atisi_basa_al(kareler):
@@ -249,6 +314,8 @@ def kur(setad):
                 kk = [Image.open(x).convert('RGBA') for x in y]
                 if (setad, 'Walk') in ONDEN_AT:
                     kk = yaysiz_onu_at(kk)[0]
+                if (setad, 'Walk') in ALEV_AT:
+                    kk = alevsiz_onu_at(kk)[0]
                 durus_k = kk[0]
             else:
                 durus_k = donusler().get(yon)
@@ -262,6 +329,8 @@ def kur(setad):
             atilan = 0
             if (setad, aksiyon) in ONDEN_AT:
                 kareler, atilan = yaysiz_onu_at(kareler)
+            if (setad, aksiyon) in ALEV_AT:
+                kareler, atilan = alevsiz_onu_at(kareler)
             if (setad, aksiyon) in ATIS_BASA:
                 kareler = atisi_basa_al(kareler)
             sh = Image.new('RGBA', (en * len(kareler), BOY), (0, 0, 0, 0))
@@ -277,6 +346,8 @@ def kur(setad):
               + (f'  ({atilan} yaysiz kare atildi)' if atilan else '')
               + (f'  (silah ucu {t}px tasti)' if t else ''))
     aktor_uyum.klasor(f'{ROOT}/public/assets/{slot}')
+    if any(k[0] == setad for k in ALEV_AT):
+        alev_geri(slot)
 
 
 if __name__ == '__main__':
