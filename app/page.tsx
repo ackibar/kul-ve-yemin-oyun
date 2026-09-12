@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState,type PointerEvent} from 'react';
-import {Swords,Play,Settings2,BookOpen,RotateCw,Volume2,ChevronRight,Smartphone,Shield,Heart,Backpack,ScrollText,Pause,Hand,Flame,Coins,Map as MapIcon,ArrowUp,Footprints,Wind,Gem,Shirt,Sword,Plus,Check,Home as HomeIcon,Maximize,MessageCircle,Music2,VolumeX,Save,ArrowLeft,Compass,X,Download} from 'lucide-react';
+import {Swords,Play,Settings2,BookOpen,Volume2,ChevronRight,Smartphone,Shield,Heart,ScrollText,Pause,Hand,Flame,Coins,Footprints,Wind,Gem,Shirt,Sword,Plus,Check,Home as HomeIcon,Maximize,Music2,VolumeX,Save,Compass,X} from 'lucide-react';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogAction,AlertDialogCancel} from '@/components/ui/alert-dialog';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/tabs';

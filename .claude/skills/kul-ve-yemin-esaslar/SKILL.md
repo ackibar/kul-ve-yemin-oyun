@@ -239,6 +239,19 @@ kondu. Uzaklıkla kısılır.
 
 ---
 
+### Yükleme ve performans (ölçüldü 2026-09-12)
+Oyun CPU-bağımlı değil: 6× CPU kısıtıyla bile medyan kare 16.7 ms, 33 ms üstü
+kare %0. Darboğaz açılıştaki istek sayısıydı. Motor **yalnız çizilen** sheet'i
+yükler: NPC → Idle+Walk, oyuncu → Idle+Walk+Attack, düşman → Walk+Attack+Hurt
+(Idle/Death hiç çizilmiyor). Wang karoları tembel: beş mekânın da boyalı arka
+planı var, yedek yol çalışmıyor → yalnız arka plan yoksa yüklenir. Yeni bir
+çizim yolu eklenirse `EYLEM` listeleri genişletilmeli.
+
+**CSS `url()` referansları varlık taramasında görünmez.** v4.2 temizliğinde
+`public/pixelify.ttf` bu yüzden silinmiş ve oyun aylarca yedek monospace ile
+yazmış (dosya yoksa sunucu index.html döndürüyor → 404 bile görünmüyor).
+Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
+
 ## 4. Süreç (alışkanlıklar)
 
 - **Ücretli üretimden önce sor.** Tek çağrıyla fiyatla, toplu basmadan
@@ -263,4 +276,4 @@ kondu. Uzaklıkla kısılır.
 
 ---
 
-*Son güncelleme: 2026-09-12, v5.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v5.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

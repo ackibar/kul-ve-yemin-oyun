@@ -1,4 +1,4 @@
-import {addItem,gainXp,ITEMS,newState,removeItem,stats,type ItemId,type State,type Zone} from './data';
+import {addItem,gainXp,ITEMS,removeItem,stats,type ItemId,type State,type Zone} from './data';
 /** Render yogunlugu: gorsel pikseli / dunya birimi. Dunya 16px karo, 32px aktor
  *  biriminde kalir; gorseller 2x cozunurlukte (32px karo, 64px aktor) uretilir. */
 const R=2;
@@ -129,14 +129,20 @@ export class Engine{
  private img(key:string,path:string){const im=new Image();im.src=path;this.images[key]=im;return new Promise<void>((resolve,reject)=>{im.onload=()=>resolve();im.onerror=()=>reject(new Error(path));})}
   private async loadAssets(){const jobs:Promise<void>[]=[];const optional:boolean[]=[];/** optional[i] === true olan isler ISTEGE BAGLI: eksikligi oyunu kirmaz.
   *  Karakter dongusu disindaki tum isler zorunlu sayilir. */
- const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};for(const id of [3,5,21,22,35])jobs.push(this.img('tile'+id,`/assets/dungeon/1%20Tiles/Tile_${String(id).padStart(2,'0')}.png`));jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);jobs.push(this.img('ceset','/assets/characters/5/D_Corpse.png'));optional.push(true);jobs.push(this.img('kral_ceset','/assets/characters/13/D_Corpse.png'));optional.push(true);mark(false);for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?15:10);n++){if(kind==='enemies'&&n===3)continue;/* solucan kaldirildi */const iste=(kind==='characters'&&n>=5)||(kind==='enemies'&&(n===6||n>=8));for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death']){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}/* Insansi dusmanlar (4 kullenmis, 6 Rauf) caprazlarda da ciziliyor; tepeden
+ const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);jobs.push(this.img('ceset','/assets/characters/5/D_Corpse.png'));optional.push(true);jobs.push(this.img('kral_ceset','/assets/characters/13/D_Corpse.png'));optional.push(true);mark(false);/* YALNIZCA CIZILEN sheet'ler yukleniyor. Olculdu: NPC'lerde sprite cagrisi tek
+   yerde ve sadece Idle/Walk uretiyor; dusmanlarda eylem yalnizca Walk/Attack/
+   Hurt olabiliyor (Idle/Death hic cizilmiyor). Once hepsi yukleniyordu: 180
+   gereksiz istek. Yeni bir cizim yolu eklenirse bu listeler genisletilir. */
+const EYLEM={npc:['Idle','Walk'],dusman:['Walk','Attack','Hurt']};
+for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?15:10);n++){if(kind==='enemies'&&n===3)continue;/* solucan kaldirildi */const iste=(kind==='characters'&&n>=5)||(kind==='enemies'&&(n===6||n>=8));for(const dir of ['D','U','S'])for(const action of (kind==='characters'?EYLEM.npc:EYLEM.dusman)){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}/* Insansi dusmanlar (4 kullenmis, 6 Rauf) caprazlarda da ciziliyor; tepeden
    gorulen yaratiklar dondurulerek cizildigi icin ek sheet istemiyor. */for(const n of [4,6,8,10])for(const dir of ['DS','US'])for(const action of ['Walk','Attack']){jobs.push(this.img(`enemies${n}${dir}${action}`,`/assets/enemies/${n}/${dir}_${action}.png`));optional.push(true);}/* Oyuncu 8 yonde cizilir (DS/US caprazlar, bati tarafi aynalanir); NPC ve
    dusmanlar 3 yonde kalir. Capraz sheet'ler istege bagli isaretlenir ki
    eksik olsalar yukleme hatasi vermesin - poz() en yakin ana yone duser. */
 /* '1' (silahsiz) de burada: caprazlari uretilmisti ama yalnizca ana yon
    dongusunde yukleniyordu, yani silahsiz modda capraz sheet'ler hic
    kullanilmiyordu - poz() sessizce ana yone dusuyordu. */
-for(const set of ['1','1sword','1bow','1balta','1mesale','1swordmesale'])for(const dir of ['D','U','S','DS','US'])for(const action of ['Idle','Walk','Attack','Hurt','Death']){jobs.push(this.img(`characters${set}${dir}${action}`,`/assets/characters/${set}/${dir}_${action}.png`));/* Mesale seti sonradan uretildi; eksikse oyun acilmaya devam etsin (kit() tabana duser). */optional.push(dir==='DS'||dir==='US'||set.endsWith('mesale'));}for(const z of ['haven','magara','disari','yikik','cistern'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));for(const z of ['haven','cistern'])for(let i=0;i<16;i++)jobs.push(this.img(`wang_${z}_${i}`,`/assets/dungeon/wang/${z}/wang_${i}.png`));/* 'portal' (Trapdoor_D) kaldirildi: kapak sprite'i yalnizca boyali arka
+/* Oyuncuda action yalnizca Idle/Walk/Attack olabiliyor (olum ekran paneli, hasar yanip sonme ile gosteriliyor). */
+for(const set of ['1','1sword','1bow','1balta','1mesale','1swordmesale'])for(const dir of ['D','U','S','DS','US'])for(const action of ['Idle','Walk','Attack']){jobs.push(this.img(`characters${set}${dir}${action}`,`/assets/characters/${set}/${dir}_${action}.png`));/* Mesale seti sonradan uretildi; eksikse oyun acilmaya devam etsin (kit() tabana duser). */optional.push(dir==='DS'||dir==='US'||set.endsWith('mesale'));}for(const z of ['haven','magara','disari','yikik','cistern'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));/* 'portal' (Trapdoor_D) kaldirildi: kapak sprite'i yalnizca boyali arka
    plani olmayan mekanda ciziliyordu, oyle bir mekan kalmadi. */
 for(const [key,name]of [['fire','Fire1'],['lever','Lever1'],['trap','Spikes']])jobs.push(this.img(key,`/assets/dungeon/3%20Animated%20objects/${name}.png`));/* Sandik artik CraftPix setinden degil: oyunun paletinde uretilmis iki
    kareli kendi sheet'i (0 kapali, 1 acik). */jobs.push(this.img('chest','/assets/nesne/sandik.png'));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));mark(false);const result=await Promise.allSettled(jobs);
@@ -331,6 +337,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    g.globalCompositeOperation='source-over';
    const c=this.ctx;c.drawImage(t,0,0,t.width,t.height,cx,cy,en,boy);
   }
+  /** Wang karolari yalnizca boyali arka plan YOKSA gerekiyor; acilista 32 istek
+   *  yapmasin diye o ana ertelendi. Bir kez tetiklenir. */
+  private wangIstendi=false;
+  private wangYukle(){if(this.wangIstendi)return;this.wangIstendi=true;
+   for(const z of ['haven','cistern'])for(let i=0;i<16;i++)this.img(`wang_${z}_${i}`,`/assets/dungeon/wang/${z}/wang_${i}.png`).catch(()=>{});}
   private kill(m:Mob){
   if(m.id==='rauf'){this.raufDizCok();return;}
   if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);
@@ -694,7 +705,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    }
    if(rf==='takip'){
     const kopya=this.world.entities.filter(x=>x.id==='rauf');
-    if(kopya.length>1)this.world.entities=this.world.entities.filter((x,i)=>x.id!=='rauf'||x===kopya[0]);
+    if(kopya.length>1)this.world.entities=this.world.entities.filter(x=>x.id!=='rauf'||x===kopya[0]);
     let e=this.world.entities.find(x=>x.id==='rauf');
     if(!e){e={id:'rauf',type:'npc',x:this.state.x-14,y:this.state.y+6,name:'Rauf',portrait:5};
      this.world.entities.push(e);}
@@ -854,7 +865,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   // Tek parca arka plan: karo tekrarini ve desen olcegi sorununu ortadan kaldirir.
   // Gorsel carpisma haritasiyla maskelenerek uretilir (bkz. scripts/arkaplan_maske.py),
   // bu yuzden gorunen duvar ile geciilmez alan birebir ortusur.
-  if(bg?.naturalWidth){c.drawImage(bg,0,0,bg.width,bg.height,0,0,this.world.w*16,this.world.h*16);}else{
+  if(bg?.naturalWidth){c.drawImage(bg,0,0,bg.width,bg.height,0,0,this.world.w*16,this.world.h*16);}else{this.wangYukle();
   const isFloor=(tx:number,ty:number)=>ty>=0&&ty<this.world.h&&tx>=0&&tx<this.world.w&&this.world.tiles[ty][tx]===1;const y0=Math.floor(cy/16)-1,y1=Math.ceil((cy+this.gorus.boy)/16)+2,x0=Math.floor(cx/16)-1,x1=Math.ceil((cx+this.gorus.en)/16)+2;
   // Dual-grid autotile: her cizilen karo dort dunya hucresinin kesistigi koseye ortalanir;
   // wang_N'de N = kose duvar maskesi (NW=8, NE=4, SW=2, SE=1), wang_0 tam zemin, wang_15 tam duvar.

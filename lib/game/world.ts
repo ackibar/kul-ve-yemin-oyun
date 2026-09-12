@@ -38,13 +38,6 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   ucurumlar.push([x1,y1,x2,y2]);};
  const at=(e:Entity)=>entities.push({...e,x:e.x*16+8,y:e.y*16+8});
  const fire=(x:number,y:number)=>at({id:`fire${x}_${y}`,type:'fire',x,y});
- /** Nesne yerlestirir: sprite'i cizer VE ayak izini engel olarak ekler.
-  *  fw/fh karo biriminde ayak izi; gorselin tamami degil, tabani esas alinir
-  *  (raf gibi uzun nesnelerde ust kisim yalnizca gorsel). */
- const obj=(id:string,tx:number,ty:number,ad:string,fw:number,fh:number,name?:string)=>{
-  entities.push({id,type:'decor',x:tx*16,y:ty*16,asset:`nesne/${ad}`,name});
-  blockers.push([tx-fw/2,ty-fh,tx+fw/2,ty]);
- };
  const decor=(id:string,x:number,y:number,asset:string,name?:string)=>at({id,type:'decor',x,y,asset,name:name||(asset.includes('Table')?'Zanaat Masası':undefined)});
  const chest=(id:string,x:number,y:number,items:[ItemId,number][],gold=0)=>at({id,type:'chest',x,y,items,gold,name:'Sandık'});
  const enemy=(id:string,kind:1|2|4|5|6|7|8|9|10,x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
