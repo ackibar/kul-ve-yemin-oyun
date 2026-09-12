@@ -1,14 +1,23 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM = '3.1';
+export const SURUM = '3.2';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
 export const ASAMA = 'alpha';
 
 export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern' | 'forge';
-export type ItemId = 'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'core'|'wood'|'torch'|'arrow'|'kurdele';
-export type Item = {id:ItemId;name:string;kind:'weapon'|'armor'|'ring'|'consumable'|'quest';description:string;rarity:'Sıradan'|'Nadir'|'Eşsiz'|'Görev';icon:string;attack?:number;defense?:number;hp?:number;price:number};
+export type ItemId = 'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'core'|'wood'|'torch'|'arrow'|'kurdele';
+/** Item alanlari. attack/defense/hp dogrudan stats()'e girer; asagidakiler
+ *  motorun tek tek okudugu DAVRANIS bayraklaridir - her yeni item icin kod
+ *  yazmak yerine burada tanimlanir.
+ *   menzilli   - ok firlatir (yay ailesi). Sprite takimi ve saldiri akisi buna bakar.
+ *   hiz        - saldiri suresi carpani (0.7 = %30 daha hizli).
+ *   okHasar    - okun hasarina eklenir (zirh/aksesuar).
+ *   atesBagisik- ates karesine basinca yanmaz.
+ *   altinKat   - toplanan altin carpani.
+ *   canGoster  - dusmanlarin can cubugu hasar almadan da gorunur. */
+export type Item = {id:ItemId;name:string;kind:'weapon'|'armor'|'ring'|'consumable'|'quest';description:string;rarity:'Sıradan'|'Nadir'|'Eşsiz'|'Görev';icon:string;attack?:number;defense?:number;hp?:number;price:number;menzilli?:boolean;hiz?:number;okHasar?:number;atesBagisik?:boolean;altinKat?:number;canGoster?:boolean};
 export const ITEMS:Record<ItemId,Item>={
  // Silahsiz mod bir "esya" olarak tutuluyor: boylece silah secme ekraninda
  // digerleriyle ayni sirada cikiyor ve kusanma akisi degismiyor.
@@ -17,14 +26,19 @@ export const ITEMS:Record<ItemId,Item>={
  guard:{id:'guard',name:'Muhafız kılıcı',kind:'weapon',description:'Alf’in sözü kadar sağlam. +17 saldırı.',rarity:'Nadir',icon:'sword',attack:17,price:65},
  ember:{id:'ember',name:'Köz kılıcı',kind:'weapon',description:'+23 saldırı. Vuruşlar 3 saniye boyunca yakar.',rarity:'Eşsiz',icon:'flame',attack:23,price:110},
  blood:{id:'blood',name:'Gece dişi',kind:'weapon',description:'+19 saldırı. Her vuruşta 3 can yeniler.',rarity:'Eşsiz',icon:'sword',attack:19,price:95},
- bow:{id:'bow',name:'Avcı yayı',kind:'weapon',description:'+18 saldırı. Menzilli ok fırlatır.',rarity:'Nadir',icon:'sword',attack:18,price:75},
+ bow:{id:'bow',name:'Avcı yayı',kind:'weapon',description:'+18 saldırı. Menzilli ok fırlatır.',rarity:'Nadir',icon:'bow',attack:18,price:75,menzilli:true},
+ tatar:{id:'tatar',name:'Tatar yayı',kind:'weapon',description:'+14 saldırı. Avcı yayından çok daha hızlı atar.',rarity:'Nadir',icon:'bow',attack:14,price:70,menzilli:true,hiz:.6},
  arrow:{id:'arrow',name:'Ok',kind:'consumable',description:'Avcı yayı ile menzilli atış yapmak için kullanılır.',rarity:'Sıradan',icon:'sword',price:2},
  leather:{id:'leather',name:'Gezgin ceketi',kind:'armor',description:'Her darbeyi 2 puan hafifletir.',rarity:'Sıradan',icon:'shirt',defense:2,price:0},
  chain:{id:'chain',name:'Halka zırh',kind:'armor',description:'+5 savunma. Pasın altında hâlâ sağlam.',rarity:'Nadir',icon:'shield',defense:5,price:50},
+ kemik:{id:'kemik',name:'Kemik göğüslük',kind:'armor',description:'+6 savunma, +10 azami can. Ateş seni yakmaz.',rarity:'Nadir',icon:'shield',defense:6,hp:10,price:70,atesBagisik:true},
+ yelek:{id:'yelek',name:'Avcı yeleği',kind:'armor',description:'+3 savunma. Attığın her ok 4 fazla hasar verir.',rarity:'Nadir',icon:'shirt',defense:3,price:58,okHasar:4},
  ash:{id:'ash',name:'Kül zırhı',kind:'armor',description:'+8 savunma, +20 azami can.',rarity:'Eşsiz',icon:'shield',defense:8,hp:20,price:100},
  copper:{id:'copper',name:'Bakır yüzük',kind:'ring',description:'+3 saldırı. İçinde küçük bir yemin saklı.',rarity:'Sıradan',icon:'ring',attack:3,price:25},
  life:{id:'life',name:'Yaşam halkası',kind:'ring',description:'+25 azami can.',rarity:'Nadir',icon:'heart',hp:25,price:55},
  wind:{id:'wind',name:'Rüzgâr mührü',kind:'ring',description:'Kaçınma 0,6 saniye daha hızlı dolar.',rarity:'Nadir',icon:'wind',price:60},
+ gozu:{id:'gozu',name:'Kül gözü',kind:'ring',description:'Düşmanların canını görürsün. Bulduğun altın %10 artar.',rarity:'Nadir',icon:'gem',price:48,altinKat:1.1,canGoster:true},
+ bileme:{id:'bileme',name:'Bileme taşı',kind:'consumable',description:'30 saniye boyunca %25 daha hızlı vurursun.',rarity:'Nadir',icon:'sword',price:18},
  potion:{id:'potion',name:'Can iksiri',kind:'consumable',description:'45 can yeniler. Savaş sırasında da içilebilir.',rarity:'Sıradan',icon:'potion',price:12},
  tonic:{id:'tonic',name:'Köz toniği',kind:'consumable',description:'20 saniye boyunca +8 saldırı.',rarity:'Nadir',icon:'flame',price:20},
  wood:{id:'wood',name:'Odun',kind:'consumable',description:'Ateşin yanına gidip yakarak meşale yapabilirsin.',rarity:'Sıradan',icon:'book',price:5},
@@ -44,7 +58,7 @@ export function removeItem(s:State,id:ItemId){if(!s.inventory[id])return false;s
 export function gainXp(s:State,n:number){s.xp+=n;let leveled=false;while(s.level<5&&s.xp>=XP[s.level]){s.level++;s.points++;leveled=true;}if(leveled){s.hp=stats(s).maxHp;s.journal.unshift(`Seviye ${s.level}: yeni bir yetenek puanı kazandın.`)}return leveled;}
 export function equip(s:State,id:ItemId){if(!s.inventory[id])return false;const kind=ITEMS[id].kind;if(kind!=='weapon'&&kind!=='armor'&&kind!=='ring')return false;s.equipment[kind]=id;s.hp=Math.min(s.hp,stats(s).maxHp);return true;}
 export function spendPoint(s:State,key:keyof State['skills']){if(s.points<1||!['power','vigor','agility'].includes(key))return false;s.points--;s.skills[key]++;if(key==='vigor')s.hp+=18;return true;}
-export function buy(s:State,id:ItemId){const item=ITEMS[id];if(!['potion','tonic','chain','copper','guard','bow','arrow'].includes(id)||s.gold<item.price)return false;if(item.kind!=='consumable'&&s.inventory[id])return false;s.gold-=item.price;addItem(s,id,id==='arrow'?10:1);return true;}
+export function buy(s:State,id:ItemId){const item=ITEMS[id];if(!['potion','tonic','bileme','chain','copper','guard','bow','arrow','tatar','kemik','yelek','gozu'].includes(id)||s.gold<item.price)return false;if(item.kind!=='consumable'&&s.inventory[id])return false;s.gold-=item.price;addItem(s,id,id==='arrow'?10:1);return true;}
 export function questList(s:State){return [
  {id:'medicine',title:'Bir doz umut',done:!!s.flags.medicineDone,active:!!s.flags.medicineStarted,step:s.flags.medicineDone?(s.flags.medicine==='rauf'?'Rauf’u kurtardın. Mirna kararını öğrendi.':'İlaç sığınağın hastalarına ulaştı.'):s.flags.medicine==='rauf'?'Kararını Mirna’ya anlat.':s.inventory.medicine?'İlacı Mirna’ya götür veya yaralı Rauf’u ver.':'Sarnıcın kuzeydoğu odasındaki ilacı bul.'},
  {id:'ledger',title:'Defterdeki isim',done:!!s.flags.ledgerDone,active:!!s.flags.ledgerStarted,step:s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Rauf’u sırrını korudun.':'Rauf’u muhafızlara teslim ettin.'):s.inventory.ledger?'Defteri Alf’e götür.': 'Sarnıcın doğusunda Rauf’u bul ve defteri al.'},
