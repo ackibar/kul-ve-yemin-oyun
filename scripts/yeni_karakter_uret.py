@@ -48,10 +48,8 @@ KISI = {
     # "hand-me-down / frayed", "worn boots" ve "HUNCHED shoulders" (yuk
     # tasiyormus gibi). Bunlar cikarildi, karakterin kimligi baska yollarla
     # verildi: fazla buyuk tunik, bos eller, dimdik durus.
-    'ayaz4': ('a thin fourteen year old boy standing straight in a too-large DARK TEAL BLUE '
-              'linen tunic whose sleeves hang past his hands, plain RUST BROWN trousers, '
-              'barefoot, short tousled dark hair, hollow tired eyes, empty hands hanging at '
-              'his sides' + ORAN + ', ' + ORTAK, 261),
+    # NOT: 4. tur (ayaz5) baslatildi ama kullanici "Tiga kalsin oyle" dedi,
+    # kurulmadi. Tiga su an ayaz4 (sirt cantali) hali.
     # Elvi'nin ilk tarifi "battaniye katmanlarina SARINMIS" diyordu - cantayi
     # dogrudan o cagiriyordu. Katmanlar gitti, yerine tek parca uzun cuppe.
     'selvi4': ('a hard-faced woman in her late thirties standing straight in a long heavy '

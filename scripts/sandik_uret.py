@@ -14,15 +14,20 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HAM = f'{ROOT}/_arsiv/uretim/generated/nesne'
-STIL = ('dark fantasy pixel art game object, muted ash-grey and worn dark wood palette, '
-        'soot stained iron bands, single dark outline, basic shading, centered single '
-        'object, no background, no text, no shadow')
+# 2. tur: kullanici "daha kahverengi olsun ve duz olsun, capraz olmasin" dedi.
+# Eskisi kul grisi ve 3/4 acidan (koseden) cizilmisti.
+STIL = ('dark fantasy pixel art game object, WARM BROWN wood planks with visible grain, '
+        'dark iron bands, single dark outline, basic shading, centered single object, '
+        'seen STRAIGHT FROM THE FRONT, symmetrical, flat front face square to the camera, '
+        'NOT at an angle, NOT a three-quarter view, NOT rotated, '
+        'no background, no text, no shadow')
 
 TARIF = {
-    'sandik_kapali': ('a closed wooden treasure chest with a domed lid, dark scorched '
-                      'planks, two iron bands and an iron lock plate'),
-    'sandik_acik':   ('the same wooden treasure chest standing open, the domed lid '
-                      'tipped back, the inside empty and dark'),
+    'sandik_kapali': ('a closed wooden chest with a flat lid, warm brown planks, two dark '
+                      'iron bands running down the front and a small iron lock plate in the '
+                      'middle'),
+    'sandik_acik':   ('the same warm brown wooden chest standing open, the flat lid tipped '
+                      'straight back, the inside empty and dark'),
 }
 
 

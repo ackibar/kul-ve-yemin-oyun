@@ -237,6 +237,15 @@ Yürüyüş döngüsünün başında model meşaleyi belden omuza kaldırıyor (
 `alcak_onu_at`: alev tepeden 8 px'den alçak olan baş kareler atılır. Sıcak
 hale yalnız meşale eldeyken; kemerdeyken ışık ×0.35, hale yok.
 
+**Üst katman (perde mekaniği):** sahnenin boyalı asılı bezleri arka plandan
+piksel piksel kesilip ayrı sprite yapıldı (`nesne/perde_sol|sag.png`) ve motor
+onları **oyuncuyla aynı y sıralamasına** sokuyor (`type:'perde'` → actors
+listesi). Arkasına geçen oyuncu bezin ardında kalır; içinden geçilmez (dip
+çizgisinde ince blocker) ve arkasında durulabilsin diye bir karo zemin açılır.
+Arka plan olduğu gibi durur, üstüne birebir aynı pikseller biner — duruşta
+hiçbir fark yok. Aynı yöntem her "arkasına geçilsin" istenen boyalı nesne için
+geçerli.
+
 **Arayüz:** parşömen. Çerçeveler CSS değil 9 dilim piksel resmi
 (`frame*.png`, dilim 8, kalınlık dilimin katı). `border-image … fill`
 merkezi de boyar. "Vazgeç" pastel kırmızı (okunmuyordu). Alt güvenli alan
@@ -265,7 +274,9 @@ kondu. Uzaklıkla kısılır.
 - Kül Ovası canı eritir (`KUL_HASAR`), pelerin/miğfer/duru su azaltır.
 - Düşmanlar iç içe gelmez (ayrışma), haritanın kenarına sıkışmaz.
 - Rauf ölmez, diz çöker; ölürse yeniden doğmaz (yerleşim koşullu).
-- **Kral vurulabilir, çubuğu yok.** Vurup vurmamak oyuncunun ölçüsü.
+- **Kral öldürülemez** (2026-09-12 kullanıcı kararı). Bir süre vurulabilirdi
+  (çubuksuz, "ölçü oyuncunun"); kaldırıldı. Taç eşyası ve Obruk'un satın alma
+  seçeneği veride duruyor, şimdilik ulaşılamıyor.
 - Satıcılar `SATICILAR` + `zam`: Alf 1×, Obruk 2.5× ("bey" dersen 2.15×).
   Bir eşya hangi listedeyse yalnız oradan alınır.
 - Düşman canı TEK yerde (`Engine.CAN`); iki tabloda `undefined+0=NaN`

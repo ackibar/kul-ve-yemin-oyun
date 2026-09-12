@@ -1,5 +1,5 @@
 import type {ItemId,Zone} from './data';
-export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number};
+export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset'|'perde';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
 export type EnemySpec={id:string;kind:1|2|4|5|6|7|8|9|10;x:number;y:number;boss?:boolean};
@@ -52,6 +52,21 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   const ZEMIN=['000000000000000000000000000000','000000000000000000000000000000','000000000000100001000000000000','000000000000110011000000000000','000001111111111111111111110000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000000000001111111100000000000','000000000000111111000000000000','000000000000111111000000000000','000000000000111111000000000000','000000000000000000000000000000','000000000000000000000000000000'];
   for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
   blockers.push([7,5,8,6],[9,5,10,7],[21,5,25,10],[20,6,21,10],[10,7,12,9],[19,7,20,11],[4,8,10,10],[12,8,13,9],[17,8,19,9],[25,8,27,10],[3,9,4,13],[11,9,12,12],[18,9,19,10],[4,10,9,13],[12,10,13,12],[23,10,24,12],[20,11,22,13],[25,11,27,24],[4,13,6,14],[7,13,9,14],[23,13,25,19],[3,14,4,15],[22,15,23,19],[3,17,4,20],[4,18,6,24],[7,18,10,21],[6,19,7,24],[10,19,12,21],[20,19,21,21],[19,20,20,21],[21,20,22,21],[24,20,25,21],[7,22,12,24],[19,23,25,24]);
+  /* ASILI BEZLER - UST KATMAN. Sahnenin kendi boyali perdeleri; pikselleri
+     arka plandan kesilip ayri sprite yapildi (public/assets/nesne/perde_*.png)
+     ve motor bunlari OYUNCUYLA AYNI y siralamasina sokuyor: perdenin arkasina
+     gecen oyuncu bezin ARDINDA kalir. Arka plan oldugu gibi duruyor, ustune
+     birebir ayni pikseller biniyor, yani durur halde hicbir fark yok.
+     Icinden gecilmez: bezin dip cizgisine ince engel konur. Arkasinda
+     durulabilsin diye bezin gerisinde bir karoluk zemin acilir. */
+  const perde=(id:string,tx:number,ty:number,en:number)=>{
+   entities.push({id,type:'perde',x:tx*16,y:ty*16,asset:`perde_${id}`});
+   blockers.push([tx-en/2,ty-.35,tx+en/2,ty+.15]);
+   for(let j=Math.floor(ty)-1;j<=Math.floor(ty);j++)
+    for(let i=Math.round(tx-en/2);i<=Math.round(tx+en/2);i++)
+     if(tiles[j]?.[i]!==undefined)tiles[j][i]=1;
+  };
+  perde('sol',6.41,13.59,4.1);perde('sag',24.66,18.59,3.25);
   at({id:'mira',type:'npc',x:9,y:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
   // Elvi ust kapinin dibinde: cevrildigi kapidan uzaklasmiyor. Lin sag-alt
   // ocagin yaninda. Tiga indiyse ve Tuhn ucurumdan cekildiyse ikisi de o atesin
