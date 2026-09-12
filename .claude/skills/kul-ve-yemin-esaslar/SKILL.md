@@ -1,13 +1,16 @@
 ---
 name: kul-ve-yemin-esaslar
-description: Kül ve Yemin'i geliştirirken alınan estetik, hikâye, mekanik ve süreç kararları. Yeni karakter, düşman, mekân, eşya ya da diyalog eklemeden önce oku; kararların GEREKÇESİ burada.
+description: Kül ve Yemin'i geliştirirken şimdiye kadar verilmiş estetik, hikâye, mekanik ve süreç kararlarının NOT DEFTERİ. Bağlayıcı değil, hatırlatıcı — yeni içerik eklerken tutarlılık için bakılır; kullanıcı ne derse o geçerli.
 ---
 
-# Kül ve Yemin — Esaslar
+# Kül ve Yemin — Not defteri
 
-Bu dosya oyunun anayasası. Kod ne yapıldığını söyler; burası **neden** öyle
-yapıldığını. Yeni bir şey eklerken önce buraya bak, sonra ekle. Bir karar
-değişirse burayı da değiştir — silme, üstüne yaz ve tarih düş.
+Bu dosya kural kitabı DEĞİL; kafa karışmasın diye tutulan bir hatırlatma.
+Kod ne yapıldığını söyler, burası şimdiye kadar neden öyle yapıldığını.
+Her şey değişebilir — kullanıcı başka bir şey isterse o geçerli, burası
+sonradan güncellenir. Amaç yeni bir şey eklerken eskisiyle çelişmemek
+(ör. Mirna'nın saydığı sayı, Alf'in yemini) ve aynı hatayı iki kez
+yapmamak.
 
 Repo: `~/Desktop/Kul-ve-Yemin` · GitHub `ackibar/kul-ve-yemin-oyun` · Vercel
 `kul-ve-yemin-oyun.vercel.app`. React 19 + Vite + TS, Canvas 2D motor
@@ -23,28 +26,29 @@ uyur, bozulanlarla uyanır. Gökyüzü on bir yıl önce karardı; herkes bir
 şekilde bunun bir parçası. Undur'un cümlesi: "Bu sığınakta kaç yemin
 bozuldu, say istersen. Sonra gökyüzüne bak."
 
-**Zaman çizgisi (sabit):** Kül on bir yıl önce yağdı. Yetmiş kişi indi,
+**Zaman çizgisi (şimdilik):** Kül on bir yıl önce yağdı. Yetmiş kişi indi,
 on dokuz kaldı (Elvi sayılırsa yirmi; kral ölürse on sekiz). Üç haftadır
 fırtına var: kül artık yağmıyor, esiyor; eskiden bez sarıp çıkılırdı.
 
 **Kapıyı kim açtı (üç kişi, tek kapı):** Kral Ongun emri verdi ("aşağıda
 sıcak var, kapıyı açın"), Undur metni okudu, Alf son mandalı kaldırdı.
 Undur'a göre kapı çok daha önce açılmaya başlamıştı; Alf yalnızca son
-mandaldı. Biri sustu, biri kapıda kaldı, biri yazıyor. **Bu üçlü
-bozulmaz;** yeni karakter bu suça dördüncü ortak yapılmaz.
+mandaldı. Biri sustu, biri kapıda kaldı, biri yazıyor. Şu ana kadar bu
+üçlü böyle; yeni bir karakter bu suça ortak edilecekse üçünün de
+diyalogları güncellenmeli.
 
 **Her karakter bir yeminle tanımlanır** — verilmiş, bozulmuş ya da
 tutulan. Lin ateşi söndürmeyeceğine söz verdi (sığınakta sözünü tutan tek
 kişi; Undur ocakların hâlâ yanmasını ona bağlıyor). Alf bir daha nöbetine
 verildiği kapıdan geçmeyeceğine yemin etti. Rauf kızı için kaçtı. Yeni
-karakterin de bir sözü olmalı; yoksa dekor.
+karakterin de bir sözü olursa kadroya oturuyor; şart değil (Uslu'nun yok).
 
 **Kimse sadece iyi ya da kötü değil.** Obruk açgözlü ama haklı bir cümlesi
 var ("bedava veren adamın kileri iki hafta sürer"). Kral suçlu ama kırık.
 Karga paralı ama dürüst. Kötü adam yazma; **korkmuş adam** yaz.
 
 **Oyuncu kararları sistemle değil insanlarla ödüllenir/cezalandırılır.**
-Onur puanı YOK. Undur'un defteri var: yaptıkların isimlerle yazılır, NPC'ler
+Onur puanı yok (kullanıcı kararı, 2026-09-12). Undur'un defteri var: yaptıkların isimlerle yazılır, NPC'ler
 buna göre konuşur (kralı öldürürsen Lin bir daha köz taşımaz ve sana
 bakmaz). Bir karara puan/istatistik bağlama; bir insanın cümlesini
 değiştir. Karar verildiyse **tek yerde** verilsin — Rauf'ta iki paralel
@@ -97,8 +101,8 @@ kendileri koymuş olur. Modern isim yok.
 | Son muhafız | Kül Ovası | kralın son adamı, mini-boss, önce konuşur | muhafiz (gecti/dovus/oldu) |
 
 Eski adlar (kodda kalan id'ler): mira=Mirna, boran=Alf, ekin=Undur,
-nil=Lin, selvi=Elvi, ayaz=Tiga. **Kod id'lerini değiştirme**, ekran adını
-değiştir.
+nil=Lin, selvi=Elvi, ayaz=Tiga. Kod id'leri eski adlarla kaldı (kayıtlar bozulmasın diye); ekran adı
+ayrı.
 
 ### Geleceğe bırakılan kancalar (bilerek açık)
 - Obruk'un kendi odası (yeri geçici). Kiler 21 haftada bitiyor; Karga
@@ -120,7 +124,7 @@ okunur (Obruk: solmuş bordo + matlaşmış altın, başka renk yok). Mavi ve
 doygun kırmızı yok; okunabilirlik taşıyan sinyaller (kan, can çubuğu)
 istisna.
 
-**Ton uyumu otomatik ve zorunlu:** her yeni karakter/düşman
+**Ton uyumu otomatik:** her yeni karakter/düşman
 `aktor_uyum.klasor(hedef, ham_yenile=True)` ile sahnenin tonuna çekilir
 (ışık omuzu + kroma omuzu + kül tonu). Ham sheet önce
 `_arsiv/uretim/asset_backup_ton_oncesi`'ne yazılır; `ham_yenile` verilmezse
@@ -186,12 +190,12 @@ kondu. Uzaklıkla kısılır.
 
 ## 3. Mekanik kararlar
 
-- **Melee tek hedef.** Alan hasarı yalnızca `Item.alan` olan silahta
+- Melee tek hedef. Alan hasarı yalnızca `Item.alan` olan silahta
   (Yarma baltası, 3 hedef, %35 yavaş). "Rakipleri öldürmek çok kolaydı."
 - **Ok türleri** mermiye yazılır VE isabette okunur (yakar/zehir/delici/
   ceker). Ateş: 3 sn × 3 = 9, patlayıcı. Zehir: 8 sn × 2 = 16, yıpratıcı +
   hedefi 0.7× yavaşlatır. Delici geçer, Çengelli çeker (-22).
-- **Bir eşya özelliği yazıyorsa motorda okunmalı.** Üç kez yakalandı
+- Bir eşya özelliği yazıyorsa motorda okunuyor mu diye bak — üç kez yakalandı
   (ok türleri; kulKalkan/yavaslik/oldurunceCan). Yeni alan eklerken
   `grep "\.alanAdi\b" engine.ts` ile doğrula.
 - Ateş herkesi yakar (NPC, yoldaş, düşman); NPC'ler ateşten kaçınır.
@@ -206,7 +210,7 @@ kondu. Uzaklıkla kısılır.
 
 ---
 
-## 4. Süreç kuralları
+## 4. Süreç (alışkanlıklar)
 
 - **Ücretli üretimden önce sor.** Tek çağrıyla fiyatla, toplu basmadan
   önce onay al; kullanıcı onay verdiyse bakiye ve maliyeti raporla.
@@ -230,4 +234,4 @@ kondu. Uzaklıkla kısılır.
 
 ---
 
-*Son güncelleme: 2026-09-12, v5.2 (fırtına düşmanları, kral, Obruk, Uslu).*
+*Son güncelleme: 2026-09-12, v5.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
