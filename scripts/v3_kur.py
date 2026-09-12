@@ -52,6 +52,24 @@ SETLER = {
 # elle yazilmiyor: en GENIS bbox'li kare atis anidir (yay + ucan ok).
 ATIS_BASA = {('yay', 'Attack')}
 
+# keep_first_frame=True karakterin DONUS karesini kare 0 olarak sakliyor; yayli
+# sette o karede yay yok ve model yayi ancak 2-3 kare sonra ciziyor. Sonuc:
+# yururken yay arada kayboluyordu. Bu kareler atilir - uretim harcamadan.
+# Esik bbox GENISLIGINDEN: yaysiz kare yalnizca govde kadar dar, yayli kare
+# kollari disina tasiyor. Olculen guney yuruyusu 33..59, dogu 21..46.
+ONDEN_AT = {('yay', 'Walk'), ('yay', 'Attack')}
+AT_ESIK = 0.45
+
+
+def yaysiz_onu_at(kareler):
+    g = [k.getbbox() for k in kareler]
+    en = [(b[2] - b[0]) if b else 0 for b in g]
+    esik = min(en) + (max(en) - min(en)) * AT_ESIK
+    i = 0
+    while i < len(en) - 2 and en[i] < esik:
+        i += 1
+    return kareler[i:], i
+
 
 def atisi_basa_al(kareler):
     g = [k.getbbox() for k in kareler]
@@ -146,13 +164,29 @@ def kur(setad):
     for yon, g in YON.items():
         hx, hy = referans(ref_slot, g, en)
         isler = [(a, sorted(glob.glob(f'{kaynak}/{a}_{yon}_*.png'))) for a in aksiyonlar]
+        # Durus/hasar/olum icin DONUS karesi kullanilamiyor: yayli sette o karede
+        # yay yok, yani dururken yay kaybolup yuruyunce geri geliyordu. Bunun
+        # yerine yaysiz onu atilmis yuruyusun ilk karesi kullanilir.
+        durus_k = None
+        if durus_isleri:
+            y = sorted(glob.glob(f'{kaynak}/Walk_{yon}_*.png'))
+            if y:
+                kk = [Image.open(x).convert('RGBA') for x in y]
+                if (setad, 'Walk') in ONDEN_AT:
+                    kk = yaysiz_onu_at(kk)[0]
+                durus_k = kk[0]
+            elif yon in rot:
+                durus_k = rot[yon]
         for ad, n in durus_isleri.items():
-            if yon in rot:
-                isler.append((ad, [rot[yon]] * n))
+            if durus_k is not None:
+                isler.append((ad, [durus_k] * n))
         for aksiyon, kareler in isler:
             if not kareler:
                 continue
             kareler = [Image.open(k).convert('RGBA') if isinstance(k, str) else k for k in kareler]
+            atilan = 0
+            if (setad, aksiyon) in ONDEN_AT:
+                kareler, atilan = yaysiz_onu_at(kareler)
             if (setad, aksiyon) in ATIS_BASA:
                 kareler = atisi_basa_al(kareler)
             sh = Image.new('RGBA', (en * len(kareler), BOY), (0, 0, 0, 0))
@@ -162,9 +196,11 @@ def kur(setad):
                 tasma = max(tasma, t)
                 sh.paste(hucre, (i * en, 0))
             sh.save(f'{ham_kl}/{g}_{aksiyon}.png')
-            rapor.append((f'{g}_{aksiyon}', len(kareler), tasma))
-    for ad, n, t in rapor:
-        print(f'  {slot}/{ad:10s} {n} kare' + (f'  (silah ucu {t}px tasti)' if t else ''))
+            rapor.append((f'{g}_{aksiyon}', len(kareler), tasma, atilan))
+    for ad, n, t, atilan in rapor:
+        print(f'  {slot}/{ad:10s} {n} kare'
+              + (f'  ({atilan} yaysiz kare atildi)' if atilan else '')
+              + (f'  (silah ucu {t}px tasti)' if t else ''))
     aktor_uyum.klasor(f'{ROOT}/public/assets/{slot}')
 
 

@@ -69,6 +69,8 @@ export class Engine{
   *  yalnizca oyuncunun kilici savrulurken 64 px'lik kareye sigmiyordu, ucu
   *  kirpiliyordu. Yukseklik ve capa (31) degismedi, yani ayaklar yerinde. */
  static readonly OYUNCU_EN=40;
+ /** Okun ciziminde kullanilan gogus yuksekligi (yalnizca gorsel). */
+ static readonly OK_YUKSEK=17;
  static readonly DUSUS=0.5;
  private sonImza='';
  private sahneSayac=0;
@@ -542,9 +544,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   c.fillStyle=this.state.zone==='haven'?'#060e1924':'#070b1c42';c.fillRect(cx,cy,this.gorus.en,this.gorus.boy);
   for(const e of this.world.entities.filter(e=>e.type==='fire'||e.type==='core')){if(Math.abs(e.x-this.state.x)>230||Math.abs(e.y-this.state.y)>160)continue;const radius=48+Math.sin(time*3+e.x)*3;const glow=c.createRadialGradient(e.x,e.y-6,0,e.x,e.y-6,radius);glow.addColorStop(0,'#f7af3936');glow.addColorStop(.35,'#ee8e1815');glow.addColorStop(1,'#ee8e1800');c.fillStyle=glow;c.fillRect(e.x-radius,e.y-radius-6,radius*2,radius*2);}
   for(const d of this.drops){c.save();c.translate(d.x,d.y);if(d.kind==='wood'){c.fillStyle='#b87c4c';c.fillRect(-3,-2,6,4);c.fillStyle='#6e4729';c.fillRect(-2,-1,4,2);}else if(d.kind==='xp'){const p=2.5+Math.sin(time*10)*.8;c.fillStyle='#8ee675';c.beginPath();c.arc(0,0,p,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(0,0,p*.5,0,Math.PI*2);c.fill();}else if(d.kind==='gold'){c.fillStyle='#ffd700';c.beginPath();c.arc(0,0,2.5,0,Math.PI*2);c.fill();c.fillStyle='#b89200';c.fillRect(-.8,-.8,1.6,1.6);}else if(d.kind==='bow'){c.strokeStyle='#c78d4c';c.lineWidth=1.5;c.beginPath();c.arc(0,0,5,-Math.PI/2,Math.PI/2);c.stroke();c.strokeStyle='#dedede';c.lineWidth=0.8;c.beginPath();c.moveTo(0,-5);c.lineTo(0,5);c.stroke();}c.restore();}
-  for(const s of this.shots){if(s.isHero){c.save();c.translate(s.x,s.y);c.rotate(Math.atan2(s.vy,s.vx));// Kucultuldu (12 -> 8 birim) ve renkler kul paletine cekildi: beyaz uc
-    // ile parlak kirmizi tuy grafiklerin yaninda cok one cikiyordu.
-    c.strokeStyle='#6f5334';c.lineWidth=1;c.beginPath();c.moveTo(-4,0);c.lineTo(2.5,0);c.stroke();c.fillStyle='#aab2b8';c.beginPath();c.moveTo(4,0);c.lineTo(1.5,-1.4);c.lineTo(1.5,1.4);c.closePath();c.fill();c.strokeStyle='#8a5148';c.lineWidth=.7;c.beginPath();c.moveTo(-2.6,0);c.lineTo(-4.6,-1.4);c.moveTo(-2.6,0);c.lineTo(-4.6,1.4);c.stroke();c.restore();}else{c.fillStyle='#f2bd76';c.fillRect(s.x-2,s.y-2,4,4);c.fillStyle='#fff0bd';c.fillRect(s.x-1,s.y-1,2,2);}}
+  for(const s of this.shots){if(s.isHero){c.save();/* Ok ayaklardan cikiyor gibi duruyordu. shot.y'yi yukseltmek YANLIS olurdu:
+     ayni deger hem walkable() hem de ayak hizasindaki mob merkezlerine olan
+     mesafe testinde kullaniliyor, 21 birim kaldirinca ok hicbir seye
+     degmiyordu. Yukseklik yalnizca cizime verilir. */c.translate(s.x,s.y-Engine.OK_YUKSEK);c.rotate(Math.atan2(s.vy,s.vx));// Ikinci kucultme: 8 -> 5.6 birim. Uc de koyulastirildi - #aab2b8 magara
+    // zemininde sahnenin en parlak pikseliydi, ok fosforlu gibi duruyordu.
+    c.strokeStyle='#54402a';c.lineWidth=.8;c.beginPath();c.moveTo(-2.8,0);c.lineTo(1.8,0);c.stroke();c.fillStyle='#79818a';c.beginPath();c.moveTo(2.8,0);c.lineTo(1,-1);c.lineTo(1,1);c.closePath();c.fill();c.strokeStyle='#63403a';c.lineWidth=.6;c.beginPath();c.moveTo(-1.8,0);c.lineTo(-3.2,-1);c.moveTo(-1.8,0);c.lineTo(-3.2,1);c.stroke();c.restore();}else{c.fillStyle='#f2bd76';c.fillRect(s.x-2,s.y-2,4,4);c.fillStyle='#fff0bd';c.fillRect(s.x-1,s.y-1,2,2);}}
   for(const p of this.particles){c.globalAlpha=Math.min(1,p.life*3);c.fillStyle=p.color;c.fillRect(p.x,p.y,p.size,p.size);}c.globalAlpha=1;
   for(const f of this.floating){c.globalAlpha=Math.min(1,f.life*3);c.font='bold 7px Arial';c.textAlign='center';c.lineWidth=2;c.strokeStyle='#111';c.strokeText(f.text,f.x,f.y);c.fillStyle=f.color;c.fillText(f.text,f.x,f.y);}c.globalAlpha=1;
   

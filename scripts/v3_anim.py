@@ -35,12 +35,21 @@ KILIC_YUR = ('walks forward with a steady stride, legs alternating clearly, arms
 # Yay durumunun DONUS karesinde yay yok - sadece sirttaki okluk tuttu. Bu tarif
 # tek yonle sinandi: v3 uretken oldugu icin yayi 2. kareden itibaren kendisi
 # ciziyor, yani 20 uretimlik ikinci bir durum basmaya gerek kalmadi.
-YAY_VUR = ('pulls a curved wooden hunting bow up into both hands, nocks an arrow, draws '
-           'the bowstring back to the cheek, then releases; the wooden bow with its taut '
-           'string is clearly visible in the hands from the second frame onward')
-YAY_YUR = ('walks forward with a steady stride, legs alternating clearly, carrying a '
-           'curved wooden hunting bow down at one side, the bow visible in the hand in '
-           'every frame')
+# Ilk surumde ilk uc kare yaysizdi; atis karesi basa alininca bu kareler ortaya
+# dusup yay kayboluyormus gibi duruyordu. Yay artik HER karede elde sart.
+YAY_VUR = ('already holding a large curved wooden hunting bow up in both hands, nocks '
+           'an arrow, draws the bowstring back to the cheek and releases it, then '
+           'lowers the bow slightly; the wooden bow with its taut string is fully '
+           'visible in both hands in every single frame and is never put away')
+# Ilk iki tarifte yay yuruyusun ancak IKINCI yarisinda beliriyordu (dogu
+# karelerinde bbox 21 -> 52 px) ve guneyden kenarindan gorundugu icin cubuga
+# donuyordu. Cozum: yayi yana degil GOGUS HIZASINDA capraz tutturmak ve iki
+# ucunun siluetten tastigini sart kosmak.
+YAY_YUR = ('walks forward with a steady stride, legs alternating clearly, holding a '
+           'large curved wooden hunting bow up across the chest with both hands, the '
+           'bow turned so its two limbs clearly stick out past the left and right of '
+           'the body; the bow is fully visible in every single frame and is never '
+           'lowered to the side or hidden behind the body')
 # Arkadan bakista ilk denemede yay hic gorunmedi - yalnizca sirttaki okluk
 # vardi. Yayin govdenin iki yanindan TASMASI gerektigi acikca yazildi.
 YAY_VUR_ARKA = ('seen from behind, raises a curved wooden hunting bow and draws the '
