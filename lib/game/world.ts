@@ -137,7 +137,12 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   at({id:'backHaven',type:'portal',x:7,y:4,to:'magara',spawn:[14,25],name:'Yukarı çık'});
   // Ocak gecidi yaratiklarin ciktigi agizdan AYRI duruyor: ikisi ayni karodayken
   // gecide varan oyuncu dogrudan dalganin icine dusuyordu.
-  at({id:'rauf',type:'npc',x:44,y:18,name:'Rauf',portrait:5});
+  // Rauf'un yeri KOSULA bagli: oldugunde ya da Alf'e teslim edildiginde
+  // burada durmamali. Once kosulsuzdu, bu yuzden olduktan sonra sarnica
+  // her donuste yeniden beliriyordu. 'takip'te ise changeZone onu zaten
+  // oyuncunun yanina koyuyor, makeWorld'un yerlestirmesine gerek yok.
+  if(flags?.rauf!=='oldu'&&flags?.rauf!=='teslim'&&flags?.rauf!=='takip')
+   at({id:'rauf',type:'npc',x:44,y:18,name:'Rauf',portrait:5});
   chest('medicineChest',48,8,[['medicine',1],['potion',2],['toz',2]],12);
   chest('cisternWest',6,20,[['chain',1],['bow',1],['potion',2],['yeminh',1]],24);
   chest('cisternEast',49,24,[['guard',1],['potion',2],['uzunyay',1],['okdelici',8]],20);
