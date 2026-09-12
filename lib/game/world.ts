@@ -23,7 +23,8 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  const kare30=kare||zone==='yikik';
  // Boyali tek parca sahneler: Kul Ovasi ve Sarnic 54x30, digerleri 30x30.
  const genis=zone==='disari'||zone==='cistern';
- const w=genis?54:kare30?30:46,h=genis?30:kare30?30:48;
+ /* Dar Gecit dikey: 13 genislik, 63 boy. */
+ const w=zone==='tunel'?13:genis?54:kare30?30:46,h=zone==='tunel'?63:genis?30:kare30?30:48;
  const tiles=Array.from({length:h},()=>Array<number>(w).fill(0));
  const room=(x:number,y:number,rw:number,rh:number)=>{for(let j=y;j<y+rh;j++)for(let i=x;i<x+rw;i++)tiles[j][i]=1};
  const entities:Entity[]=[],enemies:EnemySpec[]=[];
@@ -155,6 +156,26 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   at({id:'obruk',type:'npc',x:6,y:13,name:'Obruk',portrait:10,s:1.25,sabit:true});
   at({id:'karga',type:'npc',x:5,y:10,name:'Karga',portrait:11,sabit:true});
   at({id:'cakal',type:'npc',x:5,y:16,name:'Çakal',portrait:12,sabit:true});
+ }else if(zone==='tunel'){
+  /* DAR GECIT: sarnicin alt agzindan inilen uzun, dar, zifiri karanlik yarik.
+     Iki kaynak gorselden kuruldu (scripts/tunel_kur.py): sahnenin kendisi ve
+     ayni sahnenin yurunebilir zemini YESILE boyanmis hali. Mekan yatay
+     uretildi, oyunda dikey duruyor - kapinin devami gibi olsun diye 90 derece
+     cevrildi. Zemin dogrudan yesil maskeden okundu, tahmin yok. */
+  const ZEMIN=['0000000000000','0000000000000','0000000000000','0000111100000','0000001110000','0000011110000','0001111111000','0001111111000','0001111011000','0000011011000','0001111111000','0001111011000','0001111011000','0001111011000','0001111011000','0001111110000','0001111110000','0001111111000','0001111100000','0000111100000','0000111110000','0001111110000','0001111111000','0001111111000','0001110111000','0001111111000','0001111111000','0011111111000','0001111111000','0001111111000','0001111111000','0001111111000','0001111111000','0001111111000','0001111111000','0001111111000','0001111110000','0001111110000','0001111111000','0001111110000','0001111111000','0001111111000','0001111101000','0001111001000','0001111001000','0001111101000','0001111110000','0001111110000','0001111110000','0001111110000','0001111110000','0000111110000','0000011111000','0000011111000','0000111111000','0001111111000','0001111111000','0001111111000','0001111110000','0001111111000','0001111110000','0001111111000','0001111100000'];
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j]?.[i]==='1'?1:0;
+  /* Donus kutusu yurunebilir zeminin ilk satirlarini KAPSAMALI: 2-4 arasi
+     dardi, oyuncu y=4.5'te takilip geri donemiyordu. */
+  /* Donus agzi GENIS satirlarda (3-9 karo): ust uc dar ve kayik, oyuncu
+     carpisma yaricapiyla oraya giremiyordu. */
+  gecis(3,4,10,7,'cistern',[27,27]);     // yukari: sarnicin alt agzi
+  /* Karanlikta ses once gelir: yaratiklar gecidin boyunca dagitildi. */
+  /* Giris agzi BOS: ilk yarasa tam spawn karosundaydi, oyuncu geri donemiyordu. */
+  enemy('tun1',1,6,16);enemy('tun2',1,5,22);enemy('tun3',4,6,28);
+  enemy('tun4',1,5,34);enemy('tun5',4,6,40);enemy('tun6',1,7,46);
+  enemy('tun7',4,5,52);enemy('tun8',1,6,58);
+  chest('tunelSandik',6,60,[['torch',3],['potion',2],['okzehir',6]],30);
+  fire(6,34);                            // yolun ortasinda bir koz: tek mola
  }else if(zone==='cistern'){
   // Unutulmus Sarnic artik karo zindan degil, tek parca boyali magara (54x30).
   // Carpisma uzerine YESIL boyanmis maskeden okundu; bu sayfada yesil magaranin
@@ -174,9 +195,11 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   chest('cisternWest',6,20,[['chain',1],['bow',1],['potion',2],['yeminh',1]],24);
   chest('cisternEast',49,24,[['guard',1],['potion',2],['uzunyay',1],['okdelici',8]],20);
   fire(10,16);fire(40,14);
+  /* Alt agiz artik bir yere cikiyor: Dar Gecit. */
+  gecis(23,29,31,30,'tunel',[6,10]);
   // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).
  }
- return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:[7*16,7*16]};
+ return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:zone==='tunel'?[6*16+8,6*16+8]:[7*16,7*16]};
 }
 export function walkable(world:World,x:number,y:number,r=5,ignoreId?:string){
  const tilesOk=[[-r,-r],[r,-r],[-r,r],[r,r]].every(([dx,dy])=>world.tiles[Math.floor((y+dy)/16)]?.[Math.floor((x+dx)/16)]===1);
