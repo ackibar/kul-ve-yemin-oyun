@@ -53,9 +53,9 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // Selvi ust kapinin dibinde: cevrildigi kapidan uzaklasmiyor. Nil sag-alt
   // ocagin yaninda. Ayaz indiyse ve Tuhn ucurumdan cekildiyse ikisi de o atesin
   // basina gelir. `s` sprite olcegi: cocuklar icin ayni sheet kucuk cizilir.
-  at({id:'selvi',type:'npc',x:13,y:6,name:'Selvi',portrait:1});
-  at({id:'nil',type:'npc',x:18,y:21,name:'Nil',portrait:3,s:.7});
-  if(flags?.ayaz==='indi')at({id:'ayaz',type:'npc',x:16,y:21,name:'Ayaz',portrait:6,s:.85});
+  at({id:'selvi',type:'npc',x:13,y:6,name:'Selvi',portrait:9});
+  at({id:'nil',type:'npc',x:18,y:21,name:'Nil',portrait:7,s:.8});
+  if(flags?.ayaz==='indi')at({id:'ayaz',type:'npc',x:16,y:21,name:'Ayaz',portrait:8,s:.9});
   if(flags?.tuhn==='kaldi')at({id:'tuhn',type:'npc',x:19,y:22,name:'Tuhn',portrait:6});
   gecis(12,27,18,28,'magara',[15,5]);   // asagi inen tunelin sonu
   // Ust kapinin agzi ZEMIN esiginde karanlik kaldigi icin kapanmisti; koridor
@@ -99,7 +99,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // Rauf Alf'e teslim edildiyse sonu burasi oluyor.
   if(flags?.rauf==='teslim')at({id:'raufCeset',type:'ceset',x:16,y:17,name:'Rauf'});
   // Ayaz: Sare'nin "bekle" dedigi yer. Siginaga indiyse burada degil.
-  if(flags?.ayaz!=='indi')at({id:'ayaz',type:'npc',x:12,y:12,name:'Ayaz',portrait:6,s:.85});
+  if(flags?.ayaz!=='indi')at({id:'ayaz',type:'npc',x:12,y:12,name:'Ayaz',portrait:8,s:.9});
  }else if(zone==='magara'){
   // Sarnic Agzi: siginagin kapagindan inilen ilk karanlik. Tek parca boyali
   // sahne (public/assets/arkaplan/magara.png). Prop katmani YOK, o yuzden

@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM = '1.4';
+export const SURUM = '1.5';
 
 export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern' | 'forge';
 export type ItemId = 'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'core'|'wood'|'torch'|'arrow'|'kurdele';
@@ -355,7 +355,7 @@ export function dialogue(s:State,id:string):Dialogue{
   choices:[close]};
  // Nil: siginaktaki cocuk. Ates onun, soz onun.
  if(id==='nil'){
-  return {who:'Nil',role:'Ateşi söndürmeyen',portrait:3,
+  return {who:'Nil',role:'Ateşi söndürmeyen',portrait:7,
    text:s.flags.ayaz==='indi'?'Ağabeyim geldi! Koşarak geldi, külden bembeyazdı. Ateşin yandığını gördü. …Mirna onu yazdı. Yaşayanlara.'
     :s.flags.ayazHaber==='soylendi'?'Söyledin mi ona? Ateşin yandığını? …Tamam. O zaman biliyor. Bilmesi yeter, gelmese de.'
     :s.flags.ayaz==='kaldi'?'Onu gördün, değil mi? Yüzünden belli. Bekliyor. …Sare teyze ona “bekle” dedi, bana “söndürme”. İkimiz de tutuyoruz.'
@@ -365,7 +365,7 @@ export function dialogue(s:State,id:string):Dialogue{
     close]};}
  // Selvi: yetmis birinci. Ust kapinin dibinde durur.
  if(id==='selvi'){
-  return {who:'Selvi',role:s.flags.selviSir==='soylendi'?'Yirminci':'Sayılmayan',portrait:1,
+  return {who:'Selvi',role:s.flags.selviSir==='soylendi'?'Yirminci':'Sayılmayan',portrait:9,
    text:s.flags.selviSir==='soylendi'?'Mirna yüzüme baktı. Sonra yazdı: yirmi. …Yirmi olmak, on dokuzun yanında durmaktan daha ağırmış; kim bilirdi.'
     :s.ending==='claim'&&s.flags.sozSelvi==='verildi'?'Tuttun. Kapı bir daha kimseye kapanmayacak. Yazdım.'
     :s.ending==='seal'&&s.flags.sozSelvi==='verildi'?'Sen de mi. …Olsun. En azından yüzüme bakarak bozdun.'
@@ -376,7 +376,7 @@ export function dialogue(s:State,id:string):Dialogue{
     close]};}
  // Ayaz: Yikik Ev'de bekleyen cocuk; indiyse siginakta Nil'in yaninda.
  if(id==='ayaz'){
-  return {who:'Ayaz',role:s.flags.ayaz==='indi'?'Nil’in ağabeyi':'Yıkıkta bekleyen',portrait:6,
+  return {who:'Ayaz',role:s.flags.ayaz==='indi'?'Nil’in ağabeyi':'Yıkıkta bekleyen',portrait:8,
    text:s.flags.ayaz==='indi'?'Nil bütün gece anlattı, ben dinledim. Ateş hiç sönmemiş.'
     :s.flags.ayaz==='kaldi'?'Hâlâ buradayım. Sen de hâlâ gidiyorsun. İkimiz de sözümüzdeyiz.'
     :'Kapıyı kapat, kül giriyor. …Aşağıdan mısın?',

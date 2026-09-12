@@ -608,3 +608,6 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 
 /* Dikeyde surum etiketi joystick'in altinda kaliyordu */
 .game-shell.dikey~.surum,.game-shell.dikey .surum{display:none}
+
+/* Cevirme uyarisindaki kacis kapisi */
+.rotate-screen .dikey-gec{margin-top:26px;padding:12px 20px!important;font-size:15px!important}
