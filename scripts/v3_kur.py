@@ -60,14 +60,10 @@ SETLER = {
 # elle yazilmiyor: en GENIS bbox'li kare atis anidir (yay + ucan ok).
 ATIS_BASA = {('yay', 'Attack')}
 
-# Yedek yon: model bazi yonlerde silahi bir turlu cizmiyor. Yayli asagi-capraz
-# yuruyusu iki kez basildi, ikisinde de yay cikmadi (bbox 34..40; yayli kare
-# 50+ olurdu). Ucuncu denemeye uretim yakmak yerine en yakin CALISAN yonun
-# kareleri kullanilir - perspektif farki, yayin kaybolmasindan iyi.
-# Yukari-caprazda ise yay kademe kademe yukseliyor ve son karelerde kafanin
-# ustunde boynuz gibi duruyordu; kuzey yuruyusu (ayni sirt gorunumu) saglam.
-YEDEK_YON = {('yay', 'Walk', 'south-east'): 'south',
-             ('yay', 'Walk', 'north-east'): 'north'}
+# Yedek yon: bir yonun kareleri kullanilamazsa en yakin calisan yonunkiler
+# kullanilir. Yayli caprazlar bir sure boyle idare edildi; artik BASLANGIC
+# karesi yontemiyle kendi kareleri var, bu yuzden sozluk bos.
+YEDEK_YON = {}
 
 # keep_first_frame=True karakterin DONUS karesini kare 0 olarak sakliyor; yayli
 # sette o karede yay yok ve model yayi ancak 2-3 kare sonra ciziyor. Sonuc:
@@ -87,14 +83,27 @@ AT_ESIK = 0.30
 EN_AZ_KARE = 4
 
 
+# Genislik araligi bundan darsa hic kirpilmaz: butun karelerde yay varken
+# esik anlamsiz kaliyor ve saglam kareler atiliyordu (yukari-caprazda aralik
+# yalnizca 33..37 px).
+EN_AZ_ARALIK = 8
+
+
 def yaysiz_onu_at(kareler):
-    g = [k.getbbox() for k in kareler]
-    en = [(b[2] - b[0]) if b else 0 for b in g]
+    """Bastan VE sondan silahsiz kareleri atar.
+
+    Sondan da atmak gerekiyor: kuzey yuruyusunde yay son iki karede soluyor,
+    animasyon dongu oldugu icin her turda bir kez 'yanip sonuyor'."""
+    en = [(lambda b: (b[2] - b[0]) if b else 0)(k.getbbox()) for k in kareler]
+    if max(en) - min(en) < EN_AZ_ARALIK:
+        return kareler, 0
     esik = min(en) + (max(en) - min(en)) * AT_ESIK
-    i = 0
-    while i < len(en) - EN_AZ_KARE and en[i] < esik:
+    i, j = 0, len(en)
+    while j - i > EN_AZ_KARE and en[i] < esik:
         i += 1
-    return kareler[i:], i
+    while j - i > EN_AZ_KARE and en[j - 1] < esik:
+        j -= 1
+    return kareler[i:j], i + (len(en) - j)
 
 
 def atisi_basa_al(kareler):

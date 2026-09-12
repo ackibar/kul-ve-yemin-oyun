@@ -94,6 +94,25 @@ KILIC_VUR_ARKA = ('seen from behind, raises the sword above the head and swings 
                   'viewer or behind the back; the sword is a solid steel blade and '
                   'stays gripped in the hand in every frame')
 
+# BASLANGIC KARESI. v3 karakterin donus karesinden basliyor ve elindeki silahi
+# koruyor - kilicin her yonde cikmasinin sebebi bu. Yayli sette donus karesinde
+# yay YOK, bu yuzden model onu her seferinde yeniden uydurmak zorunda kaliyor ve
+# caprazlarda iki kez basaramadi (asagi-caprazda hic cizmedi, yukari-caprazda
+# kafanin ustune koydu). Cozum: baslangic karesi olarak SALDIRI setinden yayin
+# elde oldugu bir kare verilir; boylece yay kilic gibi "zaten elde" olur.
+# (set, aksiyon, yon) -> (kaynak aksiyon, kaynak yon, kare no)
+BASLANGIC = {('yay', 'Walk', 'south-east'): ('Attack', 'south-east', 2),
+             ('yay', 'Walk', 'north-east'): ('Attack', 'north-east', 5),
+             # Ana yonler de ayni yola cekildi: yay gogus hizasinda capraz
+             # tutuluyordu, capraz yonlerde ise elde. Donerken durus degismesin.
+             ('yay', 'Walk', 'south'): ('Attack', 'south', 2),
+             ('yay', 'Walk', 'east'): ('Attack', 'east', 5),
+             ('yay', 'Walk', 'north'): ('Attack', 'north', 5)}
+YAY_YUR_HAZIR = ('walks forward with a steady stride, legs alternating clearly, while '
+                 'keeping the wooden bow held up in both hands exactly as in the '
+                 'starting pose, ready to shoot; the bow never leaves the hands and is '
+                 'fully visible in every single frame')
+
 # Yon bazli tarif ezmesi: (set, aksiyon, yon) -> tarif
 OZEL = {('kilic', 'Attack', 'east'): KILIC_VUR_YAN,
         ('rauf', 'Attack', 'east'): KILIC_VUR_YAN,
@@ -138,6 +157,20 @@ def uret(setad, sadece_yon=None, sadece_aksiyon=None):
         # Ayni tarif her yonde ayni durmuyor; ozel tarifi olan yonler ayri basilir.
         gruplar = {}
         for y in (sadece_yon or YONLER):
+            if (setad, aksiyon, y) in BASLANGIC:
+                # custom_start_frame tek yon istiyor, bu yuzden ayri basilir.
+                ka, ky, ki = BASLANGIC[(setad, aksiyon, y)]
+                ham64 = base64.b64encode(
+                    open(f'{ham}/{ka}_{ky}_{ki:02d}.png', 'rb').read()).decode()
+                r = pxl.call('/characters/animations', {
+                    'character_id': cid, 'mode': 'v3', 'animation_name': f'{setad}-{aksiyon}',
+                    'action_description': YAY_YUR_HAZIR, 'directions': [y],
+                    'custom_start_frame': {'type': 'base64', 'base64': ham64},
+                    'frame_count': n, 'keep_first_frame': True, 'seed': 21})
+                kuyruk.append((aksiyon, [j for j in (r.get('background_job_ids') or []) if j]))
+                print(f'{setad}/{aksiyon} [{y}] baslangic={ka}_{ky}_{ki:02d}: '
+                      f'{len(kuyruk[-1][1])} is kuyrukta')
+                continue
             gruplar.setdefault(OZEL.get((setad, aksiyon, y), tarif), []).append(y)
         for t, yonler in gruplar.items():
             r = pxl.call('/characters/animations', {
