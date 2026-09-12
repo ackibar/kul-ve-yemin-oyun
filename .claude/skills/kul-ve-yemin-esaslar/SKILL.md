@@ -198,6 +198,10 @@ dönüş karesinden geldiği için meşalesiz: `v3_kur` ALEV_AT alev pikseline
 göre kırpar; ton uyumu alevi de küle çevirdiği için `alev_geri` ham
 alev piksellerini geri koyar. Yan/arka saldırıda model meşaleyi yere
 yayılan aleve çevirdi → "SMALL fist-sized flame, NO fire on the ground".
+Yürüyüş döngüsünün başında model meşaleyi belden omuza kaldırıyor (alev y
+65→28); döngü her turda onu gösterince "bir aşağı bir yukarı" oluyordu →
+`alcak_onu_at`: alev tepeden 8 px'den alçak olan baş kareler atılır. Sıcak
+hale yalnız meşale eldeyken; kemerdeyken ışık ×0.35, hale yok.
 
 **Arayüz:** parşömen. Çerçeveler CSS değil 9 dilim piksel resmi
 (`frame*.png`, dilim 8, kalınlık dilimin katı). `border-image … fill`
@@ -259,4 +263,4 @@ kondu. Uzaklıkla kısılır.
 
 ---
 
-*Son güncelleme: 2026-09-12, v5.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v5.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

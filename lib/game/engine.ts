@@ -322,7 +322,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    const s=this.state;const tit=(x:number)=>1+Math.sin(time*9+x)*.04+Math.sin(time*23+x*.7)*.02;
    // Oyuncu: mesaleyle genis, mesalesiz yalnizca cevresi (iki adim).
    /* Merkez ayak degil govde ortasi: sprite y'nin ustune ciziliyor, y-6'da isik karakterin altinda kaliyordu. */
-   del(s.x,s.y-16,(this.mesale>0?Engine.ISIK.mesale*(this.mesaleElde()?1:.5)*(this.mesale<6?.5+this.mesale/12:1):Engine.ISIK.cip)*tit(s.x));
+   del(s.x,s.y-16,(this.mesale>0?Engine.ISIK.mesale*(this.mesaleElde()?1:.35)*(this.mesale<6?.5+this.mesale/12:1):Engine.ISIK.cip)*tit(s.x));
    for(const e of this.world.entities)if(e.type==='fire'||e.type==='core')del(e.x,e.y-6,Engine.ISIK.ates*tit(e.x));
    for(const [x,y,r] of this.world.isiklar)del(x,y,r*tit(x));
    for(const m of this.mobs){if(m.hp<=0)continue;if(m.kind===9)del(m.x,m.y-14,Engine.ISIK.fener*tit(m.x));else if(m.burn>0)del(m.x,m.y-8,Engine.ISIK.yanan);}
@@ -893,7 +893,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      mesalesi de ayni sicakligi versin, yoksa isik haritasi deligi soguk gri kaliyor. */
   {const sicak=(x:number,y:number,r:number)=>{const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'#f7af3930');g.addColorStop(.4,'#ee8e1812');g.addColorStop(1,'#ee8e1800');c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2);};
    for(const [x,y,r] of this.world.isiklar)sicak(x,y,r*.9+Math.sin(time*3+x)*3);
-   if(this.mesale>0)sicak(this.state.x,this.state.y-16,(this.mesaleElde()?70:36)+Math.sin(time*4)*3);}
+   /* Sicak hale yalnizca mesale ELDEYKEN: kemerdeyken (yay/balta) karakterin ustunde turuncu leke kaliyordu. */if(this.mesaleElde())sicak(this.state.x,this.state.y-16,70+Math.sin(time*4)*3);}
   for(const e of this.world.entities.filter(e=>e.type==='fire'||e.type==='core')){if(Math.abs(e.x-this.state.x)>230||Math.abs(e.y-this.state.y)>160)continue;const radius=48+Math.sin(time*3+e.x)*3;const glow=c.createRadialGradient(e.x,e.y-6,0,e.x,e.y-6,radius);glow.addColorStop(0,'#f7af3936');glow.addColorStop(.35,'#ee8e1815');glow.addColorStop(1,'#ee8e1800');c.fillStyle=glow;c.fillRect(e.x-radius,e.y-radius-6,radius*2,radius*2);}
   for(const d of this.drops){c.save();c.translate(d.x,d.y);if(d.kind==='wood'){c.fillStyle='#b87c4c';c.fillRect(-3,-2,6,4);c.fillStyle='#6e4729';c.fillRect(-2,-1,4,2);}else if(d.kind==='xp'){const p=2.5+Math.sin(time*10)*.8;c.fillStyle='#8ee675';c.beginPath();c.arc(0,0,p,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(0,0,p*.5,0,Math.PI*2);c.fill();}else if(d.kind==='gold'){c.fillStyle='#ffd700';c.beginPath();c.arc(0,0,2.5,0,Math.PI*2);c.fill();c.fillStyle='#b89200';c.fillRect(-.8,-.8,1.6,1.6);}else if(d.kind==='bow'){c.strokeStyle='#c78d4c';c.lineWidth=1.5;c.beginPath();c.arc(0,0,5,-Math.PI/2,Math.PI/2);c.stroke();c.strokeStyle='#dedede';c.lineWidth=0.8;c.beginPath();c.moveTo(0,-5);c.lineTo(0,5);c.stroke();}c.restore();}
   for(const s of this.shots){if(s.isHero){c.save();/* Ok ayaklardan cikiyor gibi duruyordu. shot.y'yi yukseltmek YANLIS olurdu:

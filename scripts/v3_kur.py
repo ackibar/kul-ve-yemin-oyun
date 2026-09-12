@@ -168,6 +168,35 @@ def alev_px(k):
     return n
 
 
+def alev_y(k):
+    """Alev piksellerinin ortalama y'si (None = alev yok)."""
+    px = k.load(); ys = []
+    for y in range(k.height):
+        for x in range(k.width):
+            r, g, b, a = px[x, y]
+            if a and r > 190 and g > 90 and b < 140 and r - b > 70:
+                ys.append(y)
+    return sum(ys) / len(ys) if ys else None
+
+
+# Yuruyus dongusunun basinda model mesaleyi belden omuza KALDIRIYOR (alev y
+# 65 -> 63 -> 43 -> 28), sonra ustte tutuyor. Dongu her turda o kaldirmayi
+# gosterince mesale "bir yukari bir asagi" gidiyordu. Alev en yuksek
+# seviyeden ALEV_INIS px'den fazla asagidaysa o bas kareler atilir.
+ALEV_INIS = 8
+
+
+def alcak_onu_at(kareler):
+    ys = [alev_y(k) for k in kareler]
+    if not any(y is not None for y in ys):
+        return kareler, 0
+    tepe = min(y for y in ys if y is not None)
+    i = 0
+    while len(kareler) - i > EN_AZ_KARE and (ys[i] is None or ys[i] > tepe + ALEV_INIS):
+        i += 1
+    return kareler[i:], i
+
+
 def alevsiz_onu_at(kareler):
     al = [alev_px(k) for k in kareler]
     i, j = 0, len(al)
@@ -324,6 +353,7 @@ def kur(setad):
                     kk = yaysiz_onu_at(kk)[0]
                 if (setad, 'Walk') in ALEV_AT:
                     kk = alevsiz_onu_at(kk)[0]
+                    kk = alcak_onu_at(kk)[0]
                 durus_k = kk[0]
             else:
                 durus_k = donusler().get(yon)
@@ -339,6 +369,8 @@ def kur(setad):
                 kareler, atilan = yaysiz_onu_at(kareler)
             if (setad, aksiyon) in ALEV_AT:
                 kareler, atilan = alevsiz_onu_at(kareler)
+                if aksiyon == 'Walk':
+                    kareler, a2 = alcak_onu_at(kareler); atilan += a2
             if (setad, aksiyon) in ATIS_BASA:
                 kareler = atisi_basa_al(kareler)
             sh = Image.new('RGBA', (en * len(kareler), boyut(en)[0]), (0, 0, 0, 0))
