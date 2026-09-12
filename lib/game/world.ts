@@ -14,7 +14,7 @@ export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[
   *  piksel kumelerinden olculdu (kume merkezi /32 = karo). */
  isiklar:[number,number,number][]};
 /** Kralin oturan sprite'inin zemin satiri/2; scripts/kral_uret.py kurunca yazar. */
-const KRAL_CAPA=30.5;
+const KRAL_CAPA=31;
 export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefined>):World{
  const kare=zone==='haven'||zone==='magara';
  // Kare mekanlar 30x30: siginak, magara ve yikik. Kul Ovasi 54x30.
@@ -63,7 +63,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      bati koseligine alindi (13 adim, Mirna'nin hemen yaninda): gorulen ama
      kimsenin ugramadigi bir kose. Kendi mekani yapilinca oraya tasinacak. */
   if(flags?.kral==='oldu')at({id:'kralCeset',type:'ceset',x:5,y:17,name:'Kral',asset:'kral_ceset'});
-  else at({id:'kral',type:'npc',x:5,y:17,name:'Kral',portrait:13,sabit:true,capa:KRAL_CAPA,s:.72});
+  else at({id:'kral',type:'npc',x:5,y:17,name:'Kral',portrait:13,sabit:true,capa:KRAL_CAPA,s:1.05});
   at({id:'uslu',type:'npc',x:14,y:19,name:'Uslu',portrait:14});
   if(flags?.ayaz==='indi')at({id:'ayaz',type:'npc',x:16,y:21,name:'Tiga',portrait:8,s:.9});
   if(flags?.tuhn==='kaldi')at({id:'tuhn',type:'npc',x:19,y:22,name:'Tuhn',portrait:6});

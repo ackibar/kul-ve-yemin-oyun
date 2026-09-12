@@ -170,8 +170,13 @@ Yaratıklarda alfa ağırlık merkezi. Referans, aynı yönün mevcut Idle kares
   görsel + metin): tarifte "the chair and the whole body stay in exactly the
   same place, nothing slides sideways" şart — ölçüldü, her karede taban satırı
   60'ta kaldı, o yüzden kareler bbox'a göre YENİDEN OTURTULMAZ (oturtulursa el
-  kalkınca gövde aşağı kayar). Kral: `D_Idle` baş sallama 7 kare, `D_Tac` tacı
-  çıkarıp takma 15 kare; motor 26 sn'de bir Tac'ı oynatır. Portre D_Idle'ın üst
+  kalkınca gövde aşağı kayar). Kral: `D_Idle` baş sallama +
+  duraklama, `D_Tac` tacı çıkarıp takma; motor 26 sn'de bir Tac'ı **4 fps**
+  ile oynatır (5 fps'te seyirtiyordu) ve taç elindeyken kareler kurulumda
+  çoğaltılır (altın pikselin y'sinden bulunur) — duraklama sheet'te, kodda
+  değil. Oturan figürde **önden bakış** şart: tarifte sandalyeyi ÖNCE ve
+  "seen straight from the FRONT, symmetrical, NOT at an angle" diye yaz;
+  figürü önce yazınca model sağlam bir taht çiziyor. Portre D_Idle'ın üst
   24 satırından kırpılır; figürü hücrenin tepesine oturt.
 - Düşman portresi gerekiyorsa `enemies/N/D_Idle.png` → `characters/M/`
   kopyala (son muhafız = 15).
@@ -283,4 +288,4 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 
 ---
 
-*Son güncelleme: 2026-09-12, v6.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v6.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

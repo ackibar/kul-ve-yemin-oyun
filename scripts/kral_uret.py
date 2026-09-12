@@ -43,6 +43,36 @@ def uret():
     print('  ham:', got[0])
 
 
+# Kral cok hizli oynuyordu; iki cozum birden: motor dusuk kare hizinda cizer
+# (Engine.KRAL_FPS) ve taci ELINDEYKEN kareler cogaltilir - oyuncu onun taca
+# baktigi ani gorsun diye. Taci elde olan kareler ALTIN pikselin y'sinden
+# bulunur (baste ~12, kucaginda ~30).
+DURAK_IDLE = 8      # bas salladiktan sonra kac kare hareketsiz dursun
+DURAK_TAC = 5       # taca bakarken her kare kac kat uzasin
+
+
+def altin_y(k):
+    px = k.load(); ys = []
+    for y in range(k.height):
+        for x in range(k.width):
+            r, g, b, a = px[x, y]
+            if a and r > 170 and g > 130 and b < 110 and r - b > 70:
+                ys.append(y)
+    return sum(ys) / len(ys) if ys else None
+
+
+def bekletme(ks):
+    ys = [altin_y(k) for k in ks]
+    var = [y for y in ys if y is not None]
+    if not var:
+        return ks
+    esik = min(var) + 8
+    out = []
+    for k, y in zip(ks, ys):
+        out.extend([k] * (DURAK_TAC if (y is not None and y > esik) else 1))
+    return out
+
+
 def kur():
     """Animasyon karelerinden characters/13 sheet'lerini kurar.
 
@@ -56,7 +86,12 @@ def kur():
         fs = sorted(glob.glob(f'{HAM}/anim_{ad}_*.png'))
         if not fs:
             print(f'  !! {ad} kareleri yok'); sys.exit(1)
-        kareler[hedef_ad] = [Image.open(f).convert('RGBA') for f in fs]
+        ks = [Image.open(f).convert('RGBA') for f in fs]
+        if hedef_ad == 'Tac':
+            ks = bekletme(ks)
+        else:
+            ks = ks + [ks[-1]] * DURAK_IDLE      # bas sallamadan sonra dinlenme
+        kareler[hedef_ad] = ks
     hedef = f'{ROOT}/public/assets/characters/{SLOT}'
     os.makedirs(hedef, exist_ok=True)
     zemin = 0

@@ -14,7 +14,9 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HAM = f'{ROOT}/_arsiv/uretim/generated/kral'
-KAYNAK = f'{HAM}/kral_sandalye_0.png'
+# 3. tur taban gorsel: ONDEN bakis + gercekten kirik sandalye (once yandan
+# duruyordu ve sandalye saglam bir taht gibi cikiyordu).
+KAYNAK = f'{HAM}/kral_kirik111_0.png'
 SABIT = ('; the broken wooden chair and the whole body stay in exactly the same place in '
          'every frame, nothing slides sideways, the feet never move, same character, same '
          'colours, same muted ash-grey palette')
@@ -22,9 +24,10 @@ ISLER = {
     'idle': (6, 'sitting still on the chair, the head dips slowly forward once and lifts '
                 'back up, a small tired nod, the shoulders rise and fall slightly with '
                 'breathing, the hands stay resting on the knees'),
-    'tac':  (14, 'slowly raises one hand, lifts the iron crown off his head, holds it in '
-                 'front of his chest and looks down at it for a moment, then lifts it back '
-                 'up and sets it on his head again and lowers the hand to his knee'),
+    'tac':  (14, 'raises both hands very slowly, lifts the iron crown off his head, holds '
+                 'it low in front of his chest and looks down at it, then raises it back up '
+                 'and sets it on his head again and lowers the hands to his lap; he stays '
+                 'seated facing the viewer the whole time'),
 }
 
 

@@ -401,6 +401,8 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Kralin tac hareketi: her KRAL_DONGU saniyede bir oynar (Tac sayfasinin
   *  suresi kadar), aradaki zaman bas sallama (Idle). */
  static readonly KRAL_DONGU=26;
+ /** Kralin kare hizi: 5 fps'te hareketleri seyirtiyordu. */
+ static readonly KRAL_FPS=4;
  /** Mekan basina karanlik (0 = mevcut duz tint, 1 = zifiri). Kullanici mevcut
   *  mekanlarin havasini begendi: hepsi 0, yani isik katmani hic devreye girmiyor
   *  ve mekanlar eski haliyle duruyor. Sarnic Agzi .82 ile denendi, deneme
@@ -896,9 +898,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      const nw0=this.label(e.name||'',e.x,e.y-30);void nw0;return;}
     /* Kral oturuyor: yurumez, arada bir taci cikarip geri takar. */
     if(e.id==='kral'){const tac=this.images['characters13DTac'];const n=tac?.naturalWidth?Math.floor(tac.naturalWidth/64):0;
-     const t=time%Engine.KRAL_DONGU,sure=n/5;
-     if(n&&t<sure)this.sprite('characters13DTac',e.x,e.y,Math.floor(t*5),32,32,false,OL,1,0,e.capa);
-     else this.sprite('characters13DIdle',e.x,e.y,Math.floor(time*5),32,32,false,OL,1,0,e.capa);
+     const t=time%Engine.KRAL_DONGU,sure=n/Engine.KRAL_FPS;
+     if(n&&t<sure)this.sprite('characters13DTac',e.x,e.y,Math.floor(t*Engine.KRAL_FPS),32,32,false,OL,1,0,e.capa);
+     else this.sprite('characters13DIdle',e.x,e.y,Math.floor(time*Engine.KRAL_FPS),32,32,false,OL,1,0,e.capa);
      const nwK=this.label(e.name||'',e.x,e.y-30*(e.s||1));void nwK;return;}
     const sy=this.sahneYuru.get(e.id);const g=this.gez.get(e.id);const yur=!!sy||(!!g&&g.bekle<=0&&Math.hypot(g.tx-e.x,g.ty-e.y)>1.5);const yd=sy?sy.dir:g?.dir??'D';const yf=sy?sy.flip:g?.flip??false;const yy=sy?sy.yol:(g?.yol||0);this.sprite(`characters${e.portrait}${yur?yd:'D'}${yur?'Walk':'Idle'}`,e.x,e.y,yur?Math.floor(yy/Engine.ADIM):Math.floor(time*5),32,32,yur&&yd==='S'&&yf,OL,1,0,e.capa);const pending=bekleyen(this.state,e.id);/* Unlem isimle AYNI yukseklikte olmali: isim olcekle (e.s) yukseliyordu,
    unlem sabit -30'daydi, kucuk karakterlerde (Lin s=0.8) kayik duruyordu. */const etiketY=e.y-30*(e.s||1);const nw=this.label(e.name||'',e.x,etiketY);if(pending)this.label('!',e.x-nw/2-5,etiketY,'#e0453a');}
