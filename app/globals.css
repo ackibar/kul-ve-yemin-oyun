@@ -677,3 +677,7 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
   max-width:250px;
 }
 .quest-hint b,.quest-hint>span,.quest-hint .quest-diamond{text-shadow:none!important}
+
+/* Mesale rozeti tonik rozetinin altina: ikisi ayni anda aktifken ust uste binmesin. */
+.tonic-badge.mesale-badge{top:112px}
+@container(max-width:850px){.tonic-badge.mesale-badge{top:96px}}

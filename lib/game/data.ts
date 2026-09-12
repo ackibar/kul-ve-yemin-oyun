@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='5.2';
+export const SURUM='5.3';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -87,7 +87,7 @@ export const ITEMS:Record<ItemId,Item>={
  potion:{id:'potion',name:'Can iksiri',kind:'consumable',description:'45 can yeniler. Savaş sırasında da içilebilir.',rarity:'Sıradan',icon:'potion',price:12},
  tonic:{id:'tonic',name:'Köz toniği',kind:'consumable',description:'20 saniye boyunca +8 saldırı.',rarity:'Nadir',icon:'flame',price:20},
  wood:{id:'wood',name:'Odun',kind:'consumable',description:'Ateşin yanına gidip yakarak meşale yapabilirsin.',rarity:'Sıradan',icon:'book',price:5},
- torch:{id:'torch',name:'Meşale',kind:'consumable',description:'60 saniye boyunca karanlık zindanları aydınlatır.',rarity:'Nadir',icon:'flame',price:15},
+ torch:{id:'torch',name:'Meşale',kind:'consumable',description:'90 saniye boyunca etrafını aydınlatır. Karanlık yerlerde onsuz iki adım ötesini göremezsin.',rarity:'Sıradan',icon:'flame',price:9},
  tac:{id:'tac',name:'Ongun’un tacı',kind:'quest',description:'Paslı demir. Bildiği tek işlev Obruk’a satılmak; başka kimse istemiyor. Taşıyan bilir.',rarity:'Görev',icon:'gem',price:0},
  migfer:{id:'migfer',name:'Son muhafızın miğferi',kind:'armor',description:'+8 savunma, +10 azami can. İçi kül dolu: Kül Ovası’nda canın %40 daha yavaş erir.',rarity:'Eşsiz',icon:'shield',defense:8,hp:10,price:0,kulKalkan:.6},
  cakil:{id:'cakil',name:'Dünyanın son çakılı',kind:'quest',description:'Uslu öyle diyor. Ağır değil; ağırlığı unvanında. Ne işe yaradığını Uslu da bilmiyor.',rarity:'Görev',icon:'gem',price:0},
@@ -109,7 +109,7 @@ export function spendPoint(s:State,key:keyof State['skills']){if(s.points<1||!['
  *  Obruk dunyanin sonundan kar eder (2.5). Liste ayni zamanda satin alma
  *  YETKISI: bir esya hangi saticinin listesindeyse yalnizca ondan alinir. */
 export const SATICILAR:Record<string,{liste:ItemId[];zam:number}>={
- boran:{liste:['potion','tonic','bileme','merhem','kavanoz','toz','chain','copper','guard','bow','arrow','tatar','kemik','yelek','gozu','mizrak','balta','hancer','topuz','pelerin','okates','okzehir','okdelici','okcengel'],zam:1},
+ boran:{liste:['potion','tonic','torch','bileme','merhem','kavanoz','toz','chain','copper','guard','bow','arrow','tatar','kemik','yelek','gozu','mizrak','balta','hancer','topuz','pelerin','okates','okzehir','okdelici','okcengel'],zam:1},
  obruk:{liste:['tuzet','durusu','petek','muhur','ash','ocakz','kavanoz'],zam:2.5},
 };
 /** Obruk'a "bey" diyen oyunciya daha az zam yapar: kibri satin alinabilir. */

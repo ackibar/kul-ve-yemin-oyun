@@ -174,6 +174,16 @@ Yaratıklarda alfa ağırlık merkezi. Referans, aynı yönün mevcut Idle kares
 maskelenir. Boyalı mobilyanın çarpışması elle (`blockers`). Photoshop
 katman sözleşmesi: `zemin` / `<ad>@engel` / `@gecilir` / `@ates` / `@ust`.
 
+**Işık haritası (2026-09-12):** `Engine.KARANLIK[mekan]` 0–1; 0 ise eski
+düz tint aynen kalır (kullanıcı mevcut mekânların havasını beğendi, hepsi 0;
+yalnız Sarnıç Ağzı .82 deneme). Ekran dışı tuvale karanlık basılır, her ışık
+`destination-out` radyal gradientle delik açar: ateş entity'leri, boyalı
+duvar ışıkları (`World.isiklar`, arka plandaki sıcak-parlak piksel
+kümelerinden ölçülür), fener taşıyan, yanan düşman, ateş oku, oyuncu
+(meşaleyle 78, meşalesiz 22 = iki adım). Meşale 90 sn, Alf'te 9 altın,
+zanaat masasında 2 odun. Yeni karanlık mekân gelince KARANLIK'a değer ve
+`isiklar`'a fener konumları yazılır.
+
 **Arayüz:** parşömen. Çerçeveler CSS değil 9 dilim piksel resmi
 (`frame*.png`, dilim 8, kalınlık dilimin katı). `border-image … fill`
 merkezi de boyar. "Vazgeç" pastel kırmızı (okunmuyordu). Alt güvenli alan
@@ -234,4 +244,4 @@ kondu. Uzaklıkla kısılır.
 
 ---
 
-*Son güncelleme: 2026-09-12, v5.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v5.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

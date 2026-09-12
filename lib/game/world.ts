@@ -8,7 +8,11 @@ export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[
   *  Kapi nesnesine basmak yerine tunelden yuruyerek gecmek icin. */
  gecisler:{kutu:[number,number,number,number];to:Zone;spawn:[number,number]}[];
  /** Yurunebilir ama olumcul: icine giren asagi dusup olur. */
- ucurumlar:[number,number,number,number][]};
+ ucurumlar:[number,number,number,number][];
+ /** Arka plana BOYALI sabit isik kaynaklari (duvar mesalesi gibi): dunya birimi x,y ve yaricap.
+  *  Ates entity'leri ayri, motor onlari zaten biliyor. Konumlar arka plandaki sicak-parlak
+  *  piksel kumelerinden olculdu (kume merkezi /32 = karo). */
+ isiklar:[number,number,number][]};
 /** Kralin oturan sprite'inin zemin satiri/2; scripts/kral_uret.py kurunca yazar. */
 const KRAL_CAPA=31;
 export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefined>):World{
@@ -25,7 +29,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   *  x2/y2 haric). Gorsel carpisma izgarasini bilmedigi icin elle cikarildi;
   *  bkz. scripts/haven_engel.py ve generated/_ENGELLER.png dogrulama katmani. */
  const blockers:[number,number,number,number][]=[];
- const gecisler:World['gecisler']=[];const ucurumlar:World['ucurumlar']=[];
+ const gecisler:World['gecisler']=[];const ucurumlar:World['ucurumlar']=[];const isiklar:World['isiklar']=[];
  const gecis=(x1:number,y1:number,x2:number,y2:number,to:Zone,spawn:[number,number])=>
   gecisler.push({kutu:[x1,y1,x2,y2],to,spawn});
  /** Ucurum yurunebilir olmali ki icine girilebilsin; olumu motor veriyor. */
@@ -137,6 +141,8 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // asagi dusersin. Karolar bilerek yurunebilir birakildi.
   // Sinirlar goz karariyla degil, uzerine yesil boyanmis referanstan olculdu.
   ucurum(21,11,27,19);
+  // Bati duvarindaki boyali mesale (kume merkezi 4.3,11.1 karo).
+  isiklar.push([4.3*16,11.1*16,54]);
   // Ucurumun DORT BIR YANI acik: kenarindan dolasilabilsin diye cevresi
   // yurunebilir. Sag taraf kayalik ama gecis orada da kapali kalmasin.
   room(19,9,10,12);
@@ -165,13 +171,13 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // oyuncunun yanina koyuyor, makeWorld'un yerlestirmesine gerek yok.
   if(flags?.rauf!=='oldu'&&flags?.rauf!=='teslim'&&flags?.rauf!=='takip')
    at({id:'rauf',type:'npc',x:44,y:18,name:'Rauf',portrait:5});
-  chest('medicineChest',48,8,[['medicine',1],['potion',2],['toz',2]],12);
+  chest('medicineChest',48,8,[['medicine',1],['potion',2],['toz',2],['torch',2]],12);
   chest('cisternWest',6,20,[['chain',1],['bow',1],['potion',2],['yeminh',1]],24);
   chest('cisternEast',49,24,[['guard',1],['potion',2],['uzunyay',1],['okdelici',8]],20);
   fire(10,16);fire(40,14);
   // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).
  }
- return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,spawn:zone==='haven'?[15*16,14*16]:[7*16,7*16]};
+ return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:[7*16,7*16]};
 }
 export function walkable(world:World,x:number,y:number,r=5,ignoreId?:string){
  const tilesOk=[[-r,-r],[r,-r],[-r,r],[r,r]].every(([dx,dy])=>world.tiles[Math.floor((y+dy)/16)]?.[Math.floor((x+dx)/16)]===1);
