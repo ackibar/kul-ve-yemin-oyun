@@ -133,6 +133,12 @@ script eski yedeği yeniden basar ve **yeni sanatı sessizce geri alır**
 GİRMEZ.
 
 **Ölçek:** 1 karo = 16 dünya birimi = 32 sanat px, motor 2× okur (`R=2`).
+**Büyük figür = daha yüksek çözünürlük, ölçek DEĞİL.** Kral 64×64 üretilip
+`s=1.35` ile büyütüldüğünde pikselleri sahnenin 1.35 katı oldu ve "detaysız"
+göründü (üstelik 64'lük üretimler 11-27 renkle geliyordu, diğer karakterler
+44-56). Çözüm: 128×128 üret, motor `fw/fh=64` ile çizsin — sanat pikseli
+diğerleriyle aynı boyutta, figür iki kat büyük. Çapa da 128'e göre
+(`KRAL_CAPA=61`), isim etiketi `-58`.
 Karakter hücresi 64×64; **oyuncu 80×80** (genişlik: kılıç savrulunca
 sığmıyordu; yükseklik: figür bazı karelerde 65-70 satır, 64'te kafa
 kesiliyordu — `hucre_yukselt.py`, ayak 78, `OYUNCU_CAPA 39`; HUD portresi
@@ -288,4 +294,4 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 
 ---
 
-*Son güncelleme: 2026-09-12, v6.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v6.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

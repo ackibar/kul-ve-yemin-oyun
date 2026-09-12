@@ -16,7 +16,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HAM = f'{ROOT}/_arsiv/uretim/generated/kral'
 # 3. tur taban gorsel: ONDEN bakis + gercekten kirik sandalye (once yandan
 # duruyordu ve sandalye saglam bir taht gibi cikiyordu).
-KAYNAK = f'{HAM}/kral_kirik111_0.png'
+# 5. tur: 128x128 uretim. 64'te figur yalnizca 11-27 renkle cikiyordu ve
+# olcekle buyutulunce pikselleri sahnenin iki kati oluyordu; cozum olcek degil
+# daha yuksek cozunurluklu kaynak (motor fw=64 ile yari yogunlukta cizer).
+KAYNAK = f'{HAM}/kral128_141_0.png'
 SABIT = ('; the broken wooden chair and the whole body stay in exactly the same place in '
          'every frame, nothing slides sideways, the feet never move, same character, same '
          'colours, same muted ash-grey palette')

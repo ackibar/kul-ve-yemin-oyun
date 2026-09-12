@@ -25,7 +25,7 @@ TARIF = ('an old broken king slumped on a broken wooden throne, one armrest snap
          'a once-royal robe now grey with ash with only a faint faded purple left, hollow '
          'empty eyes staring ahead, dark fantasy pixel art game character, muted ash-grey '
          'palette, soot-stained, single dark outline, basic shading, no background, human')
-CELL, USTPAY = 64, 3
+CELL, USTPAY = 128, 3
 # Zemin satiri: figur tepeden USTPAY ile baslar, alt sinir figurun boyuna bagli.
 # world.ts'teki capa = zemin_satiri / 2 (sprite() satir = 2*capa).
 
@@ -51,25 +51,19 @@ DURAK_IDLE = 8      # bas salladiktan sonra kac kare hareketsiz dursun
 DURAK_TAC = 5       # taca bakarken her kare kac kat uzasin
 
 
-def altin_y(k):
-    px = k.load(); ys = []
-    for y in range(k.height):
-        for x in range(k.width):
-            r, g, b, a = px[x, y]
-            if a and r > 170 and g > 130 and b < 110 and r - b > 70:
-                ys.append(y)
-    return sum(ys) / len(ys) if ys else None
+# Bekletme: model her seferinde "kaldir -> tut -> geri tak" sirasini uretiyor,
+# yani tutma evresi dizinin ORTASINDA. Taci renkten bulmayi iki kez denedim ve
+# ikisi de tutmadi: 64'te sandalyenin sari ahsabi olcumu bastirdi, 128'de
+# tacin tonu esigin disinda kaldi. Oran sabit ve guvenilir.
+DURAK_ARALIK = (0.25, 0.68)
 
 
 def bekletme(ks):
-    ys = [altin_y(k) for k in ks]
-    var = [y for y in ys if y is not None]
-    if not var:
-        return ks
-    esik = min(var) + 8
+    n = len(ks)
+    bas, son = int(n * DURAK_ARALIK[0]), int(n * DURAK_ARALIK[1])
     out = []
-    for k, y in zip(ks, ys):
-        out.extend([k] * (DURAK_TAC if (y is not None and y > esik) else 1))
+    for i, k in enumerate(ks):
+        out.extend([k] * (DURAK_TAC if bas <= i < son else 1))
     return out
 
 

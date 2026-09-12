@@ -897,11 +897,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      this.sprite('rauf_kneel',e.x,e.y,ilerleme,32,32,false,OYUNCU_OLCEK);
      const nw0=this.label(e.name||'',e.x,e.y-30);void nw0;return;}
     /* Kral oturuyor: yurumez, arada bir taci cikarip geri takar. */
-    if(e.id==='kral'){const tac=this.images['characters13DTac'];const n=tac?.naturalWidth?Math.floor(tac.naturalWidth/64):0;
+    if(e.id==='kral'){const tac=this.images['characters13DTac'];const n=tac?.naturalWidth?Math.floor(tac.naturalWidth/128):0;
      const t=time%Engine.KRAL_DONGU,sure=n/Engine.KRAL_FPS;
-     if(n&&t<sure)this.sprite('characters13DTac',e.x,e.y,Math.floor(t*Engine.KRAL_FPS),32,32,false,OL,1,0,e.capa);
-     else this.sprite('characters13DIdle',e.x,e.y,Math.floor(time*Engine.KRAL_FPS),32,32,false,OL,1,0,e.capa);
-     const nwK=this.label(e.name||'',e.x,e.y-30*(e.s||1));void nwK;return;}
+     /* Kral 128'lik hucrede: fw/fh 64 verilir, boylece sanat pikseli digerleriyle
+        AYNI yogunlukta cizilir (64*olcek/128 = 32*olcek/64) ama figur iki kat buyuk. */
+     if(n&&t<sure)this.sprite('characters13DTac',e.x,e.y,Math.floor(t*Engine.KRAL_FPS),64,64,false,OL,1,0,e.capa);
+     else this.sprite('characters13DIdle',e.x,e.y,Math.floor(time*Engine.KRAL_FPS),64,64,false,OL,1,0,e.capa);
+     /* Etiket 128'lik hucreye gore: 64'luk yukseklik (-30) figurun gogsunde kaliyordu. */const nwK=this.label(e.name||'',e.x,e.y-58*(e.s||1));void nwK;return;}
     const sy=this.sahneYuru.get(e.id);const g=this.gez.get(e.id);const yur=!!sy||(!!g&&g.bekle<=0&&Math.hypot(g.tx-e.x,g.ty-e.y)>1.5);const yd=sy?sy.dir:g?.dir??'D';const yf=sy?sy.flip:g?.flip??false;const yy=sy?sy.yol:(g?.yol||0);this.sprite(`characters${e.portrait}${yur?yd:'D'}${yur?'Walk':'Idle'}`,e.x,e.y,yur?Math.floor(yy/Engine.ADIM):Math.floor(time*5),32,32,yur&&yd==='S'&&yf,OL,1,0,e.capa);const pending=bekleyen(this.state,e.id);/* Unlem isimle AYNI yukseklikte olmali: isim olcekle (e.s) yukseliyordu,
    unlem sabit -30'daydi, kucuk karakterlerde (Lin s=0.8) kayik duruyordu. */const etiketY=e.y-30*(e.s||1);const nw=this.label(e.name||'',e.x,etiketY);if(pending)this.label('!',e.x-nw/2-5,etiketY,'#e0453a');}
   }}));

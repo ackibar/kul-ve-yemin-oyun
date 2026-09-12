@@ -12,22 +12,33 @@ from pxl_state import wait
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ORTAK = ('muted ash-grey palette, soot-stained, single dark outline, '
          'NO backpack, NO satchel, NO straps across the chest, NO modern clothing, human')
+# Kafa orani: ilk turda Lin ve Uslu'nun kafasi govdeye gore cok buyuk cikti
+# (kullanici: "anime kizi gibi"). Mannequin sablonu kucuk figurlerde kafayi
+# buyutuyor; oran acikca yazilmali.
+ORAN = (', realistic body proportions with a SMALL head, the head is small compared to the '
+        'shoulders, NOT chibi, NOT big-headed, NOT anime, narrow face')
 
 KISI = {
-    'nil': ('a small eight year old girl, short and slight, patched woolen dress over '
-            'rough leggings, a thick shawl tied across her shoulders, hair in a messy '
-            'braid, soot smudges on her cheeks, holding a short charred stick like a '
-            'tally marker, stubborn set jaw, standing very straight, ' + ORTAK, 41),
+    'nil2': ('a thin eight year old girl, small and slight, a plain patched woolen dress '
+             'over rough leggings, a thick shawl tied across her shoulders, hair pulled back '
+             'in a tight messy braid, soot smudges on her face, holding a short charred stick '
+             'like a tally marker, stubborn set jaw, standing very straight'
+             + ORAN + ', ' + ORTAK, 141),
     'ayaz': ('a thin fourteen year old boy, too-large hand-me-down coat with frayed '
              'cuffs hanging past his hands, cloth wrapped around his shins, tousled '
              'hair, hollow tired eyes, a dented metal canteen hanging from his belt, '
              'shoulders hunched from waiting, ' + ORTAK, 43),
     # Uslu: kulun icinden donen deli. Herkes cok ciddi; o degil. Dolasir,
     # o yuzden yurume sablonu da gerekiyor (2 + 3 = 5 uretim).
-    'uslu': ('a scrawny wild-eyed middle-aged man, hair sticking straight out in every '
-             'direction and full of ash, a wide lopsided grin, mismatched rags with one '
-             'sleeve missing, a small dead plant tucked behind one ear, bare feet, both '
-             'arms flung out as if asking a question, ' + ORTAK, 83),
+    # 2. tur: ilki "orman kackini" gibi cikti (kulaginda kuru bitki, kabarik sac
+    # kutlesi kafayi buyutuyordu). Bu sefer SIGINAK delisi: sac dagnik ama yatik,
+    # kiyafet sokak kiyafeti, bitki yok.
+    'uslu2': ('a scrawny wild-eyed man in his forties, gaunt narrow face with sunken cheeks, '
+              'unkempt greasy hair full of ash sticking out in flat tangled strands close to '
+              'the skull, a wide lopsided grin showing missing teeth, a torn city coat over a '
+              'ragged shirt with one sleeve missing, bare feet, both arms flung out to the '
+              'sides as if asking a question; NO leaves, NO plants, NO twigs, NOT a forest '
+              'hermit, NOT a druid' + ORAN + ', ' + ORTAK, 183),
     'selvi': ('a hard-faced woman in her late thirties, wrapped in many mismatched '
               'layers of cloth and blankets against cold, a scarf covering her neck, '
               'weathered wind-burned face, cracked lips, arms folded tight, standing '
