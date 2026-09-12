@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM = '2.9';
+export const SURUM = '3.0';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -74,7 +74,7 @@ export function yeminler(s:State):{kime:string;soz:string;durum:YeminDurum}[]{
  const out:{kime:string;soz:string;durum:YeminDurum}[]=[];
  if(s.flags.sozNil==='verildi')out.push({kime:'Lin',soz:'Ağabeyini görürsem ateşin yandığını söyleyeceğim.',
   durum:s.flags.ayazHaber==='soylendi'?'tutuldu':s.flags.ayaz?'bozuldu':'acik'});
- if(s.flags.sozSelvi==='verildi')out.push({kime:'Selvi',soz:'Kalbi sığınağa bağlayacağım.',
+ if(s.flags.sozSelvi==='verildi')out.push({kime:'Elvi',soz:'Kalbi sığınağa bağlayacağım.',
   durum:s.ending==='claim'?'tutuldu':s.ending==='seal'?'bozuldu':'acik'});
  if(s.flags.sozAyaz==='verildi')out.push({kime:'Tiga',soz:'Sara’yı arayacağım.',durum:'acik'});
  if(s.flags.yemin==='nobet')out.push({kime:'Kapıya',soz:'Bu kapıyı ben bekleyeceğim.',durum:'acik'});
@@ -162,7 +162,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={ rauf:{
             {label:'Haklısın, tutmam.',to:'sert'},AYRIL]},
   'ihtiyac':{text:'…On dokuz. Saydın mı gerçekten? Kimse saymaz sanıyordum. Mirna sayıyor ama o ölüleri sayıyor. Sen yaşayanları saymışsın.',
    choices:[{label:'Testiyi bırak, birlikte inelim.',to:'kaldi'},{label:'Karar senin.',to:'sert'}]},
-  // Selvi sayildiysa sayi degismistir; Tuhn icin bu "sayi eksilmek zorunda degil" demek.
+  // Elvi sayildiysa sayi degismistir; Tuhn icin bu "sayi eksilmek zorunda degil" demek.
   'ihtiyac20':{text:'Yirmi mi? Mirna on dokuz diyor. …Bugün birini daha mı yazdı? Yaşayanlara mı? …Demek sayı yalnızca eksilmiyor. Demek benim için de bir satır kalmış olabilir.',
    choices:[{label:'Testiyi bırak, birlikte inelim.',to:'kaldi'},{label:'Karar senin.',to:'sert'}]},
   // Ikinci anahtar: umut degil, kanit. Sara bir cocuga suyu verip yoluna devam etmis.
@@ -202,7 +202,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={ rauf:{
    choices:[AYRIL]},
   // Tek seferlik araya girisler: motor, olay olduktan sonraki ilk konusmada
   // talk'i buraya kurar; sonra normal gorev diyaloguna donulur.
-  'yirmi':{text:'Selvi geldi. Yüzüme baktı, bağırmadı. Onu yazdım: yirmi. Otuz gecedir ilk defa yaşayan birini yazdım.',
+  'yirmi':{text:'Elvi geldi. Yüzüme baktı, bağırmadı. Onu yazdım: yirmi. Otuz gecedir ilk defa yaşayan birini yazdım.',
    choices:[{label:'…',to:null}]},
   'ayazYazdi':{text:'Tiga’yı da yazdım. Yaşayanları yazmaya başladım; senin yüzünden. Sayfanın o tarafı boştu, artık değil.',
    choices:[{label:'…',to:null}]},
@@ -320,7 +320,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={ rauf:{
    choices:[AYRIL]},
  },
 
- // Selvi: yetmis birinci. Ilk gece kapidan cevrildi, dorduncu gun iceri girdi,
+ // Elvi: yetmis birinci. Ilk gece kapidan cevrildi, dorduncu gun iceri girdi,
  // Mirna onu hic yazmadi. Kalbin baglanmasini isteyen tek ses — acgozlulukten
  // degil, kapida kalan biri olarak.
  selvi:{
@@ -336,7 +336,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={ rauf:{
    choices:[AYRIL]},
   'sozRed':{text:'Doğru. Vermeyen bozmaz. Undur öyle yaşıyor, Alf tersini. Sen hangisi olacaksın, orada göreceğiz.',
    choices:[AYRIL]},
-  // Mirna'nin sirri Selvi'ye soylenirse: Alf'te ayni hareket bir adami yikti,
+  // Mirna'nin sirri Elvi'ye soylenirse: Alf'te ayni hareket bir adami yikti,
   // burada bir kadini deftere yazdiriyor. Ayni fiil, ters sonuc.
   'sir':{text:'…Mirna mı? Öksürenleri sayan kadın. Her sabah önümden geçiyor, yüzüme bakmadan. …Demek o. Bağırmayacağım. Sadece yüzüme bakmasını isteyeceğim. Yetmiş birinci bir sayı değil.',
    choices:[{label:'Git konuş onunla.',to:'sirKonus'}]},
@@ -370,9 +370,9 @@ export function dialogue(s:State,id:string):Dialogue{
    choices:[{label:'Ağabeyin nerede?',action:'story:nil:1'},
     ...(s.inventory.wood&&!s.flags.nilOdun?[{label:'Sana odun getirdim.',action:'nil_odun',note:'1 odun ver'}]:[]),
     close]};}
- // Selvi: yetmis birinci. Ust kapinin dibinde durur.
+ // Elvi: yetmis birinci. Ust kapinin dibinde durur.
  if(id==='selvi'){
-  return {who:'Selvi',role:s.flags.selviSir==='soylendi'?'Yirminci':'Sayılmayan',portrait:9,
+  return {who:'Elvi',role:s.flags.selviSir==='soylendi'?'Yirminci':'Sayılmayan',portrait:9,
    text:s.flags.selviSir==='soylendi'?'Mirna yüzüme baktı. Sonra yazdı: yirmi. …Yirmi olmak, on dokuzun yanında durmaktan daha ağırmış; kim bilirdi.'
     :s.ending==='claim'&&s.flags.sozSelvi==='verildi'?'Tuttun. Kapı bir daha kimseye kapanmayacak. Yazdım.'
     :s.ending==='seal'&&s.flags.sozSelvi==='verildi'?'Sen de mi. …Olsun. En azından yüzüme bakarak bozdun.'
@@ -446,23 +446,23 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
   if(dugum==='tuhn:kaldiSare'){s.flags.tuhn='kaldi';s.flags.tuhnSare='biliyor';s.flags.talk=dugum;
    s.journal.unshift('Tuhn’a Sara’nın su bulduğunu söyledin. Testiyi alıp uçurumdan çekildi.');
    return {message:'Tuhn bir adım geri çekildi.'};}
-  // Mirna'nin sirri: kapida duran oydu. Soylemek Selvi'de bir secenek acar.
+  // Mirna'nin sirri: kapida duran oydu. Soylemek Elvi'de bir secenek acar.
   if(dugum==='mira:selviSoyle'){s.flags.mirnaSir='biliyorum';s.flags.talk=dugum;
-   s.journal.unshift('Mirna ilk gece kapıda kendisinin durduğunu itiraf etti. Selvi’ye söylemek sana kaldı.');
-   return {message:'Artık Selvi’ye söyleyebilirsin.'};}
+   s.journal.unshift('Mirna ilk gece kapıda kendisinin durduğunu itiraf etti. Elvi’ye söylemek sana kaldı.');
+   return {message:'Artık Elvi’ye söyleyebilirsin.'};}
   if(dugum==='mira:selviSakla'){s.flags.mirnaSir='sakladin';s.flags.talk=dugum;
-   s.journal.unshift('Mirna’nın sırrını sakladın. Selvi sayılmadan kalacak.');
+   s.journal.unshift('Mirna’nın sırrını sakladın. Elvi sayılmadan kalacak.');
    return {message:''};}
   if(dugum==='selvi:sir'){s.flags.selviSir='soylendi';s.flags.talk=dugum;
-   s.journal.unshift('Selvi’ye kapıda Mirna’nın durduğunu söyledin. Selvi onunla konuşmaya gitti; Mirna onu yazdı. Yirmi.');
-   return {message:'Selvi yirminci oldu.'};}
+   s.journal.unshift('Elvi’ye kapıda Mirna’nın durduğunu söyledin. Elvi onunla konuşmaya gitti; Mirna onu yazdı. Yirmi.');
+   return {message:'Elvi yirminci oldu.'};}
   // Oyuncunun sozleri
   if(dugum==='nil:sozVerildi'){s.flags.sozNil='verildi';s.flags.talk=dugum;
    s.journal.unshift('Lin’e söz verdin: ağabeyini görürsen ateşin yandığını söyleyeceksin.');
    return {message:'Söz verdin.'};}
   if(dugum==='nil:sozRed'){s.flags.sozNil='red';s.flags.talk=dugum;return {message:''};}
   if(dugum==='selvi:sozVerildi'){s.flags.sozSelvi='verildi';s.flags.talk=dugum;
-   s.journal.unshift('Selvi’ye söz verdin: kalbi sığınağa bağlayacaksın.');
+   s.journal.unshift('Elvi’ye söz verdin: kalbi sığınağa bağlayacaksın.');
    return {message:'Söz verdin.'};}
   if(dugum==='selvi:sozRed'){s.flags.sozSelvi='red';s.flags.talk=dugum;return {message:''};}
   // Tiga: iner, kalir; her iki durumda Sara icin soz istenir
