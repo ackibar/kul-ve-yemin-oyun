@@ -82,7 +82,18 @@ export class Engine{
   *  cirpmasini 1.3 saniyede tamamliyordu, yani agir cekim duruyordu.
   *  Saldiri daha hizli: windup 0.4 sn, 7 kare o surede sigsin. */
  static readonly DUSMAN_FPS=(eylem:string)=>eylem==='Attack'?15:11;
- static readonly TEPEDEN:Record<number,number>={1:Math.PI/6,2:Math.PI/2,5:Math.PI/2};
+ /** Yaratiklarin yon gosterme YONTEMI. Hepsini dondurmek yanlisti: sprite'lar
+  *  ayni bakis acisiyla cizilmemis.
+  *   'tam'   - gercekten tepeden (orumcek). Dondurmek dogru, 360 yon verir.
+  *             `aci` = sprite'in dogal bakis acisi (radyan, 0 = saga).
+  *   'yan'   - yandan-usten (fare). Dondurulunce sirtustu donuyordu; bunun
+  *             yerine yatayda AYNALANIR, dikey bilesen kucuk bir egime cevrilir.
+  *   'sabit' - onden cizilmis (yarasa: kafa yukarida, yuzu bize donuk).
+  *             Herhangi bir dondurme kafayi asagi ceviriyor; hic dondurulmez. */
+ static readonly YARATIK:Record<number,{mod:'tam'|'yan'|'sabit';aci?:number}>=
+  {1:{mod:'yan'},2:{mod:'tam',aci:Math.PI/2},5:{mod:'sabit'}};
+ /** 'yan' yaratiklarin dikey egim siniri (radyan). Daha fazlasi yine yatiriyor. */
+ static readonly EGIM=Math.PI/6;
  static readonly DUSUS=0.5;
  private sonImza='';
  private sahneSayac=0;
@@ -589,9 +600,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      const nw0=this.label(e.name||'',e.x,e.y-30);void nw0;return;}
     const sy=this.sahneYuru.get(e.id);const g=this.gez.get(e.id);const yur=!!sy||(!!g&&g.bekle<=0&&Math.hypot(g.tx-e.x,g.ty-e.y)>1.5);const yd=sy?sy.dir:g?.dir??'D';const yf=sy?sy.flip:g?.flip??false;const yy=sy?sy.yol:(g?.yol||0);this.sprite(`characters${e.portrait}${yur?yd:'D'}${yur?'Walk':'Idle'}`,e.x,e.y,yur?Math.floor(yy/Engine.ADIM):Math.floor(time*5),32,32,yur&&yd==='S'&&yf,OL);const pending=bekleyen(this.state,e.id);const nw=this.label(e.name||'',e.x,e.y-30*(e.s||1));if(pending)this.label('!',e.x-nw/2-5,e.y-30,'#e0453a');}
   }}));
-  for(const m of this.mobs)actors.push({y:m.y,draw:()=>{c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:1)*OYUNCU_OLCEK;if(Engine.TEPEDEN[m.kind]!==undefined){/* Fare, orumcek, kirkayak, yarasa TEPEDEN cizilmis: yon icin ayri sheet
-   uretmek gereksiz, sprite bakis yonune DONDURULUR. Hem sekiz degil 360
-   yon verir hem de bedava. TEPEDEN[kind] = sprite'in dogal bakis acisi. */const bak=m.aci??Math.atan2(dy,dx);this.sprite(`enemies${m.kind}D${eylem}`,m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,false,ol,1,bak-Engine.TEPEDEN[m.kind]);}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}if(m.hp<m.max||m.boss){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');}}});
+  for(const m of this.mobs)actors.push({y:m.y,draw:()=>{c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=Math.floor(time*Engine.DUSMAN_FPS(eylem));if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0));}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim);}else{this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}if(m.hp<m.max||m.boss){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');}}});
    actors.push({y:this.state.y,draw:()=>{const s=this.state;c.fillStyle='#02081280';c.beginPath();c.ellipse(s.x,s.y+1,8.5*OYUNCU_OLCEK,2.8*OYUNCU_OLCEK,0,0,7);c.fill();const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';// Dusus: sprite kucule kucule asagi kayiyor, boslugun icine iniyormus gibi.
   // Dusus: kucuIme YOK, karakter bir anda kayboluyor.
   const dusuyor=this.dusus>0;
