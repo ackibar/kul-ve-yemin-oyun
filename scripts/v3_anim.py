@@ -109,6 +109,18 @@ RAUF_YUR = ('walks forward with a steady stride, legs alternating clearly, the s
             'held down at the side in one hand the whole time')
 KUL_YUR = ('shambles forward with a heavy uneven stride, legs dragging, both arms '
            'hanging loose and swinging slightly')
+# Bogulmus: firtinada olmus, cigeri kul dolu. Su icindeymis gibi yurur.
+BOG_YUR = ('wades forward slowly with heavy dragging steps as if through deep water, '
+           'torso swaying, arms half raised, ash spilling from the open mouth')
+BOG_VUR = ('lurches forward and grabs with both arms wrapping them around the target, '
+           'then staggers back; the mouth gapes wide and spews a burst of grey ash')
+# Kralin son muhafizi: agir zirh, iki elle uzun kilic.
+MUH_YUR = ('marches forward with slow heavy armoured steps, carrying the long straight '
+           'sword held down in both hands in front of the body; the steel blade stays '
+           'gripped and fully visible in every single frame')
+MUH_VUR = ('raises the long straight sword high in both hands and brings it down in a '
+           'heavy vertical cut in front of the body, then returns to guard; the sword is '
+           'a solid steel blade and stays gripped in the hands in every frame')
 KUL_VUR = ('lunges forward and swings both clawed arms down and across at the target, '
            'then pulls them back; the body leans into the blow')
 
@@ -168,13 +180,18 @@ OZEL = {('kilic', 'Attack', 'east'): KILIC_VUR_YAN,
         # Caprazlar: asagi-sag kameraya donuk, yukari-sag sirti donuk.
         ('yay', 'Attack', 'south-east'): YAY_VUR_IKI_EL,
         ('yay', 'Attack', 'north-east'): YAY_VUR_ARKA,
-        ('kilic', 'Attack', 'north-east'): KILIC_VUR_ARKA}
+        ('kilic', 'Attack', 'north-east'): KILIC_VUR_ARKA,
+        ('muhafiz', 'Attack', 'east'): KILIC_VUR_YAN,
+        ('muhafiz', 'Attack', 'north'): KILIC_VUR_ARKA,
+        ('muhafiz', 'Attack', 'north-east'): KILIC_VUR_ARKA}
 
 SETLER = {
     'kilic': ('_arsiv/uretim/pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILIC_YUR), ('Attack', 6, KILIC_VUR)]),
     'yay':   ('_arsiv/uretim/pixellab/gezgin/id_yay.txt',   [('Walk', 8, YAY_YUR),   ('Attack', 6, YAY_VUR)]),
     'rauf':  ('_arsiv/uretim/pixellab/id_rauf.txt',         [('Attack', 6, RAUF_VUR), ('Walk', 8, RAUF_YUR)]),
     'kullenmis': ('_arsiv/uretim/pixellab/id_kullenmis.txt', [('Walk', 8, KUL_YUR), ('Attack', 6, KUL_VUR)]),
+    'bogulmus': ('_arsiv/uretim/pixellab/id_bogulmus.txt', [('Walk', 8, BOG_YUR), ('Attack', 6, BOG_VUR)]),
+    'muhafiz':  ('_arsiv/uretim/pixellab/id_muhafiz.txt',  [('Walk', 8, MUH_YUR), ('Attack', 6, MUH_VUR)]),
     # Silahsiz set: kilic varyantinin degil TABAN karakterin kendisi.
     'yumruk': ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Walk', 8, YUMRUK_YUR), ('Attack', 6, YUMRUK_VUR)]),
     'balta':  ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Attack', 6, BALTA_VUR), ('Walk', 8, BALTA_YUR)]),

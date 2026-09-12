@@ -49,7 +49,9 @@ ID_DOSYA = {'kilic': '_arsiv/uretim/pixellab/gezgin/id_kilic.txt',
             'yumruk': '_arsiv/uretim/pixellab/gezgin/id.txt',
             'balta': '_arsiv/uretim/pixellab/gezgin/id.txt',
             'rauf': '_arsiv/uretim/pixellab/id_rauf.txt',
-            'rauf6': '_arsiv/uretim/pixellab/id_rauf.txt'}
+            'rauf6': '_arsiv/uretim/pixellab/id_rauf.txt',
+            'bogulmus': '_arsiv/uretim/pixellab/id_bogulmus.txt',
+            'muhafiz': '_arsiv/uretim/pixellab/id_muhafiz.txt'}
 
 SETLER = {
     # Kilicli sette ana yonlerin Idle/Hurt/Death'i zaten var ve calisiyor;
@@ -71,6 +73,8 @@ SETLER = {
     # dusuyor). Idle/Death hic cizilmiyor ama eksik gorsel uyarisi cikmasin
     # diye ana yonlerde zaten var.
     'kullenmis': ('enemies/4', 'enemies/4', NPC_EN, {}, None),
+    'bogulmus':  ('enemies/8', 'enemies/8', NPC_EN, {}, None),
+    'muhafiz':   ('enemies/10','enemies/10',NPC_EN, {}, None),
     'yay':   ('characters/1bow',   'characters/1sword', OYUNCU_EN,
               {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),
 }

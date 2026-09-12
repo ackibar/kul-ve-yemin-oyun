@@ -2,7 +2,7 @@ import type {ItemId,Zone} from './data';
 export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
-export type EnemySpec={id:string;kind:1|2|4|5|6|7;x:number;y:number;boss?:boolean};
+export type EnemySpec={id:string;kind:1|2|4|5|6|7|8|9|10;x:number;y:number;boss?:boolean};
 export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[];enemies:EnemySpec[];spawn:[number,number];blockers:[number,number,number,number][];
  /** Uzerine BASINCA bolge degistiren kutular (karo birimi, x2/y2 haric).
   *  Kapi nesnesine basmak yerine tunelden yuruyerek gecmek icin. */
@@ -43,7 +43,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  };
  const decor=(id:string,x:number,y:number,asset:string,name?:string)=>at({id,type:'decor',x,y,asset,name:name||(asset.includes('Table')?'Zanaat Masası':undefined)});
  const chest=(id:string,x:number,y:number,items:[ItemId,number][],gold=0)=>at({id,type:'chest',x,y,items,gold,name:'Sandık'});
- const enemy=(id:string,kind:1|2|4|5|6|7,x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
+ const enemy=(id:string,kind:1|2|4|5|6|7|8|9|10,x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
  if(zone==='haven'){
   // Zemin ve carpisma ARTIK ELLE YAZILMIYOR: yeni mekan tek sahne gorseli +
   // ayri prop sayfasi olarak geldi, ikisi de scripts/mekan_kur.py ile islendi.
@@ -60,7 +60,9 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   at({id:'selvi',type:'npc',x:13,y:6,name:'Elvi',portrait:9});
   at({id:'nil',type:'npc',x:18,y:21,name:'Lin',portrait:7,s:.8});
   // Kral: sol ust kosede oturur, kimse bakmaz. Uslu ortada dolasir.
-  at({id:'kral',type:'npc',x:5,y:6,name:'Kral',portrait:13,sabit:true,capa:KRAL_CAPA,s:.72});
+  // Kral: vurulabilir (engine kralHasar). Oldurulduyse kosede cesedi kalir.
+  if(flags?.kral==='oldu')at({id:'kralCeset',type:'ceset',x:5,y:6,name:'Kral',asset:'kral_ceset'});
+  else at({id:'kral',type:'npc',x:5,y:6,name:'Kral',portrait:13,sabit:true,capa:KRAL_CAPA,s:.72});
   at({id:'uslu',type:'npc',x:14,y:19,name:'Uslu',portrait:14});
   if(flags?.ayaz==='indi')at({id:'ayaz',type:'npc',x:16,y:21,name:'Tiga',portrait:8,s:.9});
   if(flags?.tuhn==='kaldi')at({id:'tuhn',type:'npc',x:19,y:22,name:'Tuhn',portrait:6});
@@ -101,6 +103,14 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // kacacak yeri kalmiyor. Uzun bir dovus burada zaten pahali; Kul pelerini
   // takmak ya da hizli bitirmek gerekiyor.
   enemy('trol',7,8,22);
+  /* FIRTINA DUSMANLARI. Bogulmus: firtinada olmus, cigeri kul dolu; yavas,
+     dayanikli, vurunca oyuncuyu agirlastirir. Fener tasiyan: uzaktan isik
+     gosterir, yaklasinca soner ve etrafa Bogulmus birakir. */
+  enemy('bog1',8,13,23);enemy('bog2',8,36,22);enemy('bog3',8,43,18);enemy('bog4',8,29,14);
+  enemy('fener1',9,39,24);enemy('fener2',9,7,10);
+  /* Kralin son muhafizi: on bir yildir ovada devriyede, emir geri alinmadi.
+     Once konusur (NPC); kavga secilirse motor onu kind 10 dusmana cevirir. */
+  if(flags?.muhafiz!=='oldu')at({id:'muhafiz',type:'npc',x:46,y:14,name:'Son Muhafız',portrait:15,sabit:true,s:1.1});
  }else if(zone==='yikik'){
   // Kul Ovasi'ndaki kemerli yikintinin ici (30x30). Zemin boyali sahne,
   // carpisma da uzerine YESIL boyanmis maskeden okundu - burada yesil

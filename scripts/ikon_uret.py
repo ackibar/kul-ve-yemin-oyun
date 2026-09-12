@@ -31,6 +31,7 @@ TARIF = {
     'yemin':   'a straight knightly sword with a plain crossguard and a red cord tied to the grip',
     'uzunyay': 'a tall wooden longbow, slim curved limbs, taut string',
     'okates':  'a single arrow with a burning orange-tipped head',
+    'migfer': 'a dented closed iron great helm with a narrow eye slit, grey ash packed into every seam, a stub of faded purple plume',
     'tuzet':  'a thick slab of dark salted dried meat, coarse salt crystals on the surface, tied with twine',
     'durusu': 'a stoppered clay water flask with a clean pale blue water drop motif on its side',
     'petek':  'a golden honeycomb piece dripping honey, waxy hexagon cells',
