@@ -16,7 +16,7 @@ import math, os, sys
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = f'{ROOT}/generated/dusman'
+OUT = f'{ROOT}/_arsiv/uretim/generated/dusman'
 # Trol sopasiyla birlikte 64'e sigmiyor (110 px genis): kirpilinca sopa
 # gidiyordu. Hucre GENISLIGI ayri bir parametre; motor bu dusmani fw=56
 # (56*R=112) ile ciziyor. Yukseklik degismedi, ayaklar yine tabanda.

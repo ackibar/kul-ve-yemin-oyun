@@ -19,7 +19,7 @@ TARIF = ('grieving medieval commoner man in his forties, slumped shoulders and l
 if __name__ == '__main__':
     b0 = pxl.balance()[0]
     if '--animasyon' in sys.argv:
-        cid = open(f'{ROOT}/pixellab/id_kederli.txt').read().strip()
+        cid = open(f'{ROOT}/_arsiv/uretim/pixellab/id_kederli.txt').read().strip()
         rr = pxl.call('/characters/animations', {
             'character_id': cid, 'mode': 'template', 'template_animation_id': 'walking',
             'directions': ['south', 'north', 'east'], 'animation_name': 'Walk'})
@@ -32,6 +32,6 @@ if __name__ == '__main__':
         'outline': 'single color black outline', 'detail': 'medium detail', 'seed': 71})
     cid = r['character_id']
     wait([r['background_job_id']], 'kederli')
-    os.makedirs(f'{ROOT}/pixellab', exist_ok=True)
-    open(f'{ROOT}/pixellab/id_kederli.txt', 'w').write(cid)
+    os.makedirs(f'{ROOT}/_arsiv/uretim/pixellab', exist_ok=True)
+    open(f'{ROOT}/_arsiv/uretim/pixellab/id_kederli.txt', 'w').write(cid)
     print(f'  karakter hazir id={cid[:8]}  ({b0-pxl.balance()[0]:.0f} uretim)')

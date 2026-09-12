@@ -17,7 +17,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL = 'gemini-3-pro-image'
 SRC = f'{ROOT}/public/assets/dungeon/3 Animated objects/Fire1.png'
 OUT = f'{ROOT}/public/assets/dungeon/3 Animated objects/Fire1.png'
-RAW = f'{ROOT}/generated/alev'
+RAW = f'{ROOT}/_arsiv/uretim/generated/alev'
 CHROMA = '#0000FF'
 CELL = 64          # hedef: 32 dunya birimi x 2 yogunluk
 

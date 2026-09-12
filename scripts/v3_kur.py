@@ -31,7 +31,7 @@ BOY, FEET = 64, 62
 # aynalaniyor. NPC'ler yalnizca ilk uc yonu kullaniyor.
 YON = {'south': 'D', 'north': 'U', 'east': 'S',
        'south-east': 'DS', 'north-east': 'US'}
-HAM = os.path.join(ROOT, 'asset_backup_ton_oncesi')
+HAM = os.path.join(ROOT, '_arsiv/uretim/asset_backup_ton_oncesi')
 
 # Hucre GENISLIGI aksiyona gore degisiyor. Olculdu: kilic savurusunda kol disa
 # aciliyor ve kare 64'e sigmiyor (D_Attack 6px sola, 3px saga tasiyor) - kilicin
@@ -43,13 +43,13 @@ OYUNCU_EN, NPC_EN = 80, 64
 # set -> (hedef slot, referans slot, hucre eni, {aksiyon: kare} durus isleri,
 #         durus uretilecek yonler; None = hepsi)
 # PixelLab karakter id'si: silahsiz set taban karakterin kendisi.
-ID_DOSYA = {'kilic': 'pixellab/gezgin/id_kilic.txt',
-            'kullenmis': 'pixellab/id_kullenmis.txt',
-            'yay': 'pixellab/gezgin/id_yay.txt',
-            'yumruk': 'pixellab/gezgin/id.txt',
-            'balta': 'pixellab/gezgin/id.txt',
-            'rauf': 'pixellab/id_rauf.txt',
-            'rauf6': 'pixellab/id_rauf.txt'}
+ID_DOSYA = {'kilic': '_arsiv/uretim/pixellab/gezgin/id_kilic.txt',
+            'kullenmis': '_arsiv/uretim/pixellab/id_kullenmis.txt',
+            'yay': '_arsiv/uretim/pixellab/gezgin/id_yay.txt',
+            'yumruk': '_arsiv/uretim/pixellab/gezgin/id.txt',
+            'balta': '_arsiv/uretim/pixellab/gezgin/id.txt',
+            'rauf': '_arsiv/uretim/pixellab/id_rauf.txt',
+            'rauf6': '_arsiv/uretim/pixellab/id_rauf.txt'}
 
 SETLER = {
     # Kilicli sette ana yonlerin Idle/Hurt/Death'i zaten var ve calisiyor;
@@ -213,7 +213,7 @@ def donus_kareleri(cid, kl):
 def kur(setad):
     slot, ref_slot, en, durus_isleri, durus_yonler = SETLER[setad]
     # rauf6 kendi uretimini yapmaz, rauf'un ham karelerini kullanir.
-    kaynak = f'{ROOT}/pixellab/v3/{"rauf" if setad == "rauf6" else setad}'
+    kaynak = f'{ROOT}/_arsiv/uretim/pixellab/v3/{"rauf" if setad == "rauf6" else setad}'
     ham_kl = f'{HAM}/{slot}'
     os.makedirs(ham_kl, exist_ok=True)
     if not os.path.isdir(f'{ROOT}/public/assets/{slot}'):
@@ -226,7 +226,7 @@ def kur(setad):
     def donusler():
         if not rot:
             cid = open(f'{ROOT}/{ID_DOSYA[setad]}').read().strip()
-            rot.update(donus_kareleri(cid, f'{ROOT}/pixellab/v3/{setad}_sheet'))
+            rot.update(donus_kareleri(cid, f'{ROOT}/_arsiv/uretim/pixellab/v3/{setad}_sheet'))
         return rot
 
     aksiyonlar = sorted({os.path.basename(f).split('_')[0] for f in glob.glob(f'{kaynak}/*.png')})

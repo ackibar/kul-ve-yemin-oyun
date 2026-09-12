@@ -45,7 +45,7 @@ if __name__ == '__main__':
     floor = sum(r.count(1) for r in wd['tiles'])
     print(f'{zone}: {wd["w"]}x{wd["h"]} karo  zemin={floor}  duvar={wd["w"]*wd["h"]-floor}')
     print(f'  dunya birimi: {wd["w"]*16}x{wd["h"]*16}   2x piksel: {wd["w"]*32}x{wd["h"]*32}')
-    os.makedirs(f'{ROOT}/generated/plan', exist_ok=True)
-    p = f'{ROOT}/generated/plan/{zone}.png'
+    os.makedirs(f'{ROOT}/_arsiv/uretim/generated/plan', exist_ok=True)
+    p = f'{ROOT}/_arsiv/uretim/generated/plan/{zone}.png'
     plan_image(wd).save(p)
     print('  plan ->', p)

@@ -35,13 +35,13 @@ def uret(ad, tarif, seed):
         'view': 'low top-down', 'template_id': 'mannequin', 'no_background': True,
         'outline': 'single color black outline', 'detail': 'medium detail', 'seed': seed})
     wait([r['background_job_id']], ad)
-    os.makedirs(f'{ROOT}/pixellab', exist_ok=True)
-    open(f'{ROOT}/pixellab/id_{ad}.txt', 'w').write(r['character_id'])
+    os.makedirs(f'{ROOT}/_arsiv/uretim/pixellab', exist_ok=True)
+    open(f'{ROOT}/_arsiv/uretim/pixellab/id_{ad}.txt', 'w').write(r['character_id'])
     print(f'  {ad:6s} karakter hazir id={r["character_id"][:8]}', flush=True)
 
 
 def animasyon(ad):
-    cid = open(f'{ROOT}/pixellab/id_{ad}.txt').read().strip()
+    cid = open(f'{ROOT}/_arsiv/uretim/pixellab/id_{ad}.txt').read().strip()
     rr = pxl.call('/characters/animations', {
         'character_id': cid, 'mode': 'template', 'template_animation_id': 'walking',
         'directions': ['south', 'north', 'east'], 'animation_name': 'Walk'})

@@ -14,14 +14,14 @@ TARIF = ('holding a simple curved wooden hunting bow in the left hand, bowstring
          'visible, a quiver of arrows strapped to the back; no sword')
 
 if __name__ == '__main__':
-    src = open(f'{ROOT}/pixellab/gezgin/id.txt').read().strip()
+    src = open(f'{ROOT}/_arsiv/uretim/pixellab/gezgin/id.txt').read().strip()
     once = pxl.balance()[0]
     r = pxl.call('/create-character-state', {
         'character_id': src, 'edit_description': TARIF, 'state_name': 'yay',
         'use_color_palette_from_reference': True, 'no_background': True, 'seed': 21})
     cid = r.get('character_id')
     print('yeni id:', cid, '| isler:', r.get('background_job_ids'))
-    open(f'{ROOT}/pixellab/gezgin/id_yay.txt', 'w').write(cid or '')
+    open(f'{ROOT}/_arsiv/uretim/pixellab/gezgin/id_yay.txt', 'w').write(cid or '')
     joblar = [j for j in (r.get('background_job_ids') or [r.get('background_job_id')]) if j]
     for i in range(240):
         st = [pxl.call(f'/background-jobs/{j}').get('status') for j in joblar]

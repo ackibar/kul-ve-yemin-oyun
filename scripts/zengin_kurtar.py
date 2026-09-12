@@ -8,8 +8,8 @@ tespit edilip komsu piksellerle doldurulabiliyor.
 import os
 from PIL import Image
 
-SRC = 'generated/_IZGARA.png'
-DST = 'generated/arkaplan/haven_zengin.png'
+SRC = '_arsiv/uretim/generated/_IZGARA.png'
+DST = '_arsiv/uretim/generated/arkaplan/haven_zengin.png'
 
 
 def is_overlay(c):
@@ -35,7 +35,7 @@ def main():
             if aday:
                 px[x, y] = tuple(sum(c[i] for c in aday) // len(aday) for i in range(3))
                 break
-    os.makedirs('generated/arkaplan', exist_ok=True)
+    os.makedirs('_arsiv/uretim/generated/arkaplan', exist_ok=True)
     out = im.resize((W // 2, H // 2), Image.BOX)   # 2x -> oyun cozunurlugu
     out.save(DST)
     print('kurtarildi ->', DST, out.size)

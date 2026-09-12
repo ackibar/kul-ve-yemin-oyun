@@ -17,7 +17,7 @@ import pixelize as P
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL = 'gemini-3-pro-image'
 OUT = f'{ROOT}/public/assets/nesne'
-RAW = f'{ROOT}/generated/nesne'
+RAW = f'{ROOT}/_arsiv/uretim/generated/nesne'
 CHROMA = '#0000FF'
 R = 2                     # render yogunlugu: 1 dunya birimi = 2 piksel
 

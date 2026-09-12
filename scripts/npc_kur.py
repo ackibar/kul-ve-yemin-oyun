@@ -33,7 +33,7 @@ def fit(f):
 
 
 def indir(cid, ad):
-    kl = f'{ROOT}/pixellab/{ad}'
+    kl = f'{ROOT}/_arsiv/uretim/pixellab/{ad}'
     os.makedirs(kl, exist_ok=True)
     req = urllib.request.Request(
         f'https://api.pixellab.ai/v2/characters/{cid}/spritesheet',
@@ -46,7 +46,7 @@ def indir(cid, ad):
 
 
 def kur(ad, slot):
-    cid = open(f'{ROOT}/pixellab/id_{ad}.txt').read().strip()
+    cid = open(f'{ROOT}/_arsiv/uretim/pixellab/id_{ad}.txt').read().strip()
     kl = indir(cid, ad)
     sheet = Image.open(glob.glob(f'{kl}/*.png')[0]).convert('RGBA')
     meta = json.load(open(glob.glob(f'{kl}/*.json')[0]))
@@ -92,7 +92,7 @@ def kur(ad, slot):
 
 if __name__ == '__main__':
     for ad, slot in [('mira', 3), ('boran', 2), ('ekin', 4)]:
-        if os.path.exists(f'{ROOT}/pixellab/id_{ad}.txt'):
+        if os.path.exists(f'{ROOT}/_arsiv/uretim/pixellab/id_{ad}.txt'):
             kur(ad, slot)
         else:
             print(f'  {ad}: henuz uretilmedi, atlandi')

@@ -137,28 +137,12 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   at({id:'backHaven',type:'portal',x:7,y:4,to:'magara',spawn:[14,25],name:'Yukarı çık'});
   // Ocak gecidi yaratiklarin ciktigi agizdan AYRI duruyor: ikisi ayni karodayken
   // gecide varan oyuncu dogrudan dalganin icine dusuyordu.
-  at({id:'toForge',type:'portal',x:31,y:27,to:'forge',spawn:[7,7],name:'Kül Ocağı'});
   at({id:'rauf',type:'npc',x:44,y:18,name:'Rauf',portrait:5});
-  at({id:'gateLever',type:'lever',x:5,y:24,name:'Ocak kapısını aç'});
   chest('medicineChest',48,8,[['medicine',1],['potion',2],['toz',2]],12);
   chest('cisternWest',6,20,[['chain',1],['bow',1],['potion',2],['yeminh',1]],24);
   chest('cisternEast',49,24,[['guard',1],['potion',2],['uzunyay',1],['okdelici',8]],20);
   fire(10,16);fire(40,14);
   // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).
- }else{
-  room(3,3,12,12);room(8,13,4,23);room(4,29,13,14);room(15,34,18,4);room(28,27,14,17);room(33,12,4,18);room(25,3,17,14);room(13,7,15,4);room(17,18,10,10);room(10,21,9,4);room(25,22,10,4);
-  // Donus noktasi [37,38] idi: sarnic 54x30, yani 38. satir HARITA DISI -
-  // oyuncu ocaktan donunce yurunemeyen bosluga dusuyordu. Ocak kapisinin
-  // (31,27) hemen ustune alindi.
-  at({id:'backCistern',type:'portal',x:5,y:5,to:'cistern',spawn:[31,26],name:'Sarnıca dön'});
-  at({id:'core',type:'core',x:35,y:6,name:'Kül kalbi'});
-  at({id:'returnHaven',type:'portal',x:39,y:6,to:'haven',spawn:[15,14],name:'Sığınağa geçit'});
-  chest('forgeWest',7,39,[['ash',1],['potion',3],['ocakz',1]],25);chest('forgeCenter',22,20,[['ember',1],['yemin',1],['tonic',2],['kavanoz',2]],20);chest('forgeEast',38,39,[['life',1],['potion',3],['okates',10],['merhem',2]],30);
-  for(const [x,y] of [[3,3],[14,3],[25,3],[41,3],[4,29],[16,29],[28,27],[41,27],[17,18]])fire(x,y);
-  for(const [x,y] of [[9,17],[10,26],[21,8],[35,18],[22,35],[31,31]])at({id:`ftrap${x}_${y}`,type:'trap',x,y});
-  // Ocaktaki solucanlar yarasa ve fareyle degistirildi (kind 3 kaldirildi).
-  enemy('f1',5,11,11);enemy('f2',2,21,9);enemy('f3',4,9,33);enemy('f4',2,12,38);enemy('f5',1,21,24);enemy('f6',4,31,35);enemy('f7',2,38,33);enemy('f8',5,35,23);enemy('f9',2,28,12);enemy('fbat1',5,18,20);enemy('warden',4,34,10,true);
-  decor('fbox',5,12,'Boxes/2.png');decor('fshelf',5,31,'Bookshelf/2.png');decor('ftable',30,40,'Tables/1.png','Zanaat Masası');
  }
  return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,spawn:zone==='haven'?[15*16,14*16]:[7*16,7*16]};
 }

@@ -30,8 +30,8 @@ def ornekle(k, n):
 
 
 def kur(ad, slot):
-    cid = open(f'{ROOT}/pixellab/id_{ad}.txt').read().strip()
-    kl = f'{ROOT}/pixellab/{ad}_kur'
+    cid = open(f'{ROOT}/_arsiv/uretim/pixellab/id_{ad}.txt').read().strip()
+    kl = f'{ROOT}/_arsiv/uretim/pixellab/{ad}_kur'
     shutil.rmtree(kl, ignore_errors=True); os.makedirs(kl)
     req = urllib.request.Request(f'https://api.pixellab.ai/v2/characters/{cid}/spritesheet',
                                  headers={'Authorization': 'Bearer ' + pxl.key()})

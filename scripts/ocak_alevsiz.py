@@ -12,8 +12,8 @@ from PIL import Image, ImageFilter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL = 'gemini-3-pro-image'
-SRC = f'{ROOT}/generated/arkaplan/haven_zengin.png'
-OUT = f'{ROOT}/generated/arkaplan/haven_alevsiz.png'
+SRC = f'{ROOT}/_arsiv/uretim/generated/arkaplan/haven_zengin.png'
+OUT = f'{ROOT}/_arsiv/uretim/generated/arkaplan/haven_alevsiz.png'
 
 PROMPT = """This is a crop from a top-down pixel-art game map: a stone fire pit with a flame.
 
@@ -73,12 +73,12 @@ def uret(crop):
 
 def main(pits, feather=6):
     im = Image.open(SRC).convert('RGB')
-    os.makedirs(f'{ROOT}/generated/ocak', exist_ok=True)
+    os.makedirs(f'{ROOT}/_arsiv/uretim/generated/ocak', exist_ok=True)
     for i, (cx, cy, R) in enumerate(pits):
         box = (cx - R, cy - R, cx + R, cy + R)
         crop = im.crop(box)
         yama = uret(crop).resize(crop.size, Image.LANCZOS)
-        yama.save(f'{ROOT}/generated/ocak/yama{i}.png')
+        yama.save(f'{ROOT}/_arsiv/uretim/generated/ocak/yama{i}.png')
         # kenarlari yumusak maske ile birlestir: kirpim sinirinda dikis olmasin
         m = Image.new('L', crop.size, 0)
         inner = int(min(crop.size) * 0.5) - feather

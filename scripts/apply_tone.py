@@ -1,4 +1,4 @@
-"""generated/<mod>/ altindaki sheet'leri public/assets'e uygular.
+"""_arsiv/uretim/generated/<mod>/ altindaki sheet'leri public/assets'e uygular.
 
 Her dosya once dogrulanir: olcu birebir tutmali ve SILUET degismemeli
 (renk disinda hicbir sey degismemeli). Tek bir dosya bile bu testi
@@ -25,7 +25,7 @@ for kind, cnt in [('characters', 3), ('enemies', 5)]:
         for d in ['D', 'U', 'S']:
             for act in ACTIONS:
                 name = f'{d}_{act}.png'
-                src = os.path.join(ROOT, 'generated', a.mode, kind, str(n), name)
+                src = os.path.join(ROOT, '_arsiv/uretim/generated', a.mode, kind, str(n), name)
                 dst = os.path.join(ROOT, 'public/assets', kind, str(n), name)
                 if not os.path.exists(src):
                     bad.append((src, 'uretim yok')); continue

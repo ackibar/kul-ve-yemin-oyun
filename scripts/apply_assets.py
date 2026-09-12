@@ -17,7 +17,7 @@ def main():
     a = ap.parse_args()
 
     tag = a.actor.replace('/', '_')
-    src_dir = os.path.join(ROOT, 'generated', tag, 'sheets')
+    src_dir = os.path.join(ROOT, '_arsiv/uretim/generated', tag, 'sheets')
     dst_dir = os.path.join(ROOT, 'public/assets', a.actor)
     if not os.path.isdir(src_dir):
         raise SystemExit(f'uretim yok: {src_dir}')

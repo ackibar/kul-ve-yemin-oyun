@@ -38,7 +38,7 @@ def uret(ad, tarif, seed):
         'outline': 'single color black outline', 'detail': 'medium detail', 'seed': seed})
     cid = r['character_id']
     wait([r['background_job_id']], ad)
-    open(f'{ROOT}/pixellab/id_{ad}.txt', 'w').write(cid)
+    open(f'{ROOT}/_arsiv/uretim/pixellab/id_{ad}.txt', 'w').write(cid)
     b1 = pxl.balance()[0]
     print(f'  {ad}: karakter hazir  id={cid[:8]}  maliyet={b0-b1:.0f}')
     return cid

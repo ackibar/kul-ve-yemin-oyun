@@ -13,7 +13,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if __name__ == '__main__':
     b0 = pxl.balance()[0]
     for ad in ['mira', 'boran', 'ekin']:
-        yol = f'{ROOT}/pixellab/id_{ad}.txt'
+        yol = f'{ROOT}/_arsiv/uretim/pixellab/id_{ad}.txt'
         if not os.path.exists(yol):
             print(f'  {ad}: id yok, atlandi'); continue
         cid = open(yol).read().strip()

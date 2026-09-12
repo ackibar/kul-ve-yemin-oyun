@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = 'pixellab/gezgin/sheet3'
+SRC = '_arsiv/uretim/pixellab/gezgin/sheet3'
 DIR_MAP = {'south': 'D', 'north': 'U', 'east': 'S'}
 # Kaynak sprite SAGA bakar (hem orijinal Craftpix seti hem PixelLab 'east' boyle).
 # Motorun oyuncu cizimindeki ters aynalama engine.ts'te duzeltildi, burada cevirmiyoruz.
@@ -59,7 +59,7 @@ for r in meta['spritesheet']['rows']:
         name = 'Walk' if name.startswith('Walk') else name
         anims.setdefault(name, {})[r['direction']] = row_frames(r)
 
-OUT = f'{ROOT}/pixellab/oyun_kurulum/characters/1'
+OUT = f'{ROOT}/_arsiv/uretim/pixellab/oyun_kurulum/characters/1'
 os.makedirs(OUT, exist_ok=True)
 made = []
 for src_dir, g in DIR_MAP.items():

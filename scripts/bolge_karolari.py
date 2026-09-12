@@ -34,7 +34,7 @@ def mean_L(img):
 
 
 def build(src_dir, target_L, contrast, chroma, hue_deg, hue_k):
-    src = [Image.open(f'{ROOT}/pixellab/tileset/{src_dir}/wang_{i}.png').convert('RGBA')
+    src = [Image.open(f'{ROOT}/_arsiv/uretim/pixellab/tileset/{src_dir}/wang_{i}.png').convert('RGBA')
            for i in range(16)]
     f0 = mean_L(src[FLOOR])
     # parlatirken toplamsal (zemin-duvar farki korunur), karartirken carpansal

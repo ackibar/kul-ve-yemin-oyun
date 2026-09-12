@@ -20,7 +20,7 @@ TARIF = ('a gaunt humanoid figure crusted with grey ash, skin cracked like dry c
 if __name__ == '__main__':
     b0 = pxl.balance()[0]
     if '--animasyon' in sys.argv:
-        cid = open(f'{ROOT}/pixellab/id_kullenmis.txt').read().strip()
+        cid = open(f'{ROOT}/_arsiv/uretim/pixellab/id_kullenmis.txt').read().strip()
         rr = pxl.call('/characters/animations', {
             'character_id': cid, 'mode': 'template', 'template_animation_id': 'walking',
             'directions': ['south', 'north', 'east'], 'animation_name': 'Walk'})
@@ -33,5 +33,5 @@ if __name__ == '__main__':
         'outline': 'single color black outline', 'detail': 'medium detail', 'seed': 89})
     cid = r['character_id']
     wait([r['background_job_id']], 'kullenmis')
-    open(f'{ROOT}/pixellab/id_kullenmis.txt', 'w').write(cid)
+    open(f'{ROOT}/_arsiv/uretim/pixellab/id_kullenmis.txt', 'w').write(cid)
     print(f'  karakter hazir id={cid[:8]} ({b0-pxl.balance()[0]:.0f} uretim)')

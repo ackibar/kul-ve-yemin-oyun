@@ -28,7 +28,7 @@ def mask(zone, wall_keep=0.26, edge_keep=0.5, feather=9):
     """
     world = {d['zone']: d for d in json.load(open(f'{SC}/dunya.json'))}[zone]
     W, H, tiles = world['w'], world['h'], world['tiles']
-    bg = Image.open(f'{ROOT}/generated/arkaplan/{zone}.png').convert('RGB')
+    bg = Image.open(f'{ROOT}/_arsiv/uretim/generated/arkaplan/{zone}.png').convert('RGB')
     if bg.size != (W * CELL, H * CELL):
         bg = bg.resize((W * CELL, H * CELL), Image.LANCZOS)
 
@@ -57,7 +57,7 @@ def mask(zone, wall_keep=0.26, edge_keep=0.5, feather=9):
                 continue
             r, g, b = px[x, y]
             px[x, y] = (int(r * k), int(g * k), int(b * k))
-    bg.save(f'{ROOT}/generated/arkaplan/{zone}_maskeli.png')
+    bg.save(f'{ROOT}/_arsiv/uretim/generated/arkaplan/{zone}_maskeli.png')
     return bg, world
 
 

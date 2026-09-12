@@ -14,7 +14,7 @@ import aktor_uyum
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-HAM = f'{ROOT}/generated/nesne'
+HAM = f'{ROOT}/_arsiv/uretim/generated/nesne'
 HEDEF = f'{ROOT}/public/assets/nesne'
 CELL = 48
 

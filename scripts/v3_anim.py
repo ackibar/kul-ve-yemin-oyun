@@ -171,13 +171,13 @@ OZEL = {('kilic', 'Attack', 'east'): KILIC_VUR_YAN,
         ('kilic', 'Attack', 'north-east'): KILIC_VUR_ARKA}
 
 SETLER = {
-    'kilic': ('pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILIC_YUR), ('Attack', 6, KILIC_VUR)]),
-    'yay':   ('pixellab/gezgin/id_yay.txt',   [('Walk', 8, YAY_YUR),   ('Attack', 6, YAY_VUR)]),
-    'rauf':  ('pixellab/id_rauf.txt',         [('Attack', 6, RAUF_VUR), ('Walk', 8, RAUF_YUR)]),
-    'kullenmis': ('pixellab/id_kullenmis.txt', [('Walk', 8, KUL_YUR), ('Attack', 6, KUL_VUR)]),
+    'kilic': ('_arsiv/uretim/pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILIC_YUR), ('Attack', 6, KILIC_VUR)]),
+    'yay':   ('_arsiv/uretim/pixellab/gezgin/id_yay.txt',   [('Walk', 8, YAY_YUR),   ('Attack', 6, YAY_VUR)]),
+    'rauf':  ('_arsiv/uretim/pixellab/id_rauf.txt',         [('Attack', 6, RAUF_VUR), ('Walk', 8, RAUF_YUR)]),
+    'kullenmis': ('_arsiv/uretim/pixellab/id_kullenmis.txt', [('Walk', 8, KUL_YUR), ('Attack', 6, KUL_VUR)]),
     # Silahsiz set: kilic varyantinin degil TABAN karakterin kendisi.
-    'yumruk': ('pixellab/gezgin/id.txt',      [('Walk', 8, YUMRUK_YUR), ('Attack', 6, YUMRUK_VUR)]),
-    'balta':  ('pixellab/gezgin/id.txt',      [('Attack', 6, BALTA_VUR), ('Walk', 8, BALTA_YUR)]),
+    'yumruk': ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Walk', 8, YUMRUK_YUR), ('Attack', 6, YUMRUK_VUR)]),
+    'balta':  ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Attack', 6, BALTA_VUR), ('Walk', 8, BALTA_YUR)]),
 }
 
 
@@ -196,7 +196,7 @@ def bekle(joblar, etiket):
 def uret(setad, sadece_yon=None, sadece_aksiyon=None):
     id_yol, isler = SETLER[setad]
     cid = open(f'{ROOT}/{id_yol}').read().strip()
-    ham = f'{ROOT}/pixellab/v3/{setad}'
+    ham = f'{ROOT}/_arsiv/uretim/pixellab/v3/{setad}'
     os.makedirs(ham, exist_ok=True)
     once = pxl.balance()[0]
     kuyruk = []

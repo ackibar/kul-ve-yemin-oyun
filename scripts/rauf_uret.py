@@ -26,7 +26,7 @@ ANIM = [('walking', 'Walk'), ('cross-punch', 'Attack'),
 if __name__ == '__main__':
     b0 = pxl.balance()[0]
     if '--sadece-animasyon' in sys.argv:
-        cid = open(f'{ROOT}/pixellab/id_rauf.txt').read().strip()
+        cid = open(f'{ROOT}/_arsiv/uretim/pixellab/id_rauf.txt').read().strip()
         for tmpl, ad in ANIM:
             b1 = pxl.balance()[0]
             rr = pxl.call('/characters/animations', {
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         'outline': 'single color black outline', 'detail': 'medium detail', 'seed': 53})
     cid = r['character_id']
     wait([r['background_job_id']], 'rauf')
-    open(f'{ROOT}/pixellab/id_rauf.txt', 'w').write(cid)
+    open(f'{ROOT}/_arsiv/uretim/pixellab/id_rauf.txt', 'w').write(cid)
     print(f'  karakter hazir id={cid[:8]}  ({b0-pxl.balance()[0]:.0f} uretim)')
     if '--sadece-karakter' in sys.argv:
         print('  (animasyonlar onay bekliyor)')

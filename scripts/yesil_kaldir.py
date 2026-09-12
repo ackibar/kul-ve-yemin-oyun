@@ -114,4 +114,4 @@ def main(prop_yolu, bg_yolu, hedef_dir):
 
 if __name__ == '__main__':
     main(sys.argv[1], sys.argv[2],
-         sys.argv[3] if len(sys.argv) > 3 else f'{ROOT}/generated/prop')
+         sys.argv[3] if len(sys.argv) > 3 else f'{ROOT}/_arsiv/uretim/generated/prop')

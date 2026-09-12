@@ -65,9 +65,9 @@ def main():
         for p in c.get('content', {}).get('parts', []):
             if 'inlineData' in p:
                 raw = Image.open(io.BytesIO(base64.b64decode(p['inlineData']['data']))).convert('RGB')
-                raw.save(f'{ROOT}/generated/arkaplan/haven_ince_ham.png')
+                raw.save(f'{ROOT}/_arsiv/uretim/generated/arkaplan/haven_ince_ham.png')
                 out = raw.resize(src.size, Image.LANCZOS)
-                out.save(f'{ROOT}/generated/arkaplan/haven_ince.png')
+                out.save(f'{ROOT}/_arsiv/uretim/generated/arkaplan/haven_ince.png')
                 print(f'ham {raw.size} -> {out.size}')
                 return
     raise SystemExit('gorsel yok: ' + json.dumps(res)[:300])

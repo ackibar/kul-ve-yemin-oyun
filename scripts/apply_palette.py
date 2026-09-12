@@ -17,7 +17,7 @@ n = 0
 for kind, cnt in [('characters', 3), ('enemies', 5)]:
     for a in range(1, cnt + 1):
         actor = f'{kind}/{a}'
-        out = os.path.join(ROOT, f'generated/{MODE}', actor)
+        out = os.path.join(ROOT, f'_arsiv/uretim/generated/{MODE}', actor)
         os.makedirs(out, exist_ok=True)
         for d in ['D', 'U', 'S']:
             for act in ACTIONS:
@@ -34,8 +34,8 @@ for kind, cnt in [('characters', 3), ('enemies', 5)]:
             c = Image.open(os.path.join(out, name)).convert('RGBA')
             cv = Image.new('RGBA', (b.width * 8, b.height * 16), (18, 14, 26, 255))
             cv.paste(P.magnify(b), (0, 0)); cv.paste(P.magnify(c), (0, b.height * 8))
-            os.makedirs(os.path.join(ROOT, f'generated/{MODE}/_onizleme'), exist_ok=True)
-            cv.save(os.path.join(ROOT, f'generated/{MODE}/_onizleme',
+            os.makedirs(os.path.join(ROOT, f'_arsiv/uretim/generated/{MODE}/_onizleme'), exist_ok=True)
+            cv.save(os.path.join(ROOT, f'_arsiv/uretim/generated/{MODE}/_onizleme',
                                  f'{kind}{a}_{name}'))
 print(f'{n} sheet donusturuldu -> generated/{MODE}/')
 print('public/assets DOKUNULMADI.')

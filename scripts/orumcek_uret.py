@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pxl
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = f'{ROOT}/generated/dusman'
+OUT = f'{ROOT}/_arsiv/uretim/generated/dusman'
 STIL = ('dark fantasy pixel art creature, muted ash-grey and cold charcoal palette, '
         'single dark outline, basic shading, centered single creature, '
         'no background, no text')

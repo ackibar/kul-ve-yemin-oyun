@@ -15,7 +15,7 @@ import aktor_uyum
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-HAM = f'{ROOT}/generated/yaratik_anim'
+HAM = f'{ROOT}/_arsiv/uretim/generated/yaratik_anim'
 # Hucre eni yaratiga gore: trol sopasiyla 64'e sigmiyor.
 CELL = 64
 CELL_EN = {7: 112}

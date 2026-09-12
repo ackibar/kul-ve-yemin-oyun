@@ -13,7 +13,7 @@ import pxl
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-HAM = f'{ROOT}/generated/nesne'
+HAM = f'{ROOT}/_arsiv/uretim/generated/nesne'
 STIL = ('dark fantasy pixel art game object, muted ash-grey and worn dark wood palette, '
         'soot stained iron bands, single dark outline, basic shading, centered single '
         'object, no background, no text, no shadow')

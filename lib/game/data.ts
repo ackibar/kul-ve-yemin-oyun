@@ -1,13 +1,16 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM = '4.1';
+export const SURUM = '4.2';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
 export const ASAMA = 'alpha';
 
-export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern' | 'forge';
-export type ItemId = 'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'core'|'wood'|'torch'|'arrow'|'kurdele';
+// 'forge' (Kul Ocagi) kaldirildi: eski zindan assetleriyle yapilmis tek
+// mekandi. Bekci, Kul kalbi ve iki son da onunla birlikte cikti; oyunun
+// sonu yeni bir mekanla bastan kurulacak.
+export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern';
+export type ItemId = 'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'wood'|'torch'|'arrow'|'kurdele';
 /** Item alanlari. attack/defense/hp dogrudan stats()'e girer; asagidakiler
  *  motorun tek tek okudugu DAVRANIS bayraklaridir - her yeni item icin kod
  *  yazmak yerine burada tanimlanir.
@@ -77,10 +80,9 @@ export const ITEMS:Record<ItemId,Item>={
  torch:{id:'torch',name:'Meşale',kind:'consumable',description:'60 saniye boyunca karanlık zindanları aydınlatır.',rarity:'Nadir',icon:'flame',price:15},
  medicine:{id:'medicine',name:'Son ilaç',kind:'quest',description:'Tek bir doz. Mirna’nın hastaları mı, yaralı kaçak mı?',rarity:'Görev',icon:'potion',price:0},
  ledger:{id:'ledger',name:'Nöbet defteri',kind:'quest',description:'Ocak muhafızlarının yemin defteri. Rauf’un adı çizili. Alf bunu bekliyor.',rarity:'Görev',icon:'book',price:0},
- core:{id:'core',name:'Kül kalbi',kind:'quest',description:'Sığınağın altında atan güç. Undur ne yapılacağını biliyor.',rarity:'Görev',icon:'gem',price:0},
  kurdele:{id:'kurdele',name:'Kırmızı kurdele',kind:'quest',description:'Rauf’un bileğinden. Kızınındı. Alf bunu hiç görmedi.',rarity:'Görev',icon:'ring',price:0},
 };
-export const ZONES:Record<Zone,{name:string;subtitle:string;danger:string}>={haven:{name:'Son Sığınak',subtitle:'Ateşin hâlâ yandığı yer',danger:'Güvenli bölge'},disari:{name:'Kül Ovası',subtitle:'Örtünün altında kalan dünya',danger:'Ölümcül · uzun kalma'},yikik:{name:'Yıkık Ev',subtitle:'Külün giremediği tek oda',danger:'Kapalı · güvenli'},magara:{name:'Sarnıç Ağzı',subtitle:'Sığınağın altındaki ilk karanlık',danger:'Tenha'},cistern:{name:'Unutulmuş Sarnıç',subtitle:'Taşların hatırladığı sırlar',danger:'Seviye 1–3'},forge:{name:'Kül Ocağı',subtitle:'Yeminin başladığı yer',danger:'Seviye 3–5'}};
+export const ZONES:Record<Zone,{name:string;subtitle:string;danger:string}>={haven:{name:'Son Sığınak',subtitle:'Ateşin hâlâ yandığı yer',danger:'Güvenli bölge'},disari:{name:'Kül Ovası',subtitle:'Örtünün altında kalan dünya',danger:'Ölümcül · uzun kalma'},yikik:{name:'Yıkık Ev',subtitle:'Külün giremediği tek oda',danger:'Kapalı · güvenli'},magara:{name:'Sarnıç Ağzı',subtitle:'Sığınağın altındaki ilk karanlık',danger:'Tenha'},cistern:{name:'Unutulmuş Sarnıç',subtitle:'Taşların hatırladığı sırlar',danger:'Seviye 1–3'}};
 export interface State {version:1;started:boolean;zone:Zone;x:number;y:number;hp:number;xp:number;level:number;gold:number;points:number;skills:{power:number;vigor:number;agility:number};inventory:Partial<Record<ItemId,number>>;equipment:{weapon:ItemId;armor:ItemId;ring:ItemId|null;ok?:ItemId};flags:Record<string,boolean|string>;opened:string[];killed:string[];journal:string[];playtime:number;ending:string|null;}
 export const XP=[0,100,260,490,790];
 export const newState=():State=>({version:1,started:true,zone:'haven',x:15*16,y:14*16,hp:100,xp:0,level:1,gold:18,points:0,skills:{power:0,vigor:0,agility:0},inventory:{yumruk:1,rusty:1,leather:1,potion:3},equipment:{weapon:'rusty',armor:'leather',ring:null,ok:'arrow'},flags:{},opened:[],killed:[],journal:['Son Sığınak’a vardın. Önce şifacı Mirna ile konuş.'],playtime:0,ending:null});
@@ -94,7 +96,6 @@ export function buy(s:State,id:ItemId){const item=ITEMS[id];if(!['potion','tonic
 export function questList(s:State){return [
  {id:'medicine',title:'Bir doz umut',done:!!s.flags.medicineDone,active:!!s.flags.medicineStarted,step:s.flags.medicineDone?(s.flags.medicine==='rauf'?'Rauf’u kurtardın. Mirna kararını öğrendi.':'İlaç sığınağın hastalarına ulaştı.'):s.flags.medicine==='rauf'?'Kararını Mirna’ya anlat.':s.inventory.medicine?'İlacı Mirna’ya götür veya yaralı Rauf’u ver.':'Sarnıcın kuzeydoğu odasındaki ilacı bul.'},
  {id:'ledger',title:'Defterdeki isim',done:!!s.flags.ledgerDone,active:!!s.flags.ledgerStarted,step:s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Rauf’u sırrını korudun.':'Rauf’u muhafızlara teslim ettin.'):s.inventory.ledger?'Defteri Alf’e götür.': 'Sarnıcın doğusunda Rauf’u bul ve defteri al.'},
- {id:'core',title:'Kül ve yemin',done:!!s.ending,active:!!s.flags.coreStarted,step:s.ending?'Sığınağın kaderini belirledin.':s.inventory.core?'Kül kalbini Undur’a götür.':s.killed.includes('warden')?'Kül Ocağı’ndaki kalbi al.':'Kül Ocağı’na ulaş, Bekçi’yi yen ve kalbi bul.'},
  // Istege bagli: Lin'in atesi ve yukarida bekleyen agabeyi. Ana sonu kilitlemez.
  {id:'ates',title:'Sönmeyen ateş',done:s.flags.ayaz==='indi',active:!!s.flags.nil||!!s.flags.ayaz,step:s.flags.ayaz==='indi'?'Tiga sığınağa indi. Lin’in ateşi yanmaya devam ediyor.':s.flags.ayaz==='kaldi'?'Tiga Yıkık Ev’de kalmayı seçti. Sara’yı bekliyor.':s.flags.ayaz?'Tiga Yıkık Ev’de. Onu aşağı inmeye ikna edecek bir sebep bul.':s.flags.sozNil==='verildi'?'Lin’e söz verdin: ağabeyini görürsen ateşin yandığını söyleyeceksin. Kül Ovası’ndaki yıkığa bak.':'Lin’in ağabeyi on bir gündür yukarıda. Kül Ovası’ndaki yıkığa bak.'}
  ]}
@@ -447,7 +448,7 @@ export function dialogue(s:State,id:string):Dialogue{
   ...(s.flags.alfSir==='biliyorum'?[{label:'Undur’un sana söylemediği bir şey var.',action:'story:boran:sir',note:'Karar · Onbir yılın sahibi'}]:[]),
   ...((s.flags.rauf==='korundu'||s.flags.rauf==='serbest')&&!s.flags.alfKarsi
     ?[{label:'Bana bir şey soracaktın.',action:'story:boran:karsi',note:'Yüzleşme · Rauf'}]:[]),...(!s.flags.ledgerStarted?[{label:'Rauf’u bulup getireceğim.',action:'boran_start',note:'Görev · Defterdeki isim'}]:[]),...(s.inventory.ledger?[{label:s.flags.fugitive==='protected'?'Defter terk edilmişti. Rauf’u görmedim.':'Rauf teslim olmayı kabul etti.',action:'boran_deliver',note:s.flags.fugitive==='protected'?'Rauf’u koru · Yaşam halkası':'Rauf’u teslim et · Muhafız kılıcı'}]:[]),{label:'Malzemelerine bakabilir miyim?',action:'shop'},close]};
- if(id==='ekin')return {who:'Undur',role:'Yeminlerin arşivcisi',portrait:4,text:s.ending?(s.flags.alfSir==='soylendi'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf’inki yalanmış; sen söyledin, o da bıraktı. Bunu yazdım.':s.flags.alfSir==='sakladin'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf hâlâ kendi yükünü taşıyor — sayende. Bunu da yazdım.':'Bir yemin, onu tutan insanlar kadar güçlüdür. Seninkinin izini bu taşlar uzun süre taşıyacak.'):s.inventory.core?'Kalp elinde. Onunla aşağıdaki yarığı mühürleyebiliriz. Ya da gücünü sığınağa taşıyabiliriz; sıcaklık ve ışık, ama yanında tehlike de gelecek.':'Sarsıntılar artıyor. Kül Ocağı’ndaki Bekçi, eski kalbi koruyor. Onu getir. Bu sığınağın yarını hakkında bir karar vermemiz gerekecek.',choices:[{label:'Bana hikâyeni anlat.',action:'story:ekin:1'},...(!s.flags.coreStarted?[{label:'Kül kalbini getireceğim.',action:'ekin_start',note:'Ana görev · Kül ve yemin'}]:[]),...(s.inventory.core&&!s.ending?[{label:'Yarığı mühürle. Bu gücü geride bırakalım.',action:'ending_seal',note:'Güvenli bir gelecek · Bölüm sonu',disabled:!s.flags.medicineDone||!s.flags.ledgerDone},{label:'Kalbi sığınağa bağla. Karanlıkta yaşamayalım.',action:'ending_claim',note:'Güç ve sorumluluk · Bölüm sonu',disabled:!s.flags.medicineDone||!s.flags.ledgerDone},...(!s.flags.medicineDone||!s.flags.ledgerDone?[{label:'Önce Mirna ve Alf’le işlerimi tamamlamalıyım.',action:'close'}]:[])]:[]),close]};
+ if(id==='ekin')return {who:'Undur',role:'Yeminlerin arşivcisi',portrait:4,text:s.ending?(s.flags.alfSir==='soylendi'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf’inki yalanmış; sen söyledin, o da bıraktı. Bunu yazdım.':s.flags.alfSir==='sakladin'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf hâlâ kendi yükünü taşıyor — sayende. Bunu da yazdım.':'Bir yemin, onu tutan insanlar kadar güçlüdür. Seninkinin izini bu taşlar uzun süre taşıyacak.'):'Sarsıntılar artıyor. Aşağıda, sarnıcın da altında bir yer var — eski kalp orada atıyor. Yolunu henüz bulamadım. Bulduğumda sana ilk ben söylerim.',choices:[{label:'Bana hikâyeni anlat.',action:'story:ekin:1'},close]};
  if(id==='rauf')return {who:'Rauf',role:'Yaralı kaçak',portrait:5,text:s.flags.fugitive==='reported'?'Teslim olacağım. Defteri de götür; adımın altına ne yazdıysa bir de yüzüme okusun.':s.flags.medicine==='rauf'?'Nefes almak artık acıtmıyor. Bunu unutmayacağım. Batıdaki kol, ocağa giden kapıyı açar.': 'Alf’in nöbet defteri bende. Adım içinde, üstü çizili — ben çizmedim, o çizdi. Ocak kapısını açık bulunca içeri girdim; bacağım burada bitti. Alf beni dinlemez. Bana yardım eder misin?',choices:[{label:'Bana hikâyeni anlat.',action:'story:rauf:1'},...(s.inventory.medicine&&s.flags.fugitive!=='reported'?[{label:'Bu ilacı al. Yaşaman gerek.',action:'rauf_heal',note:'Son ilacı harca · Mirna’ya götüremeyeceksin'}]:[]),...(!s.flags.fugitive?[{label:'Sırrını koruyacağım. Defteri bana ver.',action:'rauf_protect',note:'Rauf’u koru · Defteri al'},{label:'Defteri ver. Alf’e teslim olmalısın.',action:'rauf_report',note:'Rauf’u teslim et · Defteri al'}]:[]),close]};
  return {who:'Eski mühür',role:'Kül Ocağı',portrait:1,text:'Kalp hâlâ atıyor. Onu Undur’a götürmelisin.',choices:[close]};
 }
@@ -525,7 +526,11 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
   // Son: yemin dugumleri sonu tetikler
   if(dugum==='ekin:yeminNobet'||dugum==='ekin:yeminYukari'||dugum==='ekin:yeminBesle'){
    s.flags.talk='';
-   if(s.ending||!s.flags.medicineDone||!s.flags.ledgerDone||!removeItem(s,'core'))return {message:'Önce Mirna ve Alf’in görevlerini tamamla.'};
+   // Son SIMDILIK KAPALI: Kul Ocagi ve Kul kalbi kaldirildi, dolayisiyla
+   // yemini muhurleyecek nesne de yok. Dugum duruyor ki metin ve secimler
+   // kaybolmasin; yeni son mekani gelince bu kosul geri acilacak.
+   return {message:'Undur başını sallıyor: “Kalp olmadan yemin tutmaz. Henüz değil.”'};
+   /* eslint-disable no-unreachable */
    s.flags.yemin=dugum==='ekin:yeminNobet'?'nobet':dugum==='ekin:yeminYukari'?'yukari':'besle';
    s.ending=s.flags.yemin==='besle'?'claim':'seal';s.flags.coreStarted=true;gainXp(s,200);
    s.journal.unshift(s.ending==='seal'?`Yemin ettin: ${s.flags.yemin==='nobet'?'kapıyı bekleyeceksin':'yukarıda kalanları arayacaksın'}. Yarık kapandı.`:'İlk yemini yeniledin: besleyeceksin, o uyuyacak. Kül kalbi sığınağa bağlandı.');
@@ -547,7 +552,7 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
  case 'boran_deliver':if(s.flags.ledgerDone||!s.flags.fugitive||!removeItem(s,'ledger'))return {message:''};s.flags.ledgerDone=true;s.flags.ledgerStarted=true;xp=140;s.gold+=25;addItem(s,s.flags.fugitive==='protected'?'life':'guard');message=s.flags.fugitive==='protected'?'Rauf’un ismini gizledin. Yaşam halkası kazandın.':'Defteri ve Rauf’u teslim ettin. Muhafız kılıcı kazandın.';break;
  // Son artik dogrudan bitmiyor: once yemin dugumu acilir (ekin:muhur / ekin:besle),
  // oradaki soz sonu tetikler. Kosullar burada da denetlenir ki dugum bos acilmasin.
- case 'ending_seal':case 'ending_claim':if(s.ending||!s.flags.medicineDone||!s.flags.ledgerDone||!s.inventory.core)return {message:'Önce Mirna ve Alf’in görevlerini tamamla.'};s.flags.talk=action==='ending_seal'?'ekin:muhur':'ekin:besle';return {message:''};
+ case 'ending_seal':case 'ending_claim':if(true)return {message:'Önce Mirna ve Alf’in görevlerini tamamla.'};s.flags.talk=action==='ending_seal'?'ekin:muhur':'ekin:besle';return {message:''};
  case 'nil_odun':if(s.flags.nilOdun||!removeItem(s,'wood'))return {message:''};s.flags.nilOdun=true;xp=20;message='Lin odunu aldı: “Bu gece de yanar.”';break;
  case 'ayaz_haber':if(s.flags.ayazHaber||!s.flags.sozNil)return {message:''};s.flags.ayazHaber='soylendi';xp=30;message=s.flags.sozNil==='verildi'?'Lin’e verdiğin sözü tuttun. Tiga: “…Yanıyor demek.”':'Tiga: “…Yanıyor demek.”';break;
  case 'ceset_kurdele':if(s.flags.kurdeleAlindi)return {message:''};s.flags.kurdeleAlindi=true;addItem(s,'kurdele');message='Kurdeleyi Rauf’un bileğinden çözdün.';break;

@@ -16,8 +16,8 @@ import pxl
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-KAYNAK = f'{ROOT}/generated/dusman'
-HAM = f'{ROOT}/generated/yaratik_anim'
+KAYNAK = f'{ROOT}/_arsiv/uretim/generated/dusman'
+HAM = f'{ROOT}/_arsiv/uretim/generated/yaratik_anim'
 SABIT = (', seen from directly above, the creature keeps facing the same direction '
          'the whole time and never turns or rotates')
 

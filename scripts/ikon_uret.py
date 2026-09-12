@@ -13,7 +13,7 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HEDEF = f'{ROOT}/public/assets/icons/items'
-HAM = f'{ROOT}/generated/ikon'
+HAM = f'{ROOT}/_arsiv/uretim/generated/ikon'
 STIL = ('dark fantasy pixel art game inventory icon, single object centered, '
         'muted ash-grey and worn leather palette, single dark outline, '
         'basic shading, no background, no text, no border')

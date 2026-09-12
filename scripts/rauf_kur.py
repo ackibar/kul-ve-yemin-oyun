@@ -41,8 +41,8 @@ def indir(cid, kl):
 
 
 def main():
-    cid = open(f'{ROOT}/pixellab/id_rauf.txt').read().strip()
-    kl = f'{ROOT}/pixellab/rauf_kur'
+    cid = open(f'{ROOT}/_arsiv/uretim/pixellab/id_rauf.txt').read().strip()
+    kl = f'{ROOT}/_arsiv/uretim/pixellab/rauf_kur'
     shutil.rmtree(kl, ignore_errors=True)
     indir(cid, kl)
     sheet = Image.open(glob.glob(f'{kl}/*.png')[0]).convert('RGBA')

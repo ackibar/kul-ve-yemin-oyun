@@ -12,9 +12,9 @@ import os, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from PIL import Image, ImageFilter
 
-SRC = 'generated/arkaplan/haven_zengin.png'
-BG_OUT = 'generated/arkaplan/haven_alevsiz.png'
-LAYER_OUT = 'generated/alev_katman'
+SRC = '_arsiv/uretim/generated/arkaplan/haven_zengin.png'
+BG_OUT = '_arsiv/uretim/generated/arkaplan/haven_alevsiz.png'
+LAYER_OUT = '_arsiv/uretim/generated/alev_katman'
 
 
 def is_flame(c):

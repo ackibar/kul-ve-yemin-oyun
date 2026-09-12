@@ -36,7 +36,7 @@ def b64(img, fmt='PNG'):
 
 
 def generate(zone, size):
-    plan = Image.open(f'{ROOT}/generated/plan/{zone}.png').convert('RGB')
+    plan = Image.open(f'{ROOT}/_arsiv/uretim/generated/plan/{zone}.png').convert('RGB')
     prompt = f"""IMAGE 1 is a STRUCTURE PLAN for a top-down 2D game level. It is not art.
 WHITE = walkable floor. BLACK = solid wall / void the player can never enter.
 
@@ -86,7 +86,7 @@ if __name__ == '__main__':
         open('/tmp/claude-501/-Users-can/51650aa6-4bf1-4ab1-86e3-39d5ee0a1589/scratchpad/dunya.json'))}[zone]
     target = (world['w'] * 32, world['h'] * 32)          # 2x render yogunlugu
     raw = generate(zone, size)
-    raw.save(f'{ROOT}/generated/arkaplan/{zone}_ham.png')
+    raw.save(f'{ROOT}/_arsiv/uretim/generated/arkaplan/{zone}_ham.png')
     out = raw.resize(target, Image.LANCZOS)
-    out.save(f'{ROOT}/generated/arkaplan/{zone}.png')
+    out.save(f'{ROOT}/_arsiv/uretim/generated/arkaplan/{zone}.png')
     print(f'{zone}: ham {raw.size} -> oyun {out.size}  (plan {world["w"]}x{world["h"]} karo)')

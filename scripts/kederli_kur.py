@@ -27,8 +27,8 @@ def ornekle(kare, n):
 
 
 def main():
-    cid = open(f'{ROOT}/pixellab/id_kederli.txt').read().strip()
-    kl = f'{ROOT}/pixellab/kederli_kur'
+    cid = open(f'{ROOT}/_arsiv/uretim/pixellab/id_kederli.txt').read().strip()
+    kl = f'{ROOT}/_arsiv/uretim/pixellab/kederli_kur'
     shutil.rmtree(kl, ignore_errors=True); os.makedirs(kl, exist_ok=True)
     req = urllib.request.Request(f'https://api.pixellab.ai/v2/characters/{cid}/spritesheet',
                                  headers={'Authorization': 'Bearer ' + pxl.key()})

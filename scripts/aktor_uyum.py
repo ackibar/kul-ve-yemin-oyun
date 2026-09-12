@@ -32,7 +32,7 @@ import pixelize as P
 from tone_transfer import lab_to_srgb
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-KAYNAK = os.path.join(ROOT, 'asset_backup_ton_oncesi')   # daima pristine kaynak
+KAYNAK = os.path.join(ROOT, '_arsiv/uretim/asset_backup_ton_oncesi')   # daima pristine kaynak
 HEDEF = os.path.join(ROOT, 'public/assets')
 KLASORLER = ['characters', 'enemies']
 

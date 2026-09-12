@@ -53,3 +53,8 @@ __pycache__/
 # Kaynak sanat (yesil fonlu ham gorseller) depoya girmez
 /Generate_*.jpeg
 /Generate_*.png
+
+# Arsiv: oyunun calismasi icin gerekli degil (bkz. _arsiv/OKU.md)
+/_arsiv/
+tsconfig.tsbuildinfo
+.DS_Store

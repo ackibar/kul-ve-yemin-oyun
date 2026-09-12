@@ -190,7 +190,7 @@ def main(bg_yolu, prop_yolu, ad='haven'):
     for x1, y1, x2, y2 in ek:
         px[y1*KARO:y2*KARO, x1*KARO:x2*KARO, 0] = np.minimum(
             255, px[y1*KARO:y2*KARO, x1*KARO:x2*KARO, 0] + 70)
-    Image.fromarray(px).convert('RGB').save(f'{ROOT}/generated/_YENI_ENGEL.png')
+    Image.fromarray(px).convert('RGB').save(f'{ROOT}/_arsiv/uretim/generated/_YENI_ENGEL.png')
     print('-> generated/_YENI_ENGEL.png (kirmizi = gecilemez)')
 
     # Ocak merkezleri: prop katmanindaki sicak-parlak kumeler. Motor animasyonlu
@@ -207,7 +207,7 @@ def main(bg_yolu, prop_yolu, ad='haven'):
     print(' blockers.push(' + ','.join(f'[{a},{b},{c},{d}]' for a, b, c, d in ek) + ');')
     print(f' // ocak merkezleri (dunya birimi): ' + ', '.join(
         f'({x/2:.1f},{y/2:.1f})' for x, y in ocaklar))
-    np.save(f'{ROOT}/generated/_zemin_karo.npy', zemin)
+    np.save(f'{ROOT}/_arsiv/uretim/generated/_zemin_karo.npy', zemin)
 
 
 if __name__ == '__main__':
@@ -216,5 +216,5 @@ if __name__ == '__main__':
     if len(sys.argv) > 4:
         NX, NY = (int(v) for v in sys.argv[4].lower().split('x'))
     main(sys.argv[1] if len(sys.argv) > 1 else f'{ROOT}/background.jpeg',
-         sys.argv[2] if len(sys.argv) > 2 else f'{ROOT}/generated/prop/prop_saydam.png',
+         sys.argv[2] if len(sys.argv) > 2 else f'{ROOT}/_arsiv/uretim/generated/prop/prop_saydam.png',
          sys.argv[3] if len(sys.argv) > 3 else 'haven')

@@ -20,7 +20,7 @@ from PIL import Image
 import pixelize as P
 from tone_transfer import lab_to_srgb
 
-SRC = os.environ.get('KARO_SRC', 'pixellab/tileset/wang')
+SRC = os.environ.get('KARO_SRC', '_arsiv/uretim/pixellab/tileset/wang')
 DST = 'public/assets/dungeon/wang'
 FLOOR = 0          # wang_0 = tam zemin, parlaklik capasi
 WALL = 15
@@ -79,7 +79,7 @@ if __name__ == '__main__':
               f'   kenar {edges(src[i]):4d} -> {edges(tiles[i]):4d}')
     print(f'  zemin-duvar farki {mean_L(src[FLOOR])-mean_L(src[WALL]):5.1f} ->'
           f' {mean_L(tiles[FLOOR])-mean_L(tiles[WALL]):5.1f}')
-    d = DST if apply else 'generated/karo_deneme'
+    d = DST if apply else '_arsiv/uretim/generated/karo_deneme'
     os.makedirs(d, exist_ok=True)
     for i, t in enumerate(tiles):
         t.save(f'{d}/wang_{i}.png')

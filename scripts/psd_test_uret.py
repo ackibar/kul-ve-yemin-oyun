@@ -51,7 +51,7 @@ g2 = psd.create_pixel_layer(kutu(80, 32, (210, 200, 190, 255)), name='yorgan', t
 psd.create_group([g1, g2], name='buyukyatak@engel')
 BEKLENEN.append(('buyukyatak@engel', 700, 588, 96, 76))
 
-psd.save('generated/test_mekan.psd')
+psd.save('_arsiv/uretim/generated/test_mekan.psd')
 print('-> generated/test_mekan.psd')
 print('BEKLENEN:')
 for ad, x, y, w, h in BEKLENEN:

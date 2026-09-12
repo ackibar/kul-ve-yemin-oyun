@@ -173,7 +173,7 @@ def main():
             if not os.path.exists(fp):
                 raise SystemExit(f'kanonik kare eksik: {fp}')
             ref_b64[d] = b64(Image.open(fp).convert('RGB'))
-    out = os.path.join(ROOT, 'generated', a.actor.replace('/', '_'))
+    out = os.path.join(ROOT, '_arsiv/uretim/generated', a.actor.replace('/', '_'))
     for sub in ('raw', 'frames', 'sheets', 'preview'):
         os.makedirs(os.path.join(out, sub), exist_ok=True)
 

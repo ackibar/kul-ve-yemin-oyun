@@ -12,7 +12,7 @@ import pxl
 from pxl_state import wait
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OBJ = os.path.join(ROOT, 'pixellab/objeler'); ICO = os.path.join(ROOT, 'pixellab/ikonlar')
+OBJ = os.path.join(ROOT, '_arsiv/uretim/pixellab/objeler'); ICO = os.path.join(ROOT, '_arsiv/uretim/pixellab/ikonlar')
 os.makedirs(OBJ, exist_ok=True); os.makedirs(ICO, exist_ok=True)
 SEED = 21
 STYLE = 'worn dark wood, underground shelter, muted ash-grey and brown palette, top-down game prop'

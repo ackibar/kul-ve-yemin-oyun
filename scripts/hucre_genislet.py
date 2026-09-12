@@ -18,7 +18,7 @@ from PIL import Image
 from v3_kur import capalar, BOY, FEET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-HAM = os.path.join(ROOT, 'asset_backup_ton_oncesi')
+HAM = os.path.join(ROOT, '_arsiv/uretim/asset_backup_ton_oncesi')
 
 
 def genislet(slot, yeni_en):

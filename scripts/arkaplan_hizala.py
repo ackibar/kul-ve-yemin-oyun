@@ -33,7 +33,7 @@ def align(zone):
     world = {d['zone']: d for d in json.load(open(f'{SC}/dunya.json'))}[zone]
     W, H, tiles = world['w'], world['h'], world['tiles']
     floor_n = sum(r.count(1) for r in tiles)
-    bg = Image.open(f'{ROOT}/generated/arkaplan/{zone}.png').convert('RGB')
+    bg = Image.open(f'{ROOT}/_arsiv/uretim/generated/arkaplan/{zone}.png').convert('RGB')
     tw, th = W * 32, H * 32                       # 2x render yogunlugu
 
     tb = floor_bbox_from_tiles(tiles)             # karo biriminde
@@ -49,7 +49,7 @@ def align(zone):
     off_y = int(round(tb[1] * k - ib[1] * sy * k))
     out = Image.new('RGB', (tw, th), (6, 5, 9))
     out.paste(src, (off_x, off_y))
-    out.save(f'{ROOT}/generated/arkaplan/{zone}_hizali.png')
+    out.save(f'{ROOT}/_arsiv/uretim/generated/arkaplan/{zone}_hizali.png')
     return out, world
 
 
@@ -67,6 +67,6 @@ def score(img, world):
 if __name__ == '__main__':
     zone = sys.argv[1]
     world = {d['zone']: d for d in json.load(open(f'{SC}/dunya.json'))}[zone]
-    before = score(Image.open(f'{ROOT}/generated/arkaplan/{zone}.png').convert('RGB'), world)
+    before = score(Image.open(f'{ROOT}/_arsiv/uretim/generated/arkaplan/{zone}.png').convert('RGB'), world)
     out, _ = align(zone)
     print(f'  uyum: %{before:.1f} -> %{score(out, world):.1f}')

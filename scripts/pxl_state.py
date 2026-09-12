@@ -17,7 +17,7 @@ def wait(jobs, label=''):
 
 
 if __name__ == '__main__':
-    src = open('pixellab/gezgin/id.txt').read().strip()
+    src = open('_arsiv/uretim/pixellab/gezgin/id.txt').read().strip()
     name, desc = sys.argv[1], sys.argv[2]
     before = pxl.balance()[0]
     r = pxl.call('/create-character-state', {
@@ -29,4 +29,4 @@ if __name__ == '__main__':
     wait([j for j in jobs if j], name)
     after = pxl.balance()[0]
     print(f'{name}: id={cid}  maliyet={before-after:.0f} uretim  bakiye={after:.0f}')
-    open(f'pixellab/gezgin/id_{name}.txt', 'w').write(cid or '')
+    open(f'_arsiv/uretim/pixellab/gezgin/id_{name}.txt', 'w').write(cid or '')
