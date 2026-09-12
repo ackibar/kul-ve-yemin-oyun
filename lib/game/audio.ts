@@ -94,6 +94,11 @@ export class GameAudio{
    src.onended=()=>{src.disconnect();g.disconnect()};return;}const t=this.ctx.currentTime,b=this.fxBus,s=Math.min(1,Math.max(0,scale));const notes=(ns:number[],d=.1,v=.3,type:OscillatorType='triangle')=>ns.forEach((f,i)=>this.tone(f,t+i*d,d*2,v*s,type,b));switch(name){case 'step':this.tone(85+Math.random()*30,t,.04,.13*s,'triangle',b);break;case 'swing':notes([250,130,70],.025,.25,'sawtooth');break;case 'hit':notes([110,65],.03,.55,'square');break;case 'hurt':notes([180,100,70],.06,.35,'sawtooth');break;case 'dodge':notes([120,230,380],.025,.16,'sine');break;case 'chest':notes([330,440,554,660],.1,.25);break;case 'coin':notes([880,1320],.07,.2);break;case 'level':notes([293.66,369.99,440,587.33,739.99,880],.11,.3);break;case 'talk':notes([330,440],.055,.12);break;case 'drink':notes([220,330,550],.075,.2,'sine');break;case 'door':notes([146,220,293],.12,.22);break;case 'death':notes([293,261,220,146],.25,.25);break;case 'select':notes([480],.05,.15);break;case 'trap':notes([180,240,120],.04,.3,'sawtooth');break;/* Dusman sesleri GECICI sentez. Hazir kayit gelince tek yapilacak sey
      ORNEKLER'e dosyayi eklemek: play() ornek varsa sentezi hic calistirmiyor.
      Perde her seferinde biraz kaydiriliyor, yoksa ust uste calinca makine
-     gibi duyuluyor. */case 'dusmanVur':{const k=.92+Math.random()*.16;notes([96*k,58*k,40*k],.045,.34,'square');break;}case 'dusmanOlum':{const k=.9+Math.random()*.2;notes([430*k,300*k,190*k,105*k],.06,.28,'sawtooth');break;}}}
+     gibi duyuluyor. */case 'dusmanVur':{const k=.92+Math.random()*.16;notes([96*k,58*k,40*k],.045,.34,'square');break;}case 'dusmanOlum':{const k=.92+Math.random()*.16;/* Olculdu: ses calisiyordu ama duyulmuyordu. Oldurme aninda ayni 100 ms
+     icinde 'hit' (0.55, 110/65 Hz) ve iki 'coin' calıyor; olum sesi de alcak
+     bantta oldugu icin onlarin altinda kaliyordu. Iki degisiklik: 0.15 sn
+     GECIKME ile carpismadan cikarildi ve BOS BANDA tasindi - once yuksek bir
+     ciyaklama (360-620 Hz, baska hicbir efekt orada degil), arkasindan kisa
+     bir gumburtu. */const g=.15;[620,470,360].forEach((f,i)=>this.tone(f*k,t+g+i*.055,.15,.45*s,'sawtooth',b));this.tone(95*k,t+g+.17,.2,.4*s,'square',b);this.tone(58*k,t+g+.25,.26,.34*s,'square',b);break;}}}
  destroy(){if(this.timer)clearInterval(this.timer);this.timer=null;for(const s of this.calan)try{s.stop()}catch{}this.calan=[];try{this.ates?.stop()}catch{}this.ates=null;void this.ctx?.close().catch(()=>{});this.ctx=null;}
 }
