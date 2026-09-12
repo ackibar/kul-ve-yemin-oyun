@@ -165,7 +165,13 @@ Yaratıklarda alfa ağırlık merkezi. Referans, aynı yönün mevcut Idle kares
   widest part of the body", kollar göbeğin üstünde, "hands empty, holding
   nothing", istemediğin detayı adla ("NO beard").
 - Oturan/yatan figür: mannequin ayakta durur → düz pixflux (1 üretim),
-  sheet'i elle kur (`kral_uret.py`, `fener_uret.py`). Portre D_Idle'ın üst
+  sheet'i elle kur (`kral_uret.py`, `fener_uret.py`). Oturan figürü
+  **animasyonlamak** için `/animate-with-text-v3` (1 üretim/animasyon, düz
+  görsel + metin): tarifte "the chair and the whole body stay in exactly the
+  same place, nothing slides sideways" şart — ölçüldü, her karede taban satırı
+  60'ta kaldı, o yüzden kareler bbox'a göre YENİDEN OTURTULMAZ (oturtulursa el
+  kalkınca gövde aşağı kayar). Kral: `D_Idle` baş sallama 7 kare, `D_Tac` tacı
+  çıkarıp takma 15 kare; motor 26 sn'de bir Tac'ı oynatır. Portre D_Idle'ın üst
   24 satırından kırpılır; figürü hücrenin tepesine oturt.
 - Düşman portresi gerekiyorsa `enemies/N/D_Idle.png` → `characters/M/`
   kopyala (son muhafız = 15).
@@ -277,4 +283,4 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 
 ---
 
-*Son güncelleme: 2026-09-12, v6.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v6.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

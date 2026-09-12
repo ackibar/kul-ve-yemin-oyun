@@ -14,7 +14,7 @@ export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[
   *  piksel kumelerinden olculdu (kume merkezi /32 = karo). */
  isiklar:[number,number,number][]};
 /** Kralin oturan sprite'inin zemin satiri/2; scripts/kral_uret.py kurunca yazar. */
-const KRAL_CAPA=31;
+const KRAL_CAPA=30.5;
 export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefined>):World{
  const kare=zone==='haven'||zone==='magara';
  // Kare mekanlar 30x30: siginak, magara ve yikik. Kul Ovasi 54x30.

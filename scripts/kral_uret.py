@@ -16,12 +16,15 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HAM = f'{ROOT}/_arsiv/uretim/generated/kral'
 SLOT = 13
-TARIF = ('an old broken king sitting on the ground with his knees drawn up, slumped, '
+# 1. surum yerde oturuyordu; kullanici kirik bir sandalye istedi. Sandalye
+# figurun parcasi olarak URETILIYOR (ayri sprite degil): oturma pozu ve
+# sandalye birbirine oturmali, ayri cizilince adam havada duruyor.
+TARIF = ('an old broken king slumped on a broken wooden throne, one armrest snapped off '
+         'and the chair back cracked, sitting upright with both hands resting on his knees, '
          'a tarnished dented iron crown on his head, long grey unkempt beard full of ash, '
          'a once-royal robe now grey with ash with only a faint faded purple left, hollow '
-         'empty eyes staring ahead, thin hands resting on his knees, dark fantasy pixel art '
-         'game character, muted ash-grey palette, soot-stained, single dark outline, '
-         'basic shading, no background, human')
+         'empty eyes staring ahead, dark fantasy pixel art game character, muted ash-grey '
+         'palette, soot-stained, single dark outline, basic shading, no background, human')
 CELL, USTPAY = 64, 3
 # Zemin satiri: figur tepeden USTPAY ile baslar, alt sinir figurun boyuna bagli.
 # world.ts'teki capa = zemin_satiri / 2 (sprite() satir = 2*capa).
@@ -41,21 +44,39 @@ def uret():
 
 
 def kur():
-    im = Image.open(sorted(glob.glob(f'{HAM}/kral*.png'))[-1]).convert('RGBA')
-    bb = im.getbbox(); sp = im.crop(bb)
-    cell = Image.new('RGBA', (CELL, CELL), (0, 0, 0, 0))
-    cell.paste(sp, (CELL // 2 - sp.width // 2, USTPAY))
-    zemin = USTPAY + sp.height
+    """Animasyon karelerinden characters/13 sheet'lerini kurar.
+
+    Kareler ZATEN hizali (olculdu: her karede taban satiri 60, sandalye
+    kaymiyor), bu yuzden bbox'a gore yeniden oturtulmaz - oturtulsaydi el
+    kalkinca govde asagi kayardi. Cerceve 64x64 oldugu gibi hucreye konur.
+    Idle = bas sallama, Tac = taci cikarip geri takma (motor arada bir oynatir).
+    """
+    kareler = {}
+    for ad, hedef_ad in (('idle', 'Idle'), ('tac', 'Tac')):
+        fs = sorted(glob.glob(f'{HAM}/anim_{ad}_*.png'))
+        if not fs:
+            print(f'  !! {ad} kareleri yok'); sys.exit(1)
+        kareler[hedef_ad] = [Image.open(f).convert('RGBA') for f in fs]
     hedef = f'{ROOT}/public/assets/characters/{SLOT}'
     os.makedirs(hedef, exist_ok=True)
-    for g in 'DUS':
-        for isim, n in {'Idle': 4, 'Walk': 6, 'Attack': 4, 'Hurt': 2, 'Death': 8}.items():
-            sh = Image.new('RGBA', (CELL * n, CELL), (0, 0, 0, 0))
-            for i in range(n):
-                sh.paste(cell, (i * CELL, 0))
+    zemin = 0
+    for isim, ks in kareler.items():
+        sh = Image.new('RGBA', (CELL * len(ks), CELL), (0, 0, 0, 0))
+        for i, k in enumerate(ks):
+            sh.paste(k, (i * CELL, 0))
+            bb = k.getbbox()
+            if bb:
+                zemin = max(zemin, bb[3])
+        for g in 'DUS':                    # kral donmuyor; uc yon de ayni
             sh.save(f'{hedef}/{g}_{isim}.png')
+    # Motor NPC'de Walk da arayabilir; duragan kare ile doldurulur.
+    for g in 'DUS':
+        tek = Image.new('RGBA', (CELL, CELL), (0, 0, 0, 0))
+        tek.paste(kareler['Idle'][0], (0, 0))
+        tek.save(f'{hedef}/{g}_Walk.png')
     aktor_uyum.klasor(hedef, ham_yenile=True)
-    print(f'  characters/{SLOT} kuruldu; figur {sp.width}x{sp.height}, zemin satiri {zemin} -> world.ts capa={zemin/2:g}')
+    print(f'  characters/{SLOT}: Idle {len(kareler["Idle"])} kare, Tac {len(kareler["Tac"])} kare; '
+          f'zemin satiri {zemin} -> world.ts KRAL_CAPA={zemin/2:g}')
 
 
 if __name__ == '__main__':
