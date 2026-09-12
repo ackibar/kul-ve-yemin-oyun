@@ -186,6 +186,13 @@ Yaratıklarda alfa ağırlık merkezi. Referans, aynı yönün mevcut Idle kares
   24 satırından kırpılır; figürü hücrenin tepesine oturt.
 - Düşman portresi gerekiyorsa `enemies/N/D_Idle.png` → `characters/M/`
   kopyala (son muhafız = 15).
+- **Kafa oranı**: mannequin şablonu küçük figürlerde kafayı büyütüyor (Lin
+  "anime kızı" gibi çıkmıştı). `ORAN` sabitini ekle: "realistic body
+  proportions with a SMALL head, the head is small compared to the shoulders,
+  NOT chibi, NOT big-headed, NOT anime, narrow face".
+- İstenmeyen çağrışımı **adıyla yasakla**: Uslu'nun kabarık saçı + kulağındaki
+  kuru bitki onu "orman kaçkını" yapıyordu → "NO leaves, NO plants, NO twigs,
+  NOT a forest hermit, NOT a druid" + "flat tangled strands close to the skull".
 - Yeni karakter tarifine `ORTAK` ekle: "NO backpack, NO satchel, NO straps,
   NO modern clothing, human".
 
@@ -294,4 +301,4 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 
 ---
 
-*Son güncelleme: 2026-09-12, v6.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v6.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

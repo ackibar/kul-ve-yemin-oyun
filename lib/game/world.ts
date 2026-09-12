@@ -57,7 +57,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // ocagin yaninda. Tiga indiyse ve Tuhn ucurumdan cekildiyse ikisi de o atesin
   // basina gelir. `s` sprite olcegi: cocuklar icin ayni sheet kucuk cizilir.
   at({id:'selvi',type:'npc',x:13,y:6,name:'Elvi',portrait:9});
-  at({id:'nil',type:'npc',x:18,y:21,name:'Lin',portrait:7,s:.8});
+  at({id:'nil',type:'npc',x:18,y:21,name:'Lin',portrait:7,s:.74});
   // Kral: sol ust kosede oturur, kimse bakmaz. Uslu ortada dolasir.
   /* Kral: vurulabilir (engine kralHasar). Oldurulduyse kosede cesedi kalir.
      Yeri (5,6) idi: haritanin sol UST cebi, 22 adim uzakta ve ancak ust
