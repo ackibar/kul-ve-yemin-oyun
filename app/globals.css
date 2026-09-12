@@ -665,3 +665,15 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
   color:#2b1512!important;font-weight:700;
 }
 .confirm-actions [data-slot=alert-dialog-cancel]:hover{background:#d1928b!important}
+
+/* ---- Görev ipucu -------------------------------------------------------
+   "İlk ışık / Sığınaktakilerle konuş" kutusu yarı saydamdı ve altındaki
+   sahne içinden geçiyordu; diğer paneller gibi parşömen çerçevesine alındı.
+   `fill` ile merkez de resimden geliyor, ayrıca arka plan tanımlanmıyor. */
+.quest-hint{
+  background:none!important;border:8px solid transparent!important;border-radius:0!important;
+  border-image:url(/assets/ui/frame_in.png) 8 fill repeat!important;
+  border-left-width:8px!important;text-shadow:none!important;
+  max-width:250px;
+}
+.quest-hint b,.quest-hint>span,.quest-hint .quest-diamond{text-shadow:none!important}

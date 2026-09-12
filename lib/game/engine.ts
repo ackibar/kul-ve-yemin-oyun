@@ -116,7 +116,7 @@ export class Engine{
  /** NPC dolasmasi: kisa bir yuruyus, sonra bekleme, sonra tekrar. Ev konumundan
   *  fazla uzaklasmazlar ki gorev icin bulunabilir kalsinlar. */
  private gez=new Map<string,{hx:number;hy:number;tx:number;ty:number;bekle:number;dir:'D'|'U'|'S';flip:boolean;yol:number}>();
- private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
+ private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
  private keys={up:false,down:false,left:false,right:false};
  private handleKeyDown=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(this.paused)return;if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=true;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=true;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=true;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=true;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=true;if(e.repeat)return;if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK')this.dodge();if(e.code==='KeyE')this.interact();if(e.code==='KeyQ'||e.code==='KeyR')this.toggleWeapon();};
  private handleKeyUp=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=false;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=false;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=false;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=false;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=false;};
@@ -326,7 +326,20 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   if(walkable(this.world,p.x+dx,p.y)&&!this.carpisir(p.x,p.y,p.x+dx,p.y,ben,mobDahil))p.x+=dx;
   if(walkable(this.world,p.x,p.y+dy)&&!this.carpisir(p.x,p.y,p.x,p.y+dy,ben,mobDahil))p.y+=dy;
  }
-  /** Koz kavanozunun patlamasi: alan hasari + yanma. */
+  /** Ucurumdan havalanan yarasa surusu. Dagilarak doguyorlar ki tek yigin
+  *  halinde gelmesinler; kimlikleri benzersiz, yoksa `killed` listesi bir
+  *  onceki surunun olulerini hatirlar ve hepsi olu dogar. */
+ private yarasaSurusu(kx:number,ky:number,adet:number){
+  const max=([0,34,42,0,80,24,72][5]);
+  for(let i=0;i<adet;i++){
+   const a=Math.random()*Math.PI*2,r=6+Math.random()*30;
+   let sx=kx*16+8+Math.cos(a)*r,sy=ky*16+8+Math.sin(a)*r;
+   for(let k=0;k<12&&!walkable(this.world,sx,sy);k++){sx=kx*16+8+(Math.random()-.5)*40;sy=ky*16+8+(Math.random()-.5)*40;}
+   this.mobs.push({id:`tuhnyarasa_${this.tick.toFixed(0)}_${i}`,kind:5,x:sx,y:sy,hp:max,max,
+    cool:.4+Math.random()*.8,windup:0,burn:0,hurt:0,homeX:sx,homeY:sy});}
+  this.burst(kx*16+8,ky*16+8,'#6d5a72',26);
+ }
+ /** Koz kavanozunun patlamasi: alan hasari + yanma. */
  private kavanozPatla(x:number,y:number){
   this.burst(x,y,'#f0a35c',26);this.burst(x,y,'#ffd08a',14);this.audio.play('hit');
   for(const m of this.mobs){if(m.hp<=0)continue;const d=Math.hypot(m.x-x,m.y-y);
@@ -438,6 +451,20 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      this.notify('Kapıdan başka ses gelmiyor.');this.save();this.emit();
     }
    }
+   // Dusus sesi ve rahatsiz olan yarasalar. Ses gec geliyor cunku ucurum
+   // derin; oyuncu once sessizligi duyup sonra ne oldugunu anliyor.
+   // Iki asama: once dusus sesi, SONRA rahatsiz olan yarasalar. Tek asamada
+   // ikisi ayni karede oluyordu ve sira anlasilmiyordu. Oyuncu bu arada
+   // bolgeyi terk ettiyse ikisi de iptal.
+   if(this.state.zone!=='magara'){this.tuhnSayac=0;this.tuhnYarasa=0;}
+   else{
+    if(this.tuhnSayac>0){this.tuhnSayac-=dt;
+     if(this.tuhnSayac<=0){this.audio.play('hurt');this.audio.play('trap');
+      this.notify('Aşağıdan boğuk bir ses geldi.');this.tuhnYarasa=1.1;this.emit();}}
+    else if(this.tuhnYarasa>0){this.tuhnYarasa-=dt;
+     if(this.tuhnYarasa<=0){this.audio.play('door');
+      this.notify('Karanlıktan kanat sesleri yükseliyor.');
+      this.yarasaSurusu(24,13,7);this.emit();}}}
    // --- Tuhn: ikna edilemediyse ucuruma yurur ve atlar ---
    if(this.state.flags.tuhn==='atladi'&&this.state.zone==='magara'){
     const bd=this.world.entities.find(x=>x.id==='tuhn');
@@ -452,7 +479,10 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      }else{
       this.world.entities=this.world.entities.filter(x=>x.id!=='tuhn');
       this.sahneYuru.delete('tuhn');
-      this.audio.play('hurt');this.notify('Tuhn bir adım attı. Ses gelmedi.');
+      // Ses HEMEN degil: ucurum derin. Once sessizlik, sonra asagidan bogur
+      // bir ses ve rahatsiz olan yarasalar. Sayac asagida isleniyor.
+      this.notify('Tuhn bir adım attı. Ses gelmedi.');
+      this.tuhnSayac=1.2;
       this.save();this.emit();}
     }
    }
