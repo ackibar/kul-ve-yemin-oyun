@@ -23,7 +23,7 @@ Kayıt cihazdaki localStorage alanındadır (`kul-ve-yemin-save-v1`); sunucu hes
 - `npm run dev`
 - `npm run build`
 - `npx tsc --noEmit`
-- `node tests/regression.mjs`
+- `node scripts/test/regression.mjs`
 
 Oyun mantığı `lib/game/data.ts`, haritalar `world.ts`, çalışma döngüsü ve çizim `engine.ts`, sesler `audio.ts` içindedir.
 
@@ -39,7 +39,7 @@ Görseller kullanıcının sağladığı Craftpix oyun kitinden, Cinzel yazı ti
 
 `app/` React arayüzü, `lib/game/` motor (engine, world, data, audio), `public/assets/`
 oyunun çalışması için gereken tüm görsel ve ses dosyaları, `scripts/` asset üretim ve
-mekân kurma araçları (oyun çalışırken kullanılmaz), `tests/regression.mjs` tarayıcı
+mekân kurma araçları (oyun çalışırken kullanılmaz), `scripts/test/regression.mjs` tarayıcı
 üstünde koşan duman testi.
 
 Depoya **girmeyen** yerel klasörler: `generated/` (ara çıktılar), `pixellab/`,
