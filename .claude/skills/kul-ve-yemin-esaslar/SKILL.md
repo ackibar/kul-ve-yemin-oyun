@@ -243,7 +243,10 @@ onları **oyuncuyla aynı y sıralamasına** sokuyor (`type:'perde'` → actors
 listesi). Arkasına geçen oyuncu bezin ardında kalır; içinden geçilmez (dip
 çizgisinde ince blocker) ve arkasında durulabilsin diye bir karo zemin açılır.
 Arka plan olduğu gibi durur, üstüne birebir aynı pikseller biner — duruşta
-hiçbir fark yok. Aynı yöntem her "arkasına geçilsin" istenen boyalı nesne için
+hiçbir fark yok. **Arkaya geçebilmek için karoyu açmak yetmez:**
+boyalı duvarın `blockers` kutusu hâlâ engelliyor; `delik()` o kutuyu keser
+(kesişeni en fazla dört parçaya böler) ve cep **açık zemine kadar** uzatılır,
+yoksa kutunun kalan parçası yolu kapatıyor. Aynı yöntem her "arkasına geçilsin" istenen boyalı nesne için
 geçerli.
 
 **Arayüz:** parşömen. Çerçeveler CSS değil 9 dilim piksel resmi

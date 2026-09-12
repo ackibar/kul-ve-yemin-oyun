@@ -59,14 +59,36 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      birebir ayni pikseller biniyor, yani durur halde hicbir fark yok.
      Icinden gecilmez: bezin dip cizgisine ince engel konur. Arkasinda
      durulabilsin diye bezin gerisinde bir karoluk zemin acilir. */
-  const perde=(id:string,tx:number,ty:number,en:number)=>{
-   entities.push({id,type:'perde',x:tx*16,y:ty*16,asset:`perde_${id}`});
-   blockers.push([tx-en/2,ty-.35,tx+en/2,ty+.15]);
-   for(let j=Math.floor(ty)-1;j<=Math.floor(ty);j++)
-    for(let i=Math.round(tx-en/2);i<=Math.round(tx+en/2);i++)
+  /** Mevcut engel kutularindan bir dikdortgeni OYAR. Perdenin arkasi boyali
+   *  duvarin engel kutusunun icinde kaliyordu: karoyu yurunebilir yapmak
+   *  yetmedi, engeli de delmek gerekti. Kesisen kutu en fazla dort parcaya
+   *  bolunur (ust/alt/sol/sag), kalanlar aynen durur. */
+  const delik=(dx1:number,dy1:number,dx2:number,dy2:number)=>{
+   for(let i=blockers.length-1;i>=0;i--){
+    const [bx1,by1,bx2,by2]=blockers[i];
+    if(bx2<=dx1||bx1>=dx2||by2<=dy1||by1>=dy2)continue;   // kesismiyor
+    blockers.splice(i,1);
+    if(by1<dy1)blockers.push([bx1,by1,bx2,dy1]);
+    if(by2>dy2)blockers.push([bx1,dy2,bx2,by2]);
+    const ky1=Math.max(by1,dy1),ky2=Math.min(by2,dy2);
+    if(bx1<dx1)blockers.push([bx1,ky1,dx1,ky2]);
+    if(bx2>dx2)blockers.push([dx2,ky1,bx2,ky2]);
+   }
+   for(let j=Math.floor(dy1);j<=Math.ceil(dy2)-1;j++)
+    for(let i=Math.floor(dx1);i<=Math.ceil(dx2)-1;i++)
      if(tiles[j]?.[i]!==undefined)tiles[j][i]=1;
   };
-  perde('sol',6.41,13.59,4.1);perde('sag',24.66,18.59,3.25);
+  /** Asili bez: ust katman sprite'i + dip cizgisinde engel + ARKASINDA cep.
+   *  Cep hem karo hem engel duzeyinde acilir, yoksa arkaya gecilemiyor. */
+  const perde=(id:string,tx:number,ty:number,en:number,cep:[number,number,number,number])=>{
+   entities.push({id,type:'perde',x:tx*16,y:ty*16,asset:`perde_${id}`});
+   /* Cep ACIK ZEMINE KADAR uzatilir: yalnizca bezin arkasini oymak yetmiyordu,
+      cevredeki engel kutusunun kalan parcasi yolu kapatiyordu. */
+   delik(...cep);
+   blockers.push([tx-en/2,ty-.3,tx+en/2,ty+.15]);       // bezin dip cizgisi
+  };
+  perde('sol',6.41,13.59,4.1,[4.3,11.7,9.3,13.3]);
+  perde('sag',24.66,18.59,3.25,[21.6,16.9,26.4,18.3]);
   at({id:'mira',type:'npc',x:9,y:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
   // Elvi ust kapinin dibinde: cevrildigi kapidan uzaklasmiyor. Lin sag-alt
   // ocagin yaninda. Tiga indiyse ve Tuhn ucurumdan cekildiyse ikisi de o atesin
