@@ -94,11 +94,13 @@ export class Engine{
   *             yerine yatayda AYNALANIR, dikey bilesen kucuk bir egime cevrilir.
   *   'sabit' - sabit bakisla cizilmis (yarasa onden, kafa yukarida).
   *             Dondurulmez; yon bilgisini animasyon tasir.
+  *   'aynali'- onden cizilmis buyuk insansi (trol). Dondurulmez ama yatayda
+  *             aynalanir: saga giderken saga, sola giderken sola bakar.
   *  Bu listede olmayan dusman yon basina AYRI sheet kullanir. Orumcek de
   *  oraya gecti: dondurme bacaklarini tek yana topluyordu, bunun yerine
   *  asagi/yukari/yan icin ayri gorsel uretildi (bati, yanin aynasi). */
- static readonly YARATIK:Record<number,{mod:'tam'|'yan'|'sabit';aci?:number}>=
-  {1:{mod:'yan'},5:{mod:'sabit'}};
+ static readonly YARATIK:Record<number,{mod:'tam'|'yan'|'sabit'|'aynali';aci?:number}>=
+  {1:{mod:'yan'},5:{mod:'sabit'},7:{mod:'aynali'}};
  /** 'yan' yaratiklarin dikey egim siniri (radyan). Daha fazlasi yine yatiriyor. */
  static readonly EGIM=Math.PI/6;
  static readonly DUSUS=0.5;
@@ -124,7 +126,7 @@ export class Engine{
  private img(key:string,path:string){const im=new Image();im.src=path;this.images[key]=im;return new Promise<void>((resolve,reject)=>{im.onload=()=>resolve();im.onerror=()=>reject(new Error(path));})}
   private async loadAssets(){const jobs:Promise<void>[]=[];const optional:boolean[]=[];/** optional[i] === true olan isler ISTEGE BAGLI: eksikligi oyunu kirmaz.
   *  Karakter dongusu disindaki tum isler zorunlu sayilir. */
- const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};for(const id of [3,5,21,22,35])jobs.push(this.img('tile'+id,`/assets/dungeon/1%20Tiles/Tile_${String(id).padStart(2,'0')}.png`));jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);jobs.push(this.img('ceset','/assets/characters/5/D_Corpse.png'));optional.push(true);mark(false);for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?9:6);n++){if(kind==='enemies'&&n===3)continue;/* solucan kaldirildi */const iste=(kind==='characters'&&n>=5)||(kind==='enemies'&&n===6);for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death']){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}/* Insansi dusmanlar (4 kullenmis, 6 Rauf) caprazlarda da ciziliyor; tepeden
+ const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};for(const id of [3,5,21,22,35])jobs.push(this.img('tile'+id,`/assets/dungeon/1%20Tiles/Tile_${String(id).padStart(2,'0')}.png`));jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);jobs.push(this.img('ceset','/assets/characters/5/D_Corpse.png'));optional.push(true);mark(false);for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?9:7);n++){if(kind==='enemies'&&n===3)continue;/* solucan kaldirildi */const iste=(kind==='characters'&&n>=5)||(kind==='enemies'&&n===6);for(const dir of ['D','U','S'])for(const action of ['Idle','Walk','Attack','Hurt','Death']){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}/* Insansi dusmanlar (4 kullenmis, 6 Rauf) caprazlarda da ciziliyor; tepeden
    gorulen yaratiklar dondurulerek cizildigi icin ek sheet istemiyor. */for(const n of [4,6])for(const dir of ['DS','US'])for(const action of ['Walk','Attack']){jobs.push(this.img(`enemies${n}${dir}${action}`,`/assets/enemies/${n}/${dir}_${action}.png`));optional.push(true);}/* Oyuncu 8 yonde cizilir (DS/US caprazlar, bati tarafi aynalanir); NPC ve
    dusmanlar 3 yonde kalir. Capraz sheet'ler istege bagli isaretlenir ki
    eksik olsalar yukleme hatasi vermesin - poz() en yakin ana yone duser. */
@@ -132,7 +134,7 @@ for(const set of ['1sword','1bow','1balta'])for(const dir of ['D','U','S','DS','
   // Rauf seti (characters/5, enemies/6) sonradan eklenecek; eksikligi oyunu kirmaz.
   const zorunlu=result.filter((_,i)=>!optional[i]);
   this.ready=zorunlu.every(r=>r.status==='fulfilled');if(!this.ready)this.onEvent({type:'message',text:'Bazı görseller yüklenemedi. Bağlantını kontrol edip sayfayı yenile.'});this.emit();}
- private resetMobs(){this.mobs=this.world.enemies.filter(e=>!this.state.killed.includes(e.id)).map(e=>{const max=e.boss?300:([0,34,42,56,80,24,72][e.kind])+(this.state.zone==='forge'?18:0);return {...e,hp:max,max,cool:1+Math.random(),windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y}});this.shots=[];this.particles=[];this.drops=[];this.activeTraps.clear();}
+ private resetMobs(){this.mobs=this.world.enemies.filter(e=>!this.state.killed.includes(e.id)).map(e=>{const max=e.boss?300:(Engine.CAN[e.kind]??40)+(this.state.zone==='forge'?18:0);return {...e,hp:max,max,cool:1+Math.random(),windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y}});this.shots=[];this.particles=[];this.drops=[];this.activeTraps.clear();}
  setState(s:State){this.state=s;this.world=makeWorld(s.zone,s.flags as Record<string,string|boolean|undefined>);
   // Takipteyse Rauf yeni bolgede oyuncunun yaninda belirir; makeWorld onu
   // kendi ev konumuna koyuyor ve geride kaliyordu.
@@ -242,7 +244,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    (ic carpim pozitif) sirtini donmus demektir. */if(silah.arkadan&&m.aci!==undefined){const vx=m.x-s.x,vy=m.y-s.y,n=Math.hypot(vx,vy)||1;if((Math.cos(m.aci)*vx+Math.sin(m.aci)*vy)/n>.35){damage=Math.round(damage*silah.arkadan);this.float(m.x,m.y-22,'SIRTTAN!','#ffd1a3');}}m.hp-=damage;m.hurt=.17;if(silah.sersemlet)m.sersem=silah.sersemlet;if(s.equipment.weapon==='ember')m.burn=3;if(s.equipment.weapon==='blood')s.hp=Math.min(stats(s).maxHp,s.hp+3);this.float(m.x,m.y-12,String(damage),'#ffdaa3');this.burst(m.x,m.y,'#c76b5d',8);this.audio.play('hit');const d=Math.hypot(m.x-s.x,m.y-s.y)||1;this.move(m,(m.x-s.x)/d*5,(m.y-s.y)/d*5);if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);}this.emit();}
   private kill(m:Mob){
   if(m.id==='rauf'){this.raufDizCok();return;}
-  if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);this.burst(m.x,m.y,m.boss?'#eeb559':'#a56a70',18);const xp=m.boss?210:([0,20,25,30,40,24,60][m.kind]);const gold=m.boss?60:5+m.kind*2;this.spawnDrop(m.x,m.y,'xp',xp);this.spawnDrop(m.x+(Math.random()-.5)*12,m.y+(Math.random()-.5)*12,'gold',gold);if(m.boss){this.notify('Kül Bekçisi yenildi. Kanı hâlâ sıcak bir mühür bıraktı.');addItem(this.state,'potion',2);addItem(this.state,'kanm',1);}this.save();}
+  if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);this.burst(m.x,m.y,m.boss?'#eeb559':'#a56a70',18);const xp=m.boss?210:([0,20,25,30,40,24,60,150][m.kind]);const gold=m.boss?60:5+m.kind*2;this.spawnDrop(m.x,m.y,'xp',xp);this.spawnDrop(m.x+(Math.random()-.5)*12,m.y+(Math.random()-.5)*12,'gold',gold);if(m.boss){this.notify('Kül Bekçisi yenildi. Kanı hâlâ sıcak bir mühür bıraktı.');addItem(this.state,'potion',2);addItem(this.state,'kanm',1);}this.save();}
   /** Rauf olmez: cani kritige dusunce dovus biter ve diz coker.
   *  Esik %18 - oldurucu darbeyi hic yemesin, olum animasyonu oynamasin. */
  private raufDizCok(){
@@ -284,7 +286,15 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Dusman golgesinin yariçapi (dunya birimi). Sabit 8 idi; genis kanatli
   *  yarasanin altinda kucuk, gövdesi dar olanlarda ise gereksiz genis
   *  kaliyordu. Yaratigin gorunur genisligine gore ayarlandi. */
- static readonly GOLGE:Record<number,number>={1:9,2:8,4:8,5:11,6:8};
+ /** Dusman canlari. TEK yerde: once hem resetMobs hem dalga dogusu kendi
+  *  kopyasini tutuyordu; trol eklenince biri guncellendi digeri kaldi ve
+  *  can NaN olup mob ilk karede `hp>0` filtresine takilip yok oldu. */
+ static readonly CAN:Record<number,number>={1:34,2:42,4:80,5:24,6:72,7:190};
+ static readonly GOLGE:Record<number,number>={1:9,2:8,4:8,5:11,6:8,7:18};
+ /** Hucre eni (dunya birimi). Trol sopasiyla 64'e sigmiyordu, 112 px kullaniyor. */
+ static readonly DUSMAN_EN:Record<number,number>={7:56};
+ /** Ciz olcegi. Trol bir mini-patron: oyuncudan belirgin buyuk gorunmeli. */
+ static readonly DUSMAN_OLCEK:Record<number,number>={7:1.7};
  static readonly CARP_MOB=14;
  private *karakterler(ben:string|null,mobDahil=false){
   if(ben!==null)yield{x:this.state.x,y:this.state.y,r:Engine.CARP};
@@ -332,7 +342,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   *  halinde gelmesinler; kimlikleri benzersiz, yoksa `killed` listesi bir
   *  onceki surunun olulerini hatirlar ve hepsi olu dogar. */
  private yarasaSurusu(kx:number,ky:number,adet:number){
-  const max=([0,34,42,0,80,24,72][5]);
+  const max=Engine.CAN[5];
   for(let i=0;i<adet;i++){
    const a=Math.random()*Math.PI*2,r=6+Math.random()*30;
    let sx=kx*16+8+Math.cos(a)*r,sy=ky*16+8+Math.sin(a)*r;
@@ -434,7 +444,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      if(this.dalgaSayac<=0){
       const [kx,ky]=Engine.KAPI;let n=0;
       for(const [kind,adet] of Engine.DALGALAR[gecen])for(let i=0;i<adet;i++){
-       const max=([0,34,42,0,80,24,72][kind]);
+       const max=Engine.CAN[kind]??40;
        // Yayilim genisletildi: hepsi ayni noktaya dogunca ust uste basliyorlardi.
        let sx=kx*16+8+(Math.random()-.5)*54,sy=ky*16+8+(Math.random()-.5)*16;
        for(let k=0;k<10&&!walkable(this.world,sx,sy);k++)sy-=8;
@@ -679,7 +689,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     const sy=this.sahneYuru.get(e.id);const g=this.gez.get(e.id);const yur=!!sy||(!!g&&g.bekle<=0&&Math.hypot(g.tx-e.x,g.ty-e.y)>1.5);const yd=sy?sy.dir:g?.dir??'D';const yf=sy?sy.flip:g?.flip??false;const yy=sy?sy.yol:(g?.yol||0);this.sprite(`characters${e.portrait}${yur?yd:'D'}${yur?'Walk':'Idle'}`,e.x,e.y,yur?Math.floor(yy/Engine.ADIM):Math.floor(time*5),32,32,yur&&yd==='S'&&yf,OL);const pending=bekleyen(this.state,e.id);/* Unlem isimle AYNI yukseklikte olmali: isim olcekle (e.s) yukseliyordu,
    unlem sabit -30'daydi, kucuk karakterlerde (Lin s=0.8) kayik duruyordu. */const etiketY=e.y-30*(e.s||1);const nw=this.label(e.name||'',e.x,etiketY);if(pending)this.label('!',e.x-nw/2-5,etiketY,'#e0453a');}
   }}));
-  for(const m of this.mobs)actors.push({y:m.y,draw:()=>{c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=Math.floor(time*Engine.DUSMAN_FPS(eylem));if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0));}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim);}else{this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}const yuzuk=this.state.equipment.ring;if(m.hp<m.max||m.boss||(yuzuk&&ITEMS[yuzuk].canGoster)){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');}}});
+  for(const m of this.mobs)actors.push({y:m.y,draw:()=>{c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=Math.floor(time*Engine.DUSMAN_FPS(eylem));if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0));}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim);}else{this.sprite(anahtar,m.x,m.y,kare,Engine.DUSMAN_EN[m.kind]??32,32,yar.mod==='aynali'&&Math.cos(bak)<0,ol);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}const yuzuk=this.state.equipment.ring;if(m.hp<m.max||m.boss||(yuzuk&&ITEMS[yuzuk].canGoster)){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');}}});
    actors.push({y:this.state.y,draw:()=>{const s=this.state;c.fillStyle='#02081280';c.beginPath();c.ellipse(s.x,s.y+1,8.5*OYUNCU_OLCEK,2.8*OYUNCU_OLCEK,0,0,7);c.fill();const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';// Dusus: sprite kucule kucule asagi kayiyor, boslugun icine iniyormus gibi.
   // Dusus: kucuIme YOK, karakter bir anda kayboluyor.
   const dusuyor=this.dusus>0;

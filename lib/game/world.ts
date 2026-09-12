@@ -2,7 +2,7 @@ import type {ItemId,Zone} from './data';
 export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
-export type EnemySpec={id:string;kind:1|2|4|5|6;x:number;y:number;boss?:boolean};
+export type EnemySpec={id:string;kind:1|2|4|5|6|7;x:number;y:number;boss?:boolean};
 export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[];enemies:EnemySpec[];spawn:[number,number];blockers:[number,number,number,number][];
  /** Uzerine BASINCA bolge degistiren kutular (karo birimi, x2/y2 haric).
   *  Kapi nesnesine basmak yerine tunelden yuruyerek gecmek icin. */
@@ -41,7 +41,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  };
  const decor=(id:string,x:number,y:number,asset:string,name?:string)=>at({id,type:'decor',x,y,asset,name:name||(asset.includes('Table')?'Zanaat Masası':undefined)});
  const chest=(id:string,x:number,y:number,items:[ItemId,number][],gold=0)=>at({id,type:'chest',x,y,items,gold,name:'Sandık'});
- const enemy=(id:string,kind:1|2|4|5|6,x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
+ const enemy=(id:string,kind:1|2|4|5|6|7,x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
  if(zone==='haven'){
   // Zemin ve carpisma ARTIK ELLE YAZILMIYOR: yeni mekan tek sahne gorseli +
   // ayri prop sayfasi olarak geldi, ikisi de scripts/mekan_kur.py ile islendi.
@@ -91,6 +91,11 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   gecis(24,29,31,30,'haven',[15,4]);   // geldigin agiz: uzerine basinca geri
   // Kemerli yikik kapi: kulun disinda kalan tek kapali mekan.
   gecis(19,20,21,21,'yikik',[15,28]);   // kemerli kapi: uzerinden yuruyunce giriliyor
+  // Kul Ovasi'nin tek sakini: sopali trol. Girise UZAGA kondu (bati ucu),
+  // cunku ovada can surekli eriyor - oyuncu kapinin onunde ona yakalanirsa
+  // kacacak yeri kalmiyor. Uzun bir dovus burada zaten pahali; Kul pelerini
+  // takmak ya da hizli bitirmek gerekiyor.
+  enemy('trol',7,8,22);
  }else if(zone==='yikik'){
   // Kul Ovasi'ndaki kemerli yikintinin ici (30x30). Zemin boyali sahne,
   // carpisma da uzerine YESIL boyanmis maskeden okundu - burada yesil

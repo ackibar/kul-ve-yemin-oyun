@@ -49,3 +49,7 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 /asset_backup_ton_oncesi/
 __pycache__/
+
+# Kaynak sanat (yesil fonlu ham gorseller) depoya girmez
+/Generate_*.jpeg
+/Generate_*.png

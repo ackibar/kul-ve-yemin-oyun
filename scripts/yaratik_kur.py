@@ -16,9 +16,11 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HAM = f'{ROOT}/generated/yaratik_anim'
+# Hucre eni yaratiga gore: trol sopasiyla 64'e sigmiyor.
 CELL = 64
+CELL_EN = {7: 112}
 YON = ('D', 'U', 'S')
-SLOT = {'fare': 1, 'orumcek2': 2, 'yarasa': 5}
+SLOT = {'fare': 1, 'orumcek2': 2, 'yarasa': 5, 'troll': 7}
 
 
 def merkez(k):
@@ -39,14 +41,14 @@ def merkez(k):
 # ekranda `-capa + r*0.5` birime denk geliyor; golge (y=0) icin r = 2*capa.
 # Kareler hucre ORTASINA (32) oturtulunca yaratik golgesinin 7 birim ustunde
 # havada duruyordu - ekranda acikca ayriydi.
-CAPA = {1: 22, 2: 21, 5: 21}          # engine.sprite() ile ayni
+CAPA = {1: 22, 2: 21, 5: 21, 7: 21}   # engine.sprite() ile ayni
 # Yerden yukseklik (art satiri). Yarasa UCUYOR: golgesi altinda gorunmeli,
 # govdesi havada durmali. Yerdeki yaratiklarda 0, yani karin cizgisi zemine
 # oturur ve golgenin yalnizca kenari disari tasar.
-UCUS = {1: 0, 2: 0, 5: 13}
+UCUS = {1: 0, 2: 0, 5: 13, 7: 0}
 
 
-def otur(k, hedef_cy):
+def otur(k, hedef_cy, en=CELL):
     """Kareyi kutle merkezine gore oturtur.
 
     Dikeyde ALT KENARA gore hizalamak dogru gorunurdu ama kare kare degisiyor
@@ -54,8 +56,8 @@ def otur(k, hedef_cy):
     bir kez ilk kareden hesaplanip butun karelere ayni sekilde uygulanir.
     """
     cx, cy = merkez(k)
-    out = Image.new('RGBA', (CELL, CELL), (0, 0, 0, 0))
-    out.paste(k, (round(CELL / 2 - cx), round(hedef_cy - cy)))
+    out = Image.new('RGBA', (en, CELL), (0, 0, 0, 0))
+    out.paste(k, (round(en / 2 - cx), round(hedef_cy - cy)))
     return out
 
 
@@ -78,9 +80,10 @@ def kirmizi(k, guc=.45):
 
 
 def sayfa(kareler, yol):
-    sh = Image.new('RGBA', (CELL * len(kareler), CELL), (0, 0, 0, 0))
+    en = kareler[0].width
+    sh = Image.new('RGBA', (en * len(kareler), CELL), (0, 0, 0, 0))
     for i, k in enumerate(kareler):
-        sh.paste(k, (i * CELL, 0))
+        sh.paste(k, (i * en, 0))
     sh.save(yol)
 
 
@@ -105,8 +108,9 @@ def kur(ad):
         src = kaynaklar[y]
         hy = ham_kareler(src, 'Walk'), ham_kareler(src, 'Attack')
         hedef = hedef_satir(hy[0][0], slot)
-        yuru = [otur(k, hedef) for k in hy[0]]
-        vur = [otur(k, hedef) for k in hy[1]]
+        en = CELL_EN.get(slot, CELL)
+        yuru = [otur(k, hedef, en) for k in hy[0]]
+        vur = [otur(k, hedef, en) for k in hy[1]]
         sayfa(yuru, f'{klasor_yol}/{y}_Walk.png')
         sayfa(vur, f'{klasor_yol}/{y}_Attack.png')
         sayfa([kirmizi(yuru[0].copy()), kirmizi(yuru[0].copy(), .25)], f'{klasor_yol}/{y}_Hurt.png')

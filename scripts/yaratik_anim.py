@@ -40,6 +40,17 @@ ISLER = {
 for _y in ('u', 's'):
     ISLER[f'orumcek2{_y}'] = ISLER['orumcek2']
 
+# Trol onden cizilmis buyuk bir insansi: dondurulmez, yalnizca aynalanir.
+# Sopa her karede elde kalmali, yoksa dev yaratik bos elle vuruyor gibi duruyor.
+ISLER['troll'] = [
+    ('Walk', 8, 'a huge troll lumbering forward with heavy slow steps, shoulders swaying '
+                'and head bobbing, dragging its heavy spiked wooden club at its side; the '
+                'club stays in its hand in every single frame'),
+    ('Attack', 6, 'a huge troll raising its heavy spiked wooden club and smashing it down '
+                  'in front of itself, body leaning into the blow, then hauling the club '
+                  'back up; the club is out in front of the body in every single frame'),
+]
+
 
 def uret(ad):
     os.makedirs(HAM, exist_ok=True)
