@@ -206,7 +206,15 @@ Yaratıklarda alfa ağırlık merkezi. Referans, aynı yönün mevcut Idle kares
   NO modern clothing, human".
 
 **Mekânlar:** tek parça boyalı arka plan; çarpışma otorite, görsel ona
-maskelenir. Boyalı mobilyanın çarpışması elle (`blockers`). Photoshop
+maskelenir.
+**En kolay yol — yeşil maske:** aynı sahnenin yürünebilir zemini yeşile
+boyanmış ikinci bir kopyası (`scripts/tunel_kur.py`). Zemin doğrudan oradan
+okunur, parlaklık tahmini gerekmez. Model yeşili sahnenin ışığıyla
+**koyultuyor** (ölçüldü: 51,71,43 — g-r=20); parlak yeşil eşiği hiçbir şey
+bulmaz, eşiği düşür ve **en büyük bağlı alanı** al (kayalardaki yosun da yeşil
+ama kopuk). Yatay üretilen mekân 90° çevrilebilir. Geçiş kutusu koridorun
+**geniş** satırlarında olmalı — dar ve kayık uca oyuncu çarpışma yarıçapıyla
+giremiyor; giriş karosuna yaratık koyma, geri dönüşü kapatıyor. Boyalı mobilyanın çarpışması elle (`blockers`). Photoshop
 katman sözleşmesi: `zemin` / `<ad>@engel` / `@gecilir` / `@ates` / `@ust`.
 
 **Işık haritası (2026-09-12):** `Engine.KARANLIK[mekan]` 0–1; 0 ise eski
