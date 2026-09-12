@@ -202,7 +202,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    /* Obruk'un kileri. Tuzlu et oyunun en guclu tek seferlik iyilesmesi;
       bedeli de ona gore (26 altin, ustune iki bucuk kat zam). */
    /* Mesale: eskiden tanimliydi ama hicbir yerde kullanilmiyordu (olu esya). */
-   else if(id==='torch'){if(!(Engine.KARANLIK[this.state.zone]>0)){this.notify('Burası zaten aydınlık; meşaleyi karanlık bir yer için sakla.');return false;}
+   else if(id==='torch'){/* Mekan kisiti kaldirildi (kullanici: kilic gibi ele alinabilsin); aydinlikta yalnizca uyarir. */if(!(Engine.KARANLIK[this.state.zone]>0))this.notify('Burası aydınlık; meşale burada yalnızca elinde yanar.');
     if(!removeItem(this.state,id))return false;this.mesale=Engine.MESALE_SURE;this.state.flags.mesaleKalan=String(Engine.MESALE_SURE);
     /* Mesale ELE alinir: gecici silah 'elmesale' envantere girer ve kusanilir; sonunce cikar. */
     const s=this.state;if(s.equipment.weapon!=='elmesale')this.mesaleOnce=s.equipment.weapon;if(!s.inventory.elmesale)addItem(s,'elmesale',1);
@@ -232,10 +232,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   /* Dongu: en guclu kilic -> en guclu menzilli -> ciplak el. Menzilli silah
      artik tek degil (avci yayi, tatar yayi), o yuzden tur bazinda seciliyor. */
   const kilic=guclu(sahip.filter(id=>!ITEMS[id].menzilli)),yay=guclu(sahip.filter(id=>ITEMS[id].menzilli));
-  const sira:ItemId[]=[];if(kilic)sira.push(kilic);if(yay)sira.push(yay);/* Mesale yaniyorsa ciplak elin yerini alir. */if(s.inventory.elmesale)sira.push('elmesale');else sira.push('yumruk');
+  const sira:ItemId[]=[];if(kilic)sira.push(kilic);if(yay)sira.push(yay);/* Mesale yaniyorsa ciplak elin yerini alir; sonukse de (heybede torch varsa) donguye girer ve secilince yakilir. */if(s.inventory.elmesale||s.inventory.torch)sira.push('elmesale');else sira.push('yumruk');
   const next=sira[(sira.indexOf(s.equipment.weapon)+1)%sira.length];
+  /* Sonuk mesaleyi ele almak = yakmak. useItem kusanmayi da yapiyor. */
+  if(next==='elmesale'&&!s.inventory.elmesale){this.useItem('torch');this.audio.play('select');return;}
   this.notify(ITEMS[next].menzilli?`${ITEMS[next].name} kuşanıldı (Menzilli ok modu). Kalan ok: ${s.inventory.arrow||0}`
    :next==='yumruk'?'Silahını kaldırdın. Çıplak ellerle dövüşüyorsun.'
+   :next==='elmesale'?'Meşaleyi eline aldın. Zayıf vurur ama tutuşturur.'
    :`${ITEMS[next].name} kuşanıldı (Kılıç modu).`);
   s.equipment.weapon=next;s.hp=Math.min(s.hp,stats(s).maxHp);this.audio.play('select');this.save();this.emit();}
  dodge(){if(this.paused||this.dodgeTimer>0)return;this.dodgeTimer=stats(this.state).dodge;this.dash=.2;this.invulnerable=.36;this.audio.play('dodge');const kx=(this.keys.right?1:0)-(this.keys.left?1:0),ky=(this.keys.down?1:0)-(this.keys.up?1:0),inX=kx||this.input.x,inY=ky||this.input.y,n=Math.hypot(inX,inY);this.dashVector=n>.1?{x:inX/n,y:inY/n}:this.yonVektor();this.emit();}
@@ -314,7 +317,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    g.globalCompositeOperation='destination-out';
    const del=(x:number,y:number,r:number,guc=1)=>{if(x<cx-r||x>cx+en+r||y<cy-r||y>cy+boy+r)return;
     const gr=g.createRadialGradient(x-cx,y-cy,0,x-cx,y-cy,r);
-    /* Yumusak gecis: dort ara durak, kenara dogru uzun kuyruk. */gr.addColorStop(0,`rgba(0,0,0,${guc})`);gr.addColorStop(.25,`rgba(0,0,0,${guc*.92})`);gr.addColorStop(.55,`rgba(0,0,0,${guc*.55})`);gr.addColorStop(.8,`rgba(0,0,0,${guc*.18})`);gr.addColorStop(1,'rgba(0,0,0,0)');
+    /* Yumusak gecis: bes ara durak, karanliga uzun kuyruk. */gr.addColorStop(0,`rgba(0,0,0,${guc})`);gr.addColorStop(.2,`rgba(0,0,0,${guc*.95})`);gr.addColorStop(.45,`rgba(0,0,0,${guc*.7})`);gr.addColorStop(.7,`rgba(0,0,0,${guc*.35})`);gr.addColorStop(.88,`rgba(0,0,0,${guc*.1})`);gr.addColorStop(1,'rgba(0,0,0,0)');
     g.fillStyle=gr;g.fillRect(x-cx-r,y-cy-r,r*2,r*2);};
    const s=this.state;const tit=(x:number)=>1+Math.sin(time*9+x)*.04+Math.sin(time*23+x*.7)*.02;
    // Oyuncu: mesaleyle genis, mesalesiz yalnizca cevresi (iki adim).
@@ -390,7 +393,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly KARANLIK:Record<string,number>={haven:0,magara:.82,cistern:0,disari:0,yikik:0};
  /** Mesale suresi (sn) ve yaricaplari: mesaleli / mesalesiz oyuncu, ates, fener. */
  static readonly MESALE_SURE=90;
- static readonly ISIK={mesale:104,cip:26,ates:64,fener:40,yanan:26,ok:18};
+ static readonly ISIK={mesale:208,cip:26,ates:64,fener:40,yanan:26,ok:18};
  /** Fener tasiyan bu mesafede soner ve etrafa Bogulmus birakir. */
  static readonly FENER_MENZIL=46;
  static readonly GOLGE:Record<number,number>={1:9,2:8,4:8,5:11,6:8,7:18,8:9,9:5,10:10};
@@ -890,7 +893,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      mesalesi de ayni sicakligi versin, yoksa isik haritasi deligi soguk gri kaliyor. */
   {const sicak=(x:number,y:number,r:number)=>{const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'#f7af3930');g.addColorStop(.4,'#ee8e1812');g.addColorStop(1,'#ee8e1800');c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2);};
    for(const [x,y,r] of this.world.isiklar)sicak(x,y,r*.9+Math.sin(time*3+x)*3);
-   if(this.mesale>0)sicak(this.state.x,this.state.y-16,(this.mesaleElde()?70:36)+Math.sin(time*4)*3);}
+   if(this.mesale>0)sicak(this.state.x,this.state.y-16,(this.mesaleElde()?120:50)+Math.sin(time*4)*4);}
   for(const e of this.world.entities.filter(e=>e.type==='fire'||e.type==='core')){if(Math.abs(e.x-this.state.x)>230||Math.abs(e.y-this.state.y)>160)continue;const radius=48+Math.sin(time*3+e.x)*3;const glow=c.createRadialGradient(e.x,e.y-6,0,e.x,e.y-6,radius);glow.addColorStop(0,'#f7af3936');glow.addColorStop(.35,'#ee8e1815');glow.addColorStop(1,'#ee8e1800');c.fillStyle=glow;c.fillRect(e.x-radius,e.y-radius-6,radius*2,radius*2);}
   for(const d of this.drops){c.save();c.translate(d.x,d.y);if(d.kind==='wood'){c.fillStyle='#b87c4c';c.fillRect(-3,-2,6,4);c.fillStyle='#6e4729';c.fillRect(-2,-1,4,2);}else if(d.kind==='xp'){const p=2.5+Math.sin(time*10)*.8;c.fillStyle='#8ee675';c.beginPath();c.arc(0,0,p,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(0,0,p*.5,0,Math.PI*2);c.fill();}else if(d.kind==='gold'){c.fillStyle='#ffd700';c.beginPath();c.arc(0,0,2.5,0,Math.PI*2);c.fill();c.fillStyle='#b89200';c.fillRect(-.8,-.8,1.6,1.6);}else if(d.kind==='bow'){c.strokeStyle='#c78d4c';c.lineWidth=1.5;c.beginPath();c.arc(0,0,5,-Math.PI/2,Math.PI/2);c.stroke();c.strokeStyle='#dedede';c.lineWidth=0.8;c.beginPath();c.moveTo(0,-5);c.lineTo(0,5);c.stroke();}c.restore();}
   for(const s of this.shots){if(s.isHero){c.save();/* Ok ayaklardan cikiyor gibi duruyordu. shot.y'yi yukseltmek YANLIS olurdu:

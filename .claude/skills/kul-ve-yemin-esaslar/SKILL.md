@@ -186,8 +186,10 @@ kümelerinden ölçülür), fener taşıyan, yanan düşman, ateş oku, oyuncu
 zanaat masasında 2 odun. Yeni karanlık mekân gelince KARANLIK'a değer ve
 `isiklar`'a fener konumları yazılır.
 
-**Meşale (2026-09-12):** yalnız `KARANLIK>0` mekânlarda yakılır (aydınlıkta
-tüketilmez, uyarı). Yanınca `elmesale` geçici silahı envantere girer;
+**Meşale (2026-09-12):** her yerde yakılır (mekân kısıtı test için
+kaldırıldı; aydınlıkta yalnız uyarır). Q döngüsünde sönük meşale de var:
+seçince yakılır — "kılıç gibi ele alınsın". Yarıçap 208 (kullanıcı iki kat
+istedi), beş duraklı yumuşak geçiş. Yanınca `elmesale` geçici silahı envantere girer;
 kılıç tutuyorsan meşale sol ele gelir (`1swordmesale` seti), silahsızsan
 tek başına (`1mesale`, vuruşu tutuşturur); yay/balta iki el ister, meşale
 kemerde kalır ve ışık yarıya iner (`mesaleElde()`). Q döngüsünde meşale
@@ -258,4 +260,4 @@ kondu. Uzaklıkla kısılır.
 
 ---
 
-*Son güncelleme: 2026-09-12, v5.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-12, v5.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
