@@ -77,6 +77,11 @@ export class Engine{
  /** Tepeden cizilmis yaratiklar ve sprite'larinin DOGAL bakis acisi (radyan,
   *  0 = saga). Bu listede olmayan dusman insansidir ve yon basina ayri sheet
   *  kullanir. Fare basi sag-asagi bakiyor, digerleri asagi. */
+ /** Dusman animasyon hizi. Eskiden sabit 7 fps idi; kareler tek gorselden
+  *  turetildigi icin yeterliydi ama gercek animasyonda yarasa 9 karelik kanat
+  *  cirpmasini 1.3 saniyede tamamliyordu, yani agir cekim duruyordu.
+  *  Saldiri daha hizli: windup 0.4 sn, 7 kare o surede sigsin. */
+ static readonly DUSMAN_FPS=(eylem:string)=>eylem==='Attack'?15:11;
  static readonly TEPEDEN:Record<number,number>={1:Math.PI/6,2:Math.PI/2,5:Math.PI/2};
  static readonly DUSUS=0.5;
  private sonImza='';
@@ -586,7 +591,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   }}));
   for(const m of this.mobs)actors.push({y:m.y,draw:()=>{c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:1)*OYUNCU_OLCEK;if(Engine.TEPEDEN[m.kind]!==undefined){/* Fare, orumcek, kirkayak, yarasa TEPEDEN cizilmis: yon icin ayri sheet
    uretmek gereksiz, sprite bakis yonune DONDURULUR. Hem sekiz degil 360
-   yon verir hem de bedava. TEPEDEN[kind] = sprite'in dogal bakis acisi. */const bak=m.aci??Math.atan2(dy,dx);this.sprite(`enemies${m.kind}D${eylem}`,m.x,m.y,Math.floor(time*7),32,32,false,ol,1,bak-Engine.TEPEDEN[m.kind]);}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*7),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}if(m.hp<m.max||m.boss){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');}}});
+   yon verir hem de bedava. TEPEDEN[kind] = sprite'in dogal bakis acisi. */const bak=m.aci??Math.atan2(dy,dx);this.sprite(`enemies${m.kind}D${eylem}`,m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,false,ol,1,bak-Engine.TEPEDEN[m.kind]);}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}if(m.hp<m.max||m.boss){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');}}});
    actors.push({y:this.state.y,draw:()=>{const s=this.state;c.fillStyle='#02081280';c.beginPath();c.ellipse(s.x,s.y+1,8.5*OYUNCU_OLCEK,2.8*OYUNCU_OLCEK,0,0,7);c.fill();const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';// Dusus: sprite kucule kucule asagi kayiyor, boslugun icine iniyormus gibi.
   // Dusus: kucuIme YOK, karakter bir anda kayboluyor.
   const dusuyor=this.dusus>0;
