@@ -89,7 +89,7 @@ kendileri koymuş olur. Modern isim yok.
 | Mirna | Sığınak | şifacı, sayan, sırrı: ilk gece kapıda o durdu | medicine*, mirnaSir |
 | Alf | Sığınak | kapı muhafızı, son mandal | ledger*, alfSir, alfKarsi |
 | Undur | Sığınak | arşivci, metni okuyan | alfSir, kralUndur |
-| Lin | Sığınak | 8 yaş, ateşi söndürmeyen | sozNil, nilOdun |
+| Lin | Sığınak | 8 yaş, ateşi söndürmeyen | sozNil, nilOdun, **nilSondu** |
 | Elvi | Sığınak | sayılmayan yetmiş birinci | selviSir, sozSelvi |
 | Tiga | Yıkık/Sığınak | Lin'in ağabeyi | ayaz (indi/kaldi) |
 | Tuhn | Sarnıç Ağzı | uçurumun başındaki adam | tuhn (kaldi/atladi) |
@@ -320,6 +320,12 @@ kondu. Uzaklıkla kısılır.
 - **Kaçışın (dash) izi var**: 0.028 sn aralıkla soluk kopya bırakılır
   (`izler`), render oyuncudan ÖNCE çizer; kalkışta ayaktan geriye kül tozu.
 - Rauf ölmez, diz çöker; ölürse yeniden doğmaz (yerleşim koşullu).
+- **Lin kırılabilir** (2026-09-13): "Belki dönmez" dalında iki kademeli bir
+  yol var. Onu kıran şey "ağabeyin öldü" demek değil, **sözü anlamsızlaştırmak**:
+  "Sana söz verdirdi ki sen kalasın; gitmek isteyen söz verdirir." Kabul ederse
+  odunu bırakır, `flags.nilSondu` ve **ateş söner** — `world.ts`'te alev2
+  entity'si çizilmez, boyalı köz kalır. Geri alınamaz; seçeneğin altında uyarısı
+  var. Ağabeyi indiyse (`ayaz==='indi'`) yol kapalı.
 - **Kral öldürülemez** (2026-09-12 kullanıcı kararı). Bir süre vurulabilirdi
   (çubuksuz, "ölçü oyuncunun"); kaldırıldı. Taç eşyası ve Obruk'un satın alma
   seçeneği veride duruyor, şimdilik ulaşılamıyor.

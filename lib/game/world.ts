@@ -80,7 +80,9 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // Capa: Fire1 sprite'i 32 birimlik hucrenin TAMAMINI dolduruyor ve sprite()
   // hucreyi y+6'da bitiriyor, yani alevin TABANI y+6. Halkanin biraz on-altina
   // otursun diye y = merkez + halka_yuksekligi*0.35 - 6.
-  entities.push({id:'alev0',type:'fire',x:190.8,y:171.9,s:1.16});entities.push({id:'alev1',type:'fire',x:334.0,y:190.6,s:1.16});entities.push({id:'alev2',type:'fire',x:327.2,y:323.4,s:1.13});
+  entities.push({id:'alev0',type:'fire',x:190.8,y:171.9,s:1.16});entities.push({id:'alev1',type:'fire',x:334.0,y:190.6,s:1.16});/* Lin'in atesi. Cocugun sozu kirildiysa (flags.nilSondu) ARTIK YANMIYOR:
+     boyali koz yerinde kalir, animasyonlu alev cizilmez. */
+  if(flags?.nilSondu!=='evet')entities.push({id:'alev2',type:'fire',x:327.2,y:323.4,s:1.13});
   decor('table2',22,10,'Tables/2.png','Zanaat Masası');
   // Alt-soldaki yatak: etkilesim noktasi yatagin UST kenarinin hemen disinda,
   // cunku yatagin kendisi engel ve icinden gorus hatti kurulamiyor.

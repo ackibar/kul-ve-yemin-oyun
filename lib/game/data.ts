@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='7.6';
+export const SURUM='7.7';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -123,7 +123,7 @@ export function questList(s:State){return [
  {id:'medicine',title:'Bir doz umut',done:!!s.flags.medicineDone,active:!!s.flags.medicineStarted,step:s.flags.medicineDone?(s.flags.medicine==='rauf'?'Rauf’u kurtardın. Mirna kararını öğrendi.':'İlaç sığınağın hastalarına ulaştı.'):s.flags.medicine==='rauf'?'Kararını Mirna’ya anlat.':s.inventory.medicine?'İlacı Mirna’ya götür veya yaralı Rauf’u ver.':'Sarnıcın kuzeydoğu odasındaki ilacı bul.'},
  {id:'ledger',title:'Defterdeki isim',done:!!s.flags.ledgerDone,active:!!s.flags.ledgerStarted,step:s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Rauf’u sırrını korudun.':'Rauf’u muhafızlara teslim ettin.'):s.inventory.ledger?'Defteri Alf’e götür.': 'Sarnıcın doğusunda Rauf’u bul. Hikâyesini dinle ve ne yapacağına karar ver.'},
  // Istege bagli: Lin'in atesi ve yukarida bekleyen agabeyi. Ana sonu kilitlemez.
- {id:'ates',title:'Sönmeyen ateş',done:s.flags.ayaz==='indi',active:!!s.flags.nil||!!s.flags.ayaz,step:s.flags.ayaz==='indi'?'Tiga sığınağa indi. Lin’in ateşi yanmaya devam ediyor.':s.flags.ayaz==='kaldi'?'Tiga Yıkık Ev’de kalmayı seçti. Sara’yı bekliyor.':s.flags.ayaz?'Tiga Yıkık Ev’de. Onu aşağı inmeye ikna edecek bir sebep bul.':s.flags.sozNil==='verildi'?'Lin’e söz verdin: ağabeyini görürsen ateşin yandığını söyleyeceksin. Kül Ovası’ndaki yıkığa bak.':'Lin’in ağabeyi on bir gündür yukarıda. Kül Ovası’ndaki yıkığa bak.'}
+ {id:'ates',title:'Sönmeyen ateş',done:s.flags.ayaz==='indi',active:!!s.flags.nil||!!s.flags.ayaz||!!s.flags.nilSondu,step:s.flags.nilSondu?'Ateş söndü. Lin artık odun taşımıyor.':s.flags.ayaz==='indi'?'Tiga sığınağa indi. Lin’in ateşi yanmaya devam ediyor.':s.flags.ayaz==='kaldi'?'Tiga Yıkık Ev’de kalmayı seçti. Sara’yı bekliyor.':s.flags.ayaz?'Tiga Yıkık Ev’de. Onu aşağı inmeye ikna edecek bir sebep bul.':s.flags.sozNil==='verildi'?'Lin’e söz verdin: ağabeyini görürsen ateşin yandığını söyleyeceksin. Kül Ovası’ndaki yıkığa bak.':'Lin’in ağabeyi on bir gündür yukarıda. Kül Ovası’ndaki yıkığa bak.'}
  ]}
 /** NPC'nin basinda unlem gosterilsin mi: oyuncunun onunla henuz kapatmadigi
  *  bir isi var demektir. Motor bunu her karede cagirir. */
@@ -134,7 +134,7 @@ export function bekleyen(s:State,id:string):boolean{
   case 'ekin':return !s.ending;
   case 'rauf':return !s.flags.fugitive;
   case 'tuhn':return !s.flags.tuhn;
-  case 'nil':return !s.flags.sozNil;
+  case 'nil':return !s.flags.sozNil&&!s.flags.nilSondu;
   case 'selvi':return !s.flags.sozSelvi;
   case 'ayaz':return s.flags.ayaz!=='indi'&&s.flags.ayaz!=='kaldi';
   case 'muhafiz':return !s.flags.muhafiz;
@@ -172,7 +172,9 @@ export type Dialogue={who:string;role:string;portrait:number;text:string;choices
  *  Basit tutuldu, sonradan derinlestirilecek. */
 export type StoryNode={text:string;choices:{label:string;to:string|null;
  /** Secenek yalnizca bu kosul saglaninca gorunur (baska bir NPC'den ogrenilen bilgi gibi). */
- if?:(s:State)=>boolean}[]};
+ if?:(s:State)=>boolean;
+ /** Secenegin altinda kucuk uyari: geri alinamaz kararlarda gosterilir. */
+ note?:string}[]};
 const AYRIL={label:'Gitmem gerek.',to:null};
 export const STORY:Record<string,Record<string,StoryNode>>={
  /* Uslu: firtinaya cikip geri donen deli. Herkes cok ciddi, o degil. Tuhaf
@@ -500,7 +502,16 @@ export const STORY:Record<string,Record<string,StoryNode>>={
   'kral':{text:'Kral amca. Ona ateşten köz götürüyorum, ısınsın diye. Konuşmuyor ama ellerini uzatıyor. Alf amca “götürme” diyor, ben götürüyorum. Ağabeyim de “söndürme” dedi; ikisi aynı şey bence.',
    choices:[AYRIL]},
   'belki':{text:'Biliyorum. Alf amca da “dönmez” dedi, sonra özür diledi. Dönmese de söndürmem. Söz ona verildi; ona geri verilmeden bitmez.',
-   choices:[{label:'Ne yapmamı istersin?',to:'soz'},AYRIL]},
+   choices:[{label:'Ne yapmamı istersin?',to:'soz'},
+    /* Kirma yolu. Cocugun kimligi SOZUNDE; onu kirmanin yolu "agabeyin oldu"
+       demek degil, sozu anlamsizlastirmak. Iki kademe: once direnir, sonra
+       kirilir. Agabeyi indiyse yol kapali - ortada bekleyecek kimse yok. */
+    {label:'Bu ateş kimseyi geri getirmiyor.',to:'kir1',if:s=>s.flags.ayaz!=='indi'&&!s.flags.nilSondu},AYRIL]},
+  'kir1':{text:'…Getirmiyor. Biliyorum. Ateş ağabeyimi getirsin diye yanmıyor ki. Dönerse ilk göreceği şey olsun diye yanıyor. Fark var.',
+   choices:[{label:'Tamam. Yanmaya devam etsin.',to:null},
+    {label:'Sana söz verdirdi ki sen kalasın. Gitmek isteyen söz verdirir.',to:'kirildi',
+     note:'Bu sözü geri alamazsın'}]},
+  'kirildi':{text:'…Yukarı çıkmak isteyen. …Sen öyle dedin. …Peki.',choices:[AYRIL]},
   'soz':{text:'Yukarı çıkan tek sensin. Onu görürsen söyle: ateş yanıyor. Bu kadar. Söz verir misin?',
    choices:[{label:'Söz veriyorum.',to:'sozVerildi'},{label:'Söz veremem. Ama görürsem söylerim.',to:'sozRed'}]},
   'sozVerildi':{text:'Tamam. Şimdi iki kişiyiz.',choices:[AYRIL]},
@@ -572,7 +583,7 @@ export function dialogue(s:State,id:string):Dialogue{
  if(tNpc===id&&STORY[id]?.[tNode]){
   const n=STORY[id][tNode],base=dialogue({...s,flags:{...s.flags,talk:''}},id);
   return {...base,text:n.text,choices:[
-   ...n.choices.filter(c=>!c.if||c.if(s)).map(c=>({label:c.label,action:c.to?`story:${id}:${c.to}`:'story:bitir'})),
+   ...n.choices.filter(c=>!c.if||c.if(s)).map(c=>({label:c.label,action:c.to?`story:${id}:${c.to}`:'story:bitir',...(c.note?{note:c.note}:{})})),
   ]};
  }
  // Tuhn: ucurumdayken butun sohbeti STORY agacinda (motor talk'i 'tuhn:1'e
@@ -583,13 +594,14 @@ export function dialogue(s:State,id:string):Dialogue{
  // Lin: siginaktaki cocuk. Ates onun, soz onun.
  if(id==='nil'){
   return {who:'Lin',role:'Ateşi söndürmeyen',portrait:7,
-   text:s.flags.kral==='oldu'?'Kral amcayı… sen mi? …Köz götürecek kimsem kalmadı. Ateşi yine söndürmem. Ama sana bakmam.'
+   text:s.flags.nilSondu?'…Söndü. Bakma bana. Odun taşımak kolaydı; zor olan neden taşıdığını bilmekti. Sen onu aldın.'
+    :s.flags.kral==='oldu'?'Kral amcayı… sen mi? …Köz götürecek kimsem kalmadı. Ateşi yine söndürmem. Ama sana bakmam.'
     :s.flags.ayaz==='indi'?'Ağabeyim geldi! Koşarak geldi, külden bembeyazdı. Ateşin yandığını gördü. …Mirna onu yazdı. Yaşayanlara.'
     :s.flags.ayazHaber==='soylendi'?'Söyledin mi ona? Ateşin yandığını? …Tamam. O zaman biliyor. Bilmesi yeter, gelmese de.'
     :s.flags.ayaz==='kaldi'?'Onu gördün, değil mi? Yüzünden belli. Bekliyor. …Sara teyze ona “bekle” dedi, bana “söndürme”. İkimiz de tutuyoruz.'
     :(s.flags.rauf==='takip'?'Yanındaki adam ateşe değil bileğine bakıyor. …Şşş. ':'Şşş. ')+'Ateşe odun atıyorum. Ağabeyim “söndürme, dönerim” dedi. Ben de söndürmüyorum. Sen kimsin?',
-   choices:[{label:'Ağabeyin nerede?',action:'story:nil:1'},
-    ...(s.inventory.wood&&!s.flags.nilOdun?[{label:'Sana odun getirdim.',action:'nil_odun',note:'1 odun ver'}]:[]),
+   choices:[...(s.flags.nilSondu?[]:[{label:'Ağabeyin nerede?',action:'story:nil:1'}]),
+    ...(s.inventory.wood&&!s.flags.nilOdun&&!s.flags.nilSondu?[{label:'Sana odun getirdim.',action:'nil_odun',note:'1 odun ver'}]:[]),
     close]};}
  // Elvi: yetmis birinci. Ust kapinin dibinde durur.
  if(id==='selvi'){
@@ -764,6 +776,12 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
    s.journal.unshift('Elvi’ye kapıda Mirna’nın durduğunu söyledin. Elvi onunla konuşmaya gitti; Mirna onu yazdı. Yirmi.');
    return {message:'Elvi yirminci oldu.'};}
   // Oyuncunun sozleri
+  /* Lin kirildi: atesi birakti. Sonuc GORSEL ve kalici - siginagin ocaklarindan
+     biri soner (world.ts alev2). Undur'un cumlesi bunun agirligini tasiyor:
+     ocaklarin hala yanmasini o cocuga bagliyordu. */
+  if(dugum==='nil:kirildi'){s.flags.nilSondu='evet';s.flags.talk=dugum;
+   s.journal.unshift('Lin’in sözünü anlamsızlaştırdın. Odunu bıraktı; ateş söndü.');
+   return {message:'Ateş söndü.'};}
   if(dugum==='nil:sozVerildi'){s.flags.sozNil='verildi';s.flags.talk=dugum;
    s.journal.unshift('Lin’e söz verdin: ağabeyini görürsen ateşin yandığını söyleyeceksin.');
    return {message:'Söz verdin.'};}
