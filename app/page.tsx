@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState,type PointerEvent} from 'react';
-import {ArrowLeftRight,Swords,Play,Settings2,BookOpen,Volume2,ChevronRight,Smartphone,Shield,Heart,ScrollText,Pause,Hand,Flame,Coins,Footprints,Wind,Gem,Shirt,Sword,Plus,Check,Home as HomeIcon,Maximize,Music2,VolumeX,Save,Compass,X} from 'lucide-react';
+import {ArrowLeftRight,Gamepad2,Swords,Play,Settings2,BookOpen,Volume2,ChevronRight,Smartphone,Shield,Heart,ScrollText,Pause,Hand,Flame,Coins,Footprints,Wind,Gem,Shirt,Sword,Plus,Check,Home as HomeIcon,Maximize,Music2,VolumeX,Save,Compass,X} from 'lucide-react';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogAction,AlertDialogCancel} from '@/components/ui/alert-dialog';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/tabs';
@@ -32,6 +32,13 @@ export default function Home(){
  const canvas=useRef<HTMLCanvasElement>(null),engine=useRef<Engine|null>(null),audio=useRef<GameAudio|null>(null),noticeTimer=useRef<ReturnType<typeof setTimeout>|null>(null);const zoneTimer=useRef<ReturnType<typeof setTimeout>|null>(null);const intro=useRef<HTMLVideoElement|null>(null);
  const [snapshot,setSnapshot]=useState<Snapshot>({state:INITIAL,near:null,attackCooldown:0,dodgeCooldown:0,tonic:0,mesale:0,saveStatus:'',ready:false});
  const [menu,setMenu]=useState(true),[panel,setPanel]=useState<Panel>(null),[speaker,setSpeaker]=useState('mira'),[hasSave,setHasSave]=useState(false),[confirmNew,setConfirmNew]=useState(false),[portrait,setPortrait]=useState(false),[notice,setNotice]=useState(''),[zoneFlash,setZoneFlash]=useState(''),[girisHazir,setGirisHazir]=useState(false),[yon,setYon]=useState<'yatay'|'dikey'>('yatay'),[tercihHazir,setTercihHazir]=useState(false),[music,setMusic]=useState(45),[effects,setEffects]=useState(65),[selected,setSelected]=useState<ItemId>('rusty'),[panelBack,setPanelBack]=useState<Panel>(null),[satici,setSatici]=useState('boran'),[sandikId,setSandikId]=useState('');
+ /* GIRDI MODU. Baslangic cihaz yetenegiyle secilir, sonra SON KULLANILAN
+    kazanir: masaustunde dokunmatik dugmeler bosuna yer kapliyordu, tablette
+    klavye takiliysa da tersi. 'auto' = algila, digerleri elle secim. */
+ const [girdi,setGirdi]=useState<'dokunma'|'klavye'|'gamepad'>(()=>
+  (typeof window!=='undefined'&&(window.matchMedia?.('(pointer: coarse)').matches||navigator.maxTouchPoints>0))?'dokunma':'klavye');
+ const [girdiKilit,setGirdiKilit]=useState<'auto'|'dokunma'|'klavye'|'gamepad'>('auto');
+ const mod=girdiKilit==='auto'?girdi:girdiKilit;
  const current=useRef({panel,menu});current.current={panel,menu};
  // Mekan adi cerceveli bildirim kutusundan ayrildi: kendi basina, buyuk ve
  // krem renkte belirip birkac saniyede soluyor.
@@ -45,6 +52,53 @@ export default function Home(){
  // demekti. Artik yalnizca o ortu acikken duraklatilir - yoksa oyuncu
  // dikeyde oynamayi secse bile oyun donmus kaliyordu (girdi geliyor,
  // motor guncellemiyor).
+ /* Son kullanilan girdi kazanir. Dokunma yalnizca gercek parmakta (kalem ve
+    fare pointerType'i farkli); klavyede oyun tuslari yeterli, Tab/Alt gibi
+    gezinti tuslari modu degistirmesin. */
+ useEffect(()=>{
+  const dokun=(e:Event)=>{if((e as {pointerType?:string}).pointerType==='touch')setGirdi('dokunma');};
+  const tus=(e:Event)=>{const c=(e as {code?:string}).code||'';if(/^(Key|Arrow|Digit|Space|Escape)/.test(c))setGirdi('klavye');};
+  const pad=()=>setGirdi('gamepad');
+  window.addEventListener('pointerdown',dokun,{passive:true});
+  window.addEventListener('keydown',tus);
+  window.addEventListener('gamepadconnected',pad);
+  return()=>{window.removeEventListener('pointerdown',dokun);window.removeEventListener('keydown',tus);window.removeEventListener('gamepadconnected',pad);};
+ },[]);
+ /* Masaustunde panelleri klavyeyle ac: dokunmatik dugmeler olmayinca heybeye
+    ulasmanin baska yolu kalmiyordu. Motor yalnizca oyun tuslarini dinliyor,
+    paneller React durumunda oldugu icin burada. */
+ useEffect(()=>{
+  if(mod==='dokunma')return;
+  const f=(e:KeyboardEvent)=>{
+   if(menu)return;
+   const ac=(hedef:Panel)=>{e.preventDefault();setPanel(cur=>cur===hedef?null:(cur===null?hedef:cur));};
+   if(e.code==='KeyI')ac('inventory');
+   else if(e.code==='KeyC')ac('character');
+   else if(e.code==='KeyL'||e.code==='KeyM')ac('journal');
+   else if(e.code==='Escape'){e.preventDefault();setPanel(cur=>cur===null?'pause':null);}
+  };
+  window.addEventListener('keydown',f);return()=>window.removeEventListener('keydown',f);
+ },[mod,menu]);
+
+ /* Gamepad: oyun icinde motor okuyor; MENUDE React geziyor. Yukari/asagi
+    odagi tasir, A onaylar, B kapatir, Start duraklatir. */
+ useEffect(()=>{
+  const g=engine.current;if(!g)return;
+  g.onGamepad=(yer,tus)=>{
+   setGirdi('gamepad');
+   if(yer!=='menu'||!tus)return;
+   if(tus==='menu'){setPanel(cur=>cur===null?'pause':null);return;}
+   const dugmeler=[...document.querySelectorAll<HTMLButtonElement>('[data-slot=dialog-content] button:not(:disabled), .title-screen button:not(:disabled)')];
+   if(!dugmeler.length)return;
+   const i=dugmeler.indexOf(document.activeElement as HTMLButtonElement);
+   if(tus==='yukari')dugmeler[(i<=0?dugmeler.length:i)-1]?.focus();
+   else if(tus==='asagi')dugmeler[(i+1)%dugmeler.length]?.focus();
+   else if(tus==='onay')(document.activeElement as HTMLButtonElement)?.click?.();
+   else if(tus==='geri')setPanel(null);
+  };
+  return()=>{if(g)g.onGamepad=undefined;};
+ },[]);
+
  useEffect(()=>{engine.current?.setPaused(menu||panel!==null||(portrait&&yon==='yatay'));},[menu,panel,portrait,yon]);
   // Ana menude muzik ve videonun kendi ruzgar sesi calar. Tarayici izinsiz
  // sesli oynatmadigi icin once denenir, olmazsa ILK dokunusta acilir.
@@ -90,7 +144,7 @@ export default function Home(){
   <header className="hud"><button className="hero-badge" onClick={()=>openPanel('character')} aria-label="Karakter ve yetenekler"><Portrait/><div><b>Gezgin <small>SV. {s.level}</small>{s.points>0&&<em>+{s.points}</em>}</b><div className="health"><span style={{width:`${s.hp/st.maxHp*100}%`}}/></div><div className="hp-row"><small>{Math.ceil(s.hp)} / {st.maxHp}</small><small className="gold"><Coins size={12}/>{s.gold}</small></div><div className="xp-bar"><span style={{width:`${s.level===5?100:(s.xp-XP[s.level-1])/(XP[s.level]-XP[s.level-1])*100}%`}}/></div></div></button><div className="zone-title">{ZONES[s.zone].name}<small>{ZONES[s.zone].danger}</small></div><nav className="hud-nav" aria-label="Oyun menüleri"><button onClick={()=>openPanel('inventory')} aria-label="Heybeyi aç"><UI ad="canta" size={27}/></button><button onClick={()=>openPanel('journal')} aria-label="Görevler ve harita"><UI ad="rulo" size={27}/></button><button onClick={()=>openPanel('pause')} aria-label="Oyunu duraklat"><Pause size={20}/></button></nav></header>
   {activeQuest&&<button className="quest-hint" onClick={()=>openPanel('journal')}><b><span className="quest-diamond">◆</span>{activeQuest.active?activeQuest.title:'İlk ışık'}</b><span>{!activeQuest.active?'Sığınaktakilerle konuş.':s.zone==='haven'?'Ayrıntılar için dokun.':activeQuest.id==='core'?'Kül kalbini bul.':'Görevini haritada takip et.'}</span></button>}
   {snapshot.tonic>0&&<div className="tonic-badge"><Flame size={15}/> +8 saldırı · {Math.ceil(snapshot.tonic)} sn</div>}{snapshot.mesale>0&&<div className="tonic-badge mesale-badge"><Flame size={15}/> Meşale · {Math.ceil(snapshot.mesale)} sn</div>}
-    {!panel&&<><Joystick engine={engine}/><div className="actions"><div className="utility-actions"><button className="round potion" onClick={(e)=>{(e.currentTarget as HTMLElement)?.blur();engine.current?.useItem('potion');}} aria-label={`Can iksiri iç, ${s.inventory.potion||0} adet`} disabled={!s.inventory.potion}><Icon name="flame" item="potion" size={34}/><small>{s.inventory.potion||0}</small></button><button className="round weapon" onClick={(e)=>{(e.currentTarget as HTMLElement)?.blur();engine.current?.toggleWeapon();}} aria-label="Silah değiştir"><Icon name={s.equipment.weapon==='yumruk'?'hand':s.equipment.weapon==='elmesale'?'flame':ITEMS[s.equipment.weapon].menzilli?'bow':'sword'} item={s.equipment.weapon} size={32}/>{/* Sayac KUSANILAN ok turunu gosterir; o bitince motor sade oka dustugu
+    {!panel&&mod==='dokunma'&&<><Joystick engine={engine}/><div className="actions"><div className="utility-actions"><button className="round potion" onClick={(e)=>{(e.currentTarget as HTMLElement)?.blur();engine.current?.useItem('potion');}} aria-label={`Can iksiri iç, ${s.inventory.potion||0} adet`} disabled={!s.inventory.potion}><Icon name="flame" item="potion" size={34}/><small>{s.inventory.potion||0}</small></button><button className="round weapon" onClick={(e)=>{(e.currentTarget as HTMLElement)?.blur();engine.current?.toggleWeapon();}} aria-label="Silah değiştir"><Icon name={s.equipment.weapon==='yumruk'?'hand':s.equipment.weapon==='elmesale'?'flame':ITEMS[s.equipment.weapon].menzilli?'bow':'sword'} item={s.equipment.weapon} size={32}/>{/* Sayac KUSANILAN ok turunu gosterir; o bitince motor sade oka dustugu
        icin etiket de ona duser. */}<small>{ITEMS[s.equipment.weapon].menzilli?`YAY (${(s.equipment.ok&&s.inventory[s.equipment.ok])||s.inventory.arrow||0})`:s.equipment.weapon==='yumruk'?'ELLER':s.equipment.weapon==='elmesale'?'MEŞALE':'KILIÇ'}</small></button>{/* Mesale artik silah dongusunde degil, kendi tusunda (F) ve kendi
        dugmesinde: karanlik mekanda silah degistirmek icin dongude dolasmak
        gerekiyordu. */}
@@ -138,16 +192,33 @@ export default function Home(){
    {panel==='crafting'&&<div className="shop-list">{([{id:'arrow' as ItemId,wood:1,gold:5,amount:15},{id:'bow' as ItemId,wood:5,gold:25,amount:1},{id:'torch' as ItemId,wood:2,gold:4,amount:2},{id:'potion' as ItemId,wood:3,gold:15,amount:1},{id:'tonic' as ItemId,wood:4,gold:20,amount:1},{id:'chain' as ItemId,wood:8,gold:40,amount:1}]).map(({id,wood,gold,amount})=>{const canCraft=(s.inventory.wood||0)>=wood&&s.gold>=gold;return <article key={id}><Icon name={ITEMS[id].icon} item={id} size={32}/><div><b>{ITEMS[id].name}{amount>1?` (${amount} Adet)`:''}</b><p>{ITEMS[id].description}</p><small style={{color:'#c4a377',display:'block',marginTop:'2px'}}>Gerekli: {wood} Odun · {gold} Altın</small></div><button className="text-button" disabled={!canCraft||(ITEMS[id].kind!=='consumable'&&!!s.inventory[id])} onClick={()=>{const game=engine.current!;s.inventory.wood=(s.inventory.wood||0)-wood;if(s.inventory.wood<=0)delete s.inventory.wood;s.gold-=gold;addItem(s,id,amount);if(ITEMS[id].menzilli||id==='arrow'){const y=(Object.keys(s.inventory)as ItemId[]).find(k=>ITEMS[k].menzilli);if(y)s.equipment.weapon=y;}game.sound('level');game.save();game.emit();showNotice(`${amount>1?amount+' adet ':''}${ITEMS[id].name} üretildi! Kuşanıldı.`);}}>{ITEMS[id].kind!=='consumable'&&s.inventory[id]?<Check size={18}/>:!canCraft?'Yetersiz Malzeme':'Üret'}</button></article>})}</div>}
 
   {panel==='pause'&&<div className="pause-layout"><div className="pause-status"><Portrait/><h3>{ZONES[s.zone].name}</h3><p>Seviye {s.level} · {Math.floor(s.playtime/60)} dakika</p><small><Save size={14}/>{snapshot.saveStatus||'Bu cihazda kayıtlı'}</small></div><div className="pause-buttons"><button className="primary text-button" onClick={()=>setPanel(null)}><Play size={18}/> Devam et</button><button className="text-button" onClick={()=>{setPanelBack('pause');setPanel('settings')}}><Settings2 size={18}/> Ses ve ayarlar</button><button className="text-button" onClick={()=>{setPanelBack('pause');setPanel('help')}}><BookOpen size={18}/> Kontrol rehberi</button><button className="text-button" onClick={mainMenu}><HomeIcon size={18}/> Kaydet ve menüye dön</button></div></div>}
-  {panel==='settings'&&<div className="settings-layout"><div className="audio-settings"><label><span><Music2 size={20}/> Müzik <b>{music}%</b></span><Slider aria-label="Müzik seviyesi" value={[music]} onValueChange={v=>{audio.current?.start();setMusic(Array.isArray(v)?v[0]:v)}} min={0} max={100} step={5}/></label><label><span><Volume2 size={20}/> Ses efektleri <b>{effects}%</b></span><Slider aria-label="Ses efektleri seviyesi" value={[effects]} onValueChange={v=>{audio.current?.start();setEffects(Array.isArray(v)?v[0]:v)}} onValueCommitted={()=>engine.current?.sound('coin')} min={0} max={100} step={5}/></label><button className="text-button" onClick={()=>{audio.current?.start();if(music||effects){setMusic(0);setEffects(0)}else{setMusic(45);setEffects(65)}}}>{music||effects?<VolumeX size={18}/>:<Volume2 size={18}/>} {music||effects?'Tüm sesleri kapat':'Sesleri aç'}</button></div><div className="settings-notes"><div className="yon-secim"><span><Smartphone size={18}/> Ekran yönü</span><div>
+  {panel==='settings'&&<div className="settings-layout"><div className="audio-settings"><label><span><Music2 size={20}/> Müzik <b>{music}%</b></span><Slider aria-label="Müzik seviyesi" value={[music]} onValueChange={v=>{audio.current?.start();setMusic(Array.isArray(v)?v[0]:v)}} min={0} max={100} step={5}/></label><label><span><Volume2 size={20}/> Ses efektleri <b>{effects}%</b></span><Slider aria-label="Ses efektleri seviyesi" value={[effects]} onValueChange={v=>{audio.current?.start();setEffects(Array.isArray(v)?v[0]:v)}} onValueCommitted={()=>engine.current?.sound('coin')} min={0} max={100} step={5}/></label><button className="text-button" onClick={()=>{audio.current?.start();if(music||effects){setMusic(0);setEffects(0)}else{setMusic(45);setEffects(65)}}}>{music||effects?<VolumeX size={18}/>:<Volume2 size={18}/>} {music||effects?'Tüm sesleri kapat':'Sesleri aç'}</button></div><div className="settings-notes"><div className="yon-secim"><span><Gamepad2 size={18}/> Kontrol</span><div>
+  {([['auto','Otomatik'],['dokunma','Dokunmatik'],['klavye','Klavye'],['gamepad','Gamepad']] as const).map(([k,ad])=>
+   <button key={k} className={`text-button ${girdiKilit===k?'secili':''}`} onClick={()=>setGirdiKilit(k)}>{ad}</button>)}
+  </div></div>
+  <p className="muted" style={{marginTop:'-6px'}}>Otomatik: cihazını algılar, son kullandığın girdiye geçer. Şu an: <b>{mod==='dokunma'?'dokunmatik':mod==='gamepad'?'gamepad':'klavye'}</b>.</p>
+  <div className="yon-secim"><span><Smartphone size={18}/> Ekran yönü</span><div>
   <button className={`text-button ${yon==='yatay'?'secili':''}`} onClick={()=>setYon('yatay')}>Yatay</button>
   <button className={`text-button ${yon==='dikey'?'secili':''}`} onClick={()=>setYon('dikey')}>Dikey</button>
  </div></div><button className="text-button" onClick={fullscreen}><Maximize size={18}/> Tam ekran</button><p>İlerleme bu cihazdaki tarayıcıya kaydedilir. Tarayıcı verilerini temizlemek kaydı siler.</p><p>Müzik ve efektler ilk dokunuştan sonra başlar. Başka bir uygulamaya geçtiğinde oyun duraklar.</p></div></div>}
-  {panel==='help'&&<div className="help-grid"><article><Footprints/><h3>Hareket et</h3><p>Sol alandaki halkayı sürükle. Haritayı görev defterinden aç.</p></article><article><Swords/><h3>Savaş</h3><p>Saldır düğmesini basılı tut. Yakındaki düşmana otomatik yönelirsin.</p></article><article><Wind/><h3>Kaçın</h3><p>Rüzgâr düğmesiyle atıl. Kırmızı çember, düşmanın saldırmak üzere olduğunu gösterir.</p></article><article><Hand/><h3>Etkileşime geç</h3><p>Kişiye, sandığa veya kapıya yaklaş. Ortadaki düğmeye dokun.</p></article><article><Flame/><h3>Meşale yak</h3><p>Karanlık yerlerde alev düğmesi (masaüstünde <b>F</b>) meşaleyi yakar, eline alır ve kemerine asar. Silah değiştirmek ayrı tuşta (<b>Q</b>).</p></article><article><Heart/><h3>Hazırlan</h3><p>Kalpten iksir iç. Heybeden ekipman kuşan; portreye dokunarak yeteneklerini geliştir.</p></article><article><ScrollText/><h3>Karar ver</h3><p>Üç görevi tamamla. Diyaloglar sırasında zaman durur; seçiminin sonucunu düşün.</p></article></div>}
+  {panel==='help'&&<div className="help-grid">{mod==='dokunma'
+    ?<article><Footprints/><h3>Hareket et</h3><p>Sol alandaki halkayı sürükle. Haritayı görev defterinden aç.</p></article>
+    :mod==='gamepad'
+    ?<article><Gamepad2/><h3>Hareket et</h3><p>Sol çubuk ya da D-pad. <b>A</b> saldır, <b>B</b> kaçın, <b>X</b> etkileşim, <b>Y</b> meşale, <b>LB</b> iksir, <b>RB</b> silah, <b>Start</b> menü. Menülerde yön tuşlarıyla gez, <b>A</b> ile seç.</p></article>
+    :<article><Footprints/><h3>Hareket et</h3><p><b>WASD</b> ya da yön tuşları. <b>J</b> saldır, <b>K</b> kaçın, <b>E</b> etkileşim, <b>Q</b> silah, <b>F</b> meşale. Paneller: <b>I</b> heybe, <b>C</b> karakter, <b>L</b> defter, <b>Esc</b> menü.</p></article>}<article><Swords/><h3>Savaş</h3><p>Saldır düğmesini basılı tut. Yakındaki düşmana otomatik yönelirsin.</p></article><article><Wind/><h3>Kaçın</h3><p>Rüzgâr düğmesiyle atıl. Kırmızı çember, düşmanın saldırmak üzere olduğunu gösterir.</p></article><article><Hand/><h3>Etkileşime geç</h3><p>Kişiye, sandığa veya kapıya yaklaş. Ortadaki düğmeye dokun.</p></article><article><Flame/><h3>Meşale yak</h3><p>Karanlık yerlerde alev düğmesi (masaüstünde <b>F</b>) meşaleyi yakar, eline alır ve kemerine asar. Silah değiştirmek ayrı tuşta (<b>Q</b>).</p></article><article><Heart/><h3>Hazırlan</h3><p>Kalpten iksir iç. Heybeden ekipman kuşan; portreye dokunarak yeteneklerini geliştir.</p></article><article><ScrollText/><h3>Karar ver</h3><p>Üç görevi tamamla. Diyaloglar sırasında zaman durur; seçiminin sonucunu düşün.</p></article></div>}
   {panel==='credits'&&<div className="credits"><Flame size={38}/><h3>Kül ve Yemin</h3><p>Birinci bölüm · Son Sığınak</p><p>Piksel görseller: Craftpix — Free Top-Down Roguelike Game Kit.<br/>Başlık yazı tipi: Cinzel, SIL Open Font License.<br/>Müzik: bu oyun için hazırlanmış sığınak ve zindan temaları.</p><p className="muted">Dokunmatik, tek oyunculu RPG prototipi. Ekipman etkileri istatistiklere uygulanır; karakterin görünümü sabittir.</p></div>}
   {panel==='death'&&<div className="death-content"><Flame size={42}/><p>Mirna’nın ateşine geri dönebilirsin.<br/>Eşyaların, görevlerin ve kararların sende kalır.<br/>Altınının %10’u yolda kaybolur.</p><button className="primary text-button" onClick={()=>{engine.current!.respawn();setPanel(null)}}>Sığınakta uyan</button></div>}
   {panel==='ending'&&<div className="ending-content"><Flame size={40}/><p className="ending-prose">{sonMetni(s)}</p><div className="ending-decisions"><p><Heart size={18}/>{s.flags.medicine==='rauf'?'Rauf’a ikinci bir hayat verdin.':'Sığınağın hastalarına umut oldun.'}</p><p><Shield size={18}/>{s.flags.fugitive==='protected'?'Bir sırrı korumayı adaletten üstün tuttun.':'Rauf’un hesap vermesini seçtin.'}</p>{yeminler(s).map(y=><p key={y.kime+y.soz}><Flame size={18}/>{y.kime}: “{y.soz}” — {y.durum==='tutuldu'?'tutuldu':y.durum==='bozuldu'?'bozuldu':'ikinci bölümde sınanacak'}</p>)}</div><p className="muted">Seviye {s.level} · {quests.filter(q=>q.done).length}/{quests.length} görev · {Math.floor(s.playtime/60)} dakika</p><div className="ending-buttons"><button className="primary text-button" onClick={()=>setPanel(null)}>Sığınağı keşfetmeye devam et</button><button className="text-button" onClick={mainMenu}>Ana menü</button></div></div>}
   </div></DialogContent></Dialog>
   <AlertDialog open={confirmNew} onOpenChange={setConfirmNew}><AlertDialogContent className="new-game-dialog"><AlertDialogTitle>Yeni bir yemin?</AlertDialogTitle><AlertDialogDescription>Bu cihazdaki mevcut yolculuğun yerini yeni bir kayıt alacak.</AlertDialogDescription><div className="confirm-actions"><AlertDialogCancel>Vazgeç</AlertDialogCancel><AlertDialogAction onClick={()=>launch(true)}>Yeni yolculuğa başla</AlertDialogAction></div></AlertDialogContent></AlertDialog>
-  {portrait&&yon==='yatay'&&<div className="rotate-screen"><Smartphone size={48}/><h2>Telefonunu yatay çevir</h2><p>Kül ve Yemin iki elle, yatay oynanır.</p><span>Hikâyen seni bekliyor.</span><button className="text-button dikey-gec" onClick={()=>setYon('dikey')}>Dikey oynamak istiyorum</button></div>}
+  {/* Kontrol ipuclari: dokunmatik dugmeler yoksa oyuncu tuslari nereden
+      bilecek? Sade bir serit, panel acikken gizleniyor. */}
+  {!menu&&!panel&&mod!=='dokunma'&&<div className="tus-serit" aria-hidden="true">
+   {(mod==='gamepad'
+    ?[['Sol çubuk','hareket'],['A','saldır'],['B','kaçın'],['X','etkileşim'],['Y','meşale'],['LB','iksir'],['RB','silah'],['Start','menü']]
+    :[['WASD','hareket'],['J','saldır'],['K','kaçın'],['E','etkileşim'],['Q','silah'],['F','meşale'],['I','heybe'],['Esc','menü']]
+   ).map(([t,a])=><span key={t}><b>{t}</b>{a}</span>)}
+  </div>}
+  {portrait&&yon==='yatay'&&mod==='dokunma'&&<div className="rotate-screen"><Smartphone size={48}/><h2>Telefonunu yatay çevir</h2><p>Kül ve Yemin iki elle, yatay oynanır.</p><span>Hikâyen seni bekliyor.</span><button className="text-button dikey-gec" onClick={()=>setYon('dikey')}>Dikey oynamak istiyorum</button></div>}
  </main>
 }

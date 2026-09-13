@@ -111,8 +111,7 @@ ayrı.
 - Son muhafızın "dön" ricası: kral diyemedi.
 - Oyunun sonu: Kül Ocağı kaldırıldı, yeni son mekânı gelecek (son zinciri
   metinleri git geçmişinde, Undur'un ağacından çıkarıldı).
-- Ertelenen: i18n (TR/EN/Bahasa), masaüstü-mobil ayrı arayüz + kontrol
-  ekranı, Tiga'nın sprite kalitesi, Kül Ovası içeriği.
+- Ertelenen: i18n (TR/EN/Bahasa), Tiga'nın sprite kalitesi, Kül Ovası içeriği.
 
 ---
 
@@ -280,6 +279,18 @@ boyalı duvarın `blockers` kutusu hâlâ engelliyor; `delik()` o kutuyu keser
 (kesişeni en fazla dört parçaya böler) ve cep **açık zemine kadar** uzatılır,
 yoksa kutunun kalan parçası yolu kapatıyor. Aynı yöntem her "arkasına geçilsin" istenen boyalı nesne için
 geçerli.
+
+**Girdi modu (2026-09-13):** üç mod — `dokunma` / `klavye` / `gamepad`.
+Başlangıç cihaz yeteneğinden (`(pointer: coarse)` veya `maxTouchPoints`), sonra
+**son kullanılan girdi kazanır** (parmak → dokunma, oyun tuşu → klavye, pad →
+gamepad). Dokunmatik joystick ve yuvarlak düğmeler **yalnız `dokunma` modunda**
+çizilir; diğerlerinde altta ince bir tuş ipucu şeridi var. Masaüstünde paneller
+klavyeden: I heybe, C karakter, L defter, Esc menü (motor yalnız oyun tuşlarını
+dinliyor, paneller React'te). Gamepad motorda her karede taranıyor
+(`gamepadTara`): sol çubuk+D-pad hareket, A/RT saldırı, B kaçın, X etkileşim,
+Y meşale, LB iksir, RB silah, Start menü; menüde yön tuşları odağı gezdirir, A
+tıklar. Ayarlarda elle kilitlenebilir. Tuzak: gamepad saldırısı **bırakılınca
+temizlenmeli**, yoksa oyuncu durmadan savuruyor.
 
 **Arayüz:** parşömen. Çerçeveler CSS değil 9 dilim piksel resmi
 (`frame*.png`, dilim 8, kalınlık dilimin katı). `border-image … fill`

@@ -108,6 +108,14 @@ export class Engine{
  private gez=new Map<string,{hx:number;hy:number;tx:number;ty:number;bekle:number;dir:'D'|'U'|'S';flip:boolean;yol:number}>();
  private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Kacis izi: dash sirasinda birakilan soluk kopyalar (sprite anahtari + kare). */private izler:{x:number;y:number;anahtar:string;kare:number;flip:boolean;life:number}[]=[];/** Iz birakma sayaci - her karede degil, sabit arayla. */private izSayac=0;/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
  private keys={up:false,down:false,left:false,right:false};
+ /** Gamepad: bir onceki karede basili olan tuslar (kenar yakalamak icin).
+  *  Standart layout varsayiliyor: 0=A 1=B 2=X 3=Y 4=LB 5=RB 6=LT 7=RT 9=Start,
+  *  12-15 = D-pad, eksen 0/1 sol cubuk. */
+ private gpBasili=new Set<number>();
+ /** Gamepad'den girdi geldiginde arayuze haber: kontrol ipuclari degissin. */
+ onGamepad?:(yon:'menu'|'oyun',tus?:string)=>void;
+ /** Cubuk olu bolgesi: ucuz padlerde bosta 0.05-0.15 arasi gurultu geliyor. */
+ static readonly GP_OLU=.24;
  private handleKeyDown=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyF','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(this.paused)return;if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=true;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=true;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=true;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=true;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=true;if(e.repeat)return;if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK')this.dodge();if(e.code==='KeyE')this.interact();if(e.code==='KeyQ'||e.code==='KeyR')this.toggleWeapon();if(e.code==='KeyF')this.toggleTorch();};
  private handleKeyUp=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyF','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=false;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=false;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=false;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=false;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=false;};
  constructor(canvas:HTMLCanvasElement,state:State,audio:GameAudio,onChange:(s:Snapshot)=>void,onEvent:(e:GameEvent)=>void){this.canvas=canvas;this.ctx=canvas?.getContext?.('2d')!;this.state=state;this.world=makeWorld(state.zone,state.flags as Record<string,string|boolean|undefined>);this.audio=audio;this.onChange=onChange;this.onEvent=onEvent;this.gez.clear();this.resetMobs();this.loadAssets();this.camera={x:state.x-this.gorus.en/2,y:state.y-this.gorus.boy/2};if(typeof window!=='undefined'){window.addEventListener('keydown',this.handleKeyDown);window.addEventListener('keyup',this.handleKeyUp);}this.loop=this.loop.bind(this);if(typeof requestAnimationFrame!=='undefined')this.raf=requestAnimationFrame(this.loop)}
@@ -844,7 +852,55 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(this.tick-this.savedAt>8)this.save();if(this.tick-this.notifyAt>.1){this.emit();this.notifyAt=this.tick;}
   }
   private trapActive(e:Entity){return (this.tick+e.x*.01)%3.3>2.1}
-  private loop(time:number){const dt=Math.min(.035,(time-this.last)/1000||0);this.last=time;if(!this.paused&&this.ready)this.update(dt);this.render(time/1000);this.raf=requestAnimationFrame(this.loop)}
+  /** Gamepad taramasi. Her karede cagrilir; oyun DURAKLIYKEN de calisir ki
+   *  menu/diyalog gamepad ile gezilebilsin (o durumda yalnizca haber verir,
+   *  hareketi arayuz yonetir). */
+  private gamepadTara(){
+   const pads=typeof navigator!=='undefined'&&navigator.getGamepads?navigator.getGamepads():[];
+   let gp=null as Gamepad|null;
+   for(const p of pads)if(p&&p.connected){gp=p;break;}
+   if(!gp){if(this.gpBasili.size)this.gpBasili.clear();return;}
+   const eksen=(i:number)=>{const v=gp!.axes[i]??0;return Math.abs(v)<Engine.GP_OLU?0:v;};
+   const basili=(i:number)=>!!gp!.buttons[i]?.pressed;
+   const yeni=(i:number)=>{const b=basili(i);const vardi=this.gpBasili.has(i);
+    if(b)this.gpBasili.add(i);else this.gpBasili.delete(i);return b&&!vardi;};
+   /* Sol cubuk VE D-pad ayni yere yaziliyor; oyuncu hangisini kullanirsa. */
+   const dx=eksen(0)+(basili(15)?1:0)-(basili(14)?1:0);
+   const dy=eksen(1)+(basili(13)?1:0)-(basili(12)?1:0);
+   const n=Math.hypot(dx,dy);
+   const hareket=n>.1;
+   if(this.paused){
+    /* Duraklamisken yalnizca haber ver: menuyu React geziyor. */
+    if(hareket||[0,1,2,3,9].some(i=>basili(i))){
+     const tus=yeni(0)?'onay':yeni(1)?'geri':yeni(9)?'menu':
+      (yeni(12)||eksen(1)<-.6&&!this.gpBasili.has(100)?'yukari':(yeni(13)||eksen(1)>.6&&!this.gpBasili.has(100))?'asagi':undefined);
+     if(eksen(1)>.6||eksen(1)<-.6)this.gpBasili.add(100);else this.gpBasili.delete(100);
+     this.onGamepad?.('menu',tus);
+    }
+    return;
+   }
+   if(hareket){this.input.x=dx/Math.max(1,n);this.input.y=dy/Math.max(1,n);this.onGamepad?.('oyun');}
+   else if(this.gpKullandi){this.input.x=0;this.input.y=0;}
+   /* RT ya da A: saldiri (basili tutulabilir). BIRAKILINCA da temizlenmeli:
+      yalnizca basiliyken true yapilinca tus birakildiktan sonra oyuncu
+      durmadan savurmaya devam ediyordu. */
+   const saldir=basili(0)||basili(7);
+   if(saldir){this.input.attack=true;this.gpSaldiri=true;this.onGamepad?.('oyun');}
+   else if(this.gpSaldiri){this.input.attack=false;this.gpSaldiri=false;}
+   if(yeni(1)){this.dodge();this.onGamepad?.('oyun');}          // B: kacin
+   if(yeni(2)){this.interact();this.onGamepad?.('oyun');}       // X: etkilesim
+   if(yeni(3)){this.toggleTorch();this.onGamepad?.('oyun');}    // Y: mesale
+   if(yeni(4)){this.useItem('potion');this.onGamepad?.('oyun');}// LB: iksir
+   if(yeni(5)){this.toggleWeapon();this.onGamepad?.('oyun');}   // RB: silah
+   if(yeni(9))this.onGamepad?.('menu','menu');                  // Start: duraklat
+   this.gpKullandi=hareket;
+  }
+  /** Son karede gamepad ile hareket edildi mi (birakilinca sifirlamak icin). */
+  private gpKullandi=false;
+  /** Saldiri tusunu gamepad mi basili tutuyordu. */
+  private gpSaldiri=false;
+
+  private loop(time:number){const dt=Math.min(.035,(time-this.last)/1000||0);this.last=time;if(this.ready)this.gamepadTara();if(!this.paused&&this.ready)this.update(dt);this.render(time/1000);this.raf=requestAnimationFrame(this.loop)}
   private sprite(key:string,x:number,y:number,frame=0,fw?:number,fh?:number,flip=false,scale=1,alpha=1,donder=0,capa?:number){const im=this.images[key];if(!im?.naturalWidth)return;const w=fw||im.width/R,h=fh||im.height/R;const count=Math.floor(im.width/(w*R));const c=this.ctx;c.save();c.globalAlpha=alpha;c.translate(Math.round(x),Math.round(y));const actor=key.startsWith('characters')||key.startsWith('enemies');/* Capa hucre icinde zemin cizgisinin satirini belirliyor (satir = 2*capa).
    Dusmanlarda 21 idi, yani sprite en fazla 42 satir yuksek olabiliyordu;
    62 satirlik trolun ust yarisi kirpiliyordu. Buyuk dusmanlar kendi
