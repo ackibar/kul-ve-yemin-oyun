@@ -42,22 +42,7 @@ export class Engine{
  /** Rauf yoldasken vurus bekleme sayaci ve dusmanlarin ona vurma sayaci.
   *  Cani flags.raufCan'da string olarak tutuluyor ki kayitla birlikte gitsin. */
  private raufVur=0;private raufHasar=0;private sahneUyari=0;
- /** Sarnicta yaratiklar alt kapidan dalga dalga geliyor. Sayac bir sonraki
-  *  dalganin gecikmesi; flags.dalga temizlenen dalga sayisi (kayitla gider). */
- private dalgaSayac=0;
- /** Dalga kapisi. Onceden [25,29] idi: sarnicin EN ALT karo satiri ve o satir
-  *  zeminde '0' - yaratiklar duvarin icinde doguyor ve move() hedef karoyu
-  *  yurunebilir bulamadigi icin hicbir yone kimildayamiyorlardi. Bir satir
-  *  yukari alindi; ayrica dogus noktasi yurunebilir olana dek yukari
-  *  kaydiriliyor ki harita degisirse yine sikismasinlar. */
- static readonly KAPI:[number,number]=[25,28];
- static readonly DALGALAR:[1|2|4|5,number][][]=[
-  [[1,2]],                 // iki fare
-  [[5,2],[1,1]],           // yarasalar + fare
-  [[2,2],[1,2]],           // orumcekler
-  [[5,3],[2,1]],           // yarasa surusu (eskiden solucan dalgasiydi)
-  [[4,1],[1,2],[5,2]],     // kullenmis + kalabalik
- ];
+
  static readonly RAUF_CAN=90;
  private uyku=0;private uykuDondu=false;
  static readonly UYKU=2.4;
@@ -121,10 +106,10 @@ export class Engine{
  /** NPC dolasmasi: kisa bir yuruyus, sonra bekleme, sonra tekrar. Ev konumundan
   *  fazla uzaklasmazlar ki gorev icin bulunabilir kalsinlar. */
  private gez=new Map<string,{hx:number;hy:number;tx:number;ty:number;bekle:number;dir:'D'|'U'|'S';flip:boolean;yol:number}>();
- private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
+ private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Kacis izi: dash sirasinda birakilan soluk kopyalar (sprite anahtari + kare). */private izler:{x:number;y:number;anahtar:string;kare:number;flip:boolean;life:number}[]=[];/** Iz birakma sayaci - her karede degil, sabit arayla. */private izSayac=0;/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
  private keys={up:false,down:false,left:false,right:false};
- private handleKeyDown=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(this.paused)return;if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=true;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=true;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=true;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=true;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=true;if(e.repeat)return;if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK')this.dodge();if(e.code==='KeyE')this.interact();if(e.code==='KeyQ'||e.code==='KeyR')this.toggleWeapon();};
- private handleKeyUp=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=false;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=false;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=false;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=false;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=false;};
+ private handleKeyDown=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyF','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(this.paused)return;if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=true;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=true;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=true;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=true;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=true;if(e.repeat)return;if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK')this.dodge();if(e.code==='KeyE')this.interact();if(e.code==='KeyQ'||e.code==='KeyR')this.toggleWeapon();if(e.code==='KeyF')this.toggleTorch();};
+ private handleKeyUp=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyF','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=false;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=false;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=false;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=false;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=false;};
  constructor(canvas:HTMLCanvasElement,state:State,audio:GameAudio,onChange:(s:Snapshot)=>void,onEvent:(e:GameEvent)=>void){this.canvas=canvas;this.ctx=canvas?.getContext?.('2d')!;this.state=state;this.world=makeWorld(state.zone,state.flags as Record<string,string|boolean|undefined>);this.audio=audio;this.onChange=onChange;this.onEvent=onEvent;this.gez.clear();this.resetMobs();this.loadAssets();this.camera={x:state.x-this.gorus.en/2,y:state.y-this.gorus.boy/2};if(typeof window!=='undefined'){window.addEventListener('keydown',this.handleKeyDown);window.addEventListener('keyup',this.handleKeyUp);}this.loop=this.loop.bind(this);if(typeof requestAnimationFrame!=='undefined')this.raf=requestAnimationFrame(this.loop)}
  private img(key:string,path:string){const im=new Image();im.src=path;this.images[key]=im;return new Promise<void>((resolve,reject)=>{im.onload=()=>resolve();im.onerror=()=>reject(new Error(path));})}
   private async loadAssets(){const jobs:Promise<void>[]=[];const optional:boolean[]=[];/** optional[i] === true olan isler ISTEGE BAGLI: eksikligi oyunu kirmaz.
@@ -156,7 +141,7 @@ for(const [key,name]of [['fire','Fire1'],['lever','Lever1'],['trap','Spikes']])j
   if(s.flags.rauf==='takip'){let r=this.world.entities.find(x=>x.id==='rauf');
    if(!r){r={id:'rauf',type:'npc',x:0,y:0,name:'Rauf',portrait:5};this.world.entities.push(r);}
    r.x=s.x-14;r.y=s.y+6;}
-if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x-this.gorus.en/2,y:s.y-this.gorus.boy/2};this.resetMobs();/* Mesale kayitta kaldiysa yanmaya devam eder. */this.mesale=Number(this.state.flags.mesaleKalan||0);this.attackTimer=this.dodgeTimer=this.dash=this.invulnerable=this.tonic=0;this.input={x:0,y:0,attack:false};this.audio.setZone(s.zone);this.emit();}
+if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x-this.gorus.en/2,y:s.y-this.gorus.boy/2};this.izler=[];this.resetMobs();/* Mesale kayitta kaldiysa yanmaya devam eder. */this.mesale=Number(this.state.flags.mesaleKalan||0);this.attackTimer=this.dodgeTimer=this.dash=this.invulnerable=this.tonic=0;this.input={x:0,y:0,attack:false};this.audio.setZone(s.zone);this.emit();}
  start(){this.audio.start();this.paused=false;this.save();this.emit()}
  setPaused(v:boolean){this.paused=v;this.input={x:0,y:0,attack:false};if(v)this.save();this.emit()}
  sound(s:Sound){this.audio.play(s)}
@@ -238,16 +223,32 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   /* Dongu: en guclu kilic -> en guclu menzilli -> ciplak el. Menzilli silah
      artik tek degil (avci yayi, tatar yayi), o yuzden tur bazinda seciliyor. */
   const kilic=guclu(sahip.filter(id=>!ITEMS[id].menzilli)),yay=guclu(sahip.filter(id=>ITEMS[id].menzilli));
-  const sira:ItemId[]=[];if(kilic)sira.push(kilic);if(yay)sira.push(yay);/* Mesale yaniyorsa ciplak elin yerini alir; sonukse de (heybede torch varsa) donguye girer ve secilince yakilir. */if(s.inventory.elmesale||s.inventory.torch)sira.push('elmesale');else sira.push('yumruk');
+  /* Mesale bu donguden CIKTI: kendi tusu var (F). Q yalnizca silah degistirir. */
+  const sira:ItemId[]=[];if(kilic)sira.push(kilic);if(yay)sira.push(yay);sira.push('yumruk');
   const next=sira[(sira.indexOf(s.equipment.weapon)+1)%sira.length];
-  /* Sonuk mesaleyi ele almak = yakmak. useItem kusanmayi da yapiyor. */
-  if(next==='elmesale'&&!s.inventory.elmesale){this.useItem('torch');this.audio.play('select');return;}
   this.notify(ITEMS[next].menzilli?`${ITEMS[next].name} kuşanıldı (Menzilli ok modu). Kalan ok: ${s.inventory.arrow||0}`
    :next==='yumruk'?'Silahını kaldırdın. Çıplak ellerle dövüşüyorsun.'
    :next==='elmesale'?'Meşaleyi eline aldın. Zayıf vurur ama tutuşturur.'
    :`${ITEMS[next].name} kuşanıldı (Kılıç modu).`);
   s.equipment.weapon=next;s.hp=Math.min(s.hp,stats(s).maxHp);this.audio.play('select');this.save();this.emit();}
- dodge(){if(this.paused||this.dodgeTimer>0)return;this.dodgeTimer=stats(this.state).dodge;this.dash=.2;this.invulnerable=.36;this.audio.play('dodge');const kx=(this.keys.right?1:0)-(this.keys.left?1:0),ky=(this.keys.down?1:0)-(this.keys.up?1:0),inX=kx||this.input.x,inY=ky||this.input.y,n=Math.hypot(inX,inY);this.dashVector=n>.1?{x:inX/n,y:inY/n}:this.yonVektor();this.emit();}
+ /** F tusu: mesaleyi yak / ele al / kaldir. Uc durum tek tusta donuyor:
+  *  sonukse yakar (bir mesale harcar), yaniyor ama elde degilse ele alir,
+  *  eldeyse onceki silaha doner (mesale yanmaya devam eder, isik yariya iner). */
+ toggleTorch(){if(this.paused||!this.ready)return;const s=this.state;
+  if(!s.inventory.elmesale){
+   if(!s.inventory.torch){this.notify('Meşalen yok. Alf’ten alabilir ya da zanaat masasında yapabilirsin.');return;}
+   this.useItem('torch');this.audio.play('select');this.emit();return;}
+  if(s.equipment.weapon==='elmesale'){
+   const geri=(this.mesaleOnce!=='elmesale'&&s.inventory[this.mesaleOnce])?this.mesaleOnce:'yumruk';
+   s.equipment.weapon=geri;this.notify(`Meşaleyi kemerine astın. ${ITEMS[geri].name} elinde.`);
+  }else{this.mesaleOnce=s.equipment.weapon;s.equipment.weapon='elmesale';this.notify('Meşale elinde.');}
+  s.hp=Math.min(s.hp,stats(s).maxHp);this.audio.play('select');this.save();this.emit();}
+ dodge(){if(this.paused||this.dodgeTimer>0)return;this.dodgeTimer=stats(this.state).dodge;this.dash=.2;this.invulnerable=.36;this.audio.play('dodge');/* Kalkis tozu: ayagin bastigi yerden geriye savrulan kul. Yon dash yonunun
+     TERSI, yani oyuncu ileri firlarken toz arkada kaliyor. */
+  {const v=this.yonVektor();for(let i=0;i<9;i++)this.particles.push({x:this.state.x+(Math.random()-.5)*6,y:this.state.y+(Math.random()-.5)*4,
+   vx:-v.x*(18+Math.random()*26)+(Math.random()-.5)*14,vy:-v.y*(18+Math.random()*26)+(Math.random()-.5)*10-6,
+   life:.25+Math.random()*.3,color:'#8d8478',size:1+Math.random(),g:26});}
+  const kx=(this.keys.right?1:0)-(this.keys.left?1:0),ky=(this.keys.down?1:0)-(this.keys.up?1:0),inX=kx||this.input.x,inY=ky||this.input.y,n=Math.hypot(inX,inY);this.dashVector=n>.1?{x:inX/n,y:inY/n}:this.yonVektor();this.emit();}
  private attack(){if(this.attackTimer>0||this.paused)return;const s=this.state;const silah=ITEMS[s.equipment.weapon];const isBow=silah.menzilli===true;/* Sure artik silahin kendi `hiz` carpanindan ve bileme tasindan geliyor;
    eskiden yalnizca yay/kilic ayrimi vardi. */this.attackTimer=(isBow?.38:.43)*(silah.hiz??1)*(this.bileme>0?.75:1);this.vurusSure=this.attackTimer;this.vurusPoz=this.attackTimer;
    if(isBow){/* Kusanilan ok turu bitmisse sade oka duser. */const okId:ItemId=(s.equipment.ok&&s.inventory[s.equipment.ok])?s.equipment.ok:'arrow';const okTur=ITEMS[okId];const arrowCount=s.inventory[okId]||0;if(arrowCount<=0){this.vurusPoz=0;this.notify('Okun kalmadı! Sarnıç kapağının yanındaki sandıktan, Alf’ten veya diğer sandıklardan ok bulabilirsin.');return;}removeItem(s,okId);this.audio.play('swing');const damage=stats(s).attack+(this.tonic>0?8:0)+(ITEMS[s.equipment.armor].okHasar||0);let targets=this.mobs.filter(m=>Math.hypot(m.x-s.x,m.y-s.y)<160&&lineOfSight(this.world,s.x,s.y,m.x,m.y));targets.sort((a,b)=>Math.hypot(a.x-s.x,a.y-s.y)-Math.hypot(b.x-s.x,b.y-s.y));const okv=170*(silah.okHiz??1);let vx=0,vy=0;if(targets[0]){const d=Math.hypot(targets[0].x-s.x,targets[0].y-s.y)||1;vx=(targets[0].x-s.x)/d*okv;vy=(targets[0].y-s.y)/d*okv;this.face(targets[0].x-s.x,targets[0].y-s.y);}else{const v=this.yonVektor();vx=v.x*okv;vy=v.y*okv;}// Ok govdenin ONUNDEN cikar: merkezden dogunca sirttan firlamis gibi
@@ -516,7 +517,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    else if(s.inventory.elmesale){delete s.flags.mesaleKalan;removeItem(s,'elmesale');
     if(s.equipment.weapon==='elmesale')s.equipment.weapon=(this.mesaleOnce!=='elmesale'&&s.inventory[this.mesaleOnce])?this.mesaleOnce:'yumruk';
     this.notify('Meşale söndü.');this.emit();}}
-   const kx=(this.keys.right?1:0)-(this.keys.left?1:0),ky=(this.keys.down?1:0)-(this.keys.up?1:0),kLen=Math.hypot(kx,ky),activeInput=kLen>0?{x:kx/kLen,y:ky/kLen}:this.input;const movement=this.dash>0?this.dashVector:activeInput;const length=Math.hypot(movement.x,movement.y);this.moving=length>.08;/* Ocak zirhinin agirligi (yavaslik) da tanimliydi ama kullanilmiyordu. */
+   const kx=(this.keys.right?1:0)-(this.keys.left?1:0),ky=(this.keys.down?1:0)-(this.keys.up?1:0),kLen=Math.hypot(kx,ky),activeInput=kLen>0?{x:kx/kLen,y:ky/kLen}:this.input;/* Kacis izi: dash suresince sabit arayla soluk kopya birakilir; render
+     bunlari oyuncudan ONCE cizer, boylece arkada kalmis gorunurler. */
+   if(this.dash>0){this.izSayac-=dt;if(this.izSayac<=0){this.izSayac=.028;
+    this.izler.push({x:this.state.x,y:this.state.y,anahtar:this.poz(this.moving?'Walk':'Idle'),
+     kare:Math.floor(this.yol/Engine.ADIM),flip:this.flip,life:.26});}}
+   for(const iz of this.izler)iz.life-=dt;this.izler=this.izler.filter(i=>i.life>0);
+   const movement=this.dash>0?this.dashVector:activeInput;const length=Math.hypot(movement.x,movement.y);this.moving=length>.08;/* Ocak zirhinin agirligi (yavaslik) da tanimliydi ama kullanilmiyordu. */
    const speed=(this.dash>0?205:44)*(ITEMS[this.state.equipment.armor].yavaslik??1)*(this.yavas>0?.6:1);if(this.moving){const dx=movement.x/Math.max(1,length),dy=movement.y/Math.max(1,length);this.face(dx,dy);this.move(this.state,dx*speed*dt,dy*speed*dt);this.bolgeKontrol();this.yol+=speed*dt;if(this.tick-this.stepAt>.29){this.audio.play('step');this.stepAt=this.tick;}}if(this.input.attack)this.attack();
    // --- Kul Ovasi: can erimesi + ruzgarda savrulan kul ---
    if(this.state.zone==='disari'&&this.state.hp>0&&!this.paused){
@@ -615,33 +622,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      this.particles.push({x:e.x+(Math.random()-.5)*13,y:e.y-12-Math.random()*6,
       vx:(Math.random()-.5)*7,vy:-9-Math.random()*11,life:.7+Math.random()*.9,
       color:c,size:1,g:-14});}}
-   // --- Sarnic dalgalari: alt kapidan sirayla gelirler ---
-   if(this.state.zone==='cistern'){
-    const gecen=Number(this.state.flags.dalga)||0;
-    if(this.mobs.every(m=>m.hp<=0)&&gecen<Engine.DALGALAR.length){
-     this.dalgaSayac-=dt;
-     if(this.dalgaSayac<=0){
-      const [kx,ky]=Engine.KAPI;let n=0;
-      for(const [kind,adet] of Engine.DALGALAR[gecen])for(let i=0;i<adet;i++){
-       const max=Engine.CAN[kind]??40;
-       // Yayilim genisletildi: hepsi ayni noktaya dogunca ust uste basliyorlardi.
-       let sx=kx*16+8+(Math.random()-.5)*54,sy=ky*16+8+(Math.random()-.5)*16;
-       for(let k=0;k<10&&!walkable(this.world,sx,sy);k++)sy-=8;
-       this.mobs.push({id:`dalga${gecen}_${n++}`,kind,x:sx,y:sy,hp:max,max,
-        cool:.8+Math.random(),windup:0,burn:0,hurt:0,homeX:sx,homeY:sy});}
-      this.state.flags.dalga=String(gecen+1);this.dalgaSayac=3.2;
-      this.audio.play('door');
-      this.notify(gecen+1===Engine.DALGALAR.length
-       ?'Kapıdan son kalabalık geliyor.':`Aşağıdaki kapıdan bir şeyler çıkıyor. (${gecen+1}/${Engine.DALGALAR.length})`);
-      this.emit();
-     }
-    }else if(this.mobs.some(m=>m.hp>0))this.dalgaSayac=3.2;
-    else if(gecen>=Engine.DALGALAR.length&&!this.state.flags.dalgaBitti){
-     this.state.flags.dalgaBitti='1';
-     this.state.journal.unshift('Sarnıçtaki kapıdan gelen her şeyi temizledin.');
-     this.notify('Kapıdan başka ses gelmiyor.');this.save();this.emit();
-    }
-   }
+   /* SARNIC DALGALARI KALDIRILDI (2026-09-13, kullanici istegi). Yaratiklar
+      alt kapidan bes dalga halinde geliyordu; dalgalar arasinda mekan bos
+      kaliyordu. Artik sarnic bastan kalabalik (world.ts). */
    // Dusus sesi ve rahatsiz olan yarasalar. Ses gec geliyor cunku ucurum
    // derin; oyuncu once sessizligi duyup sonra ne oldugunu anliyor.
    // Iki asama: once dusus sesi, SONRA rahatsiz olan yarasalar. Tek asamada
@@ -911,6 +894,8 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    actors.push({y:this.state.y,draw:()=>{const s=this.state;c.fillStyle='#02081280';c.beginPath();c.ellipse(s.x,s.y+1,8.5*OYUNCU_OLCEK,2.8*OYUNCU_OLCEK,0,0,7);c.fill();const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';// Dusus: sprite kucule kucule asagi kayiyor, boslugun icine iniyormus gibi.
   // Dusus: kucuIme YOK, karakter bir anda kayboluyor.
   const dusuyor=this.dusus>0;
+  /* Izler oyuncunun ALTINA cizilir ve solar; en eskisi en sonuk. */
+  for(const iz of this.izler)this.sprite(iz.anahtar,iz.x,iz.y,iz.kare,Engine.OYUNCU_EN,Engine.OYUNCU_BOY,iz.flip,OYUNCU_OLCEK,Math.min(.42,iz.life*1.6));
   if(!dusuyor)this.sprite(this.poz(action),s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?Math.floor((this.vurusSure-this.vurusPoz)*16):Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const v=this.yonVektor(),angle=Math.atan2(v.y,v.x);c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-1.1,angle+1.1);c.stroke();}}});
   actors.sort((a,b)=>a.y-b.y).forEach(a=>a.draw());
   c.fillStyle=this.state.zone==='haven'?'#060e1924':'#070b1c42';c.fillRect(cx,cy,this.gorus.en,this.gorus.boy);

@@ -111,6 +111,11 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      dayanikli, vurunca oyuncuyu agirlastirir. Fener tasiyan: uzaktan isik
      gosterir, yaklasinca soner ve etrafa Bogulmus birakir. */
   enemy('bog1',8,13,23);enemy('bog2',8,36,22);enemy('bog3',8,43,18);enemy('bog4',8,29,14);
+  /* Firtina kalabaligi: dort Bogulmus azdi. Can surekli eridigi icin ova
+     yine de en tehlikeli yer; kacmak hala bir secenek. */
+  enemy('d0',8,36,28);enemy('d1',8,29,17);enemy('d2',8,12,26);enemy('d3',4,41,20);enemy('d4',4,7,15);enemy('d5',1,52,23);
+  enemy('d6',1,39,13);enemy('d7',8,48,20);enemy('d8',8,13,17);enemy('d9',8,1,22);enemy('d10',4,6,23);enemy('d11',4,17,11);
+  enemy('d12',1,33,10);enemy('d13',1,7,28);
   enemy('fener1',9,39,24);enemy('fener2',9,7,10);
   /* Kralin son muhafizi: on bir yildir ovada devriyede, emir geri alinmadi.
      Once konusur (NPC); kavga secilirse motor onu kind 10 dusmana cevirir. */
@@ -171,9 +176,10 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   gecis(3,4,10,7,'cistern',[27,27]);     // yukari: sarnicin alt agzi
   /* Karanlikta ses once gelir: yaratiklar gecidin boyunca dagitildi. */
   /* Giris agzi BOS: ilk yarasa tam spawn karosundaydi, oyuncu geri donemiyordu. */
-  enemy('tun1',1,6,16);enemy('tun2',1,5,22);enemy('tun3',4,6,28);
-  enemy('tun4',1,5,34);enemy('tun5',4,6,40);enemy('tun6',1,7,46);
-  enemy('tun7',4,5,52);enemy('tun8',1,6,58);
+  enemy('t0',1,5,19);enemy('t1',1,4,43);enemy('t2',1,4,48);enemy('t3',4,4,32);enemy('t4',4,6,57);enemy('t5',5,4,12);
+  enemy('t6',5,4,37);enemy('t7',1,8,25);enemy('t8',1,7,60);enemy('t9',1,8,34);enemy('t10',4,6,22);enemy('t11',4,7,38);
+  enemy('t12',5,5,28);enemy('t13',5,7,30);enemy('t14',1,6,53);enemy('t15',1,4,59);enemy('t16',1,5,15);enemy('t17',4,8,55);
+  enemy('t18',4,7,49);enemy('t19',5,4,25);enemy('t20',5,6,41);enemy('t21',1,6,46);
   chest('tunelSandik',6,60,[['torch',3],['potion',2],['okzehir',6]],30);
   fire(6,34);                            // yolun ortasinda bir koz: tek mola
  }else if(zone==='cistern'){
@@ -195,6 +201,20 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   chest('cisternWest',6,20,[['chain',1],['bow',1],['potion',2],['yeminh',1]],24);
   chest('cisternEast',49,24,[['guard',1],['potion',2],['uzunyay',1],['okdelici',8]],20);
   fire(10,16);fire(40,14);
+  /* DALGA SISTEMI KALDIRILDI (2026-09-13). Once yaratiklar alt kapidan
+     bes dalga halinde geliyordu ve aralarda sarnic bombostu; simdi mekan
+     bastan dolu. Konumlar yurunebilir ve CEVRESI de acik karolardan,
+     birbirine en az 5 karo uzaklikta secildi; girise ve Rauf'a yakin
+     olanlar elendi. */
+  enemy('c0',1,21,5);enemy('c1',1,26,21);enemy('c2',1,35,4);enemy('c3',1,4,17);enemy('c4',1,27,3);enemy('c5',5,36,14);
+  enemy('c6',5,15,21);enemy('c7',5,44,6);enemy('c8',5,7,19);enemy('c9',2,37,21);enemy('c10',2,40,7);enemy('c11',2,32,22);
+  enemy('c12',4,30,19);enemy('c13',4,22,24);enemy('c14',1,39,3);enemy('c15',1,10,16);enemy('c16',1,37,26);enemy('c17',1,4,24);
+  enemy('c18',1,14,25);enemy('c19',5,48,8);enemy('c20',5,26,13);enemy('c21',5,32,27);enemy('c22',5,9,23);enemy('c23',2,14,15);
+  enemy('c24',2,24,16);enemy('c25',2,32,15);enemy('c26',4,17,17);enemy('c27',4,17,7);enemy('c28',1,31,7);enemy('c29',1,25,26);
+  enemy('c30',1,46,25);enemy('c31',1,29,25);enemy('c32',1,47,4);enemy('c33',5,13,9);enemy('c34',5,21,20);enemy('c35',5,43,27);
+  enemy('c36',5,3,10);enemy('c37',2,7,13);enemy('c38',2,18,13);enemy('c39',2,8,27);enemy('c40',4,50,22);enemy('c41',4,19,26);
+  enemy('c42',1,25,6);enemy('c43',1,40,24);enemy('c44',1,11,12);enemy('c45',1,50,15);enemy('c46',1,12,19);enemy('c47',5,18,3);
+  enemy('c48',5,22,12);enemy('c49',5,35,18);
   /* Alt agiz artik bir yere cikiyor: Dar Gecit. */
   gecis(23,29,31,30,'tunel',[6,10]);
   // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).

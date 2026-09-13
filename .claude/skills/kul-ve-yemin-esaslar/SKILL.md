@@ -288,6 +288,17 @@ kondu. Uzaklıkla kısılır.
 - Ateş herkesi yakar (NPC, yoldaş, düşman); NPC'ler ateşten kaçınır.
 - Kül Ovası canı eritir (`KUL_HASAR`), pelerin/miğfer/duru su azaltır.
 - Düşmanlar iç içe gelmez (ayrışma), haritanın kenarına sıkışmaz.
+- **Dalga sistemi yok** (2026-09-13). Sarnıçta yaratıklar alt kapıdan beş dalga
+  hâlinde geliyordu; dalgalar arasında mekân bomboş kalıyordu. Artık mekânlar
+  baştan dolu: Sarnıç 50, Kül Ovası 22, Dar Geçit 22 yaratık. Konumlar
+  yürünebilir **ve çevresi de açık** karolardan, birbirine en az 4-6 karo
+  uzaklıkta, girişe ve NPC'lere yakın olanlar elenerek seçildi. Ölçüldü: 4×
+  yavaşlatılmış CPU'da bile kare süresi 16.7 ms, 33 ms üstü kare yok.
+- **Meşalenin kendi tuşu var (F)**, Q yalnızca silah değiştirir. Üç durum tek
+  tuşta döner: sönükse yakar, yanıyorsa ele alır, eldeyse kemere asar (yanmaya
+  devam eder, ışık yarıya iner). Mobilde ayrı yuvarlak düğme.
+- **Kaçışın (dash) izi var**: 0.028 sn aralıkla soluk kopya bırakılır
+  (`izler`), render oyuncudan ÖNCE çizer; kalkışta ayaktan geriye kül tozu.
 - Rauf ölmez, diz çöker; ölürse yeniden doğmaz (yerleşim koşullu).
 - **Kral öldürülemez** (2026-09-12 kullanıcı kararı). Bir süre vurulabilirdi
   (çubuksuz, "ölçü oyuncunun"); kaldırıldı. Taç eşyası ve Obruk'un satın alma

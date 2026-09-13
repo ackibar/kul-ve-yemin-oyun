@@ -681,3 +681,7 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 /* Mesale rozeti tonik rozetinin altina: ikisi ayni anda aktifken ust uste binmesin. */
 .tonic-badge.mesale-badge{top:112px}
 @container(max-width:850px){.tonic-badge.mesale-badge{top:96px}}
+
+/* Mesale dugmesi: iksirle ayni aile, kendi rengi (koz turuncusu). */
+.round.mesale{width:46px;height:46px;min-width:46px;min-height:46px;color:#e9b478;background:#2d2119cb}
+@container(max-width:850px){.round.mesale{width:42px;height:42px;min-width:42px;min-height:42px}}
