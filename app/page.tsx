@@ -167,21 +167,27 @@ export default function Home(){
      const kaynak=nereden==='sandik'?(st.sandiklar![sandikId]||{}):st.inventory;
      const hedef=nereden==='sandik'?st.inventory:(st.sandiklar![sandikId]||(st.sandiklar![sandikId]={}));
      /* Kusanilan esya sandiga konamaz: cikarinca oyuncu silahsiz kalirdi. */
-     if(nereden==='heybe'&&Object.values(st.equipment).includes(id)){showNotice('Kuşandığın eşyayı bırakamazsın.');return;}
-     tasi(kaynak,hedef,id,hepsi?99:1);g.sound('select');g.save();g.emit();};
+     /* Yalnizca KUSANILAN silah/zirh/yuzuk birakilamaz. Kusanilan OK TURU de
+        equipment icinde duruyor ama o mermi: yigin sandiga konabilmeli,
+        yoksa oku hic depolayamiyorsun. */
+     if(nereden==='heybe'&&[st.equipment.weapon,st.equipment.armor,st.equipment.ring].includes(id)){showNotice('Kuşandığın eşyayı bırakamazsın.');return;}
+     /* Dokunma TAMAMINI tasir. Once tersiydi (1 adet, shift ile hepsi) ama
+        35 oku tek tek almak iskenceydi ve dokunmatikte shift yok - yigini
+        tasimanin yolu kalmiyordu. Tek adet icin shift/alt. */
+     tasi(kaynak,hedef,id,hepsi?1:99);g.sound('select');g.save();g.emit();};
     const kutu=(baslik:string,icerik:Partial<Record<ItemId,number>>,nereden:'sandik'|'heybe')=>
      <div className="sandik-sutun"><h3>{baslik}</h3><div className="item-grid">
       {(Object.keys(icerik) as ItemId[]).filter(id=>icerik[id]).map(id=>
-       <button key={id} className={`item-cell ${ITEMS[id].rarity==='Eşsiz'?'rare':''} ${nereden==='heybe'&&Object.values(s.equipment).includes(id)?'kusanik':''}`}
-        onClick={ev=>gec(id,nereden,ev.shiftKey)}
-        aria-label={`${ITEMS[id].name}, ${icerik[id]} adet, ${nereden==='sandik'?'al':'sandığa koy'}`}>
+       <button key={id} className={`item-cell ${ITEMS[id].rarity==='Eşsiz'?'rare':''} ${nereden==='heybe'&&[s.equipment.weapon,s.equipment.armor,s.equipment.ring].includes(id)?'kusanik':''}`}
+        onClick={ev=>gec(id,nereden,ev.shiftKey||ev.altKey)}
+        aria-label={`${ITEMS[id].name}, ${icerik[id]} adet, ${nereden==='sandik'?'hepsini al':'hepsini sandığa koy'}`}>
         <Icon name={ITEMS[id].icon} item={id} size={32}/><span>{ITEMS[id].name}</span>
         <small>{icerik[id]!>1?'×'+icerik[id]:ITEMS[id].rarity}</small></button>)}
       {!Object.keys(icerik).length&&<p className="muted">Boş.</p>}
      </div></div>;
     return <div className="sandik-layout">
      {kutu('Sandık',kap,'sandik')}
-     <div className="sandik-ok"><ArrowLeftRight size={22}/><small>dokun: 1 · shift: hepsi</small>
+     <div className="sandik-ok"><ArrowLeftRight size={22}/><small>dokun: hepsi · shift: 1 adet</small>
       {altin>0&&<button className="text-button" onClick={()=>{const g=engine.current!;g.state.gold+=altin;g.state.sandikAltin![sandikId]=0;g.sound('coin');g.save();g.emit();showNotice(altin+' altın aldın.');}}><Coins size={16}/>{altin} altın al</button>}</div>
      {kutu('Heybe',s.inventory,'heybe')}
     </div>;})()}

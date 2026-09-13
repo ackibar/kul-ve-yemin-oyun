@@ -341,7 +341,10 @@ kondu. Uzaklıkla kısılır.
   (çubuksuz, "ölçü oyuncunun"); kaldırıldı. Taç eşyası ve Obruk'un satın alma
   seçeneği veride duruyor, şimdilik ulaşılamıyor.
 - **Sandık iki yönlü bir kap** (2026-09-13): açınca otomatik yağma YOK, iki
-  ızgaralı panel açılır (Sandık | Heybe), dokunma 1 adet / shift hepsini taşır.
+  ızgaralı panel açılır (Sandık | Heybe); **dokunma yığının tamamını**, shift/alt
+  tek adet taşır (önce tersiydi: 35 oku tek tek almak işkenceydi ve dokunmatikte
+  shift yok). Kuşanılan ok TÜRÜ `equipment`'ta durur ama mermidir — sandığa
+  konabilmeli; yalnız silah/zırh/yüzük kilitli.
   İçerik `state.sandiklar[id]` içinde kayıtlı — bıraktığın orada durur. Kuşanılan
   eşya bırakılamaz (soluk gösterilir). Açılmış sandıklar **artık kırılamaz**
   (kırınca içine konanlar da yok oluyordu). Yarasa sürprizi yalnız ilk açılışta.
