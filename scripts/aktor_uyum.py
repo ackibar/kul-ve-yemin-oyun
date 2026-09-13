@@ -37,6 +37,10 @@ HEDEF = os.path.join(ROOT, 'public/assets')
 KLASORLER = ['characters', 'enemies']
 
 KNEE, RATIO, GLOBAL = 30.0, 0.62, 0.94     # isik omuzu
+# Aktorler sahnede fazla koyu okunuyordu: olculdu, karakter ortalama parlakligi
+# 47/255 iken siginagin aydinlik zemini 80. Siluet gibi duruyorlardi. Kul
+# paleti ve omuzlar aynen duruyor, yalnizca isiklik bir tik kaldiriliyor.
+LIFT = 1.20
 CKNEE, CRATIO, CGLOBAL = 8.0, 0.50, 0.92   # doygunluk omuzu
 KUL = math.radians(30.0)                   # sahnelerin sicak kul acisi
 NUDGE_MAX, NUDGE_MIN, NUDGE_C = 0.18, 0.04, 20.0
@@ -46,7 +50,7 @@ def grade(c):
     L, a, b = P._srgb_to_lab(c)
     C, h = math.hypot(a, b), math.atan2(b, a)
 
-    nL = (L if L <= KNEE else KNEE + (L - KNEE) * RATIO) * GLOBAL
+    nL = (L if L <= KNEE else KNEE + (L - KNEE) * RATIO) * GLOBAL * LIFT
     nC = (C if C <= CKNEE else CKNEE + (C - CKNEE) * CRATIO) * CGLOBAL
 
     # doygun renkler kimliklerini korur, notrler kule kayar

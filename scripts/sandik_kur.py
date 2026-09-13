@@ -39,9 +39,14 @@ def oturt(im):
 # ORAN hesabi (hedef/ortalama) kullanildi ve PATLADI: mor kirilinca ortalama
 # doygunluk dustu, carpan buyudu, sandik turuncu bir alet kutusuna dondu.
 # Artik SABIT ve SINIRLI katsayilar var.
-PARLAK_KAT, PARLAK_TAVAN = 1.42, .62      # koyuluk acilir ama beyazlamaz
-AHSAP_DOYGUN_TAVAN = .46                  # kahverengi okunur, cig olmaz
+# Ilk ayar (1.42 / .46) sandigi sahneden AYRI gosterdi: renk geldi ama nesne
+# ortamin uzerine yapistirilmis gibi duruyordu. Katsayilar kisildi ve ustune
+# ton uyumlu (kul) halinden bir pay geri KARISTIRILIYOR - renk olmuyor, sahneye
+# oturuyor.
+PARLAK_KAT, PARLAK_TAVAN = 1.26, .55      # koyuluk acilir ama beyazlamaz
+AHSAP_DOYGUN_TAVAN = .44                  # kahverengi okunur, cig olmaz
 METAL_DOYGUN_KAT = .12                    # mor demir -> notr gri
+KUL_PAYI = .12                            # kul tonlu halinden geri karisan pay
 
 
 def komsuya_uydur(im):
@@ -81,7 +86,11 @@ if __name__ == '__main__':
     # Ilk kare kapali, son kare tam acik; ikisi de ayni cizimden.
     ac = sorted(glob.glob(f'{HAM}/sandik_ac_*.png'))
     kaynak = [ac[0], ac[-1]] if len(ac) >= 2 else [f'{HAM}/sandik_kapali.png', f'{HAM}/sandik_acik.png']
-    kare = [komsuya_uydur(dereceler(oturt(Image.open(k).convert('RGBA')))) for k in kaynak]
+    kare = []
+    for k in kaynak:
+        kul = dereceler(oturt(Image.open(k).convert('RGBA')))   # sahnenin kul tonu
+        canli = komsuya_uydur(kul.copy())                       # rengi geri gelmis hali
+        kare.append(Image.blend(kul, canli, 1 - KUL_PAYI))
     sh = Image.new('RGBA', (CELL * len(kare), CELL), (0, 0, 0, 0))
     for i, k in enumerate(kare):
         sh.paste(k, (i * CELL, 0))

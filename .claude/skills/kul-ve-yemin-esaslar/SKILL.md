@@ -138,6 +138,12 @@ dönüyor; sabit ve tavanlı katsayı kullan.
 desen tutmuyor. Kapalı hâlden `/animate-with-text-v3` ile türet, ilk ve son
 kareyi al.
 
+**Aktör ışığı (`aktor_uyum.LIFT`, 2026-09-13):** aktörler sahnede fazla koyu
+okunuyordu — ölçüldü, karakter ortalama parlaklığı 47/255 iken sığınağın
+aydınlık zemini 80; siluet gibi duruyorlardı. `grade()` sonuna 1.20 ışıklık
+katsayısı eklendi (kül paleti ve omuzlar aynen duruyor), tüm karakter ve
+düşman klasörleri yeniden derecelendi: 47.1 → 55.9.
+
 **Ton uyumu otomatik:** her yeni karakter/düşman
 `aktor_uyum.klasor(hedef, ham_yenile=True)` ile sahnenin tonuna çekilir
 (ışık omuzu + kroma omuzu + kül tonu). Ham sheet önce
