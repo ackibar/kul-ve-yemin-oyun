@@ -124,6 +124,20 @@ okunur (Obruk: solmuş bordo + matlaşmış altın, başka renk yok). Mavi ve
 doygun kırmızı yok; okunabilirlik taşıyan sinyaller (kan, can çubuğu)
 istisna.
 
+**Nesne sprite'ı sahnede sönükse suç ton uyumunda olmayabilir.** Sandık ölçüldü:
+ton uyumundan sonra parlaklık 0.271 / doygunluk 0.297 iken aynı sahnedeki fıçı
+0.473/0.540, kasa 0.504/0.587 — sahnenin ışık tinti de binince kahverengi hiç
+okunmuyordu. Üstelik **üretilen görselin %65'i mor-maviydi** (model demiri soğuk
+mora boyuyor), parlaklık kaldırılınca mor ortaya çıkıyordu. Çözüm `sandik_kur.py`
+içinde: ahşap kuşağının (hue .02-.13) doygunluğu tavanla yükseltilir, mor-mavi
+kuşak (.55-.95) neredeyse tamamen doygunluktan arındırılır (demir nötr gri),
+parlaklık sınırlı katsayıyla açılır. **Oran hesabı (hedef/ortalama) kullanma** —
+mor kırılınca ortalama düşüp çarpan patlıyor, sandık turuncu bir alet kutusuna
+dönüyor; sabit ve tavanlı katsayı kullan.
+**İki durumlu nesnede (açık/kapalı) ikinci hâli ayrı üretme:** gövde, açı ve
+desen tutmuyor. Kapalı hâlden `/animate-with-text-v3` ile türet, ilk ve son
+kareyi al.
+
 **Ton uyumu otomatik:** her yeni karakter/düşman
 `aktor_uyum.klasor(hedef, ham_yenile=True)` ile sahnenin tonuna çekilir
 (ışık omuzu + kroma omuzu + kül tonu). Ham sheet önce
