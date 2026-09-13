@@ -685,3 +685,16 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 /* Mesale dugmesi: iksirle ayni aile, kendi rengi (koz turuncusu). */
 .round.mesale{width:46px;height:46px;min-width:46px;min-height:46px;color:#e9b478;background:#2d2119cb}
 @container(max-width:850px){.round.mesale{width:42px;height:42px;min-width:42px;min-height:42px}}
+
+/* Sandik paneli: solda sandik, sagda heybe, ortada yon isareti. */
+.sandik-layout{display:grid;grid-template-columns:1fr 92px 1fr;gap:14px;align-items:start}
+.sandik-sutun h3{margin:0 0 10px;font-size:16px;color:#e2c793}
+.sandik-sutun .item-grid{grid-template-columns:repeat(3,1fr);min-height:104px}
+.sandik-ok{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:30px;color:#c2ab80;text-align:center}
+.sandik-ok small{font-size:11px;line-height:1.3}
+.sandik-ok .text-button{padding:8px;font-size:13px;min-height:38px}
+@container(max-width:850px){.sandik-layout{grid-template-columns:1fr 62px 1fr;gap:8px}.sandik-sutun .item-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* Sandiga konamayan (kusanilan) esya: soluk ve capraz cizgili. */
+.item-cell.kusanik{opacity:.45}
+.item-cell.kusanik small{color:#b8a07a}

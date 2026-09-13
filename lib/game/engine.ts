@@ -1,4 +1,4 @@
-import {addItem,gainXp,ITEMS,removeItem,stats,type ItemId,type State,type Zone} from './data';
+import {addItem,gainXp,ITEMS,sandikAc,removeItem,stats,type ItemId,type State,type Zone} from './data';
 /** Render yogunlugu: gorsel pikseli / dunya birimi. Dunya 16px karo, 32px aktor
  *  biriminde kalir; gorseller 2x cozunurlukte (32px karo, 64px aktor) uretilir. */
 const R=2;
@@ -17,7 +17,7 @@ type Floating={x:number;y:number;text:string;life:number;color:string};
 type Shot={x:number;y:number;vx:number;vy:number;life:number;damage:number;isHero?:boolean;yakar?:number;zehir?:number;delici?:boolean;ceker?:boolean;gecti?:string[]};
 export type Drop={id:string;x:number;y:number;kind:'wood'|'xp'|'gold'|'bow';amount:number;vx:number;vy:number;life:number};
 export type Snapshot={state:State;near:Entity|null;attackCooldown:number;dodgeCooldown:number;tonic:number;mesale:number;saveStatus:string;ready:boolean};
-export type GameEvent={type:'dialogue'|'death'|'message'|'zone';id?:string;text?:string};
+export type GameEvent={type:'dialogue'|'death'|'message'|'zone'|'sandik';id?:string;text?:string};
 const SAVE='kul-ve-yemin-save-v1';
 export class Engine{
  state:State;world:World;mobs:Mob[]=[];audio:GameAudio;paused=true;input={x:0,y:0,attack:false};onChange:(s:Snapshot)=>void;onEvent:(e:GameEvent)=>void;
@@ -187,7 +187,22 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(e.id==='tuhn'&&f.tuhn!=='kaldi')f.talk='tuhn:1';
    else if(e.id==='rauf'){/* Rauf'un diyalogu DURUMA gore aciliyor. Onceden yalnizca 'takip' ve
       'serbest' ozel idi; 'korundu' ve 'dizcokme' tanisma agacina dusuyor,
-      oyuncu ayni hikayeyi bastan dinliyordu. */const r=this.state.flags.rauf;this.state.flags.talk=r==='takip'?'rauf:takip1':r==='serbest'?'rauf:serbest1':r==='korundu'?'rauf:korundu1':r==='dizcokme'?'rauf:yenildi':'';}this.audio.play('talk');this.onEvent({type:'dialogue',id:e.id});return;}if(e.type==='chest'){if(this.state.opened.includes(e.id)){this.notify('Bu sandığı daha önce açmıştın. Vurarak kırabilirsin.');return;}this.state.opened.push(e.id);for(const[id,n]of e.items||[])addItem(this.state,id,n);addItem(this.state,'arrow',10);this.state.gold+=e.gold||0;this.audio.play('chest');const lootText=(e.items||[]).map(([id,n])=>`${ITEMS[id].name}${n>1?' ×'+n:''}`).concat(['+10 Ok']).concat(e.gold?[`+${e.gold} altın`]:[]).join(' · ');if(Math.random()<0.35&&this.state.zone!=='haven'){const batCount=Math.floor(1+Math.random()*2);for(let i=0;i<batCount;i++){this.mobs.push({id:`bat_${e.id}_${Date.now()}_${i}`,kind:1,x:e.x+(Math.random()-.5)*16,y:e.y+(Math.random()-.5)*16,max:22,hp:22,cool:.3,windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y});}this.notify(lootText?`${lootText} · 🦇 Sandıktan yarasa fırladı!`:'🦇 Sandıktan yarasa fırladı!');}else{this.notify(lootText);}this.state.journal.unshift(`${e.items?.map(([id])=>ITEMS[id].name).join(', ')} buldun.`);if(e.items?.some(([id])=>id==='medicine'))this.state.flags.medicineStarted=true;this.save();this.emit();return;}if(e.type==='lever'){if(this.state.flags.gateOpen){this.notify('Ocak kapısı zaten açık.');return;}this.state.flags.gateOpen=true;this.audio.play('door');this.notify('Kül Ocağı’nın kapısı açıldı.');this.save();this.emit();return;}if(e.type==='portal'&&e.to){this.changeZone(e.to,e.spawn!);}}
+      oyuncu ayni hikayeyi bastan dinliyordu. */const r=this.state.flags.rauf;this.state.flags.talk=r==='takip'?'rauf:takip1':r==='serbest'?'rauf:serbest1':r==='korundu'?'rauf:korundu1':r==='dizcokme'?'rauf:yenildi':'';}this.audio.play('talk');this.onEvent({type:'dialogue',id:e.id});return;}if(e.type==='chest'){
+    /* ARTIK OTOMATIK YAGMA YOK. Sandik iki yonlu bir kap: icerigi state'e
+       tasinir (sandikAc), panel acilir, oyuncu alir ya da koyar. Yarasa
+       surprizi yalnizca ILK acilista. */
+    const ilk=sandikAc(this.state,e.id,e.items,e.gold);
+    if(!this.state.opened.includes(e.id))this.state.opened.push(e.id);
+    this.audio.play('chest');
+    if(ilk&&Math.random()<0.35&&this.state.zone!=='haven'){
+     const n=Math.floor(1+Math.random()*2);
+     for(let i=0;i<n;i++)this.mobs.push({id:`bat_${e.id}_${Date.now()}_${i}`,kind:1,
+      x:e.x+(Math.random()-.5)*16,y:e.y+(Math.random()-.5)*16,max:22,hp:22,
+      cool:.3,windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y});
+     this.notify('Sandıktan yarasa fırladı!');
+    }
+    if(ilk&&e.items?.some(([id])=>id==='medicine'))this.state.flags.medicineStarted=true;
+    this.save();this.onEvent({type:'sandik',id:e.id});this.emit();return;}if(e.type==='lever'){if(this.state.flags.gateOpen){this.notify('Ocak kapısı zaten açık.');return;}this.state.flags.gateOpen=true;this.audio.play('door');this.notify('Kül Ocağı’nın kapısı açıldı.');this.save();this.emit();return;}if(e.type==='portal'&&e.to){this.changeZone(e.to,e.spawn!);}}
  private changeZone(zone:Zone,spawn:[number,number]){this.halka=false;this.state.zone=zone;this.state.x=spawn[0]*16+8;this.state.y=spawn[1]*16+8;this.world=makeWorld(zone,this.state.flags as Record<string,string|boolean|undefined>);this.resetMobs();this.camera={x:this.state.x-this.gorus.en/2,y:this.state.y-this.gorus.boy/2};this.invulnerable=1.5;this.audio.setZone(zone);this.audio.play('door');this.onEvent({type:'zone',id:zone});this.save();this.emit()}
  useItem(id:ItemId){if(this.paused&&!['potion','tonic','bileme','merhem','toz','tuzet','durusu','petek','torch'].includes(id))return false;if(id==='potion'){if(this.state.hp>=stats(this.state).maxHp){this.notify('Canın zaten dolu.');return false;}if(!removeItem(this.state,id)){this.notify('Can iksirin kalmadı. Alf’ten alabilirsin.');return false;}this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+45);this.float(this.state.x,this.state.y-10,'+45','#8cdda5');}else if(id==='tonic'){if(!removeItem(this.state,id))return false;this.tonic=20;this.notify('Köz toniği: 20 saniye +8 saldırı.');}else if(id==='bileme'){if(!removeItem(this.state,id))return false;this.bileme=30;this.notify('Bileme taşı: 30 saniye %25 daha hızlı vuruş.');}else if(id==='merhem'){if(!removeItem(this.state,id))return false;this.merhem=12;this.notify('Sargı merhemi: 12 saniye boyunca yavaşça iyileşiyorsun.');}else if(id==='toz'){if(!removeItem(this.state,id))return false;this.gizli=8;this.notify('Kül tozu: 8 saniye görünmezsin.');}
    /* Obruk'un kileri. Tuzlu et oyunun en guclu tek seferlik iyilesmesi;
@@ -262,7 +277,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     const ileri=targets[0]?Math.max(9,Math.min(20,Math.hypot(targets[0].x-s.x,targets[0].y-s.y)*.6)):20;
     this.shots.push({x:s.x+vx/hz*ileri,y:s.y-4+vy/hz*ileri,vx,vy,life:1.3,damage,isHero:true,yakar:okTur.yakar,zehir:okTur.zehir,delici:okTur.delici,ceker:okTur.ceker,gecti:okTur.delici?[]:undefined});};this.save();this.emit();return;}
    this.slash=.2;this.audio.play('swing');
-   const decors=this.world.entities.filter(e=>((e.type==='decor'&&!e.asset?.includes('Table'))||(e.type==='chest'&&s.opened.includes(e.id)))&&Math.hypot(e.x-s.x,e.y-s.y)<38);
+   /* Acilmis sandiklar ARTIK KIRILAMAZ: sandik iki yonlu bir kap oldu, icine
+      esya konabiliyor - vurup yok etmek konulani da yok ediyordu. */
+   const decors=this.world.entities.filter(e=>e.type==='decor'&&!e.asset?.includes('Table')&&Math.hypot(e.x-s.x,e.y-s.y)<38);
    for(const d of decors){
     const currentHp=(this.decorHp[d.id]??3)-1;
     this.decorHp[d.id]=currentHp;

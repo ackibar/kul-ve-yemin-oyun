@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='7.7';
+export const SURUM='7.8';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -99,12 +99,35 @@ export const ITEMS:Record<ItemId,Item>={
  kurdele:{id:'kurdele',name:'Kırmızı kurdele',kind:'quest',description:'Rauf’un bileğinden. Kızınındı. Alf bunu hiç görmedi.',rarity:'Görev',icon:'ring',price:0},
 };
 export const ZONES:Record<Zone,{name:string;subtitle:string;danger:string}>={haven:{name:'Son Sığınak',subtitle:'Ateşin hâlâ yandığı yer',danger:'Güvenli bölge'},disari:{name:'Kül Ovası',subtitle:'Fırtınanın altında kalan dünya',danger:'Fırtına · nefes alınmaz'},yikik:{name:'Yıkık Ev',subtitle:'Külün giremediği tek oda',danger:'Kapalı · güvenli'},magara:{name:'Sarnıç Ağzı',subtitle:'Sığınağın altındaki ilk karanlık',danger:'Tenha'},cistern:{name:'Unutulmuş Sarnıç',subtitle:'Taşların hatırladığı sırlar',danger:'Seviye 1–3'},tunel:{name:'Dar Geçit',subtitle:'Sarnıcın altına inen yarık',danger:'Zifiri karanlık · meşale şart'}};
-export interface State {version:1;started:boolean;zone:Zone;x:number;y:number;hp:number;xp:number;level:number;gold:number;points:number;skills:{power:number;vigor:number;agility:number};inventory:Partial<Record<ItemId,number>>;equipment:{weapon:ItemId;armor:ItemId;ring:ItemId|null;ok?:ItemId};flags:Record<string,boolean|string>;opened:string[];killed:string[];journal:string[];playtime:number;ending:string|null;}
+export interface State {version:1;started:boolean;zone:Zone;x:number;y:number;hp:number;xp:number;level:number;gold:number;points:number;skills:{power:number;vigor:number;agility:number};inventory:Partial<Record<ItemId,number>>;equipment:{weapon:ItemId;armor:ItemId;ring:ItemId|null;ok?:ItemId};flags:Record<string,boolean|string>;opened:string[];killed:string[];journal:string[];playtime:number;ending:string|null;
+ /** Sandiklarin ICINDEKILER. Sandik artik "acilinca hepsini al" degil, iki
+  *  yonlu bir kap: oyuncu alabilir ve koyabilir. Anahtar sandik id'si.
+  *  Eski kayitlarda yok - opened[] ile geriye donuk uyumlu (bkz. parseSave). */
+ sandiklar?:Record<string,Partial<Record<ItemId,number>>>;
+ /** Sandiktaki altin; alininca sifirlanir. */
+ sandikAltin?:Record<string,number>;}
 export const XP=[0,100,260,490,790];
-export const newState=():State=>({version:1,started:true,zone:'haven',x:15*16,y:14*16,hp:100,xp:0,level:1,gold:18,points:0,skills:{power:0,vigor:0,agility:0},inventory:{yumruk:1,rusty:1,leather:1,potion:3},equipment:{weapon:'rusty',armor:'leather',ring:null,ok:'arrow'},flags:{},opened:[],killed:[],journal:['Son Sığınak’a vardın. Önce şifacı Mirna ile konuş.'],playtime:0,ending:null});
+export const newState=():State=>({version:1,sandiklar:{},sandikAltin:{},started:true,zone:'haven',x:15*16,y:14*16,hp:100,xp:0,level:1,gold:18,points:0,skills:{power:0,vigor:0,agility:0},inventory:{yumruk:1,rusty:1,leather:1,potion:3},equipment:{weapon:'rusty',armor:'leather',ring:null,ok:'arrow'},flags:{},opened:[],killed:[],journal:['Son Sığınak’a vardın. Önce şifacı Mirna ile konuş.'],playtime:0,ending:null});
 export function stats(s:State){const weapon=ITEMS[s.equipment.weapon],armor=ITEMS[s.equipment.armor],ring=s.equipment.ring?ITEMS[s.equipment.ring]:null;return {maxHp:100+(s.level-1)*12+s.skills.vigor*18+(armor.hp||0)+(ring?.hp||0),attack:(weapon.attack||0)+(s.equipment.weapon==='yemin'&&Number(s.flags.raufCan||0)>0?6:0)+(ring?.attack||0)+(s.level-1)*2+s.skills.power*4,defense:armor.defense||0,dodge:Math.max(.65,2.2-s.skills.agility*.25-(s.equipment.ring==='wind'?.6:0))}}
 export function addItem(s:State,id:ItemId,count=1){s.inventory[id]=(s.inventory[id]||0)+count;}
 export function removeItem(s:State,id:ItemId){if(!s.inventory[id])return false;s.inventory[id]!--;if(!s.inventory[id])delete s.inventory[id];return true;}
+/** Sandiktan oyuncuya ya da tersi: tek yonlu, adet bazli tasima.
+ *  Kaynak yoksa hicbir sey yapmaz; sayac sifirlanirsa anahtar silinir. */
+export function tasi(kaynak:Partial<Record<ItemId,number>>,hedef:Partial<Record<ItemId,number>>,id:ItemId,adet=1){
+ const var_=kaynak[id]||0;if(var_<=0)return 0;
+ const n=Math.min(adet,var_);
+ kaynak[id]=var_-n;if(!kaynak[id])delete kaynak[id];
+ hedef[id]=(hedef[id]||0)+n;return n;}
+/** Sandigin kabini ILK ACILISTA dunya verisinden doldurur. `opened` eski
+ *  kayitlarda "bu sandik bosaltildi" demek; o sandiklar bos acilir. */
+export function sandikAc(s:State,id:string,items?:[ItemId,number][],gold=0){
+ if(!s.sandiklar)s.sandiklar={};if(!s.sandikAltin)s.sandikAltin={};
+ if(s.sandiklar[id])return false;
+ const ilk=!s.opened.includes(id);
+ s.sandiklar[id]={};s.sandikAltin[id]=ilk?gold:0;
+ if(ilk){for(const [iid,n] of items||[])s.sandiklar[id]![iid]=(s.sandiklar[id]![iid]||0)+n;
+  s.sandiklar[id]!.arrow=(s.sandiklar[id]!.arrow||0)+10;}
+ return ilk;}
 export function gainXp(s:State,n:number){s.xp+=n;let leveled=false;while(s.level<5&&s.xp>=XP[s.level]){s.level++;s.points++;leveled=true;}if(leveled){s.hp=stats(s).maxHp;s.journal.unshift(`Seviye ${s.level}: yeni bir yetenek puanı kazandın.`)}return leveled;}
 export function equip(s:State,id:ItemId){if(!s.inventory[id])return false;const kind=ITEMS[id].kind;if(kind!=='weapon'&&kind!=='armor'&&kind!=='ring'&&kind!=='ammo')return false;if(kind==='ammo')s.equipment.ok=id;else s.equipment[kind]=id;s.hp=Math.min(s.hp,stats(s).maxHp);return true;}
 export function spendPoint(s:State,key:keyof State['skills']){if(s.points<1||!['power','vigor','agility'].includes(key))return false;s.points--;s.skills[key]++;if(key==='vigor')s.hp+=18;return true;}
@@ -846,7 +869,7 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
  if(message)s.journal.unshift(message);return {message,leveled:xp?gainXp(s,xp):false};
 }
 // Only accept bounded, known save fields. A broken or older save never replaces a valid run.
-export function parseSave(raw:string):State|null{try{const s=JSON.parse(raw) as State;if(s.version!==1||!s.started||!ZONES[s.zone]||!Number.isFinite(s.x)||!Number.isFinite(s.y)||s.x<0||s.y<0||s.x>1200||s.y>1200||!Number.isFinite(s.hp)||s.hp<=0||!Number.isFinite(s.gold)||s.gold<0||!Number.isFinite(s.xp)||s.xp<0||!Number.isInteger(s.level)||s.level<1||s.level>5||!Number.isInteger(s.points)||s.points<0||!s.inventory||typeof s.inventory!=='object'||!s.equipment||!s.skills||!s.flags||typeof s.flags!=='object'||Array.isArray(s.flags)||!Array.isArray(s.opened)||!Array.isArray(s.killed)||!Array.isArray(s.journal)||![s.opened,s.killed,s.journal].every(a=>a.every(v=>typeof v==='string'))||!['power','vigor','agility'].every(k=>Number.isInteger(s.skills[k as keyof State['skills']])&&s.skills[k as keyof State['skills']]>=0)||!Number.isFinite(s.playtime)||!Object.entries(s.inventory).every(([k,v])=>k in ITEMS&&Number.isInteger(v)&&Number(v)>0)||ITEMS[s.equipment.weapon]?.kind!=='weapon'||ITEMS[s.equipment.armor]?.kind!=='armor'||(s.equipment.ring!==null&&ITEMS[s.equipment.ring]?.kind!=='ring')||![s.equipment.weapon,s.equipment.armor,s.equipment.ring].every(id=>id===null||s.inventory[id])||![null,'seal','claim'].includes(s.ending))return null;// Eski kayitlarda silahsiz mod yok; eklenmezse oyuncu ona gecemez.
+export function parseSave(raw:string):State|null{try{const s=JSON.parse(raw) as State;/* Sandik kaplari sonradan eklendi; eski kayitta yoksa bos baslar. */if(!s.sandiklar||typeof s.sandiklar!=='object')s.sandiklar={};if(!s.sandikAltin||typeof s.sandikAltin!=='object')s.sandikAltin={};if(s.version!==1||!s.started||!ZONES[s.zone]||!Number.isFinite(s.x)||!Number.isFinite(s.y)||s.x<0||s.y<0||s.x>1200||s.y>1200||!Number.isFinite(s.hp)||s.hp<=0||!Number.isFinite(s.gold)||s.gold<0||!Number.isFinite(s.xp)||s.xp<0||!Number.isInteger(s.level)||s.level<1||s.level>5||!Number.isInteger(s.points)||s.points<0||!s.inventory||typeof s.inventory!=='object'||!s.equipment||!s.skills||!s.flags||typeof s.flags!=='object'||Array.isArray(s.flags)||!Array.isArray(s.opened)||!Array.isArray(s.killed)||!Array.isArray(s.journal)||![s.opened,s.killed,s.journal].every(a=>a.every(v=>typeof v==='string'))||!['power','vigor','agility'].every(k=>Number.isInteger(s.skills[k as keyof State['skills']])&&s.skills[k as keyof State['skills']]>=0)||!Number.isFinite(s.playtime)||!Object.entries(s.inventory).every(([k,v])=>k in ITEMS&&Number.isInteger(v)&&Number(v)>0)||ITEMS[s.equipment.weapon]?.kind!=='weapon'||ITEMS[s.equipment.armor]?.kind!=='armor'||(s.equipment.ring!==null&&ITEMS[s.equipment.ring]?.kind!=='ring')||![s.equipment.weapon,s.equipment.armor,s.equipment.ring].every(id=>id===null||s.inventory[id])||![null,'seal','claim'].includes(s.ending))return null;// Eski kayitlarda silahsiz mod yok; eklenmezse oyuncu ona gecemez.
  s.inventory.yumruk=s.inventory.yumruk||1;
  // Ok yuvasi sonradan eklendi; eski kayitta yok.
  s.equipment.ok=s.equipment.ok||'arrow';

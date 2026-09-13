@@ -329,6 +329,11 @@ kondu. Uzaklıkla kısılır.
 - **Kral öldürülemez** (2026-09-12 kullanıcı kararı). Bir süre vurulabilirdi
   (çubuksuz, "ölçü oyuncunun"); kaldırıldı. Taç eşyası ve Obruk'un satın alma
   seçeneği veride duruyor, şimdilik ulaşılamıyor.
+- **Sandık iki yönlü bir kap** (2026-09-13): açınca otomatik yağma YOK, iki
+  ızgaralı panel açılır (Sandık | Heybe), dokunma 1 adet / shift hepsini taşır.
+  İçerik `state.sandiklar[id]` içinde kayıtlı — bıraktığın orada durur. Kuşanılan
+  eşya bırakılamaz (soluk gösterilir). Açılmış sandıklar **artık kırılamaz**
+  (kırınca içine konanlar da yok oluyordu). Yarasa sürprizi yalnız ilk açılışta.
 - Satıcılar `SATICILAR` + `zam`: Alf 1×, Obruk 2.5× ("bey" dersen 2.15×).
   Bir eşya hangi listedeyse yalnız oradan alınır.
 - Düşman canı TEK yerde (`Engine.CAN`); iki tabloda `undefined+0=NaN`
