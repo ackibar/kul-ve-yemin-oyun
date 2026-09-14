@@ -38,7 +38,7 @@ function haritaEditoruEklentisi() {
           req.on('data', (c: Buffer) => (body += c));
           req.on('end', () => {
             try {
-              const { zone, rows } = JSON.parse(body);
+              const { zone, kind, rows, list } = JSON.parse(body);
               const src = readFileSync(WORLD_TS, 'utf8');
               // ONEMLI: `zone==='${zone}'` tek basina ARANMAZ - dosyanin basindaki
               // w/h ternary'sinde de (ör. "zone==='tunel'?13:...") gecen bir alt
@@ -46,17 +46,41 @@ function haritaEditoruEklentisi() {
               // (bir kere gercekten oldu: haven'in ZEMIN'i tunel'inkiyle
               // ezildi). Dal acilisi ")){"ile bitiyor, ternary "?" ile - bu
               // yuzden sadece gercek `if`/`}else if` dalini eslestiriyoruz.
-              const basIdx = src.indexOf(`zone==='${zone}'){`);
+              const acilis = `zone==='${zone}'){`;
+              const basIdx = src.indexOf(acilis);
               if (basIdx < 0) throw new Error(`zone==='${zone}'){ dalı bulunamadı (bu mekân farklı biçimde tanımlı olabilir)`);
               const sonrakiDal = src.indexOf(`}else if(zone===`, basIdx);
               const sonBlok = src.indexOf(`\n return {zone,w,h,tiles`, basIdx);
               const bitIdx = sonrakiDal > -1 && sonrakiDal < sonBlok ? sonrakiDal : sonBlok;
               if (bitIdx < 0) throw new Error('mekân bloğunun sonu bulunamadı');
               const blok = src.slice(basIdx, bitIdx);
-              const zeminRe = /const ZEMIN=\[[^\]]*\];/;
-              if (!zeminRe.test(blok)) throw new Error(`'${zone}' bir ZEMIN dizisiyle tanımlı değil (room()+blockers kullanıyor olabilir) - bu araç onu düzenleyemez`);
-              const yeni = `const ZEMIN=[${rows.map((r: string) => `'${r}'`).join(',')}];`;
-              const yeniBlok = blok.replace(zeminRe, yeni);
+
+              let yeniBlok: string;
+              if (kind === 'blockers') {
+                // list: [x1,y1,x2,y2][] - ondalikli olabilir (alt-karo hassasiyet icin,
+                // bkz. walkable() - blockers duz aritmetikle okunuyor, tamsayi sarti yok).
+                const fmt = (n: number) => Math.round(n * 100) / 100;
+                const satir = (list as number[][])
+                  .map(([x1, y1, x2, y2]) => `[${fmt(x1)},${fmt(y1)},${fmt(x2)},${fmt(y2)}]`)
+                  .join(',');
+                const yeniIfade = satir ? `blockers.push(${satir});` : '';
+                const pushRe = /blockers\.push\([^;]*\);\n?/;
+                if (pushRe.test(blok)) {
+                  yeniBlok = blok.replace(pushRe, yeniIfade ? yeniIfade + '\n' : '');
+                } else if (yeniIfade) {
+                  // Hic blockers.push yoktu (ör. tunel/test100) - dal acilisinin
+                  // hemen ardina ekle, sira onemli degil (blockers ustte tanimli).
+                  const eklemeNoktasi = acilis.length;
+                  yeniBlok = blok.slice(0, eklemeNoktasi) + '\n  ' + yeniIfade + blok.slice(eklemeNoktasi);
+                } else {
+                  yeniBlok = blok; // hem yeni liste bos hem eski yoktu - degisiklik yok
+                }
+              } else {
+                const zeminRe = /const ZEMIN=\[[^\]]*\];/;
+                if (!zeminRe.test(blok)) throw new Error(`'${zone}' bir ZEMIN dizisiyle tanımlı değil (room()+blockers kullanıyor olabilir) - bu araç onu düzenleyemez`);
+                const yeni = `const ZEMIN=[${(rows as string[]).map((r) => `'${r}'`).join(',')}];`;
+                yeniBlok = blok.replace(zeminRe, yeni);
+              }
               const yeniKaynak = src.slice(0, basIdx) + yeniBlok + src.slice(bitIdx);
               writeFileSync(WORLD_TS, yeniKaynak);
               res.setHeader('content-type', 'application/json');

@@ -47,7 +47,12 @@
 <body>
 <aside>
   <h1>Harita Editörü</h1>
-  <p class="hint">Kül ve Yemin için: bir mekân arka planı üstünde yürünebilir (zemin) ve engel karolarını fare ile boyayıp <code>ZEMIN</code> dizisini üretir, dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar. <code>disari</code>/<code>cistern</code>/<code>tunel</code> ve <code>haven</code>'ın zemin şekli tam desteklenir. <code>magara</code>/<code>yikik</code> hâlâ salt <code>blockers</code> dikdörtgenleriyle tanımlı (ZEMIN dizisi yok) - önizlenebilir ama kaydedilemez. Mor taralı alanlar mobilya (<code>blockers</code>) - bu araç onları boyamaz, sadece gösterir.</p>
+  <p class="hint">Kül ve Yemin için iki ayrı düzenleme modu: <b>Zemin</b> (karo karo yürünebilir/engel boyama → <code>ZEMIN</code> dizisi) ve <b>Engeller</b> (piksel hassas, karoya kilitlenmeyen dikdörtgenler → <code>blockers</code> listesi — yatağın kenarı artık kutunun ortasında kalmaz). İkisi de dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar.</p>
+
+  <div class="row" style="margin-bottom:10px">
+    <button id="modeZemin" class="active">📐 Zemin (karo)</button>
+    <button id="modeEngel">🎯 Engeller (piksel)</button>
+  </div>
 
   <h2>1 · Kaynak</h2>
   <label>Hazır mekân</label>
@@ -74,7 +79,13 @@
   <button id="loadBtn">Görseli yükle</button>
   <p class="small" id="dims"></p>
   <p class="small" id="canliNot" style="display:none">Bu mekânın <b>gerçek</b> zemin/engel durumu yüklendi (world.ts'ten, <code>npm run dev</code> sunucusu üzerinden).</p>
+  <label>Görüntü ölçeği</label>
+  <div class="row">
+    <button id="zoomOut">−</button>
+    <button id="zoomIn">+</button>
+  </div>
 
+  <div id="zeminPanel">
   <h2>2 · Fırça</h2>
   <div class="brush">
     <button id="brushZemin" class="active">Zemin (1)</button>
@@ -85,11 +96,6 @@
     <button id="fillAll">Hepsi zemin</button>
     <button id="clearAll">Hepsi engel</button>
   </div>
-  <label>Görüntü ölçeği</label>
-  <div class="row">
-    <button id="zoomOut">−</button>
-    <button id="zoomIn">+</button>
-  </div>
 
   <h2>3 · İçe / Dışa aktar</h2>
   <label>Mevcut ZEMIN dizisini yapıştır (world.ts'ten)</label>
@@ -98,21 +104,52 @@
   <label>Dışa aktarılan (world.ts'e yapıştır)</label>
   <textarea id="exportBox" rows="6" readonly></textarea>
   <button id="copyBtn">Panoya kopyala</button>
-  <button id="saveBtn" style="border-color:var(--zemin)">💾 world.ts'e kaydet</button>
-  <p class="hint">Kaydet, sadece <code>npm run dev</code> açıkken çalışan yerel bir yardımcıya yazıyor — sayfayı doğrudan dosya olarak açtıysan (file://) çalışmaz. Yalnızca <code>ZEMIN</code> diziyle tanımlı mekânlarda çalışır (<code>disari</code>, <code>cistern</code>, <code>tunel</code>, <code>haven</code>'ın zemin şekli); <code>magara</code>/<code>yikik</code> hâlâ elle <code>blockers</code> dikdörtgeniyle tanımlı, bu düğme onlarda hata verir.</p>
+  <button id="saveBtn" style="border-color:var(--zemin)">💾 world.ts'e kaydet (ZEMIN)</button>
+  <p class="hint">Yalnızca <code>ZEMIN</code> diziyle tanımlı mekânlarda çalışır (<code>disari</code>, <code>cistern</code>, <code>tunel</code>, <code>haven</code>'ın zemin şekli); <code>magara</code>/<code>yikik</code> hâlâ elle <code>blockers</code> dikdörtgeniyle tanımlı, bu düğme onlarda hata verir.</p>
 
   <h2>4 · Ulaşılabilirlik (BFS)</h2>
   <p class="hint">Bir başlangıç karosu seç, ana gövdeye bağlı olmayan "adacık" zemin karolarını bulur — yeni bir kapı/gecis eklerken "boş görünüyor ama aslında izole" hatasını önler.</p>
   <button id="pickStart">Başlangıç karosu seç</button>
   <button id="checkReach">Kontrol et</button>
-  <div id="status">Bir mekân seçip "Görseli yükle" ile başla.</div>
-  <div class="legend">
+  </div>
+
+  <div id="engelPanel" style="display:none">
+  <h2>2 · Kutu çiz</h2>
+  <p class="hint">Boş bir yere tıkla-sürükle = yeni kutu (piksel hassas, karoya kilitlenmez). Var olan bir kutuya tıkla = seç; gövdesinden sürükle = taşı; köşe tutamağından sürükle = boyutlandır. <code>Shift</code> basılıyken sürüklersen 0,25 karoya yuvarlanır (ince ayar için serbest bırak). <code>Delete</code>/<code>Backspace</code> = seçili kutuyu sil.</p>
+  <div class="row">
+    <button id="engelYeni">+ Yeni kutu (0,0,2,2)</button>
+    <button id="engelSil">Seçileni sil</button>
+  </div>
+  <div id="seciliKutu" style="display:none">
+    <label>Seçili kutu (karo birimi, ondalıklı olabilir)</label>
+    <div class="row">
+      <div><label class="small">x1</label><input type="number" id="bx1" step="0.05"></div>
+      <div><label class="small">y1</label><input type="number" id="by1" step="0.05"></div>
+    </div>
+    <div class="row">
+      <div><label class="small">x2</label><input type="number" id="bx2" step="0.05"></div>
+      <div><label class="small">y2</label><input type="number" id="by2" step="0.05"></div>
+    </div>
+  </div>
+  <label>Kutu listesi (tıkla = seç)</label>
+  <div id="kutuListe" class="small" style="max-height:140px;overflow-y:auto;border:1px solid var(--line);border-radius:3px;padding:4px"></div>
+
+  <h2>3 · İçe / Dışa aktar</h2>
+  <label>Dışa aktarılan (world.ts'e yapıştır)</label>
+  <textarea id="engelExportBox" rows="6" readonly></textarea>
+  <button id="engelCopyBtn">Panoya kopyala</button>
+  <button id="engelSaveBtn" style="border-color:#965ac8">💾 world.ts'e kaydet (blockers)</button>
+  <p class="hint">Zaten bir <code>blockers.push(...)</code> satırı olan mekânlarda onu DEĞİŞTİRİR; hiç yoksa (ör. <code>tunel</code>, <code>test100</code>) yeni bir satır ekler. Sıfır kutuyla kaydetmek var olan satırı temizler.</p>
+  </div>
+
+  <div class="legend" style="margin-top:14px">
     <span><i class="sw" style="background:var(--zemin)"></i>zemin</span>
     <span><i class="sw" style="background:var(--engel)"></i>engel</span>
     <span><i class="sw" style="background:var(--ulasilan)"></i>ulaşılabilir</span>
     <span><i class="sw" style="background:var(--izole)"></i>izole zemin</span>
-    <span><i class="sw" style="background:#965ac8"></i>mobilya (salt okunur)</span>
+    <span><i class="sw" style="background:#965ac8"></i>mobilya kutusu</span>
   </div>
+  <div id="status">Bir mekân seçip "Görseli yükle" ile başla.</div>
 </aside>
 <main>
   <div id="canvasWrap">
@@ -137,11 +174,29 @@ let brush=1;
 let painting=false;
 let pickingStart=false, startTile=null;
 let reachSet=null, isleSet=null;
-let liveBlockers=null; // sadece bilgi amacli, boyanmiyor (bkz. asagidaki not)
+let liveBlockers=null; // ham API yaniti - engel moduna gecince duzenlenebilir listeye kopyalanir
 let currentZoneName=''; // preset ise zone adi, custom ise ''
+let mode='zemin'; // 'zemin' | 'engel'
+
+// --- Engeller (piksel hassas kutular) ---
+let boxes=[]; // {x1,y1,x2,y2} karo biriminde, ONDALIKLI olabilir
+let selectedBox=-1;
+let boxDrag=null; // {type:'new'|'move'|'resize', handle?, startPx, startBox}
+const HANDLE_PX=8; // ekran pikseli cinsinden tutamak yakalama yaricapi
 
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
+
+function setMode(m){
+  mode=m;
+  $('modeZemin').classList.toggle('active', m==='zemin');
+  $('modeEngel').classList.toggle('active', m==='engel');
+  $('zeminPanel').style.display = m==='zemin' ? 'block' : 'none';
+  $('engelPanel').style.display = m==='engel' ? 'block' : 'none';
+  draw();
+}
+$('modeZemin').addEventListener('click',()=>setMode('zemin'));
+$('modeEngel').addEventListener('click',()=>setMode('engel'));
 
 $('preset').addEventListener('change',()=>{
   const v=$('preset').value;
@@ -201,10 +256,14 @@ $('loadBtn').addEventListener('click', async ()=>{
     }catch{ /* dev sunucusu yok - sorun degil, bos tuvalle devam */ }
   }
   reachSet=null; isleSet=null; startTile=null;
+  boxes = liveBlockers ? liveBlockers.map(([x1,y1,x2,y2])=>({x1,y1,x2,y2})) : [];
+  selectedBox=-1;
   scale = Math.min(2, Math.max(0.5, 900/(gridW*pxKaro)));
   $('dims').textContent = `${img.width}×${img.height}px kaynak · ${gridW}×${gridH} karo · ${pxKaro}px/karo`;
   draw();
   updateExport();
+  renderBoxList();
+  updateEngelExport();
 });
 
 function setBrush(b){
@@ -232,34 +291,43 @@ function draw(){
   ctx.clearRect(0,0,cv.width,cv.height);
   ctx.drawImage(img,0,0,cv.width,cv.height);
   const tp = pxKaro*scale;
-  for(let y=0;y<gridH;y++)for(let x=0;x<gridW;x++){
-    const v=grid[y][x];
-    let fill=null;
-    if(reachSet){
-      if(isleSet.has(y*gridW+x)) fill='rgba(201,162,39,.55)';
-      else if(reachSet.has(y*gridW+x)) fill='rgba(47,111,168,.45)';
-      else if(v===0) fill='rgba(122,47,42,.35)';
-    }else{
-      fill = v===1 ? 'rgba(58,125,58,.30)' : 'rgba(122,47,42,.30)';
+  if(mode==='zemin'){
+    for(let y=0;y<gridH;y++)for(let x=0;x<gridW;x++){
+      const v=grid[y][x];
+      let fill=null;
+      if(reachSet){
+        if(isleSet.has(y*gridW+x)) fill='rgba(201,162,39,.55)';
+        else if(reachSet.has(y*gridW+x)) fill='rgba(47,111,168,.45)';
+        else if(v===0) fill='rgba(122,47,42,.35)';
+      }else{
+        fill = v===1 ? 'rgba(58,125,58,.30)' : 'rgba(122,47,42,.30)';
+      }
+      if(fill){ ctx.fillStyle=fill; ctx.fillRect(x*tp,y*tp,tp,tp); }
     }
-    if(fill){ ctx.fillStyle=fill; ctx.fillRect(x*tp,y*tp,tp,tp); }
   }
   ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=1;
   for(let x=0;x<=gridW;x++){ ctx.beginPath(); ctx.moveTo(x*tp,0); ctx.lineTo(x*tp,gridH*tp); ctx.stroke(); }
   for(let y=0;y<=gridH;y++){ ctx.beginPath(); ctx.moveTo(0,y*tp); ctx.lineTo(gridW*tp,y*tp); ctx.stroke(); }
-  // liveBlockers SADECE bilgi amacli (mor tarama): bu araç zemin (ZEMIN dizisi)
-  // boyuyor, mobilya engelleri (blockers dikdortgenleri) ayrı bir veri - o yuzden
-  // boyanmiyor, sadece "burada mobilya var" diye gosteriliyor.
-  if(liveBlockers && liveBlockers.length){
-    ctx.save();
-    ctx.fillStyle='rgba(150,90,200,.28)';
-    ctx.strokeStyle='rgba(150,90,200,.65)';
-    for(const [x1,y1,x2,y2] of liveBlockers){
-      ctx.fillRect(x1*tp,y1*tp,(x2-x1)*tp,(y2-y1)*tp);
-      ctx.strokeRect(x1*tp,y1*tp,(x2-x1)*tp,(y2-y1)*tp);
+  // Kutular: zemin modunda soluk/salt-bilgi, engel modunda parlak+duzenlenebilir
+  // (secili olan tutamaklarla). Ikisinde de gosteriliyor ki zemin boyarken de
+  // mobilyayla cakismadigini gorebilesin.
+  ctx.save();
+  boxes.forEach((b,i)=>{
+    const sel = mode==='engel' && i===selectedBox;
+    ctx.fillStyle = sel ? 'rgba(150,90,200,.40)' : (mode==='engel' ? 'rgba(150,90,200,.28)' : 'rgba(150,90,200,.16)');
+    ctx.strokeStyle = sel ? '#c99bec' : 'rgba(150,90,200,.65)';
+    ctx.lineWidth = sel ? 2 : 1;
+    const px1=b.x1*tp, py1=b.y1*tp, pw=(b.x2-b.x1)*tp, ph=(b.y2-b.y1)*tp;
+    ctx.fillRect(px1,py1,pw,ph);
+    ctx.strokeRect(px1,py1,pw,ph);
+    if(sel){
+      ctx.fillStyle='#c99bec';
+      for(const [hx,hy] of [[b.x1,b.y1],[b.x2,b.y1],[b.x1,b.y2],[b.x2,b.y2]]){
+        ctx.beginPath(); ctx.arc(hx*tp,hy*tp,5,0,7); ctx.fill();
+      }
     }
-    ctx.restore();
-  }
+  });
+  ctx.restore();
   if(startTile){
     ctx.fillStyle='#ffe08a';
     ctx.beginPath();
@@ -276,27 +344,180 @@ function tileFromEvent(e){
   if(x<0||y<0||x>=gridW||y>=gridH)return null;
   return [x,y];
 }
+/** Karoya kilitlenmeyen (ondalikli) konum - engel kutulari icin. */
+function pxFromEvent(e){
+  const r=cv.getBoundingClientRect();
+  const tp=pxKaro*scale;
+  const x=(e.clientX-r.left)/tp, y=(e.clientY-r.top)/tp;
+  return [Math.max(0,Math.min(gridW,x)), Math.max(0,Math.min(gridH,y))];
+}
+function snap(v,shift){ return shift ? Math.round(v*4)/4 : Math.round(v*20)/20; }
+
+function handleAt(px,py){
+  if(selectedBox<0)return null;
+  const b=boxes[selectedBox], tp=pxKaro*scale;
+  const pts={tl:[b.x1,b.y1],tr:[b.x2,b.y1],bl:[b.x1,b.y2],br:[b.x2,b.y2]};
+  for(const k in pts){
+    const [hx,hy]=pts[k];
+    if(Math.hypot(hx*tp-px*tp,hy*tp-py*tp)<HANDLE_PX)return k;
+  }
+  return null;
+}
+function boxBodyAt(px,py){
+  for(let i=boxes.length-1;i>=0;i--){
+    const b=boxes[i];
+    if(px>=Math.min(b.x1,b.x2)&&px<=Math.max(b.x1,b.x2)&&py>=Math.min(b.y1,b.y2)&&py<=Math.max(b.y1,b.y2))return i;
+  }
+  return -1;
+}
 
 cv.addEventListener('mousemove',e=>{
-  const t=tileFromEvent(e);
-  $('hoverTag').textContent = t ? `karo (${t[0]}, ${t[1]})` : '';
-  if(painting && t){ grid[t[1]][t[0]]=brush; draw(); updateExport(); }
+  if(mode==='zemin'){
+    const t=tileFromEvent(e);
+    $('hoverTag').textContent = t ? `karo (${t[0]}, ${t[1]})` : '';
+    if(painting && t){ grid[t[1]][t[0]]=brush; draw(); updateExport(); }
+    return;
+  }
+  // engel modu
+  const [px,py]=pxFromEvent(e);
+  $('hoverTag').textContent = `karo (${px.toFixed(2)}, ${py.toFixed(2)})`;
+  if(!boxDrag)return;
+  const s=e.shiftKey;
+  if(boxDrag.type==='new'){
+    const b=boxes[boxDrag.idx];
+    b.x2=snap(px,s); b.y2=snap(py,s);
+  }else if(boxDrag.type==='move'){
+    const b=boxes[selectedBox], dx=px-boxDrag.from[0], dy=py-boxDrag.from[1];
+    b.x1=snap(boxDrag.orig.x1+dx,s); b.y1=snap(boxDrag.orig.y1+dy,s);
+    b.x2=snap(boxDrag.orig.x2+dx,s); b.y2=snap(boxDrag.orig.y2+dy,s);
+  }else if(boxDrag.type==='resize'){
+    const b=boxes[selectedBox];
+    if(boxDrag.handle.includes('l'))b.x1=snap(px,s);
+    if(boxDrag.handle.includes('r'))b.x2=snap(px,s);
+    if(boxDrag.handle.includes('t'))b.y1=snap(py,s);
+    if(boxDrag.handle.includes('b'))b.y2=snap(py,s);
+  }
+  draw(); syncSelectedFields(); updateEngelExport();
 });
 cv.addEventListener('mousedown',e=>{
-  const t=tileFromEvent(e);
-  if(!t)return;
-  if(pickingStart){
-    startTile=t; pickingStart=false; reachSet=null; isleSet=null;
-    $('status').textContent = `Başlangıç: (${t[0]}, ${t[1]}). "Kontrol et"e bas.`;
-    draw(); return;
+  if(mode==='zemin'){
+    const t=tileFromEvent(e);
+    if(!t)return;
+    if(pickingStart){
+      startTile=t; pickingStart=false; reachSet=null; isleSet=null;
+      $('status').textContent = `Başlangıç: (${t[0]}, ${t[1]}). "Kontrol et"e bas.`;
+      draw(); return;
+    }
+    painting=true;
+    grid[t[1]][t[0]]=brush;
+    draw(); updateExport();
+    return;
   }
-  painting=true;
-  grid[t[1]][t[0]]=brush;
-  draw(); updateExport();
+  // engel modu
+  const [px,py]=pxFromEvent(e);
+  const h=handleAt(px,py);
+  if(h){ boxDrag={type:'resize',handle:h}; return; }
+  const i=boxBodyAt(px,py);
+  if(i>=0){
+    selectedBox=i;
+    boxDrag={type:'move',from:[px,py],orig:{...boxes[i]}};
+    renderBoxList(); syncSelectedFields(); draw();
+    return;
+  }
+  // bos alan: yeni kutu
+  boxes.push({x1:px,y1:py,x2:px,y2:py});
+  selectedBox=boxes.length-1;
+  boxDrag={type:'new',idx:selectedBox};
+  renderBoxList(); draw();
 });
-window.addEventListener('mouseup',()=>painting=false);
+window.addEventListener('mouseup',()=>{
+  painting=false;
+  if(boxDrag){
+    if(boxDrag.type==='new'){
+      const b=boxes[boxDrag.idx];
+      const x1=Math.min(b.x1,b.x2), x2=Math.max(b.x1,b.x2), y1=Math.min(b.y1,b.y2), y2=Math.max(b.y1,b.y2);
+      if(x2-x1<0.1||y2-y1<0.1){ boxes.splice(boxDrag.idx,1); selectedBox=-1; } // cok kucuk - iptal
+      else Object.assign(b,{x1,y1,x2,y2});
+    }
+    boxDrag=null;
+    renderBoxList(); syncSelectedFields(); updateEngelExport(); draw();
+  }
+});
 cv.addEventListener('mouseleave',()=>{ $('hoverTag').textContent=''; });
 cv.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('keydown',e=>{
+  if(mode==='engel' && (e.key==='Delete'||e.key==='Backspace') && selectedBox>=0 && document.activeElement===document.body){
+    boxes.splice(selectedBox,1); selectedBox=-1;
+    renderBoxList(); syncSelectedFields(); updateEngelExport(); draw();
+  }
+});
+
+function renderBoxList(){
+  const el=$('kutuListe');
+  if(!boxes.length){ el.innerHTML='<i style="color:var(--ink-dim)">Kutu yok.</i>'; return; }
+  el.innerHTML = boxes.map((b,i)=>
+    `<div data-i="${i}" style="padding:4px 6px;cursor:pointer;border-radius:2px;${i===selectedBox?'background:#965ac855':''}">`
+    + `[${b.x1.toFixed(2)}, ${b.y1.toFixed(2)}, ${b.x2.toFixed(2)}, ${b.y2.toFixed(2)}]</div>`
+  ).join('');
+  el.querySelectorAll('[data-i]').forEach(row=>{
+    row.addEventListener('click',()=>{ selectedBox=parseInt(row.dataset.i,10); renderBoxList(); syncSelectedFields(); draw(); });
+  });
+}
+function syncSelectedFields(){
+  const has=selectedBox>=0 && boxes[selectedBox];
+  $('seciliKutu').style.display = has ? 'block' : 'none';
+  if(!has)return;
+  const b=boxes[selectedBox];
+  $('bx1').value=b.x1.toFixed(2); $('by1').value=b.y1.toFixed(2);
+  $('bx2').value=b.x2.toFixed(2); $('by2').value=b.y2.toFixed(2);
+}
+['bx1','by1','bx2','by2'].forEach(id=>{
+  $(id).addEventListener('input',()=>{
+    if(selectedBox<0)return;
+    const b=boxes[selectedBox];
+    b.x1=parseFloat($('bx1').value)||0; b.y1=parseFloat($('by1').value)||0;
+    b.x2=parseFloat($('bx2').value)||0; b.y2=parseFloat($('by2').value)||0;
+    draw(); updateEngelExport();
+  });
+});
+$('engelYeni').addEventListener('click',()=>{
+  if(!img){alert('Önce bir görsel yükle.');return;}
+  boxes.push({x1:0,y1:0,x2:2,y2:2});
+  selectedBox=boxes.length-1;
+  renderBoxList(); syncSelectedFields(); updateEngelExport(); draw();
+});
+$('engelSil').addEventListener('click',()=>{
+  if(selectedBox<0)return;
+  boxes.splice(selectedBox,1); selectedBox=-1;
+  renderBoxList(); syncSelectedFields(); updateEngelExport(); draw();
+});
+
+function updateEngelExport(){
+  const fmt=n=>{ const r=Math.round(n*100)/100; return r; };
+  $('engelExportBox').value = boxes.length
+    ? `blockers.push(${boxes.map(b=>`[${fmt(b.x1)},${fmt(b.y1)},${fmt(b.x2)},${fmt(b.y2)}]`).join(',')});`
+    : '(kutu yok - kaydedersen var olan blockers.push satırı temizlenir)';
+}
+$('engelCopyBtn').addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText($('engelExportBox').value); $('status').textContent='Panoya kopyalandı.'; }
+  catch{ $('engelExportBox').select(); document.execCommand('copy'); $('status').textContent='Panoya kopyalandı (yedek yöntem).'; }
+});
+$('engelSaveBtn').addEventListener('click', async ()=>{
+  if(!currentZoneName){ alert('Kaydet sadece hazır mekân listesinden seçilenlerde çalışır (özel görselde değil).'); return; }
+  $('status').textContent = 'Kaydediliyor…';
+  try{
+    const list = boxes.map(b=>[b.x1,b.y1,b.x2,b.y2]);
+    const r = await fetch('/__harita/kaydet', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ zone: currentZoneName, kind:'blockers', list }),
+    });
+    const d = await r.json();
+    if(!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
+    $('status').textContent = `✓ world.ts kaydedildi (${currentZoneName}, blockers). Vite otomatik yeniden yükleyecek - oyunu tazeleyip bak.`;
+  }catch(e){
+    $('status').textContent = `Kaydedilemedi: ${e.message}`;
+  }
+});
 
 function updateExport(){
   if(!grid.length){$('exportBox').value='';return;}

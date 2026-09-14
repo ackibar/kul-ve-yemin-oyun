@@ -540,6 +540,22 @@ BFS ile mutlaka dogrulanmali (bu depoda ilk denemede 8453 zemin
 karosundan sadece 1239'u birbirine bagliydi), dikis satir/sutunlari elle
 tam acilmali.
 
+### Harita editörüne piksel-hassas "Engeller" modu — v9.0
+Kullanıcının gerçek isteği "100x100" değilmiş: nano-banana ile ürettiği
+görsellerde mobilya kutularını (blockers) karoya kilitlenmeden, tam
+kenarına oturtacak hassasiyet istiyordu ("yatağın kenarı boxın ortasına
+geliyor"). Çözüm resolution değiştirmek değildi - `blockers.push([x1,y1,
+x2,y2],...)` zaten düz aritmetikle okunuyor (`walkable()`), yani ondalıklı
+karo koordinatları (`[7.3,5,8,7.6]`) baştan beri çalışıyordu, hiç
+kullanılmamıştı. `harita-editor.html`'e ikinci bir mod eklendi: **Zemin**
+(eski, karo karo boyama) ve **Engeller** (yeni, fare ile serbest kutu
+çiz/taşı/boyutlandır - köşe tutamakları, `Shift`=çeyrek karoya yuvarla,
+bırakınca 0.05 hassasiyet). `vite.config.ts`'teki kaydet uç noktası
+`kind:'blockers'` alacak şekilde genişledi: zone bloğunda var olan
+`blockers.push(...)` satırını değiştirir, yoksa (tunel/test100 gibi) dal
+açılışının hemen ardına yeni satır ekler. Round-trip (haven'ın 34 kutusunu
+aynen geri yazmak) ile test edildi, sıfır fark.
+
 ---
 
-*Son güncelleme: 2026-09-14, v8.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v9.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
