@@ -22,7 +22,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  // Kare mekanlar 30x30: siginak, magara ve yikik. Kul Ovasi 54x30.
  const kare30=kare||zone==='yikik';
  // Boyali tek parca sahneler: Kul Ovasi ve Sarnic 54x30, digerleri 30x30.
- const genis=zone==='disari'||zone==='cistern';
+ const genis=zone==='disari'||zone==='cistern'||zone==='depo';
  /* Dar Gecit dikey: 13 genislik, 63 boy. */
  const w=zone==='tunel'?13:genis?54:kare30?30:46,h=zone==='tunel'?63:genis?30:kare30?30:48;
  const tiles=Array.from({length:h},()=>Array<number>(w).fill(0));
@@ -75,6 +75,12 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // elle aciliyor, disari cikis da onun ucunda.
   for(let j=2;j<4;j++)for(let i=12;i<18;i++)tiles[j][i]=1;
   gecis(12,2,18,3,'disari',[27,27]);    // ust kapi: kul ovasina cikis
+  // Sol duvarda YENI bir kapi: eski depoya acilir. Bu tarafta onceden bir
+  // gecit yoktu (duvar sagirdi), duvari delip acildi - Kral'in bir sira
+  // altindaki bos koseye (blockers orada bosluk birakiyor, bkz [3,17,4,20]).
+  for(let j=20;j<24;j++)for(let i=1;i<3;i++)tiles[j][i]=1;
+  gecis(1,20,3,24,'depo',[34,4]);       // sol kapi: eski depoya gecis
+
   // Ocaklarda boyali ALEV yok, sadece kor ve odun var; animasyonlu alevi motor
   // buraya koyuyor. Konum ocak halkasinin prop bileseninden olculdu.
   // Capa: Fire1 sprite'i 32 birimlik hucrenin TAMAMINI dolduruyor ve sprite()
@@ -220,6 +226,17 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   /* Alt agiz artik bir yere cikiyor: Dar Gecit. */
   gecis(23,29,31,30,'tunel',[6,10]);
   // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).
+ }else if(zone==='depo'){
+  /* Eski Depo: siginagin soluna yeni acilan kapidan gidilen unutulmus kiler.
+     Iki kaynak gorselden kuruldu (scripts/depo_kur.py): sahnenin kendisi ve
+     yurunebilir zemini YESILE boyanmis hali - disari/cistern ile ayni "genis
+     tek parca" olculere (54x30) kucultuldu. Kullanicinin istegiyle 180 derece
+     cevrildi; sahnenin tek gecidi (ust ortadaki karanlik kemer) boylece
+     alttan siginaga donen kapiyla ayni yonde kaliyor. Zemin dogrudan yesil
+     maskeden okundu, tahmin yok. */
+  const ZEMIN=['000000000000000000000000000000001111100000000000000000','000000000000000000000000000000001111100000000000000000','000000001100000000000000011111111111111000000000000000','000000001110000000000000001111111111111000000000000000','000000001110001000000000001111111111111111100000000000','000101111110001000000001001111111111111111111000000000','000111111111101000000001001111111111111111111100000000','000001111111111000000011111111111111111111111110000000','000001111111111111111111111111111111111111111110100000','000001101111111111111111111111111111111111111111100000','000000001111111111111111111111111000001111111111111100','000000000111110000000000011111111000001111111111111100','000000000000000000000000011111111000001111111111111100','000000000000000000000000011111111100011111111111111100','000000000000000000000000011111111111111111111111111100','000000000000000000000000011111111111111111111111100000','000000000000000000000000011111111111111111111111000000','000000000000000000000000011111111111111111111111100000','000000000000000000000000001111111111111111111100100000','000000000000000000000000001000111111111101111000100000','000000000000000000000000000001111111111100000000000000','000000000000000000000000000000000110100000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000'];
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
+  gecis(32,0,37,2,'haven',[3,22]);      // ust ucuk: siginaga geri
  }
  return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:zone==='tunel'?[6*16+8,6*16+8]:[7*16,7*16]};
 }

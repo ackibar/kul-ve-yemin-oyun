@@ -409,6 +409,26 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 - Yeni script'ler `scripts/` altında; her biri başında ne yaptığını,
   maliyetini ve akıştaki yerini yazar. Klasör haritası `KLASORLER.md`.
 
+### Yeni mekan iki kaynak görselden (yeşil maske yöntemi) — v8.3, Eski Depo
+Kullanıcı hazır bir sahne + aynı sahnenin yürünebilir zeminini YEŞİLE
+boyanmış halini masaüstünden verdiği zaman: `scripts/tunel_kur.py` /
+`scripts/depo_kur.py` deseni — yeşili en büyük bağlı bileşenle bul (yosun/
+parlak leke gibi küçük kopuk lekeler elensin), KARO ızgarasına indirger,
+istenen açıyla çevir. Kaynak çözünürlük mevcut mekanlarla birebir eşleşmek
+zorunda değil: en/boy oranı hangi mekân ailesine (kare 30×30 mı, geniş
+54×30 mı) yakınsa ona küçültülür (`Image.BOX` filtresiyle, blok-ortalama).
+Zemin doğrudan maskeden okunur — `mekan_kur.py`'deki parlaklık tahmini
+YOK, ayrı `blockers` da YOK (maskenin 0'ı zaten engel).
+
+Kullanıcı "kapılar eşleşsin diye 180 derece çevir" dedi ama sahnede gerçek
+bir kapı/yan geçit yoktu — tek geçit üstte karanlığa açılan bir kemerdi.
+180 çevirince o kemer alta düştü, bağlantı noktası olarak zeminin tuval
+kenarına değdiği (varsa) tek nokta kullanıldı. Sığınak tarafında da hazır
+çizilmiş bir kapı YOKTU: yeni geçiş duvara elle delindi (`tiles[j][i]=1`),
+yani oyuncu şu an görsel olarak düz taşın içinden yürüyor. Kullanıcı fark
+ederse: bu bilinen bir eksik, boyanmış bir kapı eklenirse iyileşir — kendi
+başına "çözüldü" denmesin.
+
 ---
 
-*Son güncelleme: 2026-09-14, v8.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-14, v8.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
