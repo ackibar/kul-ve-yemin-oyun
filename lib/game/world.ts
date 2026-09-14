@@ -22,9 +22,11 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  // Kare mekanlar 30x30: siginak, magara ve yikik. Kul Ovasi 54x30.
  const kare30=kare||zone==='yikik';
  // Boyali tek parca sahneler: Kul Ovasi ve Sarnic 54x30, digerleri 30x30.
- const genis=zone==='disari'||zone==='cistern'||zone==='depo';
- /* Dar Gecit dikey: 13 genislik, 63 boy. */
- const w=zone==='tunel'?13:genis?54:kare30?30:46,h=zone==='tunel'?63:genis?30:kare30?30:48;
+ const genis=zone==='disari'||zone==='cistern';
+ /* Dar Gecit dikey: 13 genislik, 63 boy. Depo 28x16: kaynak gorselin olculen
+    gercek karo yogunlugu (96px/karo) baz alinarak hesaplandi, bkz. depo_kur.py -
+    54x30'a zorlanmisti (v8.3) ve "devasa" durmustu, aritmetigin dogrusu buydu. */
+ const w=zone==='tunel'?13:zone==='depo'?28:genis?54:kare30?30:46,h=zone==='tunel'?63:zone==='depo'?16:genis?30:kare30?30:48;
  const tiles=Array.from({length:h},()=>Array<number>(w).fill(0));
  const room=(x:number,y:number,rw:number,rh:number)=>{for(let j=y;j<y+rh;j++)for(let i=x;i<x+rw;i++)tiles[j][i]=1};
  const entities:Entity[]=[],enemies:EnemySpec[]=[];
@@ -82,7 +84,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // koltugunun hemen KUZEYI (satir 15-16) - kullanicinin da isaret ettigi
   // "Kral'a yakin gecit" - hem bos hem de ana odaya bitisik.
   for(let j=15;j<17;j++)for(let i=1;i<3;i++)tiles[j][i]=1;
-  gecis(1,15,3,17,'depo',[34,4]);       // sol kapi: eski depoya gecis
+  gecis(1,15,3,17,'depo',[9,13]);       // sol kapi: eski depoya gecis
 
   // Ocaklarda boyali ALEV yok, sadece kor ve odun var; animasyonlu alevi motor
   // buraya koyuyor. Konum ocak halkasinin prop bileseninden olculdu.
@@ -232,14 +234,16 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  }else if(zone==='depo'){
   /* Eski Depo: siginagin soluna yeni acilan kapidan gidilen unutulmus kiler.
      Iki kaynak gorselden kuruldu (scripts/depo_kur.py): sahnenin kendisi ve
-     yurunebilir zemini YESILE boyanmis hali - disari/cistern ile ayni "genis
-     tek parca" olculere (54x30) kucultuldu. Kullanicinin istegiyle 180 derece
-     cevrildi; sahnenin tek gecidi (ust ortadaki karanlik kemer) boylece
-     alttan siginaga donen kapiyla ayni yonde kaliyor. Zemin dogrudan yesil
-     maskeden okundu, tahmin yok. */
-  const ZEMIN=['000000000000000000000000000000001111100000000000000000','000000000000000000000000000000001111100000000000000000','000000001100000000000000011111111111111000000000000000','000000001110000000000000001111111111111000000000000000','000000001110001000000000001111111111111111100000000000','000101111110001000000001001111111111111111111000000000','000111111111101000000001001111111111111111111100000000','000001111111111000000011111111111111111111111110000000','000001111111111111111111111111111111111111111110100000','000001101111111111111111111111111111111111111111100000','000000001111111111111111111111111000001111111111111100','000000000111110000000000011111111000001111111111111100','000000000000000000000000011111111000001111111111111100','000000000000000000000000011111111100011111111111111100','000000000000000000000000011111111111111111111111111100','000000000000000000000000011111111111111111111111100000','000000000000000000000000011111111111111111111111000000','000000000000000000000000011111111111111111111111100000','000000000000000000000000001111111111111111111100100000','000000000000000000000000001000111111111101111000100000','000000000000000000000000000001111111111100000000000000','000000000000000000000000000000000110100000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000','000000000000000000000000000000000000000000000000000000'];
+     yurunebilir zemini YESILE boyanmis hali. ILK DENEME (v8.3) en/boy oranina
+     bakip disari/cistern'in 54x30 olcegine kucultmustu - "devasa" durdu,
+     cunku oran yakinligi ayni karo yogunlugu DEMEK DEGIL. Duzeltme: bir
+     sandik + duvar tasi haven.png'dekiyle piksel piksel karsilastirildi,
+     kaynak gorsel aslinda 96px/karo yogunlugunda olculdu (32 degil) - dogru
+     olcek 28x16. Kullanici 180 cevirmekten de vazgecti ("ters olmasin"):
+     sahne DOGAL yoninde. Zemin dogrudan yesil maskeden okundu, tahmin yok. */
+  const ZEMIN=['0000000000000000000000000000','0000000000000000000000000000','0000000000000000000000000000','0000000000000000000000000000','0000000001100000000000000000','0000010111111000000000000000','0001111111111110000000000000','0011111111111110000000000000','0111111111111110000000000000','0111111100011110000000000000','0111111100111111111111110000','0001111111111111111111111100','0000111111111111000001111110','0000011111111100000000011000','0000000011111110000000010000','0000000001100000000000000000'];
   for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
-  gecis(32,0,37,2,'haven',[3,16]);      // ust ucuk: siginaga geri
+  gecis(9,15,11,16,'haven',[3,16]);     // alt ucuk: siginaga geri
  }
  return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:zone==='tunel'?[6*16+8,6*16+8]:[7*16,7*16]};
 }

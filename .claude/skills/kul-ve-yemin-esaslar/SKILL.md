@@ -439,6 +439,18 @@ yetmez - spawn noktasından BFS ile (4 yönlü, blockers+ZEMIN ile) gerçekten
 ulaşılabilir olduğu doğrulanmalı. Tahtada elle "burası boş görünüyor"
 demek yeterli değil.
 
+### En/boy orani yakinligi != ayni karo yogunlugu — v8.5 duzeltmesi
+Eski Depo'yu ilk kurarken (v8.3) kaynak gorselin en/boy orani (1.79)
+disari/cistern'inkine (1.80) yakin diye dogrudan onlarin 54x30 olcegine
+kucultmustum. Kullanici "devasa olmus" dedi - HAKLIYDI. Oran yakinligi
+TESADUF, kaynagin gercek karo yogunlugunu GOSTERMEZ. Dogru yontem: ortak
+bir nesneyi (sandik) VEYA duvar dokusunu (tas orgusu) mevcut bir mekanla
+(haven.png) piksel piksel karsilastir - "bu sandik oradaki sandiktan kac
+kat genis" sorusu cevabi (~3x) doğrudan olcek faktorunu verir. Depo aslinda
+96px/karo'ydu (32 degil), yani 28x16 karo - 54x30 degil. Ayrica kullanici
+180 derece cevirmekten sonradan vazgecti ("ters olmasin") - donme talebi
+gelse bile HER ZAMAN geri alinabilir bir tercih, kalici varsayilmasin.
+
 ---
 
-*Son güncelleme: 2026-09-14, v8.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-14, v8.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
