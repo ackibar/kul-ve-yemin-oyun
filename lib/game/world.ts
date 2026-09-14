@@ -24,8 +24,9 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  const kare30=kare||zone==='yikik';
  // Boyali tek parca sahneler: Kul Ovasi ve Sarnic 54x30, digerleri 30x30.
  const genis=zone==='disari'||zone==='cistern';
- /* Dar Gecit dikey: 13 genislik, 63 boy. */
- const w=zone==='tunel'?13:genis?54:kare30?30:46,h=zone==='tunel'?63:genis?30:kare30?30:48;
+ /* Dar Gecit dikey: 13 genislik, 63 boy. test100: 100x100, GECICI olcek
+    denemesi (bkz. Zone tipi). */
+ const w=zone==='tunel'?13:zone==='test100'?100:genis?54:kare30?30:46,h=zone==='tunel'?63:zone==='test100'?100:genis?30:kare30?30:48;
  const tiles=Array.from({length:h},()=>Array<number>(w).fill(0));
  const room=(x:number,y:number,rw:number,rh:number)=>{for(let j=y;j<y+rh;j++)for(let i=x;i<x+rw;i++)tiles[j][i]=1};
  const entities:Entity[]=[],enemies:EnemySpec[]=[];
@@ -51,7 +52,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // ZEMIN arka planin aydinlik kismindan, blockers prop katmaninin alfasindan
   // cikti. Gorsel degisirse script yeniden calistirilip bu iki satir guncellenir;
   // dogrulama katmani generated/_YENI_ENGEL.png.
-  const ZEMIN=['000000000000000000000000000000','000000000000000000000000000000','000000000000100001000000000000','000000000000110011000000000000','000001111111111111111111110000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000000000001111111100000000000','000000000000111111000000000000','000000000000111111000000000000','000000000000111111000000000000','000000000000000000000000000000','000000000000000000000000000000'];
+  const ZEMIN=['0000000000000','0000000000000','0000000000000','0000111100000','0000001110000','0000011110000','0001111111000','0001111111000','0001111011000','0000011011000','0001111111000','0001111011000','0001111011000','0001111011000','0001111011000','0001111110000','0001111110000','0001111111000','0001111100000','0000111100000','0000111110000','0001111110000','0001111111000','0001111111000','0001110111000','0001111111000','0001111111000','0011111111000','0001111111000','0001111111000','0001111111000','0001111111000','0001111111000','0001111111000','0001111111000','0001111111000','0001111110000','0001111110000','0001111111000','0001111110000','0001111111000','0001111111000','0001111101000','0001111001000','0001111001000','0001111101000','0001111110000','0001111110000','0001111110000','0001111110000','0001111110000','0000111110000','0000011111000','0000011111000','0000111111000','0001111111000','0001111111000','0001111111000','0001111110000','0001111111000','0001111110000','0001111111000','0001111100000'];
   for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
   blockers.push([7,5,8,6],[9,5,10,7],[21,5,25,10],[20,6,21,10],[10,7,12,9],[19,7,20,11],[4,8,10,10],[12,8,13,9],[17,8,19,9],[25,8,27,10],[3,9,4,13],[11,9,12,12],[18,9,19,10],[4,10,9,13],[12,10,13,12],[23,10,24,12],[20,11,22,13],[25,11,27,24],[4,13,6,14],[7,13,9,14],[23,13,25,19],[3,14,4,15],[22,15,23,19],[3,17,4,20],[4,18,6,24],[7,18,10,21],[6,19,7,24],[10,19,12,21],[20,19,21,21],[19,20,20,21],[21,20,22,21],[24,20,25,21],[7,22,12,24],[19,23,25,24]);
   at({id:'mira',type:'npc',x:9,y:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
@@ -79,6 +80,13 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // elle aciliyor, disari cikis da onun ucunda.
   for(let j=2;j<4;j++)for(let i=12;i<18;i++)tiles[j][i]=1;
   gecis(12,2,18,3,'disari',[27,27]);    // ust kapi: kul ovasina cikis
+  /* GECICI TEST KAPISI - kullanici "100x100 test mekani" karar verince
+     kaldirilacak. Depo denemesinde aynen bu satirlar reachable oldugu
+     WASD ile dogrulanmisti (Kral'in koltugunun hemen kuzeyi), o yuzden
+     ayni yer tekrar kullanildi - "bos gorunuyor ama izole" hatasi
+     tekrarlanmasin diye. */
+  for(let j=15;j<17;j++)for(let i=1;i<3;i++)tiles[j][i]=1;
+  gecis(1,15,3,17,'test100',[3,3]);     // TEST kapisi: 100x100 alana gecis
   // Ocaklarda boyali ALEV yok, sadece kor ve odun var; animasyonlu alevi motor
   // buraya koyuyor. Konum ocak halkasinin prop bileseninden olculdu.
   // Capa: Fire1 sprite'i 32 birimlik hucrenin TAMAMINI dolduruyor ve sprite()
@@ -227,8 +235,20 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   /* Alt agiz artik bir yere cikiyor: Dar Gecit. */
   gecis(23,29,31,30,'tunel',[6,10]);
   // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).
+ }else if(zone==='test100'){
+  /* GECICI: 100x100 karo olceginin nasil hissettirdigini gormek icin.
+     scripts/test100_kur.py ile kuruldu - gercek sanat degil, haven.png'den
+     kirpilan zemin/duvar/sandik parcalari tekrarlanarak dolduruldu. Karar
+     verilince bu blok, Zone tipindeki 'test100', ZONES'taki girdi,
+     engine.ts'teki bg yukleme satiri ve haven'daki GECICI TEST KAPISI
+     birlikte silinecek. */
+  room(1,1,98,98);
+  blockers.push([12,4,14,5],[21,4,23,5],[27,4,29,5],[33,4,35,5],[36,4,38,5],[66,4,68,5],[78,4,80,5],[9,7,11,8],[12,7,14,8],[63,7,65,8],[78,7,80,8],[27,10,29,11],[51,10,53,11],[60,10,62,11],[63,10,65,11],[81,10,83,11],[42,13,44,14],[69,13,71,14],[90,13,92,14],[3,16,5,17],[6,16,8,17],[18,16,20,17],[21,16,23,17],[27,16,29,17],[33,16,35,17],[69,16,71,17],[72,16,74,17],[87,16,89,17],[9,19,11,20],[75,19,77,20],[78,19,80,20],[45,22,47,23],[33,25,35,26],[18,28,20,29],[27,28,29,29],[57,28,59,29],[48,31,50,32],[54,31,56,32],[30,34,32,35],[39,34,41,35],[51,34,53,35],[63,34,65,35],[69,34,71,35],[12,37,14,38],[15,37,17,38],[24,37,26,38],[36,37,38,38],[42,37,44,38],[72,37,74,38],[78,37,80,38],[12,40,14,41],[18,40,20,41],[36,40,38,41],[81,40,83,41],[87,40,89,41],[6,43,8,44],[60,43,62,44],[78,43,80,44],[84,43,86,44],[90,43,92,44],[93,43,95,44],[45,46,47,47],[3,49,5,50],[12,49,14,50],[33,49,35,50],[51,49,53,50],[60,49,62,50],[6,52,8,53],[24,52,26,53],[27,52,29,53],[54,52,56,53],[69,52,71,53],[39,55,41,56],[42,55,44,56],[66,55,68,56],[18,58,20,59],[21,58,23,59],[72,58,74,59],[90,58,92,59],[69,61,71,62],[75,61,77,62],[15,64,17,65],[60,64,62,65],[63,64,65,65],[78,64,80,65],[6,67,8,68],[36,67,38,68],[66,67,68,68],[69,67,71,68],[87,67,89,68],[30,70,32,71],[54,70,56,71],[45,73,47,74],[48,73,50,74],[81,73,83,74],[6,76,8,77],[39,76,41,77],[60,76,62,77],[72,76,74,77],[75,76,77,77],[78,76,80,77],[24,79,26,80],[39,79,41,80],[6,82,8,83],[18,82,20,83],[21,82,23,83],[42,82,44,83],[45,82,47,83],[45,85,47,86],[60,85,62,86],[66,85,68,86],[6,88,8,89],[39,88,41,89],[63,88,65,89],[66,88,68,89],[78,88,80,89],[36,91,38,92],[60,91,62,92],[72,91,74,92],[3,94,5,95],[30,94,32,95],[93,94,95,95]);
+  // Donus kutusu spawn noktasindan AYRI tutuldu, yoksa varir varmaz geri
+  // gonderirdi (bkz. disari'nin ust kapisindaki ayni not).
+  gecis(1,1,3,3,'haven',[3,16]);        // TEST kapisi: siginaga geri
  }
- return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:zone==='tunel'?[6*16+8,6*16+8]:[7*16,7*16]};
+ return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:zone==='tunel'?[6*16+8,6*16+8]:zone==='test100'?[5*16+8,5*16+8]:[7*16,7*16]};
 }
 export function walkable(world:World,x:number,y:number,r=5,ignoreId?:string){
  const tilesOk=[[-r,-r],[r,-r],[-r,r],[r,r]].every(([dx,dy])=>world.tiles[Math.floor((y+dy)/16)]?.[Math.floor((x+dx)/16)]===1);

@@ -47,7 +47,7 @@
 <body>
 <aside>
   <h1>Harita Editörü</h1>
-  <p class="hint">Kül ve Yemin için: bir mekân arka planı üstünde yürünebilir (zemin) ve engel karolarını fare ile boyayıp <code>ZEMIN</code> dizisini üretir. Sadece <code>world.ts</code>'teki tek-parça (ZEMIN dizili) mekânlar için — <code>haven</code>/<code>magara</code> gibi elle <code>blockers</code> dikdörtgeniyle çalışanlar için değil.</p>
+  <p class="hint">Kül ve Yemin için: bir mekân arka planı üstünde yürünebilir (zemin) ve engel karolarını fare ile boyayıp <code>ZEMIN</code> dizisini üretir, dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar. <code>disari</code>/<code>cistern</code>/<code>tunel</code> ve <code>haven</code>'ın zemin şekli tam desteklenir. <code>magara</code>/<code>yikik</code> hâlâ salt <code>blockers</code> dikdörtgenleriyle tanımlı (ZEMIN dizisi yok) - önizlenebilir ama kaydedilemez. Mor taralı alanlar mobilya (<code>blockers</code>) - bu araç onları boyamaz, sadece gösterir.</p>
 
   <h2>1 · Kaynak</h2>
   <label>Hazır mekân</label>
@@ -73,6 +73,7 @@
   <input type="number" id="pxKaro" value="32" min="1">
   <button id="loadBtn">Görseli yükle</button>
   <p class="small" id="dims"></p>
+  <p class="small" id="canliNot" style="display:none">Bu mekânın <b>gerçek</b> zemin/engel durumu yüklendi (world.ts'ten, <code>npm run dev</code> sunucusu üzerinden).</p>
 
   <h2>2 · Fırça</h2>
   <div class="brush">
@@ -97,6 +98,8 @@
   <label>Dışa aktarılan (world.ts'e yapıştır)</label>
   <textarea id="exportBox" rows="6" readonly></textarea>
   <button id="copyBtn">Panoya kopyala</button>
+  <button id="saveBtn" style="border-color:var(--zemin)">💾 world.ts'e kaydet</button>
+  <p class="hint">Kaydet, sadece <code>npm run dev</code> açıkken çalışan yerel bir yardımcıya yazıyor — sayfayı doğrudan dosya olarak açtıysan (file://) çalışmaz. Yalnızca <code>ZEMIN</code> diziyle tanımlı mekânlarda çalışır (<code>disari</code>, <code>cistern</code>, <code>tunel</code>, <code>haven</code>'ın zemin şekli); <code>magara</code>/<code>yikik</code> hâlâ elle <code>blockers</code> dikdörtgeniyle tanımlı, bu düğme onlarda hata verir.</p>
 
   <h2>4 · Ulaşılabilirlik (BFS)</h2>
   <p class="hint">Bir başlangıç karosu seç, ana gövdeye bağlı olmayan "adacık" zemin karolarını bulur — yeni bir kapı/gecis eklerken "boş görünüyor ama aslında izole" hatasını önler.</p>
@@ -108,6 +111,7 @@
     <span><i class="sw" style="background:var(--engel)"></i>engel</span>
     <span><i class="sw" style="background:var(--ulasilan)"></i>ulaşılabilir</span>
     <span><i class="sw" style="background:var(--izole)"></i>izole zemin</span>
+    <span><i class="sw" style="background:#965ac8"></i>mobilya (salt okunur)</span>
   </div>
 </aside>
 <main>
@@ -133,6 +137,8 @@ let brush=1;
 let painting=false;
 let pickingStart=false, startTile=null;
 let reachSet=null, isleSet=null;
+let liveBlockers=null; // sadece bilgi amacli, boyanmiyor (bkz. asagidaki not)
+let currentZoneName=''; // preset ise zone adi, custom ise ''
 
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
@@ -163,6 +169,9 @@ $('loadBtn').addEventListener('click', async ()=>{
   gridH=parseInt($('gh').value,10)||30;
   pxKaro=parseInt($('pxKaro').value,10)||32;
   const v=$('preset').value;
+  currentZoneName = (v && v!=='custom') ? v : '';
+  liveBlockers=null;
+  $('canliNot').style.display='none';
   try{
     if(v==='custom'){
       const f=$('fileInput').files[0];
@@ -175,6 +184,22 @@ $('loadBtn').addEventListener('click', async ()=>{
     }
   }catch(e){alert('Görsel yüklenemedi: '+e);return;}
   grid=emptyGrid(gridW,gridH);
+  // Preset ise dev sunucusundan GERCEK zemin/engel durumunu cekmeyi dene
+  // (bkz. vite.config.ts). file:// olarak acildiysa ya da sunucu yoksa
+  // sessizce bos tuvale duser.
+  if(currentZoneName){
+    try{
+      const r=await fetch(`/__harita/${currentZoneName}`);
+      if(r.ok){
+        const d=await r.json();
+        if(d.tiles && d.tiles.length===gridH && d.tiles[0].length===gridW){
+          grid = d.tiles.map(row=>row.map(v=>v?1:0));
+          liveBlockers = d.blockers||[];
+          $('canliNot').style.display='block';
+        }
+      }
+    }catch{ /* dev sunucusu yok - sorun degil, bos tuvalle devam */ }
+  }
   reachSet=null; isleSet=null; startTile=null;
   scale = Math.min(2, Math.max(0.5, 900/(gridW*pxKaro)));
   $('dims').textContent = `${img.width}×${img.height}px kaynak · ${gridW}×${gridH} karo · ${pxKaro}px/karo`;
@@ -222,6 +247,19 @@ function draw(){
   ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=1;
   for(let x=0;x<=gridW;x++){ ctx.beginPath(); ctx.moveTo(x*tp,0); ctx.lineTo(x*tp,gridH*tp); ctx.stroke(); }
   for(let y=0;y<=gridH;y++){ ctx.beginPath(); ctx.moveTo(0,y*tp); ctx.lineTo(gridW*tp,y*tp); ctx.stroke(); }
+  // liveBlockers SADECE bilgi amacli (mor tarama): bu araç zemin (ZEMIN dizisi)
+  // boyuyor, mobilya engelleri (blockers dikdortgenleri) ayrı bir veri - o yuzden
+  // boyanmiyor, sadece "burada mobilya var" diye gosteriliyor.
+  if(liveBlockers && liveBlockers.length){
+    ctx.save();
+    ctx.fillStyle='rgba(150,90,200,.28)';
+    ctx.strokeStyle='rgba(150,90,200,.65)';
+    for(const [x1,y1,x2,y2] of liveBlockers){
+      ctx.fillRect(x1*tp,y1*tp,(x2-x1)*tp,(y2-y1)*tp);
+      ctx.strokeRect(x1*tp,y1*tp,(x2-x1)*tp,(y2-y1)*tp);
+    }
+    ctx.restore();
+  }
   if(startTile){
     ctx.fillStyle='#ffe08a';
     ctx.beginPath();
@@ -286,6 +324,24 @@ $('importBtn').addEventListener('click',()=>{
 $('copyBtn').addEventListener('click', async ()=>{
   try{ await navigator.clipboard.writeText($('exportBox').value); $('status').textContent='Panoya kopyalandı.'; }
   catch{ $('exportBox').select(); document.execCommand('copy'); $('status').textContent='Panoya kopyalandı (yedek yöntem).'; }
+});
+
+$('saveBtn').addEventListener('click', async ()=>{
+  if(!currentZoneName){ alert('Kaydet sadece hazır mekân listesinden seçilenlerde çalışır (özel görselde değil).'); return; }
+  if(!grid.length){ alert('Önce bir görsel yükle.'); return; }
+  $('status').textContent = 'Kaydediliyor…';
+  try{
+    const rows = grid.map(r=>r.join(''));
+    const r = await fetch('/__harita/kaydet', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ zone: currentZoneName, rows }),
+    });
+    const d = await r.json();
+    if(!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
+    $('status').textContent = `✓ world.ts kaydedildi (${currentZoneName}). Vite otomatik yeniden yükleyecek - oyunu tazeleyip bak.`;
+  }catch(e){
+    $('status').textContent = `Kaydedilemedi: ${e.message}\n(dev sunucusu (npm run dev) açık mı, ve bu mekân ZEMIN diziyle mi tanımlı, kontrol et)`;
+  }
 });
 
 $('pickStart').addEventListener('click',()=>{

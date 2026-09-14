@@ -478,6 +478,31 @@ BAŞA dönüp bu notu da oku: (a) en/boy oranı yakınlığı ölçek kanıtı D
 odaya bağlı olduğu doğrulanmalı, (c) kullanıcı "döndür/çevir" derse yön
 belirtmeden asla varsayma, tek bir yönde dene ve göster.
 
+### Harita editörü artık gerçek veriyi okuyup yazabiliyor — v8.7
+`public/harita-editor.html` (bkz. önceki not) `vite.config.ts`'teki dev-only
+bir eklentiyle konuştu: GET `/__harita/:zone` `server.ssrLoadModule` ile
+`world.ts`'i SSR modda yükleyip `makeWorld()` çağırır, GERÇEK tiles/
+blockers döner (editör artık boş değil, oyundaki hâli açılır). POST
+`/__harita/kaydet` `{zone,rows}` alır, `world.ts` metninde o zone bloğunun
+sınırlarını (`zone==='X'`'ten bir sonraki `}else if(zone===` ya da son
+`return {zone,...}`'a kadar) bulup içindeki TEK `const ZEMIN=[...]`
+satırını değiştirir. Round-trip (aynı veriyi geri yazmak) ile test edildi -
+`git diff` sıfır fark verdi. Sadece `npm run dev` açıkken çalışır, build'e
+girmez. `magara`/`yikik` hâlâ `ZEMIN` dizisi değil salt `blockers` ile
+tanımlı - kaydet düğmesi onlarda kasıtlı olarak hata verir.
+
+### 100x100 "test100" mekanı — GEÇİCİ, kullanıcı karar verecek
+Kullanıcı "tüm oyunu 100x100'e taşı" isteğine kadar gitti ama bunun her
+mekanın YENİDEN sanatı + tüm NPC/blocker/gecis koordinatlarının elden
+geçmesi demek olduğunu söyleyince "önce bir tane test mekanı ver, bakayım"
+dedi. `scripts/test100_kur.py` haven.png'den zemin/duvar/sandık parçalarını
+kırpıp tekrarlayarak GERÇEK OLMAYAN bir 3200×3200 dolgu üretti - sadece
+ölçeğin nasıl hissettirdiğini görmek için. Bağlantı: Son Sığınak'ta Kral'ın
+koltuğunun hemen kuzeyinde (daha önce Eski Depo'nun kullandığı, WASD ile
+doğrulanmış aynı nokta) GEÇİCİ bir kapı. Karar çıkınca (ya kalıcı yapılacak
+ya da tamamen silinecek) `Zone` tipinden, `ZONES`'tan, `world.ts`'teki
+`test100` dalından ve o geçici kapıdan hepsi birden temizlenmeli.
+
 ---
 
-*Son güncelleme: 2026-09-14, v8.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-14, v8.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
