@@ -503,6 +503,24 @@ doğrulanmış aynı nokta) GEÇİCİ bir kapı. Karar çıkınca (ya kalıcı y
 ya da tamamen silinecek) `Zone` tipinden, `ZONES`'tan, `world.ts`'teki
 `test100` dalından ve o geçici kapıdan hepsi birden temizlenmeli.
 
+### CİDDİ HATA: harita editörünün "kaydet"i haven'ın zeminini bozmuştu — v8.8
+Kullanıcı "karakter hareket edemiyor" dedi - kök neden buydu: v8.7'de
+kurduğum `/__harita/kaydet` dal-sınırı tespiti `src.indexOf("zone==='X'")`
+ile arıyordu, ama bu alt dizge dosyanın BAŞINDAKİ w/h ternary'sinde de
+geçiyor (`zone==='tunel'?13:...`). "tunel"i kaydet dediğimde (round-trip
+testi sırasında, boyamadan) ilk eşleşme o ternary satırıydı, blok sınırı
+oradan bir sonraki gerçek `}else if(zone===`'a kadar hesaplandı - bu da
+YANLIŞLIKLA TÜM haven bloğunu kapsadı, ve içindeki İLK `const ZEMIN=[...]`
+(haven'ın kendi zemini) tunel'in 13 genişliğindeki satırlarıyla ezildi.
+Oyun açılıyordu, sahne görünüyordu, ama `tiles[y][x]` her yerde `undefined`
+döndüğü için karakter HİÇBİR YÖNE hareket edemiyordu - sessiz bir bozulma,
+konsol hatası yok. Düzeltme: arama dizgesi `zone==='X'){` oldu (sadece
+gerçek dal açılışı bu şekilde biter, ternary '?' ile biter). **Ders: metin
+tabanlı kod-değiştirme araçları yazarken, aranan alt dizgenin dosyada
+BAŞKA amaçla da geçebileceğini varsay - ilk eşleşmeyi doğrulamadan kullanma.**
+Ayrıca: "oyun açılmıyor/hareket etmiyor" gibi bir şikayet gelince önce
+`git diff`e bak - kodun kendisi mi bozuk, çalışma zamanı mı.
+
 ---
 
-*Son güncelleme: 2026-09-14, v8.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-14, v8.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

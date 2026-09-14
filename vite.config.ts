@@ -40,8 +40,14 @@ function haritaEditoruEklentisi() {
             try {
               const { zone, rows } = JSON.parse(body);
               const src = readFileSync(WORLD_TS, 'utf8');
-              const basIdx = src.indexOf(`zone==='${zone}'`);
-              if (basIdx < 0) throw new Error(`zone==='${zone}' bulunamadı`);
+              // ONEMLI: `zone==='${zone}'` tek basina ARANMAZ - dosyanin basindaki
+              // w/h ternary'sinde de (ör. "zone==='tunel'?13:...") gecen bir alt
+              // dizge, ilk eslesme o satiri bulup YANLIS blok sinirini verirdi
+              // (bir kere gercekten oldu: haven'in ZEMIN'i tunel'inkiyle
+              // ezildi). Dal acilisi ")){"ile bitiyor, ternary "?" ile - bu
+              // yuzden sadece gercek `if`/`}else if` dalini eslestiriyoruz.
+              const basIdx = src.indexOf(`zone==='${zone}'){`);
+              if (basIdx < 0) throw new Error(`zone==='${zone}'){ dalı bulunamadı (bu mekân farklı biçimde tanımlı olabilir)`);
               const sonrakiDal = src.indexOf(`}else if(zone===`, basIdx);
               const sonBlok = src.indexOf(`\n return {zone,w,h,tiles`, basIdx);
               const bitIdx = sonrakiDal > -1 && sonrakiDal < sonBlok ? sonrakiDal : sonBlok;
