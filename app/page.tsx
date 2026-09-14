@@ -27,6 +27,40 @@ function Icon({name,size=23,item}:{name:string;size?:number;item?:string}){if(it
 /* Oyuncu sheet'i 80 satir (kafa kesilmesin diye); portre kirpimi 64'e gore, o yuzden oyuncu icin ayri portre.png. */
 function Portrait({id=1}:{id?:number}){return <span className="portrait" style={{backgroundImage:`url('/assets/characters/${id}/${id===1?'portre':'D_Idle'}.png')`}}/>}
 function Joystick({engine}:{engine:React.RefObject<Engine|null>}){const [knob,setKnob]=useState({x:0,y:0});const active=useRef<number|null>(null);const move=(e:PointerEvent<HTMLDivElement>)=>{if(active.current!==e.pointerId)return;const r=e.currentTarget.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,length=Math.hypot(dx,dy),max=r.width*.33;const x=dx/Math.max(1,length/max),y=dy/Math.max(1,length/max);setKnob({x,y});if(engine.current){engine.current.input.x=x/max;engine.current.input.y=y/max}};const end=()=>{active.current=null;setKnob({x:0,y:0});if(engine.current){engine.current.input.x=engine.current.input.y=0}};return <div className="joystick" role="group" aria-label="Hareket: parmağını istediğin yöne sürükle" onPointerDown={e=>{active.current=e.pointerId;e.currentTarget.setPointerCapture(e.pointerId);move(e);}} onPointerMove={move} onPointerUp={end} onPointerCancel={end} onLostPointerCapture={end}><span className="stick-direction up">⌃</span><span className="stick-direction down">⌄</span><div style={{transform:`translate(${knob.x}px,${knob.y}px)`}}/><span className="control-caption">HAREKET</span></div>}
+/** Gezici joystick: sabit halkanın aksine parmağın DOKUNDUĞU yerde belirir.
+ *  Yakalama alanı ekranın solunda geniş bir bölge (bkz. .joy-alan); HUD,
+ *  görev ipucu ve aksiyon düğmeleriyle çakışmasın diye bu bileşen JSX'te
+ *  onlardan ÖNCE render edilir - DOM sırası z-index yerine geçiyor, onlar
+ *  üstte kalır. Halka, dokunulan noktada tam sığacak şekilde kenarlardan
+ *  içeri kenetlenir (RING kadar payla). */
+function FloatingJoystick({engine}:{engine:React.RefObject<Engine|null>}){
+ const [origin,setOrigin]=useState<{x:number;y:number}|null>(null);
+ const [knob,setKnob]=useState({x:0,y:0});
+ const active=useRef<number|null>(null);
+ const RING=54,MAX=40;
+ const konumla=(e:PointerEvent<HTMLDivElement>)=>{
+  const r=e.currentTarget.getBoundingClientRect();
+  const x=Math.min(Math.max(e.clientX-r.left,RING),Math.max(RING,r.width-RING));
+  const y=Math.min(Math.max(e.clientY-r.top,RING),Math.max(RING,r.height-RING));
+  return {x,y};
+ };
+ const move=(e:PointerEvent<HTMLDivElement>)=>{
+  if(active.current!==e.pointerId||!origin)return;
+  const r=e.currentTarget.getBoundingClientRect();
+  const dx=e.clientX-r.left-origin.x,dy=e.clientY-r.top-origin.y,length=Math.hypot(dx,dy);
+  const x=dx/Math.max(1,length/MAX),y=dy/Math.max(1,length/MAX);
+  setKnob({x,y});if(engine.current){engine.current.input.x=x/MAX;engine.current.input.y=y/MAX}
+ };
+ const end=()=>{active.current=null;setOrigin(null);setKnob({x:0,y:0});if(engine.current){engine.current.input.x=engine.current.input.y=0}};
+ return <div className="joy-alan" role="group" aria-label="Hareket: ekrana dokun ve istediğin yöne sürükle"
+   onPointerDown={e=>{active.current=e.pointerId;try{e.currentTarget.setPointerCapture(e.pointerId);}catch{/* capture olmasa da halka gorunur, surukleme calisir */}setOrigin(konumla(e));setKnob({x:0,y:0});}}
+   onPointerMove={move} onPointerUp={end} onPointerCancel={end} onLostPointerCapture={end}>
+  {origin&&<div className="joystick joystick-serbest" style={{left:origin.x,top:origin.y}}>
+   <span className="stick-direction up">⌃</span><span className="stick-direction down">⌄</span>
+   <div style={{transform:`translate(${knob.x}px,${knob.y}px)`}}/>
+  </div>}
+ </div>;
+}
 function MapView({state}:{state:State}){const w=makeWorld(state.zone);return <div className="map-layout"><svg className="dungeon-map" viewBox={`0 0 ${w.w*5} ${w.h*5}`} aria-label={`${ZONES[state.zone].name} haritası`} role="img">{w.tiles.flatMap((row,y)=>row.map((tile,x)=>tile?<rect key={`${x}-${y}`} x={x*5} y={y*5} width={5} height={5} fill="#65737f"/>:null))}{w.entities.filter(e=>['npc','portal','chest','lever','core'].includes(e.type)&&!state.opened.includes(e.id)).map(e=><circle key={e.id} cx={e.x/16*5} cy={e.y/16*5} r={e.type==='portal'?2.8:2} fill={e.type==='npc'?'#eec785':e.type==='portal'?'#86d0e0':'#aa9bc4'}/>)}<circle cx={state.x/16*5} cy={state.y/16*5} r={3.5} fill="#fff" stroke="#17232c" strokeWidth={1}/></svg><div className="map-key"><b>{ZONES[state.zone].name}</b><p>● Beyaz: sen<br/><span className="gold">● Altın: kişiler</span><br/><span className="blue">● Mavi: geçitler</span><br/><span className="purple">● Mor: nesneler</span></p><p>Sığınakta Mirna batıda, Alf doğuda, Undur güneybatıda. Sarnıca giriş güneyde.</p>{state.zone==='cistern'&&<p>İlaç ve Rauf kuzeydoğuda. Sandıklar doğuda ve batıda.</p>}</div></div>}
 export default function Home(){
  const canvas=useRef<HTMLCanvasElement>(null),engine=useRef<Engine|null>(null),audio=useRef<GameAudio|null>(null),noticeTimer=useRef<ReturnType<typeof setTimeout>|null>(null);const zoneTimer=useRef<ReturnType<typeof setTimeout>|null>(null);const intro=useRef<HTMLVideoElement|null>(null);
@@ -39,12 +73,15 @@ export default function Home(){
   (typeof window!=='undefined'&&(window.matchMedia?.('(pointer: coarse)').matches||navigator.maxTouchPoints>0))?'dokunma':'klavye');
  const [girdiKilit,setGirdiKilit]=useState<'auto'|'dokunma'|'klavye'|'gamepad'>('auto');
  const mod=girdiKilit==='auto'?girdi:girdiKilit;
+ /* Joystick stili: SABİT (ekranın sol altında sabit halka, öntanımlı) ya da
+    GEZİCİ (parmağın dokunduğu yerde belirir). İkisi de seçenek olarak kalır. */
+ const [joyStili,setJoyStili]=useState<'sabit'|'gezici'>('sabit');
  const current=useRef({panel,menu});current.current={panel,menu};
  // Mekan adi cerceveli bildirim kutusundan ayrildi: kendi basina, buyuk ve
  // krem renkte belirip birkac saniyede soluyor.
  const flashZone=(text:string)=>{setZoneFlash(text);if(zoneTimer.current)clearTimeout(zoneTimer.current);zoneTimer.current=setTimeout(()=>setZoneFlash(''),2800)};
  const showNotice=(text:string)=>{setNotice(text);if(noticeTimer.current)clearTimeout(noticeTimer.current);noticeTimer.current=setTimeout(()=>setNotice(''),4800)};
- useEffect(()=>{let saved:State|null=null;try{const raw=localStorage.getItem(SAVE);saved=raw?parseSave(raw):null;if(raw&&!saved)showNotice('Eski kayıt okunamadı. Yeni bir yolculuk başlatabilirsin.');const pref=JSON.parse(localStorage.getItem('kul-yemin-audio')||'{}');if(typeof pref.music==='number'&&typeof pref.effects==='number'){setMusic(Math.min(100,Math.max(0,pref.music)));setEffects(Math.min(100,Math.max(0,pref.effects)));}if(pref.yon==='dikey'||pref.yon==='yatay')setYon(pref.yon);}catch{}setTercihHazir(true);setHasSave(!!saved);const sound=new GameAudio();audio.current=sound;const game=new Engine(canvas.current!,saved||structuredClone(INITIAL),sound,setSnapshot,event=>{if(event.type==='dialogue'){if(event.id==='crafting'){setPanel('crafting');}else{setSpeaker(event.id!);setPanel('dialogue');}}else if(event.type==='sandik'){setSandikId(event.id!);setPanel('sandik');}else if(event.type==='death')setPanel('death');else if(event.type==='zone')flashZone(ZONES[event.id as keyof typeof ZONES].name);else if(event.text)showNotice(event.text);});engine.current=game;
+ useEffect(()=>{let saved:State|null=null;try{const raw=localStorage.getItem(SAVE);saved=raw?parseSave(raw):null;if(raw&&!saved)showNotice('Eski kayıt okunamadı. Yeni bir yolculuk başlatabilirsin.');const pref=JSON.parse(localStorage.getItem('kul-yemin-audio')||'{}');if(typeof pref.music==='number'&&typeof pref.effects==='number'){setMusic(Math.min(100,Math.max(0,pref.music)));setEffects(Math.min(100,Math.max(0,pref.effects)));}if(pref.yon==='dikey'||pref.yon==='yatay')setYon(pref.yon);if(pref.joy==='gezici'||pref.joy==='sabit')setJoyStili(pref.joy);}catch{}setTercihHazir(true);setHasSave(!!saved);const sound=new GameAudio();audio.current=sound;const game=new Engine(canvas.current!,saved||structuredClone(INITIAL),sound,setSnapshot,event=>{if(event.type==='dialogue'){if(event.id==='crafting'){setPanel('crafting');}else{setSpeaker(event.id!);setPanel('dialogue');}}else if(event.type==='sandik'){setSandikId(event.id!);setPanel('sandik');}else if(event.type==='death')setPanel('death');else if(event.type==='zone')flashZone(ZONES[event.id as keyof typeof ZONES].name);else if(event.text)showNotice(event.text);});engine.current=game;
  const resize=()=>setPortrait(window.matchMedia('(orientation: portrait)').matches);resize();window.addEventListener('resize',resize);const visibility=()=>{if(document.hidden){game.setPaused(true);game.save();sound.pause(true);if(!current.current.menu)setPanel(p=>p||'pause');}else sound.pause(false);};document.addEventListener('visibilitychange',visibility);const save=()=>game.save();window.addEventListener('pagehide',save);
  return()=>{game.destroy();sound.destroy();window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',save);if(noticeTimer.current)clearTimeout(noticeTimer.current);if(zoneTimer.current)clearTimeout(zoneTimer.current);};},[]);
  // Dikey ekran TEK BASINA duraklatma sebebi degil. Bu kosul dikey mod
@@ -126,8 +163,8 @@ export default function Home(){
   // uzerine yaziyordu (ses seviyesi ve ekran yonu her acilista sifirlaniyordu).
   // Durum degiskeni sayesinde ilk yazma, yuklenmis degerlerin oldugu render'da olur.
   if(!tercihHazir)return;
-  try{localStorage.setItem('kul-yemin-audio',JSON.stringify({music,effects,yon}));}catch{}
- },[music,effects,yon,tercihHazir]);
+  try{localStorage.setItem('kul-yemin-audio',JSON.stringify({music,effects,yon,joy:joyStili}));}catch{}
+ },[music,effects,yon,joyStili,tercihHazir]);
  useEffect(()=>{const doc=document as Document&{modelContext?:{registerTool:(tool:unknown,options:{signal:AbortSignal})=>void|Promise<void>}};if(!doc.modelContext?.registerTool)return;const life=new AbortController();const reg=(tool:unknown)=>{try{void Promise.resolve(doc.modelContext!.registerTool(tool,{signal:life.signal})).catch(()=>{})}catch{}};reg({name:'read_adventure_status',description:'Read this device’s current adventure, inventory and quests.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:false},execute:()=>{const s=engine.current!.state;return {zone:ZONES[s.zone].name,level:s.level,hp:s.hp,inventory:s.inventory,quests:questList(s),ending:s.ending};}});reg({name:'use_adventure_consumable',description:'Use an owned potion or tonic in the current active adventure, as in the inventory.',inputSchema:{type:'object',properties:{item:{type:'string',enum:['potion','tonic']}},required:['item'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute:(input:unknown)=>{const id=(input as {item?:string})?.item;if(id!=='potion'&&id!=='tonic')throw new Error('Unknown consumable.');if(current.current.menu||current.current.panel==='death')throw new Error('Resume a living adventure first.');if(!engine.current!.useItem(id))throw new Error('Item unavailable or cannot be used.');return {hp:engine.current!.state.hp,remaining:engine.current!.state.inventory[id]||0};}});return()=>life.abort();},[]);
  const s=snapshot.state,st=stats(s),quests=questList(s),activeQuest=quests.find(q=>q.active&&!q.done)||quests.find(q=>!q.done),talk=dialogue(s,speaker);
  function launch(fresh=false){audio.current?.start();const game=engine.current!;if(fresh){game.setState(newState());setSelected('rusty');}else{try{const raw=localStorage.getItem(SAVE),saved=raw?parseSave(raw):null;if(saved)game.setState(saved);}catch{}}setMenu(false);setPanel(null);setHasSave(true);setConfirmNew(false);game.start();}
@@ -141,10 +178,13 @@ export default function Home(){
  return <main className={`game-shell ${portrait&&yon==="dikey"?"dikey":""}`} aria-label="Kül ve Yemin mobil rol yapma oyunu">
   <canvas ref={canvas} className="world" aria-label={`${ZONES[s.zone].name} oyun alanı`}/><div className="vignette"/>
   {menu?<section className="title-screen"><video ref={intro} className="intro-video" src="/assets/video/intro.mp4" poster="/assets/video/intro.jpg" autoPlay muted loop playsInline preload="auto"/><div className={`title-content ${girisHazir?"acik":""}`}><div className="chapter-label"><span/> BİR YERALTI HİKÂYESİ <span/></div><h1>KÜL <i>ve</i> YEMİN</h1><p className="title-sub">Bazı kapılar bir seçimle açılır.</p><div className="menu-buttons">{hasSave?<><button className="primary" disabled={!snapshot.ready} onClick={()=>launch()}><Play size={19} fill="currentColor"/> Yolculuğa devam et <ChevronRight size={19}/></button><button onClick={()=>setConfirmNew(true)} disabled={!snapshot.ready}><Plus size={19}/> Yeni yolculuk</button></>:<button className="primary" onClick={()=>launch(true)} disabled={!snapshot.ready}><Play size={19} fill="currentColor"/>{snapshot.ready?'Yolculuğa başla':'Dünya hazırlanıyor…'}<ChevronRight size={19}/></button>}<div className="menu-secondary"><button onClick={()=>openPanel('settings')}><Settings2 size={18}/> Ayarlar</button><button onClick={()=>openPanel('help')}><BookOpen size={18}/> Rehber</button></div></div></div><footer><button onClick={()=>openPanel('credits')}>BÖLÜM I · SON SIĞINAK</button><span><Smartphone size={15}/> {yon==='dikey'?'DİKEY':'YATAY'} · DOKUNMATİK</span></footer></section>:<>
+  {/* Gezici joystick yakalama alanı: HUD ve görev ipucundan ÖNCE, ki DOM
+      sırası gereği onlar üstte kalsın (bkz. FloatingJoystick yorumu). */}
+  {!panel&&mod==='dokunma'&&joyStili==='gezici'&&<FloatingJoystick engine={engine}/>}
   <header className="hud"><button className="hero-badge" onClick={()=>openPanel('character')} aria-label="Karakter ve yetenekler"><Portrait/><div><b>Gezgin <small>SV. {s.level}</small>{s.points>0&&<em>+{s.points}</em>}</b><div className="health"><span style={{width:`${s.hp/st.maxHp*100}%`}}/></div><div className="hp-row"><small>{Math.ceil(s.hp)} / {st.maxHp}</small><small className="gold"><Coins size={12}/>{s.gold}</small></div><div className="xp-bar"><span style={{width:`${s.level===5?100:(s.xp-XP[s.level-1])/(XP[s.level]-XP[s.level-1])*100}%`}}/></div></div></button><div className="zone-title">{ZONES[s.zone].name}<small>{ZONES[s.zone].danger}</small></div><nav className="hud-nav" aria-label="Oyun menüleri"><button onClick={()=>openPanel('inventory')} aria-label="Heybeyi aç"><UI ad="canta" size={27}/></button><button onClick={()=>openPanel('journal')} aria-label="Görevler ve harita"><UI ad="rulo" size={27}/></button><button onClick={()=>openPanel('pause')} aria-label="Oyunu duraklat"><Pause size={20}/></button></nav></header>
   {activeQuest&&<button className="quest-hint" onClick={()=>openPanel('journal')}><b><span className="quest-diamond">◆</span>{activeQuest.active?activeQuest.title:'İlk ışık'}</b><span>{!activeQuest.active?'Sığınaktakilerle konuş.':s.zone==='haven'?'Ayrıntılar için dokun.':activeQuest.id==='core'?'Kül kalbini bul.':'Görevini haritada takip et.'}</span></button>}
   {snapshot.tonic>0&&<div className="tonic-badge"><Flame size={15}/> +8 saldırı · {Math.ceil(snapshot.tonic)} sn</div>}{snapshot.mesale>0&&<div className="tonic-badge mesale-badge"><Flame size={15}/> Meşale · {Math.ceil(snapshot.mesale)} sn</div>}
-    {!panel&&mod==='dokunma'&&<><Joystick engine={engine}/><div className="actions"><div className="utility-actions"><button className="round potion" onClick={(e)=>{(e.currentTarget as HTMLElement)?.blur();engine.current?.useItem('potion');}} aria-label={`Can iksiri iç, ${s.inventory.potion||0} adet`} disabled={!s.inventory.potion}><Icon name="flame" item="potion" size={34}/><small>{s.inventory.potion||0}</small></button><button className="round weapon" onClick={(e)=>{(e.currentTarget as HTMLElement)?.blur();engine.current?.toggleWeapon();}} aria-label="Silah değiştir"><Icon name={s.equipment.weapon==='yumruk'?'hand':s.equipment.weapon==='elmesale'?'flame':ITEMS[s.equipment.weapon].menzilli?'bow':'sword'} item={s.equipment.weapon} size={32}/>{/* Sayac KUSANILAN ok turunu gosterir; o bitince motor sade oka dustugu
+    {!panel&&mod==='dokunma'&&<>{joyStili==='sabit'&&<Joystick engine={engine}/>}<div className="actions"><div className="utility-actions"><button className="round potion" onClick={(e)=>{(e.currentTarget as HTMLElement)?.blur();engine.current?.useItem('potion');}} aria-label={`Can iksiri iç, ${s.inventory.potion||0} adet`} disabled={!s.inventory.potion}><Icon name="flame" item="potion" size={34}/><small>{s.inventory.potion||0}</small></button><button className="round weapon" onClick={(e)=>{(e.currentTarget as HTMLElement)?.blur();engine.current?.toggleWeapon();}} aria-label="Silah değiştir"><Icon name={s.equipment.weapon==='yumruk'?'hand':s.equipment.weapon==='elmesale'?'flame':ITEMS[s.equipment.weapon].menzilli?'bow':'sword'} item={s.equipment.weapon} size={32}/>{/* Sayac KUSANILAN ok turunu gosterir; o bitince motor sade oka dustugu
        icin etiket de ona duser. */}<small>{ITEMS[s.equipment.weapon].menzilli?`YAY (${(s.equipment.ok&&s.inventory[s.equipment.ok])||s.inventory.arrow||0})`:s.equipment.weapon==='yumruk'?'ELLER':s.equipment.weapon==='elmesale'?'MEŞALE':'KILIÇ'}</small></button>{/* Mesale artik silah dongusunde degil, kendi tusunda (F) ve kendi
        dugmesinde: karanlik mekanda silah degistirmek icin dongude dolasmak
        gerekiyordu. */}
@@ -203,6 +243,11 @@ export default function Home(){
    <button key={k} className={`text-button ${girdiKilit===k?'secili':''}`} onClick={()=>setGirdiKilit(k)}>{ad}</button>)}
   </div></div>
   <p className="muted" style={{marginTop:'-6px'}}>Otomatik: cihazını algılar, son kullandığın girdiye geçer. Şu an: <b>{mod==='dokunma'?'dokunmatik':mod==='gamepad'?'gamepad':'klavye'}</b>.</p>
+  <div className="yon-secim"><span><Hand size={18}/> Joystick</span><div>
+  <button className={`text-button ${joyStili==='sabit'?'secili':''}`} onClick={()=>setJoyStili('sabit')}>Sabit</button>
+  <button className={`text-button ${joyStili==='gezici'?'secili':''}`} onClick={()=>setJoyStili('gezici')}>Parmağının altında</button>
+ </div></div>
+  <p className="muted" style={{marginTop:'-6px'}}>Sabit: ekranın sol altında durur. Parmağının altında: nereye dokunursan orada belirir.</p>
   <div className="yon-secim"><span><Smartphone size={18}/> Ekran yönü</span><div>
   <button className={`text-button ${yon==='yatay'?'secili':''}`} onClick={()=>setYon('yatay')}>Yatay</button>
   <button className={`text-button ${yon==='dikey'?'secili':''}`} onClick={()=>setYon('dikey')}>Dikey</button>

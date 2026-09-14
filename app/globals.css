@@ -658,6 +658,33 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 .game-shell.dikey .actions{bottom:calc(var(--ui-taban) + var(--alt-pay))}
 .game-shell.dikey .interact{bottom:calc(var(--ui-taban) + 100px + var(--alt-pay))}
 
+/* ---- Gezici joystick -------------------------------------------------
+   "Sabit" seçeneğinin (yukarıdaki .joystick) yanına eklenen ikinci mod:
+   halka SABİT bir yerde durmaz, parmağın nereye değerse orada belirir.
+   .joy-alan geniş bir dokunma alanı (ekranın solu, tam yükseklik); JSX'te
+   HUD'dan ÖNCE render edilir ki DOM sırası HUD/görev ipucunu üstte tutsun -
+   z-index yerine kaynak sırası kullanılıyor (dosyanın geri kalanıyla aynı
+   yöntem). .joystick-serbest kendi görselini taşır, .joystick'in bottom/left
+   kurallarına (bazıları !important) hiç bulaşmaz - dokunma noktasına göre
+   left/top inline set edilir. */
+.joy-alan{position:absolute;inset:0;width:min(64vw,400px);right:auto;touch-action:none}
+.joystick-serbest{position:absolute;bottom:auto!important;transform:translate(-50%,-50%);
+  width:108px;height:108px;border:3px solid #e6d7b0aa;background:#3a291766;
+  border-radius:50%;display:grid;place-items:center;pointer-events:none}
+.joystick-serbest>div{width:46px;height:46px;border-radius:50%;
+  background:#e6d7b088;border:3px solid #4a3520;box-shadow:0 3px 10px #0006}
+@media (max-height:560px){
+  .joystick-serbest{width:78px!important;height:78px!important}
+  .joystick-serbest>div{width:34px!important;height:34px!important}
+}
+.game-shell.dikey .joystick-serbest{width:88px!important;height:88px!important}
+.game-shell.dikey .joystick-serbest>div{width:38px!important;height:38px!important}
+/* Dikeydeki `.game-shell.dikey .joystick{bottom:...!important}` kuralı 3
+   sınıflık ozgullukte (0,0,3,0); tek sınıflı .joystick-serbest!important onu
+   yenemiyordu. Aynı ozgullukte yaziliyor, dosyada ondan SONRA geldigi icin
+   kazaniyor. */
+.game-shell.dikey .joystick-serbest{bottom:auto!important}
+
 /* ---- "Vazgeç" düğmesi --------------------------------------------------
    Hiçbir çerçeve listesinde yoktu: shadcn'in koyu zemini kalıyor, üstüne de
    parşömen mürekkebi (koyu) yazılıyordu - metin hiç okunmuyordu. Pastel bir

@@ -292,7 +292,19 @@ Y meşale, LB iksir, RB silah, Start menü; menüde yön tuşları odağı gezdi
 tıklar. Ayarlarda elle kilitlenebilir. Tuzak: gamepad saldırısı **bırakılınca
 temizlenmeli**, yoksa oyuncu durmadan savuruyor.
 
-**Arayüz:** parşömen. Çerçeveler CSS değil 9 dilim piksel resmi
+**Joystick stili (2026-09-14):** iki seçenek — `sabit` (öntanımlı, ekranın sol
+altında sabit halka, değişmedi) ve `gezici` (parmağın DOKUNDUĞU yerde belirir).
+`FloatingJoystick`'in geniş dokunma alanı (`.joy-alan`) JSX'te **HUD ve görev
+ipucundan ÖNCE** render edilir: aynı stacking context'te z-index yerine DOM
+sırası kazanıyor, o yüzden HUD/aksiyon düğmeleri erken/geç sırayla otomatik
+üstte kalıyor — geometrik "bu bölgeye dokunma" hesabına gerek kalmadı. Halkanın
+görseli `.joystick` sınıfını PAYLAŞMAZ (ayrı `.joystick-serbest`): `.joystick`
+kuralları arasında `bottom`e birden fazla yerde `!important` var (bazıları
+`.game-shell.dikey .joystick` gibi 3 sınıflı, yani yüksek özgüllükte), paylaşsa
+halka her zaman ekranın altına sabitlenirdi. Tuzak: `setPointerCapture`
+sentetik/otomasyon kaynaklı `pointerdown`'larda "No active pointer" hatasıyla
+atabiliyor (gerçek dokunuşta atmaz) — `try/catch` içine alındı ki nadir bir
+gerçek-dünya arızası akışı kesmesin. Çerçeveler CSS değil 9 dilim piksel resmi
 (`frame*.png`, dilim 8, kalınlık dilimin katı). `border-image … fill`
 merkezi de boyar. "Vazgeç" pastel kırmızı (okunmuyordu). Alt güvenli alan
 `calc(N + env(...))` — `max()` YANLIŞ. Mobil dikey mod oynanabilir olmalı
@@ -399,4 +411,4 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 
 ---
 
-*Son güncelleme: 2026-09-14, v8.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-14, v8.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
