@@ -521,6 +521,25 @@ BAŞKA amaçla da geçebileceğini varsay - ilk eşleşmeyi doğrulamadan kullan
 Ayrıca: "oyun açılmıyor/hareket etmiyor" gibi bir şikayet gelince önce
 `git diff`e bak - kodun kendisi mi bozuk, çalışma zamanı mı.
 
+### Kucuk bir dokuyu tekrarlamak "bozuk" okunur, bir SAHNEYI tekrarlamak okunmaz — v8.9
+test100'un v1'i (haven'dan kirpilan kucuk zemin/sandik parcalari, binlerce
+kez tekrarlanmis) kullanicidan "tuhaf bozuk duruyor, anlamadım" tepkisi
+aldı - gösterip "bu placeholder, gerçek sanat değil" diye açıklamak
+yetmedi, gorsel gercekten goz icin rastgele gurultu gibi okunuyordu.
+Kullanici "elimizdeki hazır map görsellerinden biriyle uyarla" deyince v2:
+VAR OLAN BUTUN BIR MEKANI (cistern, 54x30) kendi icinde 2x4 tekrarlayip
+100x100'e kirptim - kucuk bir doku degil, tanidik/tutarli bir SAHNE
+tekrarlaniyor artik (merdiven, mantar, kaya), goze "kopyalanmis gercek bir
+yer" gibi okunuyor. **Ders: yer tutucu/test gorseli icin kucuk bir dokuyu
+yogun tekrarlamak yerine, var olan butun bir sahneyi seyrek tekrarlamak
+her zaman daha "gercek" okunur.**
+
+Teknik not: boyle bir tekrar kurulumunda mekanin kendi duvarlari tekrar
+SINIRLARINDA (satir/sutun) kapali kalir ve N ayri kapali odaya boler -
+BFS ile mutlaka dogrulanmali (bu depoda ilk denemede 8453 zemin
+karosundan sadece 1239'u birbirine bagliydi), dikis satir/sutunlari elle
+tam acilmali.
+
 ---
 
-*Son güncelleme: 2026-09-14, v8.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-14, v8.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
