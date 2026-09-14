@@ -298,6 +298,13 @@ merkezi de boyar. "Vazgeç" pastel kırmızı (okunmuyordu). Alt güvenli alan
 `calc(N + env(...))` — `max()` YANLIŞ. Mobil dikey mod oynanabilir olmalı
 (`portrait` tek başına duraklatmaz). Sol altta sürüm `vX.Y ALPHA`; her
 anlamlı değişiklikte 0.1 artar (`SURUM` in data.ts).
+**Dokunmatik kontrol kümesinin (joystick + aksiyon düğmeleri + etkileşim
+kutusu) alt boşluğu piksel değil `--ui-taban:15dvh`** (2026-09-14) — "ekranın
+%15'i altta boş kalsın" isteği. `env(safe-area-inset-bottom)` ayrı bir
+değişkende (`--alt-pay`) toplanıp üstüne eklenir. Kısa yatay ekran ve dikey
+mod override'larında da aynı `%15` kullanılır; `.interact` kutusu kümenin
+hep sabit bir delta kadar (+12px, kısada +10px, dikeyde +100px) üstünde
+tutulur ki göreli konumu bozulmasın.
 
 **Ses:** Web Audio sentez; `ORNEKLER` örnek haritası sentezi ezer
 (kullanıcı sesleri sonra değiştirecek). Aynı frekans bandında üst üste
@@ -392,4 +399,4 @@ Varlık silmeden önce `grep -o "url(['\"]\?/[^)'\"]*" app/globals.css`.
 
 ---
 
-*Son güncelleme: 2026-09-12, v6.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-14, v8.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

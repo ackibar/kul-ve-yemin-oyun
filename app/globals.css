@@ -627,10 +627,16 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
    Tek blokta toplandi, cunku taban degerler dort ayri medya sorgusuna
    dagilmisti; buradan silmek eski davranisa dondurur. */
 :root{--alt-pay:env(safe-area-inset-bottom,0px)}
+/* Kumanda kumesi (joystick/aksiyon dugmeleri) telefonun alt sinirina COK
+   yakindi, basparmak orada rahat durmuyordu. Taban artik piksel degil ekran
+   YUKSEKLIGININ %15'i (dvh), boylece hangi cihazda da altta sabit bir bosluk
+   kalir. interact kutusu kumenin HEP bir tik ustunde durur (delta korunuyor:
+   +12px / +10px kisa ekranda / +100px dikeyde, oncekiyle ayni fark). */
+:root{--ui-taban:15dvh}
 
-.joystick{bottom:calc(34px + var(--alt-pay))}
-.actions{bottom:calc(34px + var(--alt-pay))}
-.interact{bottom:calc(46px + var(--alt-pay))}
+.joystick{bottom:calc(var(--ui-taban) + var(--alt-pay))}
+.actions{bottom:calc(var(--ui-taban) + var(--alt-pay))}
+.interact{bottom:calc(var(--ui-taban) + 12px + var(--alt-pay))}
 .save-mark{bottom:calc(12px + var(--alt-pay))}
 .title-screen footer{bottom:calc(18px + var(--alt-pay))}
 
@@ -638,19 +644,19 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 /* Taban degerler bilerek yuksek: Android'de jest cubugu varken bile
    safe-area-inset-bottom 0 gelebiliyor, yani tek dayanak taban deger. */
 @media (max-height:450px) and (orientation:landscape){
-  .joystick{bottom:calc(26px + var(--alt-pay))}
-  .actions{bottom:calc(26px + var(--alt-pay))}
-  .interact{bottom:calc(36px + var(--alt-pay))}
+  .joystick{bottom:calc(var(--ui-taban) + var(--alt-pay))}
+  .actions{bottom:calc(var(--ui-taban) + var(--alt-pay))}
+  .interact{bottom:calc(var(--ui-taban) + 10px + var(--alt-pay))}
 }
 @media (max-height:560px){
-  .joystick{bottom:calc(26px + var(--alt-pay))!important}
-  .actions{bottom:calc(26px + var(--alt-pay))!important}
-  .interact{bottom:calc(36px + var(--alt-pay))!important}
+  .joystick{bottom:calc(var(--ui-taban) + var(--alt-pay))!important}
+  .actions{bottom:calc(var(--ui-taban) + var(--alt-pay))!important}
+  .interact{bottom:calc(var(--ui-taban) + 10px + var(--alt-pay))!important}
 }
 /* Dikey mod: alt serit zaten dar, yine de gosterge uzerine binmesin. */
-.game-shell.dikey .joystick{bottom:calc(32px + var(--alt-pay))!important}
-.game-shell.dikey .actions{bottom:calc(32px + var(--alt-pay))}
-.game-shell.dikey .interact{bottom:calc(132px + var(--alt-pay))}
+.game-shell.dikey .joystick{bottom:calc(var(--ui-taban) + var(--alt-pay))!important}
+.game-shell.dikey .actions{bottom:calc(var(--ui-taban) + var(--alt-pay))}
+.game-shell.dikey .interact{bottom:calc(var(--ui-taban) + 100px + var(--alt-pay))}
 
 /* ---- "Vazgeç" düğmesi --------------------------------------------------
    Hiçbir çerçeve listesinde yoktu: shadcn'in koyu zemini kalıyor, üstüne de
