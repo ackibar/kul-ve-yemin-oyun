@@ -429,6 +429,16 @@ yani oyuncu şu an görsel olarak düz taşın içinden yürüyor. Kullanıcı f
 ederse: bu bilinen bir eksik, boyanmış bir kapı eklenirse iyileşir — kendi
 başına "çözüldü" denmesin.
 
+### "Boş ve blockers'tan temiz" ≠ "ulaşılabilir" — v8.4 düzeltmesi
+Eski Depo kapısını ilk koyduğumda (satır 20-24) o cebin blockers'tan boş
+olduğunu kontrol ettim ama ANA ODAYA BAĞLI olup olmadığını kontrol
+ETMEDİM - kullanıcı "kapıdan geçemiyorum" dedi, meğer Kral'ın köşe
+mobilyası o cebi dört yandan kapatıyormuş (kendi başına ulaşılamaz bir
+cep). Ders: yeni bir gecis/kapı eklerken, hedef karonun BOŞ olması
+yetmez - spawn noktasından BFS ile (4 yönlü, blockers+ZEMIN ile) gerçekten
+ulaşılabilir olduğu doğrulanmalı. Tahtada elle "burası boş görünüyor"
+demek yeterli değil.
+
 ---
 
-*Son güncelleme: 2026-09-14, v8.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-14, v8.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
