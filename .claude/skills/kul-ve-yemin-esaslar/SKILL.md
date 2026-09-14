@@ -451,6 +451,33 @@ kat genis" sorusu cevabi (~3x) doğrudan olcek faktorunu verir. Depo aslinda
 180 derece cevirmekten sonradan vazgecti ("ters olmasin") - donme talebi
 gelse bile HER ZAMAN geri alinabilir bir tercih, kalici varsayilmasin.
 
+### Eski Depo mekanı geri alındı (şimdilik) — v8.6
+Kullanıcı 90 derece döndürmeyi de denedikten sonra "döndürme iptal normal
+dursun", sonra da "obruk ve adamları eski yerine gitsin bu haritayı da
+şimdilik kaldıralım" dedi. Zone tipi/ZONES/world.ts dalı/haven'daki sol
+kapı/engine.ts'teki bg yükleme girişi TAMAMEN kaldırıldı (perde
+mekaniğindeki gibi - devre dışı bırakmak değil, silmek). `public/assets/
+arkaplan/depo.png` ve `scripts/depo_kur.py` dosyaları SİLİNMEDİ (kullanıcı
+"şimdilik" dedi, kendi mekânı üretilince tekrar kullanılabilir) ama hiçbir
+kod onlara referans vermiyor. Obruk/Karga/Çakal Sarnıç Ağzı'ndaki eski
+konumlarına (6,13)/(5,10)/(5,16) döndü.
+
+Bu denemeden kalıcı iki şey: (1) `Entity.uzaktan` mekaniği (tezgah
+arkasındaki NPC ile konuşma) KULLANILMADIĞI İÇİN de geri alındı - başka
+kimse kullanmıyorsa yarım kalan altyapıyı bırakma. (2) Uslu artık
+`flags.usluYer` ile iki mekân (Son Sığınak / Sarnıç Ağzı) arasında
+"geziyor" - `engine.ts`'in `changeZone`'unda bu iki mekân arasındaki
+kapıdan geçerken %50 ihtimalle yer değiştiriyormuş gibi davranıyor.
+
+### "Boş" bir haritanın gerçek karo boyutu ölçülmeden VARSAYILMAMALI
+Eski Depo denemesinin en büyük dersi buydu ve tekrar tekrar maliyetli
+çıktı (v8.3 devasa, v8.5 düzeltme, v8.6 döndürme/geri alma). Yeni bir
+harita eklerken artık [[kul-ve-yemin-esaslar-skill]] okunduktan sonra
+BAŞA dönüp bu notu da oku: (a) en/boy oranı yakınlığı ölçek kanıtı DEĞİL,
+(b) yeni bir kapı eklerken hedef karonun boş olması yetmez, BFS ile ana
+odaya bağlı olduğu doğrulanmalı, (c) kullanıcı "döndür/çevir" derse yön
+belirtmeden asla varsayma, tek bir yönde dene ve göster.
+
 ---
 
-*Son güncelleme: 2026-09-14, v8.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-14, v8.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

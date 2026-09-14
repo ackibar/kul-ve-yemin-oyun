@@ -12,8 +12,9 @@ ve duvar tas orgusu de dogruladi (~30px vs ~90-100px, ~3x) - yani kaynak
 gorsel 96px/karo yogunlugunda (32px/karo * 3), 32px/karo DEGIL. Sahne bu
 yuzden 1/3 kucultuluyor (96->32px/karo), 54x30'a degil.
 
-Ayrica kullanici 180 derece cevirmekten vazgecti ("ters olmasin") - sahne
-DOGAL yoninde kullaniliyor.
+Ayrica kullanici once 180 derece cevirmekten vazgecti ("ters olmasin"),
+sonra 90 derece dondurulmesini istedi, SONRA ondan da vazgecti ("döndürme
+iptal normal dursun") - sahne DOGAL yoninde kaliyor, DONDUR=None.
 
 Cikti:
   public/assets/arkaplan/depo.png
@@ -30,6 +31,7 @@ HEDEF_PX_KARO = 32     # motorun beklentisi (digitermer mekanlarla ayni)
 KAYNAK_SAHNE = os.path.expanduser('~/Desktop/map store.jpeg')
 KAYNAK_MASKE = os.path.expanduser('~/Desktop/map store green.jpeg')
 HEDEF = f'{ROOT}/public/assets/arkaplan/depo.png'
+DONDUR = None  # donme YOK - kullanici once 90 istedi sonra vazgecti, dogal yon
 
 
 def en_buyuk_bilesen(m):
@@ -70,6 +72,10 @@ def main():
     print(f'  kaynak {W0}x{H0} -> {NX}x{NY} karo ({cw}x{ch} px), kirpma payi ({x0},{y0})')
     sahne = sahne.crop((x0, y0, x0 + cw, y0 + ch))
     maske = maske.crop((x0, y0, x0 + cw, y0 + ch))
+    if DONDUR is not None:
+        sahne = sahne.transpose(DONDUR)
+        maske = maske.transpose(DONDUR)
+        NX, NY = NY, NX  # dondurunce en/boy yer degistirir
 
     a = np.asarray(maske).astype(int)
     r, g, b = a[..., 0], a[..., 1], a[..., 2]

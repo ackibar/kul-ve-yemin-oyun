@@ -1,5 +1,6 @@
 import type {ItemId,Zone} from './data';
-export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number};
+export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number;/** Aradaki tezgah/engel yuzunden gorus hattinda "yurunemez" karo olsa da
+ *  konusulabilir (Obruk gibi tezgahin ARKASINDA duran satici); menzil de genisler. */uzaktan?:boolean};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
 export type EnemySpec={id:string;kind:1|2|4|5|6|7|8|9|10;x:number;y:number;boss?:boolean};
@@ -23,10 +24,8 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  const kare30=kare||zone==='yikik';
  // Boyali tek parca sahneler: Kul Ovasi ve Sarnic 54x30, digerleri 30x30.
  const genis=zone==='disari'||zone==='cistern';
- /* Dar Gecit dikey: 13 genislik, 63 boy. Depo 28x16: kaynak gorselin olculen
-    gercek karo yogunlugu (96px/karo) baz alinarak hesaplandi, bkz. depo_kur.py -
-    54x30'a zorlanmisti (v8.3) ve "devasa" durmustu, aritmetigin dogrusu buydu. */
- const w=zone==='tunel'?13:zone==='depo'?28:genis?54:kare30?30:46,h=zone==='tunel'?63:zone==='depo'?16:genis?30:kare30?30:48;
+ /* Dar Gecit dikey: 13 genislik, 63 boy. */
+ const w=zone==='tunel'?13:genis?54:kare30?30:46,h=zone==='tunel'?63:genis?30:kare30?30:48;
  const tiles=Array.from({length:h},()=>Array<number>(w).fill(0));
  const room=(x:number,y:number,rw:number,rh:number)=>{for(let j=y;j<y+rh;j++)for(let i=x;i<x+rw;i++)tiles[j][i]=1};
  const entities:Entity[]=[],enemies:EnemySpec[]=[];
@@ -69,7 +68,10 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      kimsenin ugramadigi bir kose. Kendi mekani yapilinca oraya tasinacak. */
   if(flags?.kral==='oldu')at({id:'kralCeset',type:'ceset',x:5,y:17,name:'Kral',asset:'kral_ceset'});
   else at({id:'kral',type:'npc',x:5,y:17,name:'Kral',portrait:13,sabit:true,capa:KRAL_CAPA,s:.58});
-  at({id:'uslu',type:'npc',x:14,y:19,name:'Uslu',portrait:14});
+  // Uslu tek mekana bagli degil: flags.usluYer 'magara' ise Sarnic Agzi'nda,
+  // yoksa (varsayilan) burada dolasir - bkz. engine.ts changeZone (siginak<->
+  // magara kapisindan gecerken yari ihtimalle yer degistirir).
+  if(flags?.usluYer!=='magara')at({id:'uslu',type:'npc',x:14,y:19,name:'Uslu',portrait:14});
   if(flags?.ayaz==='indi')at({id:'ayaz',type:'npc',x:16,y:21,name:'Tiga',portrait:8,s:.9});
   if(flags?.tuhn==='kaldi')at({id:'tuhn',type:'npc',x:19,y:22,name:'Tuhn',portrait:6});
   gecis(12,27,18,28,'magara',[15,5]);   // asagi inen tunelin sonu
@@ -77,15 +79,6 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // elle aciliyor, disari cikis da onun ucunda.
   for(let j=2;j<4;j++)for(let i=12;i<18;i++)tiles[j][i]=1;
   gecis(12,2,18,3,'disari',[27,27]);    // ust kapi: kul ovasina cikis
-  // Sol duvarda YENI bir kapi: eski depoya acilir. Bu tarafta onceden bir
-  // gecit yoktu (duvar sagirdi), duvari delip acildi. ILK DENEME (20,24)
-  // satirlariydi - blockers'tan bosti ama ANA ODAYA BAGLI DEGILDI (Kral'in
-  // kose mobilyasi o cebi her yonden kapatiyor, BFS ile dogrulandi). Kral'in
-  // koltugunun hemen KUZEYI (satir 15-16) - kullanicinin da isaret ettigi
-  // "Kral'a yakin gecit" - hem bos hem de ana odaya bitisik.
-  for(let j=15;j<17;j++)for(let i=1;i<3;i++)tiles[j][i]=1;
-  gecis(1,15,3,17,'depo',[9,13]);       // sol kapi: eski depoya gecis
-
   // Ocaklarda boyali ALEV yok, sadece kor ve odun var; animasyonlu alevi motor
   // buraya koyuyor. Konum ocak halkasinin prop bileseninden olculdu.
   // Capa: Fire1 sprite'i 32 birimlik hucrenin TAMAMINI dolduruyor ve sprite()
@@ -168,12 +161,15 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // Atladiysa yok; indiyse siginakta, Lin'in atesinin basinda.
   if(!flags?.tuhn)at({id:'tuhn',type:'npc',x:20,y:15,name:'Tuhn',portrait:6});
   /* Obruk ve iki parali askeri. YER GECICI: adamin kendi odasi uretilince
-     oraya tasinacak. Simdilik Sarnic Agzi'nin bati duvari - siginakla sarnic
-     arasindaki tek yol buradan geciyor, yani gecen herkes onunden geciyor.
-     Karga ve Cakal onu ARADA tutacak sekilde duruyor. */
+     oraya tasinacak (bir ara depoya tasinmisti, kullanici eski yerine
+     dondurdu). Siginakla sarnic arasindaki tek yol buradan geciyor, yani
+     gecen herkes onunden geciyor. Karga ve Cakal onu ARADA tutacak sekilde
+     duruyor. */
   at({id:'obruk',type:'npc',x:6,y:13,name:'Obruk',portrait:10,s:1.25,sabit:true});
   at({id:'karga',type:'npc',x:5,y:10,name:'Karga',portrait:11,sabit:true});
   at({id:'cakal',type:'npc',x:5,y:16,name:'Çakal',portrait:12,sabit:true});
+  // Uslu buraya da ugrayabilir - bkz. haven'daki ayni flag kontrolu.
+  if(flags?.usluYer==='magara')at({id:'uslu',type:'npc',x:14,y:10,name:'Uslu',portrait:14});
  }else if(zone==='tunel'){
   /* DAR GECIT: sarnicin alt agzindan inilen uzun, dar, zifiri karanlik yarik.
      Iki kaynak gorselden kuruldu (scripts/tunel_kur.py): sahnenin kendisi ve
@@ -231,19 +227,6 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   /* Alt agiz artik bir yere cikiyor: Dar Gecit. */
   gecis(23,29,31,30,'tunel',[6,10]);
   // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).
- }else if(zone==='depo'){
-  /* Eski Depo: siginagin soluna yeni acilan kapidan gidilen unutulmus kiler.
-     Iki kaynak gorselden kuruldu (scripts/depo_kur.py): sahnenin kendisi ve
-     yurunebilir zemini YESILE boyanmis hali. ILK DENEME (v8.3) en/boy oranina
-     bakip disari/cistern'in 54x30 olcegine kucultmustu - "devasa" durdu,
-     cunku oran yakinligi ayni karo yogunlugu DEMEK DEGIL. Duzeltme: bir
-     sandik + duvar tasi haven.png'dekiyle piksel piksel karsilastirildi,
-     kaynak gorsel aslinda 96px/karo yogunlugunda olculdu (32 degil) - dogru
-     olcek 28x16. Kullanici 180 cevirmekten de vazgecti ("ters olmasin"):
-     sahne DOGAL yoninde. Zemin dogrudan yesil maskeden okundu, tahmin yok. */
-  const ZEMIN=['0000000000000000000000000000','0000000000000000000000000000','0000000000000000000000000000','0000000000000000000000000000','0000000001100000000000000000','0000010111111000000000000000','0001111111111110000000000000','0011111111111110000000000000','0111111111111110000000000000','0111111100011110000000000000','0111111100111111111111110000','0001111111111111111111111100','0000111111111111000001111110','0000011111111100000000011000','0000000011111110000000010000','0000000001100000000000000000'];
-  for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
-  gecis(9,15,11,16,'haven',[3,16]);     // alt ucuk: siginaga geri
  }
  return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:zone==='tunel'?[6*16+8,6*16+8]:[7*16,7*16]};
 }
