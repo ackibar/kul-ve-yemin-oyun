@@ -118,8 +118,18 @@ export class Engine{
  static readonly GP_OLU=.24;
  private handleKeyDown=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyF','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(this.paused)return;if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=true;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=true;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=true;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=true;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=true;if(e.repeat)return;if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK')this.dodge();if(e.code==='KeyE')this.interact();if(e.code==='KeyQ'||e.code==='KeyR')this.toggleWeapon();if(e.code==='KeyF')this.toggleTorch();};
  private handleKeyUp=(e:KeyboardEvent)=>{if(['Space','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyR','KeyE','KeyF','KeyJ','KeyK','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){e.preventDefault();}if(e.code==='KeyW'||e.code==='ArrowUp')this.keys.up=false;if(e.code==='KeyS'||e.code==='ArrowDown')this.keys.down=false;if(e.code==='KeyA'||e.code==='ArrowLeft')this.keys.left=false;if(e.code==='KeyD'||e.code==='ArrowRight')this.keys.right=false;if(e.code==='Space'||e.code==='KeyJ')this.input.attack=false;};
- constructor(canvas:HTMLCanvasElement,state:State,audio:GameAudio,onChange:(s:Snapshot)=>void,onEvent:(e:GameEvent)=>void){this.canvas=canvas;this.ctx=canvas?.getContext?.('2d')!;this.state=state;this.world=makeWorld(state.zone,state.flags as Record<string,string|boolean|undefined>);this.audio=audio;this.onChange=onChange;this.onEvent=onEvent;this.gez.clear();this.resetMobs();this.loadAssets();this.camera={x:state.x-this.gorus.en/2,y:state.y-this.gorus.boy/2};if(typeof window!=='undefined'){window.addEventListener('keydown',this.handleKeyDown);window.addEventListener('keyup',this.handleKeyUp);}this.loop=this.loop.bind(this);if(typeof requestAnimationFrame!=='undefined')this.raf=requestAnimationFrame(this.loop)}
+ constructor(canvas:HTMLCanvasElement,state:State,audio:GameAudio,onChange:(s:Snapshot)=>void,onEvent:(e:GameEvent)=>void){this.canvas=canvas;this.ctx=canvas?.getContext?.('2d')!;this.state=state;this.world=makeWorld(state.zone,state.flags as Record<string,string|boolean|undefined>);this.audio=audio;this.onChange=onChange;this.onEvent=onEvent;this.gez.clear();this.resetMobs();this.loadAssets();this.overlayNesneleriYukle();this.camera={x:state.x-this.gorus.en/2,y:state.y-this.gorus.boy/2};if(typeof window!=='undefined'){window.addEventListener('keydown',this.handleKeyDown);window.addEventListener('keyup',this.handleKeyUp);}this.loop=this.loop.bind(this);if(typeof requestAnimationFrame!=='undefined')this.raf=requestAnimationFrame(this.loop)}
  private img(key:string,path:string){const im=new Image();im.src=path;this.images[key]=im;return new Promise<void>((resolve,reject)=>{im.onload=()=>resolve();im.onerror=()=>reject(new Error(path));})}
+ /** harita-editor.html'in yerlestirdigi "overlay" decor'lar (boyali sahnenin
+  *  UZERINE cizilen tekil PNG'ler, ör. nesne/xxx) sabit onceden-yukleme
+  *  listesinde degil - zone degisince world.entities'te ne varsa TARANIR ve
+  *  eksik olan resimler burada yuklenir. Resim gelene kadar sprite() sessizce
+  *  cizmez (naturalWidth kontrolu), sonraki karede kendiliginden belirir. */
+ private overlayNesneleriYukle(){
+  for(const e of this.world.entities){
+   if(e.type==='decor'&&e.overlay&&e.asset&&!this.images[e.asset])this.img(e.asset,`/assets/${e.asset}.png`).catch(()=>{});
+  }
+ }
   private async loadAssets(){const jobs:Promise<void>[]=[];const optional:boolean[]=[];/** optional[i] === true olan isler ISTEGE BAGLI: eksikligi oyunu kirmaz.
   *  Karakter dongusu disindaki tum isler zorunlu sayilir. */
  const mark=(o:boolean)=>{while(optional.length<jobs.length)optional.push(o);};jobs.push(this.img('rauf_kneel','/assets/characters/5/D_Kneel.png'));optional.push(true);jobs.push(this.img('ceset','/assets/characters/5/D_Corpse.png'));optional.push(true);jobs.push(this.img('kral_ceset','/assets/characters/13/D_Corpse.png'));optional.push(true);jobs.push(this.img('characters13DTac','/assets/characters/13/D_Tac.png'));optional.push(true);jobs.push(this.img('characters13DEl','/assets/characters/13/D_El.png'));optional.push(true);mark(false);/* YALNIZCA CIZILEN sheet'ler yukleniyor. Olculdu: NPC'lerde sprite cagrisi tek
@@ -218,7 +228,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   if((eskiBolge==='haven'&&zone==='magara')||(eskiBolge==='magara'&&zone==='haven')){
    if(Math.random()<.5)this.state.flags.usluYer=this.state.flags.usluYer==='magara'?'siginak':'magara';
   }
-  this.world=makeWorld(zone,this.state.flags as Record<string,string|boolean|undefined>);this.resetMobs();this.camera={x:this.state.x-this.gorus.en/2,y:this.state.y-this.gorus.boy/2};this.invulnerable=1.5;this.audio.setZone(zone);this.audio.play('door');this.onEvent({type:'zone',id:zone});this.save();this.emit()}
+  this.world=makeWorld(zone,this.state.flags as Record<string,string|boolean|undefined>);this.resetMobs();this.overlayNesneleriYukle();this.camera={x:this.state.x-this.gorus.en/2,y:this.state.y-this.gorus.boy/2};this.invulnerable=1.5;this.audio.setZone(zone);this.audio.play('door');this.onEvent({type:'zone',id:zone});this.save();this.emit()}
  useItem(id:ItemId){if(this.paused&&!['potion','tonic','bileme','merhem','toz','tuzet','durusu','petek','torch'].includes(id))return false;if(id==='potion'){if(this.state.hp>=stats(this.state).maxHp){this.notify('Canın zaten dolu.');return false;}if(!removeItem(this.state,id)){this.notify('Can iksirin kalmadı. Alf’ten alabilirsin.');return false;}this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+45);this.float(this.state.x,this.state.y-10,'+45','#8cdda5');}else if(id==='tonic'){if(!removeItem(this.state,id))return false;this.tonic=20;this.notify('Köz toniği: 20 saniye +8 saldırı.');}else if(id==='bileme'){if(!removeItem(this.state,id))return false;this.bileme=30;this.notify('Bileme taşı: 30 saniye %25 daha hızlı vuruş.');}else if(id==='merhem'){if(!removeItem(this.state,id))return false;this.merhem=12;this.notify('Sargı merhemi: 12 saniye boyunca yavaşça iyileşiyorsun.');}else if(id==='toz'){if(!removeItem(this.state,id))return false;this.gizli=8;this.notify('Kül tozu: 8 saniye görünmezsin.');}
    /* Obruk'un kileri. Tuzlu et oyunun en guclu tek seferlik iyilesmesi;
       bedeli de ona gore (26 altin, ustune iki bucuk kat zam). */
@@ -940,7 +950,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   const actors:({y:number;draw:()=>void})[]=this.world.entities.filter(e=>e.type!=='portal'&&e.type!=='trap').map(e=>({y:e.y,draw:()=>{
    if(e.type==='decor'){/* Boyali mekanda mobilya ZATEN sahnenin icinde cizili; ustune eski zindan
       setinden bir masa/dolap koymak yabanci duruyordu. Varlik yalnizca
-      etkilesim noktasi olarak kaliyor, etiketi duruyor. */if(!bg?.naturalWidth)this.sprite(e.asset!,e.x,e.y);if(e.name)this.label(e.name,e.x,e.y-20,'#dfc28e');return;}
+      etkilesim noktasi olarak kaliyor, etiketi duruyor. TEK ISTISNA: e.overlay
+      isaretli decor'lar (harita-editor.html'in "Nesneler" modunda eklenen
+      tekil PNG'ler) - onlar boyali sahnenin USTUNE, actors[] y-sirasina gore
+      ciziliyor, ör. yeni bir sandik/mobilya gorseli sahneye sonradan eklenmis
+      gibi. */if(e.overlay||!bg?.naturalWidth)this.sprite(e.asset!,e.x,e.y,0,undefined,undefined,false,e.s??1);if(e.name)this.label(e.name,e.x,e.y-20,'#dfc28e');return;}
    if(e.type==='fire'){this.sprite('fire',e.x,e.y,Math.floor(time*8)%8,32,32,false,e.s??1);return;}
    if(e.type==='chest'){const opened=this.state.opened.includes(e.id);this.sprite('chest',e.x,e.y,opened?1:0,24,24,false,1,1);if(!opened){c.fillStyle='#e8c883';c.fillRect(e.x-1,e.y-20+Math.sin(time*3),2,2);}return;}
    if(e.type==='lever'){this.sprite('lever',e.x,e.y,this.state.flags.gateOpen?3:0,16,18);return;}

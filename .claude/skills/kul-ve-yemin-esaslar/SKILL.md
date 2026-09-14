@@ -556,6 +556,31 @@ bırakınca 0.05 hassasiyet). `vite.config.ts`'teki kaydet uç noktası
 açılışının hemen ardına yeni satır ekler. Round-trip (haven'ın 34 kutusunu
 aynen geri yazmak) ile test edildi, sıfır fark.
 
+### Harita editörüne üçüncü mod: "Nesneler" (PNG yükle + yerleştir) — v9.1
+Motor `decor` entity'lerini boyalı bir sahnede HİÇ ÇİZMİYORDU (`if(!bg?.
+naturalWidth)this.sprite(...)`- yorum: "mobilya zaten sahnenin icinde
+cizili, ustune eski setten bir masa koymak yabanci duruyordu"). Yani yeni
+bir PNG'yi sahneye görünür şekilde eklemenin motor tarafında hazır bir
+yolu yoktu. Eklendi: `Entity.overlay?:boolean` - true ise `!bg?.
+naturalWidth` şartını atlar, `actors[]` y-sırasına göre normal bir sprite
+gibi çizilir (bkz. engine.ts `overlayNesneleriYukle()` - zone değişince
+`world.entities`'te taranıp eksik görseller dinamik yüklenir, sabit
+preload listesine girmez). Editördeki üçüncü mod: PNG yükle (sunucuya
+`/__harita/nesne-yukle` ile yazılır, `public/assets/nesne/ed_<ad>.png`),
+tuvale tıkla=yerleştir, sürükle=taşı, sayısal x/y/ölçek alanları. Kayıt
+(`kind:'nesneler'`) zone bloğunda `/* @harita-editor:nesneler */ ...
+-son */` yorum sınırları arasını YÖNETİR - NPC/sandık/ateş gibi elle
+yazılmış hiçbir şeye dokunmadan güvenle silip yeniden yazabiliyor.
+
+**Tekrar eden hata, tekrar bulundu:** ilk yazımda ekleme `'\n'+ İÇERİK`
+yapıyordu ama kaldırma regex'i o baştaki `\n`'i eşlemiyordu - kaldırınca
+kalıcı bir boş satır birikiyordu. Çözüm: `\n` işaretleyicinin (NESNE_BAS)
+kendisinin İÇİNE alındı, ekleme ve eşleşme AYNI sabiti kullanıyor. Genel
+ders (bkz. [[kul-ve-yemin-esaslar-skill]] içindeki önceki not): bir metin
+ekleme/kaldırma çifti yazarken ikisinin de TAM AYNI sınırlayıcıyı
+kullandığını doğrula, ayrı ayrı "mantıklı görünüyor" yetmiyor - round-trip
+(ekle→kaldır, diff sıfır olmalı) ile test et.
+
 ---
 
-*Son güncelleme: 2026-09-15, v9.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v9.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

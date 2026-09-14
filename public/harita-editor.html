@@ -47,11 +47,12 @@
 <body>
 <aside>
   <h1>Harita Editörü</h1>
-  <p class="hint">Kül ve Yemin için iki ayrı düzenleme modu: <b>Zemin</b> (karo karo yürünebilir/engel boyama → <code>ZEMIN</code> dizisi) ve <b>Engeller</b> (piksel hassas, karoya kilitlenmeyen dikdörtgenler → <code>blockers</code> listesi — yatağın kenarı artık kutunun ortasında kalmaz). İkisi de dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar.</p>
+  <p class="hint">Üç düzenleme modu: <b>Zemin</b> (karo boyama → <code>ZEMIN</code>), <b>Engeller</b> (piksel hassas kutu → <code>blockers</code>) ve <b>Nesneler</b> (kendi PNG'ini yükle, sahneye yerleştir → yeni <code>decor</code> varlıkları). Hepsi dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar.</p>
 
   <div class="row" style="margin-bottom:10px">
-    <button id="modeZemin" class="active">📐 Zemin (karo)</button>
-    <button id="modeEngel">🎯 Engeller (piksel)</button>
+    <button id="modeZemin" class="active">📐 Zemin</button>
+    <button id="modeEngel">🎯 Engeller</button>
+    <button id="modeNesne">🖼️ Nesneler</button>
   </div>
 
   <h2>1 · Kaynak</h2>
@@ -142,6 +143,36 @@
   <p class="hint">Zaten bir <code>blockers.push(...)</code> satırı olan mekânlarda onu DEĞİŞTİRİR; hiç yoksa (ör. <code>tunel</code>, <code>test100</code>) yeni bir satır ekler. Sıfır kutuyla kaydetmek var olan satırı temizler.</p>
   </div>
 
+  <div id="nesnePanel" style="display:none">
+  <h2>2 · PNG yükle</h2>
+  <p class="hint">Boyalı sahnenin ÜSTÜNE çizilecek tekil bir görsel (ör. nano-banana ile ürettiğin yeni bir eşya). Oyun 1 karo = 32px kullanıyor, yani görselini 32'nin katları olacak şekilde hazırlarsan (64×64 = 2×2 karo gibi) ölçek diğer her şeyle tutarlı olur. Şeffaf zemin (PNG alfa kanalı) önerilir.</p>
+  <input type="file" id="nesneDosya" accept="image/png">
+  <p class="small" id="nesneYuklemeDurum"></p>
+  <label>Yüklenen görseller (tıkla = yerleştirme fırçası seç)</label>
+  <div id="nesnePalet" class="small" style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:3px;padding:6px;min-height:40px"></div>
+
+  <h2>3 · Yerleştir</h2>
+  <p class="hint">Bir görsel seç, tuvale tıkla = o noktaya yerleştirir. Var olan bir nesneye tıkla = seç; sürükle = taşı. <code>Delete</code>/<code>Backspace</code> = seçili nesneyi sil.</p>
+  <div id="seciliNesne" style="display:none">
+    <label>Seçili nesne (karo birimi)</label>
+    <div class="row">
+      <div><label class="small">x</label><input type="number" id="nx" step="0.05"></div>
+      <div><label class="small">y</label><input type="number" id="ny" step="0.05"></div>
+      <div><label class="small">ölçek</label><input type="number" id="ns" step="0.05" min="0.1"></div>
+    </div>
+    <button id="nesneSil">Seçileni sil</button>
+  </div>
+  <label>Nesne listesi (tıkla = seç)</label>
+  <div id="nesneListe" class="small" style="max-height:120px;overflow-y:auto;border:1px solid var(--line);border-radius:3px;padding:4px"></div>
+
+  <h2>4 · İçe / Dışa aktar</h2>
+  <label>Dışa aktarılan (world.ts'e yapıştır)</label>
+  <textarea id="nesneExportBox" rows="6" readonly></textarea>
+  <button id="nesneCopyBtn">Panoya kopyala</button>
+  <button id="nesneSaveBtn" style="border-color:#c99bec">💾 world.ts'e kaydet (nesneler)</button>
+  <p class="hint">Bu aracın önceden eklediği nesneleri (varsa) DEĞİŞTİRİR - NPC/sandık/ateş gibi elle yazılmış diğer varlıklara dokunmaz. Sıfır nesneyle kaydetmek hepsini temizler.</p>
+  </div>
+
   <div class="legend" style="margin-top:14px">
     <span><i class="sw" style="background:var(--zemin)"></i>zemin</span>
     <span><i class="sw" style="background:var(--engel)"></i>engel</span>
@@ -175,14 +206,23 @@ let painting=false;
 let pickingStart=false, startTile=null;
 let reachSet=null, isleSet=null;
 let liveBlockers=null; // ham API yaniti - engel moduna gecince duzenlenebilir listeye kopyalanir
+let liveNesneler=null; // ham API yaniti - {id,x,y,asset,s}[]
 let currentZoneName=''; // preset ise zone adi, custom ise ''
-let mode='zemin'; // 'zemin' | 'engel'
+let mode='zemin'; // 'zemin' | 'engel' | 'nesne'
 
 // --- Engeller (piksel hassas kutular) ---
 let boxes=[]; // {x1,y1,x2,y2} karo biriminde, ONDALIKLI olabilir
 let selectedBox=-1;
 let boxDrag=null; // {type:'new'|'move'|'resize', handle?, startPx, startBox}
 const HANDLE_PX=8; // ekran pikseli cinsinden tutamak yakalama yaricapi
+
+// --- Nesneler (yuklenen PNG'ler, sahneye yerlestirilen tekil objeler) ---
+let palet=[]; // {asset,img} - yuklenen, sunucuya kaydedilmis gorseller
+let aktifAsset=null; // paletten secili, tuvale tiklayinca yerlesecek
+let objeler=[]; // {id,x,y,s,asset} karo biriminde
+let selectedObje=-1;
+let objeDrag=null; // {from:[x,y], orig:{x,y}}
+let objeSayac=0;
 
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
@@ -191,12 +231,15 @@ function setMode(m){
   mode=m;
   $('modeZemin').classList.toggle('active', m==='zemin');
   $('modeEngel').classList.toggle('active', m==='engel');
+  $('modeNesne').classList.toggle('active', m==='nesne');
   $('zeminPanel').style.display = m==='zemin' ? 'block' : 'none';
   $('engelPanel').style.display = m==='engel' ? 'block' : 'none';
+  $('nesnePanel').style.display = m==='nesne' ? 'block' : 'none';
   draw();
 }
 $('modeZemin').addEventListener('click',()=>setMode('zemin'));
 $('modeEngel').addEventListener('click',()=>setMode('engel'));
+$('modeNesne').addEventListener('click',()=>setMode('nesne'));
 
 $('preset').addEventListener('change',()=>{
   const v=$('preset').value;
@@ -250,6 +293,7 @@ $('loadBtn').addEventListener('click', async ()=>{
         if(d.tiles && d.tiles.length===gridH && d.tiles[0].length===gridW){
           grid = d.tiles.map(row=>row.map(v=>v?1:0));
           liveBlockers = d.blockers||[];
+          liveNesneler = d.nesneler||[];
           $('canliNot').style.display='block';
         }
       }
@@ -264,6 +308,7 @@ $('loadBtn').addEventListener('click', async ()=>{
   updateExport();
   renderBoxList();
   updateEngelExport();
+  await loadNesneler();
 });
 
 function setBrush(b){
@@ -328,6 +373,21 @@ function draw(){
     }
   });
   ctx.restore();
+  // Yerlestirilmis nesneler: gercek gorsel, bottom-anchored (motorun sprite()
+  // cizimiyle ayni mantik - (x,y) nesnenin AYAK noktasi, alt kenari orada biter).
+  ctx.save();
+  objeler.forEach((o,i)=>{
+    const p=palet.find(p=>p.asset===o.asset);
+    if(!p)return;
+    const s=(o.s||1), iw=p.img.width*scale/2*s, ih=p.img.height*scale/2*s; // R=2: 2 img px = 1 dunya birimi
+    const px=o.x*tp, py=o.y*tp;
+    ctx.drawImage(p.img, px-iw/2, py-ih, iw, ih);
+    if(mode==='nesne' && i===selectedObje){
+      ctx.strokeStyle='#c99bec'; ctx.lineWidth=2;
+      ctx.strokeRect(px-iw/2, py-ih, iw, ih);
+    }
+  });
+  ctx.restore();
   if(startTile){
     ctx.fillStyle='#ffe08a';
     ctx.beginPath();
@@ -378,6 +438,15 @@ cv.addEventListener('mousemove',e=>{
     if(painting && t){ grid[t[1]][t[0]]=brush; draw(); updateExport(); }
     return;
   }
+  if(mode==='nesne'){
+    const [px,py]=pxFromEvent(e);
+    $('hoverTag').textContent = `karo (${px.toFixed(2)}, ${py.toFixed(2)})`;
+    if(!objeDrag)return;
+    const o=objeler[selectedObje], dx=px-objeDrag.from[0], dy=py-objeDrag.from[1];
+    o.x=objeDrag.orig.x+dx; o.y=objeDrag.orig.y+dy;
+    draw(); syncSelectedObje(); updateNesneExport();
+    return;
+  }
   // engel modu
   const [px,py]=pxFromEvent(e);
   $('hoverTag').textContent = `karo (${px.toFixed(2)}, ${py.toFixed(2)})`;
@@ -413,6 +482,25 @@ cv.addEventListener('mousedown',e=>{
     draw(); updateExport();
     return;
   }
+  if(mode==='nesne'){
+    const [px,py]=pxFromEvent(e);
+    const i=objeAt(px,py);
+    if(i>=0){
+      selectedObje=i;
+      objeDrag={from:[px,py],orig:{x:objeler[i].x,y:objeler[i].y}};
+      renderObjeList(); syncSelectedObje(); draw();
+      return;
+    }
+    if(aktifAsset){
+      objeSayac++;
+      objeler.push({id:`ed${Date.now()}_${objeSayac}`,x:px,y:py,s:1,asset:aktifAsset});
+      selectedObje=objeler.length-1;
+      renderObjeList(); syncSelectedObje(); updateNesneExport(); draw();
+    }else{
+      $('status').textContent='Önce paletten bir görsel seç (ya da yeni bir PNG yükle).';
+    }
+    return;
+  }
   // engel modu
   const [px,py]=pxFromEvent(e);
   const h=handleAt(px,py);
@@ -432,6 +520,7 @@ cv.addEventListener('mousedown',e=>{
 });
 window.addEventListener('mouseup',()=>{
   painting=false;
+  objeDrag=null;
   if(boxDrag){
     if(boxDrag.type==='new'){
       const b=boxes[boxDrag.idx];
@@ -449,6 +538,10 @@ window.addEventListener('keydown',e=>{
   if(mode==='engel' && (e.key==='Delete'||e.key==='Backspace') && selectedBox>=0 && document.activeElement===document.body){
     boxes.splice(selectedBox,1); selectedBox=-1;
     renderBoxList(); syncSelectedFields(); updateEngelExport(); draw();
+  }
+  if(mode==='nesne' && (e.key==='Delete'||e.key==='Backspace') && selectedObje>=0 && document.activeElement===document.body){
+    objeler.splice(selectedObje,1); selectedObje=-1;
+    renderObjeList(); syncSelectedObje(); updateNesneExport(); draw();
   }
 });
 
@@ -514,6 +607,135 @@ $('engelSaveBtn').addEventListener('click', async ()=>{
     const d = await r.json();
     if(!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
     $('status').textContent = `✓ world.ts kaydedildi (${currentZoneName}, blockers). Vite otomatik yeniden yükleyecek - oyunu tazeleyip bak.`;
+  }catch(e){
+    $('status').textContent = `Kaydedilemedi: ${e.message}`;
+  }
+});
+
+// --- Nesneler (PNG yukle + sahneye yerlestir) ---
+function fileToDataUrl(f){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(r.result);
+    r.onerror=reject;
+    r.readAsDataURL(f);
+  });
+}
+async function loadNesneler(){
+  objeler=[]; selectedObje=-1;
+  palet=[]; aktifAsset=null;
+  renderPalet(); renderObjeList(); syncSelectedObje(); updateNesneExport();
+  if(!liveNesneler || !liveNesneler.length)return;
+  for(const n of liveNesneler){
+    if(!palet.some(p=>p.asset===n.asset)){
+      try{
+        const im=await loadImageSrc(`/assets/${n.asset}.png?t=${Date.now()}`);
+        palet.push({asset:n.asset,img:im});
+      }catch{ /* dosya bulunamadi, yine de listede tut ama gorselsiz */ }
+    }
+    objeler.push({id:n.id,x:n.x,y:n.y,s:n.s,asset:n.asset});
+  }
+  renderPalet(); renderObjeList(); draw();
+}
+
+$('nesneDosya').addEventListener('change', async ()=>{
+  const f=$('nesneDosya').files[0];
+  if(!f)return;
+  $('nesneYuklemeDurum').textContent='Yükleniyor…';
+  try{
+    const dataUrl=await fileToDataUrl(f);
+    const ad=f.name.replace(/\.png$/i,'').replace(/[^a-zA-Z0-9_-]/g,'_');
+    const r=await fetch('/__harita/nesne-yukle',{
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ filename: ad, dataUrl }),
+    });
+    const d=await r.json();
+    if(!r.ok||d.error)throw new Error(d.error||`HTTP ${r.status}`);
+    const im=await loadImageSrc(dataUrl);
+    palet.push({asset:d.asset,img:im});
+    aktifAsset=d.asset;
+    renderPalet();
+    $('nesneYuklemeDurum').textContent=`✓ Yüklendi: ${d.asset}.png — şimdi tuvale tıkla.`;
+  }catch(e){
+    $('nesneYuklemeDurum').textContent=`Yüklenemedi: ${e.message}`;
+  }
+  $('nesneDosya').value='';
+});
+
+function renderPalet(){
+  const el=$('nesnePalet');
+  if(!palet.length){ el.innerHTML='<i style="color:var(--ink-dim)">Henüz görsel yok.</i>'; return; }
+  el.innerHTML = palet.map(p=>
+    `<div data-asset="${p.asset}" title="${p.asset}" style="width:40px;height:40px;border:2px solid ${p.asset===aktifAsset?'#c99bec':'var(--line)'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b">`
+    + `<img src="${p.img.src}" style="max-width:34px;max-height:34px;image-rendering:pixelated"></div>`
+  ).join('');
+  el.querySelectorAll('[data-asset]').forEach(elm=>{
+    elm.addEventListener('click',()=>{ aktifAsset=elm.dataset.asset; renderPalet(); });
+  });
+}
+
+function objeAt(px,py){
+  for(let i=objeler.length-1;i>=0;i--){
+    const o=objeler[i], p=palet.find(p=>p.asset===o.asset);
+    const iw=p?(p.img.width/2/pxKaro):1, ih=p?(p.img.height/2/pxKaro):1; // 2px/dunya birimi (R=2), /pxKaro -> karo
+    if(px>=o.x-iw/2*(o.s||1)&&px<=o.x+iw/2*(o.s||1)&&py>=o.y-ih*(o.s||1)&&py<=o.y)return i;
+  }
+  return -1;
+}
+function renderObjeList(){
+  const el=$('nesneListe');
+  if(!objeler.length){ el.innerHTML='<i style="color:var(--ink-dim)">Nesne yok.</i>'; return; }
+  el.innerHTML = objeler.map((o,i)=>
+    `<div data-i="${i}" style="padding:4px 6px;cursor:pointer;border-radius:2px;${i===selectedObje?'background:#c99bec55':''}">`
+    + `${o.asset} @ (${o.x.toFixed(2)}, ${o.y.toFixed(2)})</div>`
+  ).join('');
+  el.querySelectorAll('[data-i]').forEach(row=>{
+    row.addEventListener('click',()=>{ selectedObje=parseInt(row.dataset.i,10); renderObjeList(); syncSelectedObje(); draw(); });
+  });
+}
+function syncSelectedObje(){
+  const has=selectedObje>=0 && objeler[selectedObje];
+  $('seciliNesne').style.display = has ? 'block' : 'none';
+  if(!has)return;
+  const o=objeler[selectedObje];
+  $('nx').value=o.x.toFixed(2); $('ny').value=o.y.toFixed(2); $('ns').value=(o.s||1).toFixed(2);
+}
+['nx','ny','ns'].forEach(id=>{
+  $(id).addEventListener('input',()=>{
+    if(selectedObje<0)return;
+    const o=objeler[selectedObje];
+    o.x=parseFloat($('nx').value)||0; o.y=parseFloat($('ny').value)||0; o.s=parseFloat($('ns').value)||1;
+    draw(); updateNesneExport();
+  });
+});
+$('nesneSil').addEventListener('click',()=>{
+  if(selectedObje<0)return;
+  objeler.splice(selectedObje,1); selectedObje=-1;
+  renderObjeList(); syncSelectedObje(); updateNesneExport(); draw();
+});
+
+function updateNesneExport(){
+  const fmt=n=>Math.round(n*100)/100;
+  $('nesneExportBox').value = objeler.length
+    ? objeler.map(o=>`at({id:'${o.id}',type:'decor',x:${fmt(o.x)},y:${fmt(o.y)},asset:'${o.asset}',s:${fmt(o.s||1)},overlay:true});`).join('\n')
+    : '(nesne yok - kaydedersen önceki eklemeler temizlenir)';
+}
+$('nesneCopyBtn').addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText($('nesneExportBox').value); $('status').textContent='Panoya kopyalandı.'; }
+  catch{ $('nesneExportBox').select(); document.execCommand('copy'); $('status').textContent='Panoya kopyalandı (yedek yöntem).'; }
+});
+$('nesneSaveBtn').addEventListener('click', async ()=>{
+  if(!currentZoneName){ alert('Kaydet sadece hazır mekân listesinden seçilenlerde çalışır (özel görselde değil).'); return; }
+  $('status').textContent='Kaydediliyor…';
+  try{
+    const list = objeler.map(o=>({id:o.id,x:o.x,y:o.y,asset:o.asset,s:o.s||1}));
+    const r = await fetch('/__harita/kaydet', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ zone: currentZoneName, kind:'nesneler', list }),
+    });
+    const d = await r.json();
+    if(!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
+    $('status').textContent = `✓ world.ts kaydedildi (${currentZoneName}, nesneler). Vite otomatik yeniden yükleyecek - oyunu tazeleyip bak.`;
   }catch(e){
     $('status').textContent = `Kaydedilemedi: ${e.message}`;
   }

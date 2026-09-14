@@ -1,9 +1,15 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const WORLD_TS = fileURLToPath(new URL('./lib/game/world.ts', import.meta.url));
+const NESNE_DIR = fileURLToPath(new URL('./public/assets/nesne/', import.meta.url));
+// Bu araç kendi eklediği decor'ları bu yorum sınırları arasında tutar -
+// zone bloğundaki NPC/sandık/ateş gibi elle yazılmış diğer her şeye
+// dokunmadan güvenle silip yeniden yazabilmek için (bkz. asağıdaki 'nesneler').
+const NESNE_BAS = '\n  /* @harita-editor:nesneler */\n';
+const NESNE_SON = '  /* @harita-editor:nesneler-son */\n';
 
 // Dev-only yardimci: harita-editor.html'in "hazir mekan yukle" / "kaydet"
 // ozellikleri icin. world.ts'i SSR modda yukleyip makeWorld() cagirir, o
@@ -25,8 +31,12 @@ function haritaEditoruEklentisi() {
           try {
             const mod = await server.ssrLoadModule('/lib/game/world.ts');
             const world = mod.makeWorld(zone);
+            // Sadece bu aracın kendi eklediği (overlay:true) decor'ları döner -
+            // NPC/sandık/ateş gibi elle yazılmış diğer entity'lere karışmaz.
+            const nesneler = world.entities.filter((e: any) => e.type === 'decor' && e.overlay)
+              .map((e: any) => ({ id: e.id, x: (e.x - 8) / 16, y: (e.y - 8) / 16, asset: e.asset, s: e.s ?? 1 }));
             res.setHeader('content-type', 'application/json');
-            res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers }));
+            res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler }));
           } catch (e: any) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: String(e?.message || e) }));
@@ -75,6 +85,27 @@ function haritaEditoruEklentisi() {
                 } else {
                   yeniBlok = blok; // hem yeni liste bos hem eski yoktu - degisiklik yok
                 }
+              } else if (kind === 'nesneler') {
+                // list: {id,x,y,asset,s}[] - x/y karo biriminde (ondalikli olabilir).
+                // at() zaten *16+8 uyguluyor, o yuzden BURADA CARPMA YOK - world.ts'teki
+                // diger tum at({...}) cagrilari da karo birimi aliyor, tutarli kalsin.
+                const fmt = (n: number) => Math.round(n * 100) / 100;
+                const satirlar = (list as { id: string; x: number; y: number; asset: string; s?: number }[])
+                  .map((o) => `  at({id:'${o.id}',type:'decor',x:${fmt(o.x)},y:${fmt(o.y)},asset:'${o.asset}',s:${fmt(o.s ?? 1)},overlay:true});\n`)
+                  .join('');
+                // NESNE_BAS kendi basinda '\n' tasiyor, hem ilk eklemede hem de
+                // eslesme aramasinda AYNI sabit kullaniliyor - boylece kaldirinca
+                // (bos liste) o onceki bos satir da tek seferde temizleniyor.
+                const yeniBolum = satirlar ? NESNE_BAS + satirlar + NESNE_SON : '';
+                const marklıRe = new RegExp(NESNE_BAS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[\\s\\S]*?' + NESNE_SON.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                if (marklıRe.test(blok)) {
+                  yeniBlok = blok.replace(marklıRe, yeniBolum);
+                } else if (yeniBolum) {
+                  const eklemeNoktasi = acilis.length;
+                  yeniBlok = blok.slice(0, eklemeNoktasi) + yeniBolum + blok.slice(eklemeNoktasi);
+                } else {
+                  yeniBlok = blok;
+                }
               } else {
                 const zeminRe = /const ZEMIN=\[[^\]]*\];/;
                 if (!zeminRe.test(blok)) throw new Error(`'${zone}' bir ZEMIN dizisiyle tanımlı değil (room()+blockers kullanıyor olabilir) - bu araç onu düzenleyemez`);
@@ -85,6 +116,27 @@ function haritaEditoruEklentisi() {
               writeFileSync(WORLD_TS, yeniKaynak);
               res.setHeader('content-type', 'application/json');
               res.end(JSON.stringify({ ok: true }));
+            } catch (e: any) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: String(e?.message || e) }));
+            }
+          });
+          return;
+        }
+        if (req.method === 'POST' && url === '/__harita/nesne-yukle') {
+          let body = '';
+          req.on('data', (c: Buffer) => (body += c));
+          req.on('end', () => {
+            try {
+              const { filename, dataUrl } = JSON.parse(body);
+              const ad = String(filename).toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'nesne';
+              const m = /^data:image\/png;base64,(.+)$/.exec(dataUrl);
+              if (!m) throw new Error('sadece PNG (data URL) kabul edilir');
+              mkdirSync(NESNE_DIR, { recursive: true });
+              const dosyaAdi = `ed_${ad}.png`;
+              writeFileSync(NESNE_DIR + dosyaAdi, Buffer.from(m[1], 'base64'));
+              res.setHeader('content-type', 'application/json');
+              res.end(JSON.stringify({ ok: true, asset: `nesne/ed_${ad}` }));
             } catch (e: any) {
               res.statusCode = 400;
               res.end(JSON.stringify({ error: String(e?.message || e) }));
