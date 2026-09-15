@@ -655,6 +655,23 @@ oyunda NPC olarak yerleştirip ekran görüntüsüyle doğrulandı) - test
 sonunda temizlendi (`2_silahli` klasörü, geçici test scriptleri, geçici
 `__oyun` kancası silindi, hiçbiri commit'e girmedi).
 
+### Silah Ekle: sheet başına tek konum yetmedi, kare kare (frame-by-frame) oldu — v9.7
+Kullanıcı v9.6'daki akışı denedikten sonra "kare kare istiyorum" dedi -
+netleştirince (AskUserQuestion) "her sheet'e TEK konum, tüm karelere
+otomatik uygulanır" yetmiyordu; yürüyüşün HER adımında silahın ayrı
+ayrı konumlanmasını istiyordu (ör. adım 0'da elde yukarıda, adım 3'te
+aşağıda tutulması gerekebilir). `silahPoz[sheetKey]` artık tek bir
+`{dx,dy,scale,rotDeg}` değil, kare sayısı kadar (`Math.floor(genişlik/64)`
+- bu motorun NPC'leri hep 64px'lik karede dilimlemesiyle AYNI hesap,
+bkz. `engine.ts`'teki `sprite()`) elemanlı bir DİZİ. Sheet altına bir
+kare şeridi (küçük thumbnail'ler) eklendi, hangi kare seçiliyse tuval
+onu gösterip onun konumunu düzenliyor. İki hızlı-başlangıç butonu var:
+"bu kareyi bu çizimin tüm karelerine uygula" (sheet içi doldurma) ve
+"bu çizimi diğerlerine kopyala" (kare sayıları eşit olmayan sheet'ler
+arasında `Math.min(i,uzunluk-1)` ile en yakın kareyi kopyalar). Uçtan
+uca Playwright ile doğrulandı: aynı silah kare 0'da ve kare 3'te GERÇEKTEN
+farklı pikselde kaydedildi (PNG'yi kırpıp göz kontrolü yapıldı).
+
 **Tehlikeli ders (veri kaybı, çözülmedi çünkü zaten "özellik"):** harita
 editöründeki HER "kaydet" ucu (blockers/nesneler/karakterler), o mekân
 için BOŞ liste gönderirsen mevcut satırı TAMAMEN temizler - bu arayüzde
@@ -671,4 +688,4 @@ beklenenden büyükse tam `git diff`'e bak.
 
 ---
 
-*Son güncelleme: 2026-09-15, v9.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v9.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
