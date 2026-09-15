@@ -234,11 +234,15 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   this.onChange({state:structuredClone(this.state),near,attackCooldown:this.attackTimer,dodgeCooldown:this.dodgeTimer,tonic:this.tonic,mesale:this.mesale,saveStatus:this.saveStatus,ready:this.ready});}
  notify(text:string){this.onEvent({type:'message',text});}
  spawnDrop(x:number,y:number,kind:'wood'|'xp'|'gold'|'bow',amount:number){this.drops.push({id:`drop_${Date.now()}_${Math.random()}`,x,y,kind,amount,vx:(Math.random()-.5)*45,vy:(Math.random()-.6)*45,life:30});}
- nearest(){let near:Entity|null=null,best=40;for(const e of this.world.entities){if(['fire','trap'].includes(e.type))continue;if(e.type==='decor'&&!e.asset?.includes('Table')&&!e.asset?.startsWith('nesne/'))continue;const d=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(d<best&&lineOfSight(this.world,this.state.x,this.state.y,e.x,e.y,e.id)){near=e;best=d}}return near;}
+ nearest(){let near:Entity|null=null,best=40;for(const e of this.world.entities){if(['fire','trap'].includes(e.type))continue;if(e.type==='decor'&&!e.asset?.toLowerCase().includes('table')&&!e.asset?.startsWith('nesne/'))continue;const d=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(d<best&&lineOfSight(this.world,this.state.x,this.state.y,e.x,e.y,e.id)){near=e;best=d}}return near;}
  interact(){if(this.paused||!this.ready)return;const e=this.nearest();if(!e){this.notify('Konuşmak veya açmak için biraz yaklaş.');return;}if(e.type==='yatak'){
    if(e.id!=='yatak'){this.notify('Çok yorgunum… ama bu benim yatağım değil.');return;}
    this.uyku=Engine.UYKU;this.uykuDondu=false;this.input={x:0,y:0,attack:false};this.audio.play('door');return;}
-  if(e.type==='decor'&&e.asset?.includes('Table')){this.audio.play('talk');this.onEvent({type:'dialogue',id:'crafting'});return;}if(e.type==='ceset'){this.audio.play('talk');this.onEvent({type:'dialogue',id:e.id});return;}
+  /* Kucuk harf de yakalanir: harita-editor.html'in nesne-yukle ucbirimi
+     dosya adini otomatik kucuk harfe ceviriyor (vite.config.ts), yani
+     Nesneler modundan eklenen bir zanaat masasi asset'i asla buyuk 'T'
+     ile 'Table' iceremez - onceki hal yalniz elle yazilmis 'Tables/2.png'
+     gibi asset'leri yakalardi. */if(e.type==='decor'&&e.asset?.toLowerCase().includes('table')){this.audio.play('talk');this.onEvent({type:'dialogue',id:'crafting'});return;}if(e.type==='ceset'){this.audio.play('talk');this.onEvent({type:'dialogue',id:e.id});return;}
   if(e.type==='npc'){// Yoldas Rauf'un kendi kolu var; ana gorev diyalogu yerine o acilir.
    const f=this.state.flags;
    // Tanisma bayraklari: baska NPC'lerin secenekleri bunlara bakar. dialogue()

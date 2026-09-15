@@ -47,7 +47,7 @@
 <body>
 <aside>
   <h1>Harita Editörü</h1>
-  <p class="hint">Üç düzenleme modu: <b>Zemin</b> (karo boyama → <code>ZEMIN</code>), <b>Engeller</b> (piksel hassas kutu → <code>blockers</code>) ve <b>Nesneler</b> (kendi PNG'ini yükle, sahneye yerleştir → yeni <code>decor</code> varlıkları). Hepsi dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar. <code>H</code> = el (pan) aracını aç, açıkken tuvali sürükleyerek kaydırabilirsin; <code>V</code> = normal moda geri dön; <code>P</code> = Engeller'de doğrudan Kalem'i aç; <code>Ctrl+Z</code> = son işlemi geri al (tüm modlarda).</p>
+  <p class="hint">Üç düzenleme modu: <b>Zemin</b> (karo boyama → <code>ZEMIN</code>), <b>Engeller</b> (piksel hassas kutu → <code>blockers</code>) ve <b>Nesneler</b> (kendi PNG'ini yükle, sahneye yerleştir → yeni <code>decor</code> varlıkları). Hepsi dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar. <code>H</code> = el (pan) aracını aç, açıkken tuvali sürükleyerek kaydırabilirsin; <code>V</code> = normal moda geri dön; <code>P</code> = Engeller'de doğrudan Kalem'i aç; <code>Ctrl+Z</code> = son işlemi geri al (tüm modlarda). <b>Önemli:</b> bir şey yerleştirmek/boyamak/çizmek TEK BAŞINA <code>world.ts</code>'e yazmaz - her modun kendi "💾 kaydet" düğmesine basman gerekir, yoksa sayfayı yenilediğinde ya da kapattığında (bir uyarı çıkacak) o değişiklik diskteki eski haliyle değişip kaybolur.</p>
 
   <div class="row" style="margin-bottom:10px">
     <button id="modeZemin" class="active">📐 Zemin</button>
@@ -227,12 +227,24 @@ let mode='zemin'; // 'zemin' | 'engel' | 'nesne'
 // atilir; Ctrl+Z son kopyayi geri yukler. Modlar arasi ortak tek bir
 // yigin - hangi mod oldugunu da tutuyor ki geri alirken o moda gecilsin.
 let gecmis=[]; // {mod:'zemin'|'engel'|'nesne', veri}[]
+/** Kaydedilmemis degisiklik var mi - sayfa kapanirken/yenilenirken uyarmak
+ *  icin (bkz. asagidaki beforeunload). "kullanicinin koydugu nesneler
+ *  siliniyor" sikayeti aslinda silinme degil, kaydet'e basmadan sayfayi
+ *  yenilemekti - obje SADECE bellekte duruyordu, world.ts'e yazilmamisti,
+ *  yenileyince zone'un DISKTEKI (henuz kaydedilmemis) hali geri yukleniyordu. */
+let kaydedilmemis=false;
 function anlikGoruntuAl(){
+  kaydedilmemis=true;
   if(mode==='zemin')gecmis.push({mod:'zemin',veri:grid.map(r=>r.slice())});
   else if(mode==='engel')gecmis.push({mod:'engel',veri:JSON.parse(JSON.stringify(boxes))});
   else if(mode==='nesne')gecmis.push({mod:'nesne',veri:JSON.parse(JSON.stringify(objeler))});
   if(gecmis.length>100)gecmis.shift();
 }
+window.addEventListener('beforeunload',e=>{
+  if(!kaydedilmemis)return;
+  e.preventDefault();
+  e.returnValue='Kaydedilmemiş değişiklikler var - "💾 world.ts\'e kaydet" demeden çıkarsan kaybolurlar.';
+});
 function geriAl(){
   if(!gecmis.length){ $('status').textContent='Geri alınacak bir şey yok.'; return; }
   const {mod,veri}=gecmis.pop();
@@ -365,6 +377,7 @@ $('loadBtn').addEventListener('click', async ()=>{
   renderBoxList();
   updateEngelExport();
   await loadNesneler();
+  gecmis=[]; kaydedilmemis=false; // taze yuklendi, henuz kaydedilmemis bir sey yok
 });
 
 function setBrush(b){
@@ -908,6 +921,7 @@ $('engelSaveBtn').addEventListener('click', async ()=>{
     });
     const d = await r.json();
     if(!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
+    kaydedilmemis=false;
     $('status').textContent = `✓ world.ts kaydedildi (${currentZoneName}, blockers). Vite otomatik yeniden yükleyecek - oyunu tazeleyip bak.`;
   }catch(e){
     $('status').textContent = `Kaydedilemedi: ${e.message}`;
@@ -1131,6 +1145,7 @@ $('nesneSaveBtn').addEventListener('click', async ()=>{
     });
     const d = await r.json();
     if(!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
+    kaydedilmemis=false;
     $('status').textContent = `✓ world.ts kaydedildi (${currentZoneName}, nesneler). Vite otomatik yeniden yükleyecek - oyunu tazeleyip bak.`;
   }catch(e){
     $('status').textContent = `Kaydedilemedi: ${e.message}`;
@@ -1178,6 +1193,7 @@ $('saveBtn').addEventListener('click', async ()=>{
     });
     const d = await r.json();
     if(!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
+    kaydedilmemis=false;
     $('status').textContent = `✓ world.ts kaydedildi (${currentZoneName}). Vite otomatik yeniden yükleyecek - oyunu tazeleyip bak.`;
   }catch(e){
     $('status').textContent = `Kaydedilemedi: ${e.message}\n(dev sunucusu (npm run dev) açık mı, ve bu mekân ZEMIN diziyle mi tanımlı, kontrol et)`;

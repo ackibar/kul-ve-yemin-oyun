@@ -1068,6 +1068,52 @@ kendi test kurulumum yanlıştı (bkz. v10.6'daki "2x nesne ölçeği" dersiyle
 akraba: bir görsel dosyasının GERÇEK boyutunu kontrol etmeden ölçek
 varsayımı yapmak yanıltıcı sonuç veriyor).
 
+### v11.8: Nesne-tabanlı zanaat masası + "kaydetmeden çıkınca kayboluyor" güvencesi
+Kullanıcı Nesneler modunda haven'ın köşesine bir "alet tezgahı" görseli
+yükleyip yerleştirdi, "eye basınca crafting sayfası açılsın" istedi. İlk
+bakışta world.ts'te BEKLENEN nesne YOKTU - onun yerine 3 tane ESKİ (düz
+masa+kumaş görselli), 2'si bozuk/devasa ölçekte (727.95, 67.182 - muhtemelen
+resize tutamacını anchor'a çok yakın bir noktadan tutup sürüklemenin
+`dist/startDist` oranını patlatması) kayıtlı deneme buldum; kullanıcının
+asıl istediği (alet tezgahı) görseli HİÇ world.ts'e yazılmamıştı - kullanıcı
+"yine mi sorun oldu" diye sordu. Gerçek sebep bir kod hatası DEĞİLDİ: obje
+YERLEŞTİRMEK tek başına world.ts'e yazmıyor, ayrıca "💾 kaydet"e basmak
+gerekiyor - muhtemelen yerleştirdikten sonra kaydetmeden sayfayı yeniledi
+(ör. yeni catalog/rotate özelliklerini denemek için), bu da BELLEKTEKİ
+(henüz kaydedilmemiş) hali silip diskteki eski haliyle değiştirdi. Kullanıcı
+"koyduğum nesneler yine silinebiliyor" diye ekledi - "yine" önemli, bu
+DAHA ÖNCE de yaşanmış bir tuzak. Playwright ile UÇTAN UCA doğrulandı:
+yerleştir → kaydet butonuna bas → world.ts'e gerçekten yazıldığını gör -
+save mekanizmasının KENDİSİ sağlamdı, sorun tamamen "unutulan kaydet
+adımı" idi.
+
+**İki kalıcı düzeltme:**
+1. `harita-editor.html`'e `kaydedilmemis` bayrağı + `beforeunload` uyarısı
+   eklendi - `anlikGoruntuAl()` (zaten her mutasyondan önce çağrılıyordu,
+   undo için) artık bu bayrağı da `true` yapıyor; üç kaydet butonunun HER
+   BİRİ başarılı kayıttan sonra `false`'a çeviriyor; taze bir mekân
+   yüklemesi de `false`'a resetliyor (henüz kaydedilmemiş bir şey yok).
+   Böylece kaydetmeden sayfayı kapatan/yenileyen kullanıcı artık tarayıcı
+   uyarısı görüyor - Playwright'ta `page.reload()` sırasında gerçekten
+   bir `beforeunload` dialogu tetiklendiği doğrulandı.
+2. `engine.ts`'teki zanaat-masası tespiti (`interact()` VE `nearest()`)
+   `e.asset?.includes('Table')` (büyük T) yerine
+   `e.asset?.toLowerCase().includes('table')` oldu - vite.config.ts'teki
+   `nesne-yukle` uç noktası yüklenen HER dosya adını otomatik küçük harfe
+   çeviriyor, yani Nesneler modundan eklenen bir görsel asla büyük 'T'
+   içeremezdi, eski kontrol bu yüzden editör-yerleştirmeli masalar için
+   YAPISAL OLARAK tetiklenemezdi (yalnız elle yazılmış 'Tables/2.png' gibi
+   asset'leri yakalıyordu). Küçük harfe çevrilince hem eskisi hem yenisi
+   çalışıyor.
+
+Bozuk/gereksiz 3 eski masa denemesi world.ts'ten temizlendi, tek asset
+(`ed_alet_tezgahi_table.png` - ismi kasıtlı küçük harf "table" içeriyor)
+köşeye (7.6962,23.5762 karo) `s:0.083,layer:1` ile yerleştirildi, E'ye
+basınca "Zanaat Masası" panelinin açıldığı canlı oyun ekran görüntüsüyle
+doğrulandı. Eski düz masa görseli silinmedi, sadece "table" gecmeyen
+nötr bir isme (`ed_masa_duz_eski.png`) taşındı ki ileride tekrar
+kullanılırsa yanlışlıkla crafting tetiklemesin.
+
 ---
 
-*Son güncelleme: 2026-09-15, v11.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-16, v11.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
