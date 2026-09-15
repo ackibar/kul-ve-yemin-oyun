@@ -705,6 +705,47 @@ düzenleyip GERİ gönder - asla elle yazılmış boş bir liste gönderme.
 Şüphede kalırsan `git diff --stat` ile satır sayılarını kontrol et,
 beklenenden büyükse tam `git diff`'e bak.
 
+### Sığınakta mobilyaların çarpışması kaldırıldı — v9.9
+Kullanıcı editörden haven'ın TÜM `blockers` kutularını sildi ve
+kalıcı olarak istedi (netleştirme için AskUserQuestion soruldu, bir
+önceki maddedeki "boş liste = temizler" davranışının GERÇEKTEN
+istendiğinden emin olmak için) - artık sığınaktaki mobilyaların
+üzerinden yürünebiliyor, bilinçli bir tasarım kararı, hata değil.
+
+### Engeller modu: daire/elips ve poligon (pen tool) — v10.0
+Kullanıcı "daire de çizebilir miyim" diye sordu, sonra "pen tool gibi
+bişey de iyi olur" dedi - AskUserQuestion ile "ikisi de" seçildi.
+`World['blockers']` tipi `[number,number,number,number][]`'dan
+`number[][]`'e gevşetildi (TS union yerine RUNTIME uzunluk kontrolü
+tercih edildi - zaten dosyada onlarca elle yazılmış 4-sayılık dikdörtgen
+var, tam tip güvenliği ugruna hepsini nesneye çevirmek gereksiz churn
+olurdu): 4 sayı dikdörtgen (değişmedi), 5 sayı elips (son eleman etiket
+`1`, sınırlayıcı kutuya içirilmiş), >=7 tek sayı poligon (son eleman
+etiket `2`, öncesi düz `[x0,y0,x1,y1,...]` nokta listesi). `walkable()`
+üçünü de GERÇEK geometrisiyle çarpıştırıyor - elips normalize edilmiş
+mesafe testi, poligon ray-casting nokta-içeride testi (aktörün kare
+hitbox'ının dört köşesi test ediliyor, `tilesOk`'daki teknikle aynı).
+Editörde yeni "2 · Şekil" araç seçici: Dikdörtgen/Daire AYNI
+sürükle-oluştur/köşeden-boyutlandır/gövdeden-taşı akışını paylaşıyor
+(`boxes[i].tip` alanı sadece çizim ve dışa-aktarımı değiştiriyor, tüm
+etkileşim kodu ORTAK) - yeni bir şekil eklerken önce "bu, var olan
+kutu-tabanlı etkileşimle mi paylaşılabilir" diye bakmak işi çok
+kısaltıyor. Kalem (poligon) tamamen ayrı bir akış: tıkla-tıkla nokta
+ekle, ilk noktaya yakın tıkla ya da Enter ile bitir, Escape ile vazgeç;
+tamamlanmış poligon gövdesinden sürüklenince TÜM noktalar birlikte
+kayıyor, tek bir nokta tutamağından sürüklenince sadece o nokta.
+
+**Doğrulama yöntemi (yeni, kullanışlı):** `npx vite-node` ile world.ts'i
+DOĞRUDAN import edip `walkable()`'ı sentetik (tamamen yürünebilir,
+gerçek bir zone'un dar koridor kısıtlarından bağımsız) bir `World`
+nesnesiyle test etmek, gerçek bir zone üzerinde Playwright/oyun
+üzerinden test etmekten çok daha hızlı VE daha güvenilir sonuç verdi -
+gerçek zone'da (tunel) ilk denemede "elips çalışmıyor" gibi göründü ama
+asıl sebep test noktalarının o dar koridordaki komşu duvara aktörün
+kendi hitbox yarıçapıyla değmesiydi (blockers'la ilgisi yoktu). Çarpışma
+matematiği gibi geometrik bir şeyi doğrularken önce sentetik/izole veriyle
+test et, gerçek içerikle test etmek TALI/onay adımı olsun.
+
 ---
 
-*Son güncelleme: 2026-09-15, v9.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v10.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
