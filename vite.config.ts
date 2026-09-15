@@ -10,6 +10,13 @@ const NESNE_DIR = fileURLToPath(new URL('./public/assets/nesne/', import.meta.ur
 // dokunmadan güvenle silip yeniden yazabilmek için (bkz. asağıdaki 'nesneler').
 const NESNE_BAS = '\n  /* @harita-editor:nesneler */\n';
 const NESNE_SON = '  /* @harita-editor:nesneler-son */\n';
+const KARAKTER_BAS = '\n  /* @harita-editor:karakterler */\n';
+const KARAKTER_SON = '  /* @harita-editor:karakterler-son */\n';
+// Bu aracin ekledigi NPC'ler bu on-ekle ayirt edilir (marker blogu icindeki
+// TUM satirlar zaten bu araca ait oldugu icin blok-tabanli yonetim yetiyor,
+// on-ek sadece GET yanitinda "hangi npc'ler duzenlenebilir" diye
+// isaretlemek icin - elle yazilmis diğer NPC'lere asla dokunulmuyor).
+const KARAKTER_ONEK = 'kd_';
 
 // Dev-only yardimci: harita-editor.html'in "hazir mekan yukle" / "kaydet"
 // ozellikleri icin. world.ts'i SSR modda yukleyip makeWorld() cagirir, o
@@ -35,8 +42,12 @@ function haritaEditoruEklentisi() {
             // NPC/sandık/ateş gibi elle yazılmış diğer entity'lere karışmaz.
             const nesneler = world.entities.filter((e: any) => e.type === 'decor' && e.overlay)
               .map((e: any) => ({ id: e.id, x: (e.x - 8) / 16, y: (e.y - 8) / 16, asset: e.asset, s: e.s ?? 1 }));
+            // TUM npc'ler referans icin (salt-okunur nokta+isim), sadece bu
+            // aracin eklediyi (kd_ on-ekli) olanlar duzenlenebilir listede.
+            const tumNpcler = world.entities.filter((e: any) => e.type === 'npc')
+              .map((e: any) => ({ id: e.id, x: (e.x - 8) / 16, y: (e.y - 8) / 16, name: e.name, portrait: e.portrait, sabit: !!e.sabit, duzenlenebilir: String(e.id).startsWith(KARAKTER_ONEK) }));
             res.setHeader('content-type', 'application/json');
-            res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler }));
+            res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler, npcler: tumNpcler }));
           } catch (e: any) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: String(e?.message || e) }));
@@ -98,6 +109,24 @@ function haritaEditoruEklentisi() {
                 // (bos liste) o onceki bos satir da tek seferde temizleniyor.
                 const yeniBolum = satirlar ? NESNE_BAS + satirlar + NESNE_SON : '';
                 const marklıRe = new RegExp(NESNE_BAS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[\\s\\S]*?' + NESNE_SON.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                if (marklıRe.test(blok)) {
+                  yeniBlok = blok.replace(marklıRe, yeniBolum);
+                } else if (yeniBolum) {
+                  const eklemeNoktasi = acilis.length;
+                  yeniBlok = blok.slice(0, eklemeNoktasi) + yeniBolum + blok.slice(eklemeNoktasi);
+                } else {
+                  yeniBlok = blok;
+                }
+              } else if (kind === 'karakterler') {
+                // list: {id,x,y,name,portrait,sabit}[] - id KARAKTER_ONEK ile
+                // baslamak zorunda (istemci zaten oyle uretiyor), yoksa GET
+                // yanitinda "duzenlenebilir" olarak isaretlenmez.
+                const fmt = (n: number) => Math.round(n * 100) / 100;
+                const satirlar = (list as { id: string; x: number; y: number; name: string; portrait: number; sabit?: boolean }[])
+                  .map((o) => `  at({id:'${o.id.startsWith(KARAKTER_ONEK) ? o.id : KARAKTER_ONEK + o.id}',type:'npc',x:${fmt(o.x)},y:${fmt(o.y)},name:'${o.name.replace(/'/g, "\\'")}',portrait:${Math.round(o.portrait)}${o.sabit ? ',sabit:true' : ''}});\n`)
+                  .join('');
+                const yeniBolum = satirlar ? KARAKTER_BAS + satirlar + KARAKTER_SON : '';
+                const marklıRe = new RegExp(KARAKTER_BAS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[\\s\\S]*?' + KARAKTER_SON.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
                 if (marklıRe.test(blok)) {
                   yeniBlok = blok.replace(marklıRe, yeniBolum);
                 } else if (yeniBolum) {

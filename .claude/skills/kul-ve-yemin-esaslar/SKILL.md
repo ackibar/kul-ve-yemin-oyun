@@ -581,6 +581,27 @@ ekleme/kaldırma çifti yazarken ikisinin de TAM AYNI sınırlayıcıyı
 kullandığını doğrula, ayrı ayrı "mantıklı görünüyor" yetmiyor - round-trip
 (ekle→kaldır, diff sıfır olmalı) ile test et.
 
+### Masaüstü başlatıcı + 4. mod "Karakterler" — v9.2
+`~/Desktop/Kül ve Yemin - Başlat.command` (çift tık, Terminal'de çalışır):
+repoya cd'ler, dev sunucusu açık değilse başlatır (portu polling ile
+bekler), sonra oyunu + harita editörünü + karakter editörünü aynı anda
+açar. `public/karakter-editor.html` sadece `harita-editor.html#karakter`e
+yönlenen küçük bir kısayol - gerçek kod hep tek dosyada (`harita-editor.
+html`), hash URL'den mod önceden seçiliyor (`location.hash`).
+
+Karakterler modu `nesneler` moduyla AYNI desen: `kd_` ön-ekli id'ler bu
+aracın kendi yönettiği NPC'ler (marker bloğu `@harita-editor:
+karakterler`), ön-eksiz olan TÜM diğer NPC'ler (Mirna, Alf, Kral, vb.)
+sarı çerçeveli SALT OKUNUR noktalar olarak gösteriliyor - hiç
+silinmiyor/değişmiyor. Portre paleti `/assets/characters/N/D_Idle.png`
+(N=1 için `portre.png`) ilk kullanımda yükleniyor - dikkat: bu yükleme
+fonksiyonunu çağıran kod (hash'ten mod seçimi) SCRIPT'İN EN BAŞINDA
+çalışıyor, bu yüzden ona referans veren `let` değişkenler (`portrelerYuklendi`
+vb.) de en başta tanımlanmalı - sonradan tanımlarsan "cannot access before
+initialization" hatası alırsın (TDZ). Round-trip ile test edildi (haven'a
+NPC ekle→kaydet→boş listeyle kaydet, sıfır fark), canlı oyunda render
+edildiği doğrulandı.
+
 ---
 
-*Son güncelleme: 2026-09-15, v9.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v9.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
