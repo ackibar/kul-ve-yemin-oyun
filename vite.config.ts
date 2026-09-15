@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 
 const WORLD_TS = fileURLToPath(new URL('./lib/game/world.ts', import.meta.url));
 const NESNE_DIR = fileURLToPath(new URL('./public/assets/nesne/', import.meta.url));
@@ -42,7 +42,7 @@ function haritaEditoruEklentisi() {
               // dünya-y'den 6 birim AŞAĞIDA. Bu X'te yok (yatay ortalama simetrik,
               // stray sabit içermiyor) - sadece Y'ye özel. Bu unutulunca nesne
               // oyunda editörde göründüğünden hep biraz aşağıda çıkıyordu.
-              .map((e: any) => ({ id: e.id, x: e.x / 16, y: (e.y + 6) / 16, asset: e.asset, s: e.s ?? 1, layer: e.layer ?? 0 }));
+              .map((e: any) => ({ id: e.id, x: e.x / 16, y: (e.y + 6) / 16, asset: e.asset, s: e.s ?? 1, layer: e.layer ?? 0, aci: e.aci ?? 0 }));
             res.setHeader('content-type', 'application/json');
             res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler }));
           } catch (e: any) {
@@ -106,8 +106,8 @@ function haritaEditoruEklentisi() {
                 // yukle-duzenle-kaydet dongulerinde 2 ondalik yuvarlama
                 // biriktirip kucuk ("hafif") bir kaymaya yol acabiliyordu.
                 const fmt = (n: number) => Math.round(n * 10000) / 10000;
-                const satirlar = (list as { id: string; x: number; y: number; asset: string; s?: number; layer?: number }[])
-                  .map((o) => `  at({id:'${o.id}',type:'decor',x:${fmt(o.x - 0.5)},y:${fmt(o.y - 0.875)},asset:'${o.asset}',s:${fmt(o.s ?? 1)}${o.layer ? `,layer:${Math.round(o.layer)}` : ''},overlay:true});\n`)
+                const satirlar = (list as { id: string; x: number; y: number; asset: string; s?: number; layer?: number; aci?: number }[])
+                  .map((o) => `  at({id:'${o.id}',type:'decor',x:${fmt(o.x - 0.5)},y:${fmt(o.y - 0.875)},asset:'${o.asset}',s:${fmt(o.s ?? 1)}${o.layer ? `,layer:${Math.round(o.layer)}` : ''}${o.aci ? `,aci:${fmt(o.aci)}` : ''},overlay:true});\n`)
                   .join('');
                 // NESNE_BAS kendi basinda '\n' tasiyor, hem ilk eklemede hem de
                 // eslesme aramasinda AYNI sabit kullaniliyor - boylece kaldirinca
@@ -137,6 +137,23 @@ function haritaEditoruEklentisi() {
               res.end(JSON.stringify({ error: String(e?.message || e) }));
             }
           });
+          return;
+        }
+        if (req.method === 'GET' && url === '/__harita/nesne-katalog') {
+          // Editorde yuklenen TUM nesne gorsellerinin listesi (yalniz bu aracin
+          // eklediği "ed_" onekli dosyalar - masa/sandik/camasir gibi oyunun
+          // kendi elle-yazilmis decor sprite'lariyla karismasin). Boylece bir
+          // zone'da yuklenen gorsel BASKA bir zone acildiginda da paletde
+          // gorunur, tekrar yuklemeye gerek kalmaz.
+          try {
+            const dosyalar = readdirSync(NESNE_DIR).filter((f) => /^ed_.*\.png$/i.test(f));
+            const assets = dosyalar.map((f) => `nesne/${f.replace(/\.png$/i, '')}`);
+            res.setHeader('content-type', 'application/json');
+            res.end(JSON.stringify({ assets }));
+          } catch {
+            res.setHeader('content-type', 'application/json');
+            res.end(JSON.stringify({ assets: [] }));
+          }
           return;
         }
         if (req.method === 'POST' && url === '/__harita/nesne-yukle') {

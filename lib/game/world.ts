@@ -13,7 +13,10 @@ export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|
   *  katmandakiler arasinda tie-break olur - yani layer:1 verilen bir nesne
   *  y'si ne olursa olsun HER ZAMAN oyuncunun (layer 0) onunde, layer:-1 HER
   *  ZAMAN arkasinda kalir. Katman -1/0/1 ile sinirli degil, istenildigi kadar
-  *  yukari/asagi katman kullanilabilir (bkz. engine.ts render() aktors.sort). */layer?:number};
+  *  yukari/asagi katman kullanilabilir (bkz. engine.ts render() aktors.sort). */layer?:number;
+ /** Dondurme acisi RADYAN cinsinden (harita-editor.html'in Nesneler modundaki
+  *  donus tutamacindan gelir, derece degil - motora dogrudan sprite()'in
+  *  donder parametresi olarak geciyor). Yalniz overlay decor icin anlamli. */aci?:number};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
 export type EnemySpec={id:string;kind:1|2|4|5|6|7|8|9|10;x:number;y:number;boss?:boolean};
@@ -162,6 +165,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      Once konusur (NPC); kavga secilirse motor onu kind 10 dusmana cevirir. */
   if(flags?.muhafiz!=='oldu')at({id:'muhafiz',type:'npc',x:46,y:14,name:'Son Muhafız',portrait:15,sabit:true,s:1.1});
  }else if(zone==='yikik'){
+  blockers.push([11.59,29.96,11.7,27.61,12.25,27.87,12.8,27.94,13.35,27.54,13.49,27.1,13.38,26.47,13.2,26.22,12.98,25.85,12.65,25.81,12.39,25.45,12.14,25.04,11.81,24.64,11.7,24.16,10.34,23.98,10.34,23.76,10.19,23.25,10.52,22.92,12.17,22.95,13.16,23.03,13.13,22.4,12.94,22.07,12.17,21.89,12.06,21.71,11.73,21.6,11.4,21.6,10.96,21.74,10.52,21.82,9.72,21.85,9.5,21.41,9.24,21.23,8.69,21.12,8.29,20.94,7.88,20.61,8.03,20.42,8.43,20.31,8.84,20.13,8.84,19.73,8.62,19.4,8.29,19.1,7.99,18.96,7.77,18.88,7.37,18.74,7.33,18.41,7.88,18.17,8.13,17.62,8.31,17.51,8.58,17.33,8.72,17.01,8.58,16.85,8.42,16.55,8.42,16.16,8.72,15.96,8.74,15.71,8.72,15.53,8.72,15.35,8.7,15,8.72,14.71,9.2,14.64,9.58,14.84,10.25,14.68,10.34,14.37,10.43,13.91,10.22,13.66,9.86,13.41,9.63,13.23,9.86,12.98,9.81,12.86,9.65,12.73,9.4,12.52,9.22,12.2,9.18,11.88,8.97,11.32,8.83,10.54,9.4,10.38,11.54,10.43,13.8,9.45,14.46,9.11,10.47,2.82,1.91,1.96,2.03,26.2,2],[18.3,24.07,18.23,29.97,27.37,29.67,27.93,24.87,27.03,1.77,24.33,1.43,17.27,8.1,16.73,9.3,17.13,9.67,18.5,10.1,19.8,10.43,25.43,10.37,25.47,12.8,26.33,19.13,26.43,24.1,2],[16.7,18.57,16.8,19.2,26.23,19.23,26.37,18.43,2]);
   // Kul Ovasi'ndaki kemerli yikintinin ici (30x30). Zemin boyali sahne,
   // carpisma da uzerine YESIL boyanmis maskeden okundu - burada yesil
   // ENGEL demek, prop sayfalarindaki gibi "silinecek fon" degil.

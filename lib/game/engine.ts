@@ -974,7 +974,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    62 satirlik trolun ust yarisi kirpiliyordu. Buyuk dusmanlar kendi
    capasini geciyor. *//* Oyuncu setleri (characters1, 1sword, 1mesale...; characters10+ DEGIL) 80 satirlik hucrede. */const oyuncuSet=/^characters1(?!\d)/.test(key);const anchor=capa??(actor?(oyuncuSet?Engine.OYUNCU_CAPA:key.startsWith('characters')?31:key.startsWith('enemies1')?22:21):h);/* Tepeden gorulen yaratiklar icin: yon ayri sheet degil DONDURME. Capa
    ayakta oldugu icin cizim dikdortgeninin MERKEZI etrafinda dondurulur,
-   yoksa yaratik ayaklarinin ucundan savruluyor. */if(donder){const my=(-anchor+h/2)*scale;c.translate(0,my);c.rotate(donder);c.translate(0,-my);}if(flip)c.scale(-1,1);const top=actor?-anchor*scale:-h*scale+6;c.drawImage(im,(frame%count)*w*R,0,w*R,h*R,-w*scale/2,top,w*scale,h*scale);c.restore()}
+   yoksa yaratik ayaklarinin ucundan savruluyor. Decor'un top'u (asagida)
+   actor'dan farkli olarak +6 icerir - bu yuzden decor'un GERCEK dikey
+   merkezi de +6 kaymis, rotate pivotu (my) da ayni kaymayi almazsa
+   harita-editor.html'deki donus onizlemesiyle (gercek merkez etrafinda
+   donduruyor) uyusmaz, dondurulen nesne editorde gorunenden kayik cikar. */if(donder){const my=(-anchor+h/2)*scale+(actor?0:6);c.translate(0,my);c.rotate(donder);c.translate(0,-my);}if(flip)c.scale(-1,1);const top=actor?-anchor*scale:-h*scale+6;c.drawImage(im,(frame%count)*w*R,0,w*R,h*R,-w*scale/2,top,w*scale,h*scale);c.restore()}
   /** Oyuncunun golgesini cizer, ENGELE denk gelen kismini SILER - boyali
    *  mobilyanin uzerine golgenin bindirilmesi (ayri bir nesne olarak
    *  eklenmedigi icin) saçma duruyordu. Ana tuvale DOGRUDAN destination-out
@@ -1023,7 +1027,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
       isaretli decor'lar (harita-editor.html'in "Nesneler" modunda eklenen
       tekil PNG'ler) - onlar boyali sahnenin USTUNE, actors[] y-sirasina gore
       ciziliyor, ör. yeni bir sandik/mobilya gorseli sahneye sonradan eklenmis
-      gibi. */if(e.overlay||!bg?.naturalWidth)this.sprite(e.asset!,e.x,e.y,0,undefined,undefined,false,e.s??1);if(e.name)this.label(e.name,e.x,e.y-20,'#dfc28e');return;}
+      gibi. */if(e.overlay||!bg?.naturalWidth)this.sprite(e.asset!,e.x,e.y,0,undefined,undefined,false,e.s??1,1,e.aci??0);if(e.name)this.label(e.name,e.x,e.y-20,'#dfc28e');return;}
    if(e.type==='fire'){this.sprite('fire',e.x,e.y,Math.floor(time*8)%8,32,32,false,e.s??1);return;}
    if(e.type==='chest'){const opened=this.state.opened.includes(e.id);this.sprite('chest',e.x,e.y,opened?1:0,24,24,false,1,1);if(!opened){c.fillStyle='#e8c883';c.fillRect(e.x-1,e.y-20+Math.sin(time*3),2,2);}return;}
    if(e.type==='lever'){this.sprite('lever',e.x,e.y,this.state.flags.gateOpen?3:0,16,18);return;}

@@ -1018,6 +1018,56 @@ her taze sayfa açılışı gizli bir yarış durumu yaratır; bunu görmek içi
 durağan/normal-hızda test yeterli değil, ağ gecikmesini YAPAY olarak
 simüle etmek gerekti.
 
+### v11.7: Nesne kataloğu (her mekanda) + döndürme (aci)
+İki istek birden: (1) "harita editöre eklediğim nesneler kaydedilsin her
+mape istediğimde ekleyebileyim" - önceden yüklenen PNG'ler yalnızca O ANKİ
+zone oturumunun paletine giriyordu (`loadNesneler()` yalnız `liveNesneler`,
+yani AÇIK OLAN zone'un `world.entities`'inden okuyordu); dosya diskte
+(`public/assets/nesne/ed_*.png`) kalıcı duruyordu ama BAŞKA bir zone
+açılınca palet boşalıyor, aynı görseli tekrar yüklemek gerekiyordu. Fix:
+yeni `GET /__harita/nesne-katalog` endpoint'i (vite.config.ts) `NESNE_DIR`
+içindeki TÜM `ed_*.png` dosyalarını listeler (yalnızca bu aracın eklediği
+`ed_` önekliler - `masa.png`/`sandik.png` gibi oyunun kendi elle-yazılmış
+decor sprite'larıyla karışmasın diye); editör `loadNesneler()` sonunda
+`nesneKatalogYukle()` çağırıp bunları palete ekliyor (zone'a özel liste
+BOŞ olsa bile artık erken `return` YOK - önceki kod `!liveNesneler.length`
+ise direkt dönüyordu, katalog hiç çağrılmıyordu, bu da düzeltildi).
+
+(2) Döndürme: `Entity.aci?:number` (RADYAN, world.ts) eklendi, `engine.ts`
+decor çizim çağrısına `e.aci??0` onuncu argüman (`donder`) olarak geçiyor
+- `sprite()`'ın rotate mekanizması zaten enemy'ler için vardı, decor hiç
+kullanmıyordu. **Önemli düzeltme:** `sprite()`'daki rotate pivotu (`my`)
+decor'un `top=-h*scale+6` formülündeki o ÖZEL +6'yı hesaba katmıyordu -
+yani pivot decor'un gerçek dikey merkezinden 6 dünya-birimi (0.375 karo)
+KAYIKTI. Bu daha önce hiç fark edilmemişti çünkü `donder` decor için hiç
+kullanılmıyordu; döndürmeyi ekleyince editör önizlemesiyle (gerçek merkez
+etrafında döndürüyor) motor arasında BİR SONRAKİ "milimetrik kayma" bug'ı
+olacaktı - v11.0-11.1'deki AYNI ders tekrar geçerli oldu: yeni bir
+özellik eskiden test edilmemiş bir kod yolunu (decor+rotate kombinasyonu)
+açtığında, "zaten var olan bir mekanizmayı kullanıyorum, çalışmalı"
+varsayımı yeterli değil - uçtan uca (editör önizleme + gerçek oyun ekran
+görüntüsü, `__oyun` kancasıyla) doğrulamak gerekti. Düzeltme: decor için
+`my`'a da `+6` eklendi (`my=(-anchor+h/2)*scale+(actor?0:6)`), böylece
+pivot artık gerçek merkezde ve editör=motor eşleşiyor.
+
+Editör tarafında: `objeTutamaclari()`'ye 9. bir `rot` tutamacı (üst kenarın
+biraz yukarısında, çizgiyle bağlı, yeşil) eklendi; döndürülmüş bir nesnede
+hit-test (`objeAt`/`objeHandleAt`) fare noktasını nesnenin KENDİ (dönmemiş)
+yerel uzayına çeviren `objeYerelNokta()` ile yapılıyor (aci=0 iken no-op,
+mevcut davranış tamamen korunur). `draw()`'daki tutamaç/kutu çizimi de
+`objeKutusu`/`objeTutamaclari`'nin AYNI çıktısını kullanıyor (hit-test ile
+render'ın iki ayrı formülü tekrarlamaması için) - `ctx.rotate` zaten
+uygulandığından bu yerel-uzay noktalar otomatik doğru yerde çiziliyor.
+
+**Test yöntemi notu:** İlk döndürme testinde nesne HİÇ görünmüyordu gibi
+göründü - meğer test nesnesini varsayılan ölçek (s=1) ile yerleştirmişim,
+oysa `ed_props.png` koca bir perde SAHNESİ (1438×1093px, ~45 karo genişliğinde)
+- s=1'de kutunun neredeyse tamamı görünür alanın dışına taşıyordu, ekranda
+görünen o devasa görselin şeffaf/boş bir köşesiydi. Gerçek bug değildi,
+kendi test kurulumum yanlıştı (bkz. v10.6'daki "2x nesne ölçeği" dersiyle
+akraba: bir görsel dosyasının GERÇEK boyutunu kontrol etmeden ölçek
+varsayımı yapmak yanıltıcı sonuç veriyor).
+
 ---
 
-*Son güncelleme: 2026-09-15, v11.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v11.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
