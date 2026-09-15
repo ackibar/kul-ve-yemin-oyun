@@ -47,7 +47,7 @@
 <body>
 <aside>
   <h1>Harita Editörü</h1>
-  <p class="hint">Üç düzenleme modu: <b>Zemin</b> (karo boyama → <code>ZEMIN</code>), <b>Engeller</b> (piksel hassas kutu → <code>blockers</code>) ve <b>Nesneler</b> (kendi PNG'ini yükle, sahneye yerleştir → yeni <code>decor</code> varlıkları). Hepsi dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar. <code>H</code> = el (pan) aracını aç, açıkken tuvali sürükleyerek kaydırabilirsin; <code>V</code> = normal moda geri dön.</p>
+  <p class="hint">Üç düzenleme modu: <b>Zemin</b> (karo boyama → <code>ZEMIN</code>), <b>Engeller</b> (piksel hassas kutu → <code>blockers</code>) ve <b>Nesneler</b> (kendi PNG'ini yükle, sahneye yerleştir → yeni <code>decor</code> varlıkları). Hepsi dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar. <code>H</code> = el (pan) aracını aç, açıkken tuvali sürükleyerek kaydırabilirsin; <code>V</code> = normal moda geri dön; <code>P</code> = Engeller'de doğrudan Kalem'i aç; <code>Ctrl+Z</code> = son işlemi geri al (tüm modlarda).</p>
 
   <div class="row" style="margin-bottom:10px">
     <button id="modeZemin" class="active">📐 Zemin</button>
@@ -122,6 +122,7 @@
     <button id="sekilDikdortgen" class="active">▭ Dikdörtgen</button>
     <button id="sekilDaire">○ Daire</button>
     <button id="sekilPoligon">⬠ Kalem</button>
+    <button id="sekilSilgi">🧽 Silgi</button>
   </div>
   <p class="hint" id="sekilIpucu">Boş bir yere tıkla-sürükle = yeni kutu/daire (piksel hassas, karoya kilitlenmez). Var olan bir şekle tıkla = seç; gövdesinden sürükle = taşı; köşe tutamağından sürükle = boyutlandır. <code>Shift</code> basılıyken sürüklersen 0,25 karoya yuvarlanır (ince ayar için serbest bırak). <code>Delete</code>/<code>Backspace</code> = seçili şekli sil.</p>
   <div class="row">
@@ -218,6 +219,28 @@ let liveBlockers=null; // ham API yaniti - engel moduna gecince duzenlenebilir l
 let liveNesneler=null; // ham API yaniti - {id,x,y,asset,s}[]
 let currentZoneName=''; // preset ise zone adi, custom ise ''
 let mode='zemin'; // 'zemin' | 'engel' | 'nesne'
+
+// --- Geri al (Ctrl+Z) ---
+// Her mutasyondan HEMEN ONCE o modun veri yapisinin derin kopyasi yigina
+// atilir; Ctrl+Z son kopyayi geri yukler. Modlar arasi ortak tek bir
+// yigin - hangi mod oldugunu da tutuyor ki geri alirken o moda gecilsin.
+let gecmis=[]; // {mod:'zemin'|'engel'|'nesne', veri}[]
+function anlikGoruntuAl(){
+  if(mode==='zemin')gecmis.push({mod:'zemin',veri:grid.map(r=>r.slice())});
+  else if(mode==='engel')gecmis.push({mod:'engel',veri:JSON.parse(JSON.stringify(boxes))});
+  else if(mode==='nesne')gecmis.push({mod:'nesne',veri:JSON.parse(JSON.stringify(objeler))});
+  if(gecmis.length>100)gecmis.shift();
+}
+function geriAl(){
+  if(!gecmis.length){ $('status').textContent='Geri alınacak bir şey yok.'; return; }
+  const {mod,veri}=gecmis.pop();
+  if(mod!==mode)setMode(mod);
+  if(mod==='zemin'){ grid=veri; reachSet=null; isleSet=null; updateExport(); }
+  else if(mod==='engel'){ boxes=veri; selectedBox=-1; dizilenPoligon=null; renderBoxList(); syncSelectedFields(); updateEngelExport(); }
+  else if(mod==='nesne'){ objeler=veri; selectedObje=-1; renderObjeList(); syncSelectedObje(); updateNesneExport(); }
+  draw();
+  $('status').textContent='Geri alındı.';
+}
 
 // --- Engeller (piksel hassas kutular/daireler/poligonlar) ---
 // boxes[i].tip: 'dikdortgen'|'daire' (ikisi de {x1,y1,x2,y2}, sadece cizim/
@@ -353,7 +376,8 @@ $('brushEngel').addEventListener('click',()=>setBrush(0));
 const SEKIL_IPUCU={
   dikdortgen:'Boş bir yere tıkla-sürükle = yeni kutu (piksel hassas, karoya kilitlenmez). Var olan bir şekle tıkla = seç; gövdesinden sürükle = taşı; köşe tutamağından sürükle = boyutlandır. <code>Shift</code> basılıyken sürüklersen 0,25 karoya yuvarlanır. <code>Delete</code>/<code>Backspace</code> = seçili şekli sil.',
   daire:'Boş bir yere tıkla-sürükle = yeni daire/elips (sınırlayıcı kutu köşelerinden boyutlandırılır, oval da olabilir). Diğer davranışlar dikdörtgenle aynı.',
-  poligon:'Kalem (pen tool): tuvale tıkla tıkla nokta nokta bir şekil çiz. Bitirmek için ilk noktaya yakın bir yere tıkla ya da <code>Enter</code>a bas; vazgeçmek için <code>Escape</code>. Tamamlanan poligonu gövdesinden sürükleyerek taşı, tek bir noktasından sürükleyerek o noktayı düzenle.',
+  poligon:'Kalem (pen tool, kısayol <code>P</code>): tuvale tıkla tıkla nokta nokta bir şekil çiz. Bitirmek için ilk noktaya yakın bir yere tıkla ya da <code>Enter</code>a bas; vazgeçmek için <code>Escape</code>. Tamamlanan poligonu gövdesinden sürükleyerek taşı, tek bir noktasından sürükleyerek o noktayı düzenle.',
+  silgi:'Silgi: bir POLİGONUN tek bir noktasına tıkla = sadece o nokta silinir (şekil o kadar küçülür, yani şeklin bir KISMINI silebilirsin). Bir poligonun gövdesine ya da bir dikdörtgen/daireye tıklarsan (nokta üzerinde değilsen) o şeklin TAMAMI silinir - dikdörtgen/daire kısmi silinemez, sadece poligonlarda nokta nokta silme mümkün.',
 };
 function setEngelSekli(s){
   engelSekli=s;
@@ -361,21 +385,25 @@ function setEngelSekli(s){
   $('sekilDikdortgen').classList.toggle('active', s==='dikdortgen');
   $('sekilDaire').classList.toggle('active', s==='daire');
   $('sekilPoligon').classList.toggle('active', s==='poligon');
+  $('sekilSilgi').classList.toggle('active', s==='silgi');
   $('sekilIpucu').innerHTML=SEKIL_IPUCU[s];
   draw();
 }
 $('sekilDikdortgen').addEventListener('click',()=>setEngelSekli('dikdortgen'));
 $('sekilDaire').addEventListener('click',()=>setEngelSekli('daire'));
 $('sekilPoligon').addEventListener('click',()=>setEngelSekli('poligon'));
+$('sekilSilgi').addEventListener('click',()=>setEngelSekli('silgi'));
 window.addEventListener('keydown',e=>{
   if(e.key==='z'||e.key==='Z')setBrush(1);
   if(e.key==='x'||e.key==='X')setBrush(0);
   if((e.key==='h'||e.key==='H')&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName))setElModu(!elModu);
   if((e.key==='v'||e.key==='V')&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName))setElModu(false);
+  if((e.key==='p'||e.key==='P')&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){ setMode('engel'); setEngelSekli('poligon'); }
+  if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){ e.preventDefault(); geriAl(); }
 });
 
-$('fillAll').addEventListener('click',()=>{ if(!img)return; grid=grid.map(r=>r.map(()=>1)); draw(); updateExport(); });
-$('clearAll').addEventListener('click',()=>{ if(!img)return; grid=grid.map(r=>r.map(()=>0)); draw(); updateExport(); });
+$('fillAll').addEventListener('click',()=>{ if(!img)return; anlikGoruntuAl(); grid=grid.map(r=>r.map(()=>1)); draw(); updateExport(); });
+$('clearAll').addEventListener('click',()=>{ if(!img)return; anlikGoruntuAl(); grid=grid.map(r=>r.map(()=>0)); draw(); updateExport(); });
 $('zoomIn').addEventListener('click',()=>{ scale=Math.min(4,scale*1.25); draw(); });
 $('zoomOut').addEventListener('click',()=>{ scale=Math.max(0.2,scale/1.25); draw(); });
 // Fare tekerlegiyle tuval uzerinde yakinlastir/uzaklastir - +/- dugmeleriyle
@@ -542,6 +570,21 @@ function boxBodyAt(px,py){
   }
   return -1;
 }
+/** Silgi modu icin: HERHANGI bir poligonun (secili olsun olmasin) tek bir
+ *  noktasina yakin miyiz? handleAt'ten farkli - o SADECE secili kutuya
+ *  bakiyor, bu TUMUNE bakiyor (silgi ile secmeden direkt silebilesin diye). */
+function poligonNoktasiBul(px,py){
+  const tp=pxKaro*scale;
+  for(let bi=boxes.length-1;bi>=0;bi--){
+    const b=boxes[bi];
+    if(b.tip!=='poligon')continue;
+    for(let vi=0;vi<b.pts.length;vi++){
+      const [hx,hy]=b.pts[vi];
+      if(Math.hypot(hx*tp-px*tp,hy*tp-py*tp)<HANDLE_PX)return {bi,vi};
+    }
+  }
+  return null;
+}
 
 cv.addEventListener('mousemove',e=>{
   if(elModu){
@@ -615,6 +658,7 @@ cv.addEventListener('mousedown',e=>{
       $('status').textContent = `Başlangıç: (${t[0]}, ${t[1]}). "Kontrol et"e bas.`;
       draw(); return;
     }
+    anlikGoruntuAl();
     painting=true;
     grid[t[1]][t[0]]=brush;
     draw(); updateExport();
@@ -624,6 +668,7 @@ cv.addEventListener('mousedown',e=>{
     const [px,py]=pxFromEvent(e);
     const h=objeHandleAt(px,py);
     if(h){
+      anlikGoruntuAl();
       const o=objeler[selectedObje];
       const anchor=[o.x,o.y]; // alt-orta nokta sabit kalir, sadece s degisir
       const startDist=Math.max(0.02,Math.hypot(px-anchor[0],py-anchor[1]));
@@ -633,11 +678,13 @@ cv.addEventListener('mousedown',e=>{
     const i=objeAt(px,py);
     if(i>=0){
       selectedObje=i;
+      anlikGoruntuAl();
       objeDrag={type:'move',from:[px,py],orig:{x:objeler[i].x,y:objeler[i].y}};
       renderObjeList(); syncSelectedObje(); draw();
       return;
     }
     if(aktifAsset){
+      anlikGoruntuAl();
       objeSayac++;
       objeler.push({id:`ed${Date.now()}_${objeSayac}`,x:px,y:py,s:1,asset:aktifAsset});
       selectedObje=objeler.length-1;
@@ -649,11 +696,34 @@ cv.addEventListener('mousedown',e=>{
   }
   // engel modu
   const [px,py]=pxFromEvent(e);
+  if(engelSekli==='silgi'){
+    const nokta=poligonNoktasiBul(px,py);
+    if(nokta){
+      anlikGoruntuAl();
+      const b=boxes[nokta.bi];
+      b.pts.splice(nokta.vi,1);
+      if(b.pts.length<3)boxes.splice(nokta.bi,1);
+      if(selectedBox===nokta.bi)selectedBox=-1; else if(selectedBox>nokta.bi)selectedBox--;
+      renderBoxList(); syncSelectedFields(); updateEngelExport(); draw();
+      $('status').textContent='Nokta silindi.';
+      return;
+    }
+    const si=boxBodyAt(px,py);
+    if(si>=0){
+      anlikGoruntuAl();
+      boxes.splice(si,1);
+      if(selectedBox===si)selectedBox=-1; else if(selectedBox>si)selectedBox--;
+      renderBoxList(); syncSelectedFields(); updateEngelExport(); draw();
+      $('status').textContent='Şekil silindi.';
+    }
+    return;
+  }
   if(engelSekli==='poligon'){
     const tp=pxKaro*scale;
     if(dizilenPoligon){
       const [fx,fy]=dizilenPoligon.pts[0];
       if(dizilenPoligon.pts.length>=3 && Math.hypot((fx-px)*tp,(fy-py)*tp)<HANDLE_PX){
+        anlikGoruntuAl();
         boxes.push({tip:'poligon',pts:dizilenPoligon.pts});
         selectedBox=boxes.length-1;
         dizilenPoligon=null;
@@ -669,6 +739,7 @@ cv.addEventListener('mousedown',e=>{
   }
   const h=handleAt(px,py);
   if(h){
+    anlikGoruntuAl();
     boxDrag = h[0]==='v' ? {type:'vertex',idx:parseInt(h.slice(1),10)} : {type:'resize',handle:h};
     return;
   }
@@ -676,11 +747,13 @@ cv.addEventListener('mousedown',e=>{
   if(i>=0){
     selectedBox=i;
     const b=boxes[i];
+    anlikGoruntuAl();
     boxDrag={type:'move',from:[px,py],orig: b.tip==='poligon' ? {pts:b.pts.map(p=>[...p])} : {...b}};
     renderBoxList(); syncSelectedFields(); draw();
     return;
   }
-  // bos alan: yeni kutu/daire (poligon yukarida ayri islendi)
+  // bos alan: yeni kutu/daire (poligon/silgi yukarida ayri islendi)
+  anlikGoruntuAl();
   boxes.push({tip:engelSekli,x1:px,y1:py,x2:px,y2:py});
   selectedBox=boxes.length-1;
   boxDrag={type:'new',idx:selectedBox};
@@ -706,6 +779,7 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{
   if(mode==='engel' && dizilenPoligon && document.activeElement===document.body){
     if(e.key==='Enter' && dizilenPoligon.pts.length>=3){
+      anlikGoruntuAl();
       boxes.push({tip:'poligon',pts:dizilenPoligon.pts});
       selectedBox=boxes.length-1;
       dizilenPoligon=null;
@@ -715,10 +789,12 @@ window.addEventListener('keydown',e=>{
     if(e.key==='Escape'){ dizilenPoligon=null; draw(); return; }
   }
   if(mode==='engel' && (e.key==='Delete'||e.key==='Backspace') && selectedBox>=0 && document.activeElement===document.body){
+    anlikGoruntuAl();
     boxes.splice(selectedBox,1); selectedBox=-1;
     renderBoxList(); syncSelectedFields(); updateEngelExport(); draw();
   }
   if(mode==='nesne' && (e.key==='Delete'||e.key==='Backspace') && selectedObje>=0 && document.activeElement===document.body){
+    anlikGoruntuAl();
     objeler.splice(selectedObje,1); selectedObje=-1;
     renderObjeList(); syncSelectedObje(); updateNesneExport(); draw();
   }
@@ -758,12 +834,15 @@ function syncSelectedFields(){
 $('engelYeni').addEventListener('click',()=>{
   if(!img){alert('Önce bir görsel yükle.');return;}
   if(engelSekli==='poligon'){ $('status').textContent="Poligon için tuvale tıklayarak nokta nokta çiz, bitirince ilk noktaya yakın bir yere tıkla ya da Enter'a bas."; return; }
+  if(engelSekli==='silgi'){ $('status').textContent="Silgi bir şekil oluşturmaz - tuvaldeki bir şekle tıklayarak sil."; return; }
+  anlikGoruntuAl();
   boxes.push({tip:engelSekli,x1:0,y1:0,x2:2,y2:2});
   selectedBox=boxes.length-1;
   renderBoxList(); syncSelectedFields(); updateEngelExport(); draw();
 });
 $('engelSil').addEventListener('click',()=>{
   if(selectedBox<0)return;
+  anlikGoruntuAl();
   boxes.splice(selectedBox,1); selectedBox=-1;
   renderBoxList(); syncSelectedFields(); updateEngelExport(); draw();
 });
@@ -952,6 +1031,7 @@ $('nl').addEventListener('input',()=>{
 });
 $('nesneSil').addEventListener('click',()=>{
   if(selectedObje<0)return;
+  anlikGoruntuAl();
   objeler.splice(selectedObje,1); selectedObje=-1;
   renderObjeList(); syncSelectedObje(); updateNesneExport(); draw();
 });
@@ -1001,6 +1081,7 @@ $('importBtn').addEventListener('click',()=>{
   if(!m){alert('ZEMIN dizisi bulunamadı.');return;}
   const rows=[...m[1].matchAll(/'([01]*)'/g)].map(x=>x[1]);
   if(rows.length!==gridH){alert(`Satır sayısı uyuşmuyor: dosyada ${rows.length}, ızgara ${gridH}.`);return;}
+  anlikGoruntuAl();
   grid = rows.map(r=>{
     const a=Array(gridW).fill(0);
     for(let x=0;x<Math.min(gridW,r.length);x++) a[x]=r[x]==='1'?1:0;
