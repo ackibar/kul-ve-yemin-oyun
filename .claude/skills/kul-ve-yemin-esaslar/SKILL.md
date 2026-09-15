@@ -672,6 +672,25 @@ arasında `Math.min(i,uzunluk-1)` ile en yakın kareyi kopyalar). Uçtan
 uca Playwright ile doğrulandı: aynı silah kare 0'da ve kare 3'te GERÇEKTEN
 farklı pikselde kaydedildi (PNG'yi kırpıp göz kontrolü yapıldı).
 
+### Karakter editörü (Karakterler + Silah Ekle) komple kaldırıldı — v9.8
+Kullanıcı "karakter editörü şimdilik iptal edelim komple map editör
+kalsın" dedi - v9.4-9.7'de eklenen Karakterler (NPC yerleştirme) ve
+Silah Ekle (sprite üzerine silah komposit etme) modlarının İKİSİ de
+kaldırıldı, harita editöründe sadece Zemin/Engeller/Nesneler kaldı.
+Kaldırılanlar: `harita-editor.html`'deki iki mod butonu, iki panel, tüm
+ilgili JS (portre paleti, silah varyantı seçimi, kare-kare
+konumlandırma, vb.); `vite.config.ts`'teki `karakterler` kind'ı,
+`sprite-kaydet` endpoint'i, GET yanıtındaki `npcler`/`ozelKarakterler`
+alanları; `public/karakter-editor.html` yönlendirme kısayolu (silindi);
+masaüstü başlatıcının üçüncü `open` satırı. **"Şimdilik" yani geri
+gelebilir** - `git log`'da v9.4-9.7 commit'leri koddan geri
+çıkarılabilir bir referans olarak duruyor, sıfırdan yazmaya gerek yok.
+Not: `Entity.portrait:number|string` ve `overlay:boolean` (world.ts) ile
+motorun NPC portresini string-concat ile kurması (engine.ts) - yani
+"ücretsiz silah varyantı" ALTYAPISI - KALDIRILMADI, sadece onu
+KULLANAN editör arayüzü kaldırıldı; geri getirmek istenirse üstüne
+UI eklemek yeterli olur.
+
 **Tehlikeli ders (veri kaybı, çözülmedi çünkü zaten "özellik"):** harita
 editöründeki HER "kaydet" ucu (blockers/nesneler/karakterler), o mekân
 için BOŞ liste gönderirsen mevcut satırı TAMAMEN temizler - bu arayüzde
@@ -688,4 +707,4 @@ beklenenden büyükse tam `git diff`'e bak.
 
 ---
 
-*Son güncelleme: 2026-09-15, v9.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v9.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

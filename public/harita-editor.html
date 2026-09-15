@@ -53,8 +53,6 @@
     <button id="modeZemin" class="active">📐 Zemin</button>
     <button id="modeEngel">🎯 Engeller</button>
     <button id="modeNesne">🖼️ Nesneler</button>
-    <button id="modeKarakter">🧑 Karakterler</button>
-    <button id="modeSilah">🗡️ Silah Ekle</button>
   </div>
 
   <div id="kaynakBolumu">
@@ -177,73 +175,6 @@
   <p class="hint">Bu aracın önceden eklediği nesneleri (varsa) DEĞİŞTİRİR - NPC/sandık/ateş gibi elle yazılmış diğer varlıklara dokunmaz. Sıfır nesneyle kaydetmek hepsini temizler.</p>
   </div>
 
-  <div id="karakterPanel" style="display:none">
-  <h2>2 · Portre seç</h2>
-  <p class="hint">Sarı çerçeveli noktalar mevcut (elle yazılmış) NPC'ler - salt okunur referans, bu araç onları düzenleyemez/silemez. Bir portre seçip tuvale tıklarsan YENİ bir NPC eklersin.</p>
-  <div id="portrePalet" class="small" style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:3px;padding:6px;max-height:160px;overflow-y:auto"></div>
-
-  <div id="silahSecimi" style="display:none">
-    <label>Silah varyantı (sadece bu insan-şekilli beden için - oyuncunun kendi kuşanma setleri, YENİ üretim gerekmez, ücretsiz)</label>
-    <div id="silahPalet" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-  </div>
-
-  <h2>3 · Yerleştir</h2>
-  <p class="hint">Bir portre seç, tuvale tıkla = o noktaya yerleştirir (mor nokta). Var olan (mor) bir NPC'ye tıkla = seç; sürükle = taşı. <code>Delete</code>/<code>Backspace</code> = seçili NPC'yi sil.</p>
-  <div id="seciliKarakter" style="display:none">
-    <label>Seçili NPC</label>
-    <input type="text" id="kAd" placeholder="İsim (ör. Yeni Tüccar)">
-    <div class="row">
-      <div><label class="small">x</label><input type="number" id="kx" step="0.05"></div>
-      <div><label class="small">y</label><input type="number" id="ky" step="0.05"></div>
-    </div>
-    <label class="small"><input type="checkbox" id="kSabit" style="width:auto;margin-right:4px">Sabit (dolaşmaz, yerinde durur)</label>
-    <div id="seciliSilahSecimi" style="display:none">
-      <label class="small">Silah varyantı</label>
-      <div id="seciliSilahPalet" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-    </div>
-    <button id="karakterSil">Seçileni sil</button>
-  </div>
-  <label>NPC listesi (tıkla = seç, sadece bu aracın eklediği düzenlenebilir)</label>
-  <div id="karakterListe" class="small" style="max-height:120px;overflow-y:auto;border:1px solid var(--line);border-radius:3px;padding:4px"></div>
-
-  <h2>4 · İçe / Dışa aktar</h2>
-  <label>Dışa aktarılan (world.ts'e yapıştır)</label>
-  <textarea id="karakterExportBox" rows="6" readonly></textarea>
-  <button id="karakterCopyBtn">Panoya kopyala</button>
-  <button id="karakterSaveBtn" style="border-color:#c9a227">💾 world.ts'e kaydet (karakterler)</button>
-  <p class="hint">Bu aracın önceden eklediği NPC'leri (varsa) DEĞİŞTİRİR - elle yazılmış diğer NPC'lere (Mirna, Alf, Kral, vb.) dokunmaz. Sıfır NPC'yle kaydetmek hepsini temizler.</p>
-  </div>
-
-  <div id="silahPanel" style="display:none">
-  <h2>1 · Temel karakter</h2>
-  <p class="hint">Var olan bir karakterin yürüyüş/bekleme animasyonunu aynen kullanıp üstüne bir silah görseli kondurur - YENİ bir üretim yok, orijinal karaktere de dokunulmaz. Sonuç <b>yeni bir varyant klasörü</b> olarak kaydedilir, Karakterler modunda hemen yerleştirebilirsin.</p>
-  <div id="silahTemelPalet" class="small" style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:3px;padding:6px;max-height:140px;overflow-y:auto"></div>
-  <label>Yeni varyant adı</label>
-  <input type="text" id="silahVaryantAd" placeholder="ör. silahli">
-  <p class="small" id="silahVaryantOnizleme" style="color:var(--ink-dim)"></p>
-
-  <h2>2 · Silah görseli</h2>
-  <label>Hazır eşya ikonlarından seç</label>
-  <div id="silahIkonPalet" class="small" style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:3px;padding:6px;max-height:110px;overflow-y:auto"></div>
-  <label>...ya da kendi PNG'ini yükle</label>
-  <input type="file" id="silahDosya" accept="image/png">
-
-  <h2>3 · Konumlandır</h2>
-  <p class="hint">Önce çizimi (yön × bekleme/yürüyüş) seç, sonra altındaki karelerden (frame) birini seç - her kareyi ayrı ayrı, birbirinden bağımsız konumlandırabilirsin.</p>
-  <div id="silahSheetSecici" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-  <div id="silahKareSecici" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px"></div>
-  <div class="row">
-    <div><label class="small">ölçek</label><input type="number" id="silahOlcek" step="0.05" value="1"></div>
-    <div><label class="small">döndürme°</label><input type="number" id="silahAci" step="5" value="0"></div>
-  </div>
-  <button id="silahKareyiSheeteUygula">Bu kareyi, bu çizimin tüm karelerine uygula</button>
-  <button id="silahTumSheetleriKopyala">Bu çizimi diğer tüm çizimlere kopyala</button>
-
-  <h2>4 · Oluştur</h2>
-  <button id="silahOlusturBtn" style="border-color:#c9a227">🗡️ Yeni varyantı oluştur ve kaydet</button>
-  <p class="hint">6 dosya da (D/U/S × Idle/Walk) <code>public/assets/characters/&lt;varyant&gt;/</code> altına yazılır. Orijinal karakterin dosyalarına dokunulmaz.</p>
-  </div>
-
   <div class="legend" style="margin-top:14px">
     <span><i class="sw" style="background:var(--zemin)"></i>zemin</span>
     <span><i class="sw" style="background:var(--engel)"></i>engel</span>
@@ -256,10 +187,6 @@
 <main>
   <div id="canvasWrap">
     <canvas id="cv" width="1" height="1"></canvas>
-  </div>
-  <div id="silahCanvasWrap" style="display:none">
-    <canvas id="silahCv" width="384" height="384" style="image-rendering:pixelated;background:#0f0d0b;border:1px solid var(--line);cursor:crosshair"></canvas>
-    <p class="small" style="color:var(--ink-dim);margin-top:8px">Silahı sürükle = taşı. Tekerlek = ölçek. Shift+sürükle = döndür.</p>
   </div>
 </main>
 <div id="hoverTag"></div>
@@ -282,10 +209,8 @@ let pickingStart=false, startTile=null;
 let reachSet=null, isleSet=null;
 let liveBlockers=null; // ham API yaniti - engel moduna gecince duzenlenebilir listeye kopyalanir
 let liveNesneler=null; // ham API yaniti - {id,x,y,asset,s}[]
-let liveNpcler=null; // ham API yaniti - {id,x,y,name,portrait,sabit,duzenlenebilir}[]
-let liveOzelKarakterler=null; // ham API yaniti - onceki oturumlarda uretilmis ozel varyant klasor adlari
 let currentZoneName=''; // preset ise zone adi, custom ise ''
-let mode='zemin'; // 'zemin' | 'engel' | 'nesne' | 'karakter'
+let mode='zemin'; // 'zemin' | 'engel' | 'nesne'
 
 // --- Engeller (piksel hassas kutular) ---
 let boxes=[]; // {x1,y1,x2,y2} karo biriminde, ONDALIKLI olabilir
@@ -301,27 +226,6 @@ let selectedObje=-1;
 let objeDrag=null; // {from:[x,y], orig:{x,y}}
 let objeSayac=0;
 
-// --- Karakterler (yeni NPC yerlestirme; mevcut NPC'ler salt-okunur referans) ---
-const PORTRE_SAYISI=15;
-// Sadece portrait 1'in (insan-sekilli gezgin govdesi) silah varyanti setleri
-// var - oyuncunun kendi kusanma sistemi icin onceden uretilmisler, YENI bir
-// PixelLab cagrisi gerekmeden tekrar kullanilabilirler (bkz. Entity.portrait
-// tipindeki not). key bos ise 'characters1', dolu ise 'characters1'+key.
-const SILAH_VARYANTLARI=[
-  {key:'',label:'Yumruk (çıplak)'},{key:'sword',label:'Kılıç'},{key:'bow',label:'Yay'},
-  {key:'balta',label:'Balta'},{key:'mesale',label:'Meşale'},{key:'swordmesale',label:'Kılıç+Meşale'},
-];
-let portrelerYuklendi=false;
-let portreImg={}; // n -> Image (D_Idle.png ya da 1 icin portre.png)
-let silahImg={}; // key -> Image (characters1<key>/D_Idle.png), sadece portrait 1 icin
-let aktifPortre=null;
-let aktifSilah=''; // yeni yerlestirilecek NPC icin secili silah varyanti
-let npcReferans=[]; // salt-okunur: TUM npc'ler {x,y,name,duzenlenebilir}
-let karakterler=[]; // bu aracin yonettigi, duzenlenebilir olanlar {id,x,y,name,portrait,sabit}
-let selectedKarakter=-1;
-let karakterDrag=null;
-let karakterSayac=0;
-
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
 
@@ -330,37 +234,17 @@ function setMode(m){
   $('modeZemin').classList.toggle('active', m==='zemin');
   $('modeEngel').classList.toggle('active', m==='engel');
   $('modeNesne').classList.toggle('active', m==='nesne');
-  $('modeKarakter').classList.toggle('active', m==='karakter');
-  $('modeSilah').classList.toggle('active', m==='silah');
   $('zeminPanel').style.display = m==='zemin' ? 'block' : 'none';
   $('engelPanel').style.display = m==='engel' ? 'block' : 'none';
   $('nesnePanel').style.display = m==='nesne' ? 'block' : 'none';
-  $('karakterPanel').style.display = m==='karakter' ? 'block' : 'none';
-  $('silahPanel').style.display = m==='silah' ? 'block' : 'none';
-  // Silah modu tamamen farkli bir tuval kullanir (zone/zemin degil, tek bir
-  // karakter karesi) - "1 . Kaynak" bolumu ve normal tuval bu modda anlamsiz.
-  $('kaynakBolumu').style.display = m==='silah' ? 'none' : 'block';
-  $('canvasWrap').style.display = m==='silah' ? 'none' : 'block';
-  $('silahCanvasWrap').style.display = m==='silah' ? 'block' : 'none';
-  // Sekme basligi moda gore degisir - karakter-editor.html buraya
-  // #karakter ile yonlendiriyor, kullanici "iki tane harita editoru acilan
-  // gorunuyor" dedi cunku ikisi de ayni <title> ile bitiyordu (redirect
-  // sonrasi tarayici bu dosyanin title'ini kullaniyor, kisayolunkini degil).
-  document.title = (m==='karakter'||m==='silah' ? 'Karakter Editörü' : 'Harita Editörü') + ' — Kül ve Yemin (dev aracı)';
   history.replaceState(null,'','#'+m);
-  if(m!=='silah')draw();
-  else drawSilahCanvas();
+  draw();
 }
 $('modeZemin').addEventListener('click',()=>setMode('zemin'));
 $('modeEngel').addEventListener('click',()=>setMode('engel'));
-$('modeKarakter').addEventListener('click',()=>{ setMode('karakter'); portrelerYukle(); });
-$('modeSilah').addEventListener('click',()=>{ setMode('silah'); silahBaslat(); });
-// URL'de #karakter / #nesne / #engel / #silah ile dogrudan o moda acilabilir
-// (karakter-editor.html kisayolu bunu kullaniyor).
-if(location.hash.slice(1) && ['zemin','engel','nesne','karakter','silah'].includes(location.hash.slice(1))){
+// URL'de #nesne / #engel ile dogrudan o moda acilabilir.
+if(location.hash.slice(1) && ['zemin','engel','nesne'].includes(location.hash.slice(1))){
   setMode(location.hash.slice(1));
-  if(mode==='silah')silahBaslat();
-  if(mode==='karakter')portrelerYukle();
 }
 $('modeNesne').addEventListener('click',()=>setMode('nesne'));
 
@@ -417,8 +301,6 @@ $('loadBtn').addEventListener('click', async ()=>{
           grid = d.tiles.map(row=>row.map(v=>v?1:0));
           liveBlockers = d.blockers||[];
           liveNesneler = d.nesneler||[];
-          liveNpcler = d.npcler||[];
-          liveOzelKarakterler = d.ozelKarakterler||[];
           $('canliNot').style.display='block';
         }
       }
@@ -434,7 +316,6 @@ $('loadBtn').addEventListener('click', async ()=>{
   renderBoxList();
   updateEngelExport();
   await loadNesneler();
-  loadKarakterler();
 });
 
 function setBrush(b){
@@ -514,19 +395,6 @@ function draw(){
     }
   });
   ctx.restore();
-  // Karakterler: mevcut (elle yazilmis) NPC'ler sari cerceveli salt-okunur
-  // noktalar; bu aracin ekledikleri mor, secili olan daha buyuk+parlak.
-  ctx.save();
-  npcReferans.forEach(o=>{
-    ctx.fillStyle='#c9a227'; ctx.strokeStyle='#0f0d0b'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.arc(o.x*tp,o.y*tp,5,0,7); ctx.fill(); ctx.stroke();
-  });
-  karakterler.forEach((o,i)=>{
-    const sel = mode==='karakter' && i===selectedKarakter;
-    ctx.fillStyle=sel?'#e6b8ff':'#965ac8'; ctx.strokeStyle='#0f0d0b'; ctx.lineWidth=sel?2:1.5;
-    ctx.beginPath(); ctx.arc(o.x*tp,o.y*tp,sel?7:5,0,7); ctx.fill(); ctx.stroke();
-  });
-  ctx.restore();
   if(startTile){
     ctx.fillStyle='#ffe08a';
     ctx.beginPath();
@@ -586,15 +454,6 @@ cv.addEventListener('mousemove',e=>{
     draw(); syncSelectedObje(); updateNesneExport();
     return;
   }
-  if(mode==='karakter'){
-    const [px,py]=pxFromEvent(e);
-    $('hoverTag').textContent = `karo (${px.toFixed(2)}, ${py.toFixed(2)})`;
-    if(!karakterDrag)return;
-    const o=karakterler[selectedKarakter], dx=px-karakterDrag.from[0], dy=py-karakterDrag.from[1];
-    o.x=karakterDrag.orig.x+dx; o.y=karakterDrag.orig.y+dy;
-    draw(); syncSelectedKarakter(); updateKarakterExport();
-    return;
-  }
   // engel modu
   const [px,py]=pxFromEvent(e);
   $('hoverTag').textContent = `karo (${px.toFixed(2)}, ${py.toFixed(2)})`;
@@ -649,25 +508,6 @@ cv.addEventListener('mousedown',e=>{
     }
     return;
   }
-  if(mode==='karakter'){
-    const [px,py]=pxFromEvent(e);
-    const i=karakterAt(px,py,karakterler);
-    if(i>=0){
-      selectedKarakter=i;
-      karakterDrag={from:[px,py],orig:{x:karakterler[i].x,y:karakterler[i].y}};
-      renderKarakterList(); syncSelectedKarakter(); draw();
-      return;
-    }
-    if(aktifPortre){
-      karakterSayac++;
-      karakterler.push({id:`kd_${Date.now()}_${karakterSayac}`,x:px,y:py,name:'',portrait:portreDegeriUret(aktifPortre,aktifSilah),sabit:false});
-      selectedKarakter=karakterler.length-1;
-      renderKarakterList(); syncSelectedKarakter(); updateKarakterExport(); draw();
-    }else{
-      $('status').textContent='Önce bir portre seç.';
-    }
-    return;
-  }
   // engel modu
   const [px,py]=pxFromEvent(e);
   const h=handleAt(px,py);
@@ -688,7 +528,6 @@ cv.addEventListener('mousedown',e=>{
 window.addEventListener('mouseup',()=>{
   painting=false;
   objeDrag=null;
-  karakterDrag=null;
   if(boxDrag){
     if(boxDrag.type==='new'){
       const b=boxes[boxDrag.idx];
@@ -710,10 +549,6 @@ window.addEventListener('keydown',e=>{
   if(mode==='nesne' && (e.key==='Delete'||e.key==='Backspace') && selectedObje>=0 && document.activeElement===document.body){
     objeler.splice(selectedObje,1); selectedObje=-1;
     renderObjeList(); syncSelectedObje(); updateNesneExport(); draw();
-  }
-  if(mode==='karakter' && (e.key==='Delete'||e.key==='Backspace') && selectedKarakter>=0 && document.activeElement===document.body){
-    karakterler.splice(selectedKarakter,1); selectedKarakter=-1;
-    renderKarakterList(); syncSelectedKarakter(); updateKarakterExport(); draw();
   }
 });
 
@@ -913,171 +748,6 @@ $('nesneSaveBtn').addEventListener('click', async ()=>{
   }
 });
 
-// --- Karakterler (mevcut NPC'ler salt-okunur referans, yeni NPC yerlestir) ---
-async function portrelerYukle(){
-  if(portrelerYuklendi)return;
-  portrelerYuklendi=true;
-  for(let n=1;n<=PORTRE_SAYISI;n++){
-    if(n===3)continue; // solucan kaldirildi, bos slot
-    try{ portreImg[n]=await loadImageSrc(`/assets/characters/${n}/${n===1?'portre':'D_Idle'}.png`); }
-    catch{ /* bu numarada portre yok - atla */ }
-  }
-  for(const {key} of SILAH_VARYANTLARI){
-    if(!key)continue; // '' zaten portreImg[1]
-    try{ silahImg[key]=await loadImageSrc(`/assets/characters/1${key}/D_Idle.png`); }
-    catch{ /* bu varyant henuz uretilmemis - atla */ }
-  }
-  renderPortrePalet(); renderSilahPalet();
-  if(typeof renderSilahTemelPalet==='function')renderSilahTemelPalet();
-}
-function renderPortrePalet(){
-  const el=$('portrePalet');
-  const numaralar=Object.keys(portreImg).map(Number).sort((a,b)=>a-b);
-  if(!numaralar.length && !ozelKarakterler.length){ el.innerHTML='<i style="color:var(--ink-dim)">Yükleniyor…</i>'; return; }
-  const sayiHtml = numaralar.map(n=>
-    `<div data-n="${n}" title="portrait:${n}" style="width:40px;height:40px;border:2px solid ${n===aktifPortre?'#c9a227':'var(--line)'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b;overflow:hidden">`
-    + `<img src="${portreImg[n].src}" style="width:auto;height:150%;image-rendering:pixelated"></div>`
-  ).join('');
-  // Ozel varyantlar (silah-katmani araciyla uretilenler): STRING anahtar,
-  // mor cerceveyle ayirt ediliyor - "Silah Ekle" modunda olusturulanlar.
-  const ozelHtml = ozelKarakterler.map(o=>
-    `<div data-ozel="${o.key}" title="portrait:${o.key}" style="width:40px;height:40px;border:2px solid ${o.key===aktifPortre?'#c9a227':'#965ac8'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b;overflow:hidden">`
-    + `<img src="${o.img.src}" style="width:auto;height:150%;image-rendering:pixelated"></div>`
-  ).join('');
-  el.innerHTML = sayiHtml + (ozelHtml?`<div style="width:100%;height:0"></div>`+ozelHtml:'');
-  el.querySelectorAll('[data-n]').forEach(elm=>{
-    elm.addEventListener('click',()=>{ aktifPortre=parseInt(elm.dataset.n,10); aktifSilah=''; renderPortrePalet(); renderSilahPalet(); });
-  });
-  el.querySelectorAll('[data-ozel]').forEach(elm=>{
-    elm.addEventListener('click',()=>{ aktifPortre=elm.dataset.ozel; aktifSilah=''; renderPortrePalet(); renderSilahPalet(); });
-  });
-  $('silahSecimi').style.display = aktifPortre===1 ? 'block' : 'none';
-}
-function renderSilahPalet(){
-  const el=$('silahPalet');
-  el.innerHTML = SILAH_VARYANTLARI.map(v=>{
-    const im=v.key?silahImg[v.key]:portreImg[1];
-    return `<div data-k="${v.key}" title="${v.label}" style="width:40px;height:40px;border:2px solid ${v.key===aktifSilah?'#c9a227':'var(--line)'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b;overflow:hidden">`
-      + (im?`<img src="${im.src}" style="width:auto;height:150%;image-rendering:pixelated">`:'<i class="small" style="color:var(--ink-dim)">?</i>') + `</div>`;
-  }).join('');
-  el.querySelectorAll('[data-k]').forEach(elm=>{
-    elm.addEventListener('click',()=>{ aktifSilah=elm.dataset.k; renderSilahPalet(); });
-  });
-}
-/** portrait 1'in silah varyantlari 'characters1<key>' klasor adiyla eslesir -
- *  bu yuzden Entity.portrait bazen '1sword' gibi bir STRING olur. */
-function portreDegeriUret(numara,silah){ return (numara===1&&silah) ? '1'+silah : numara; }
-function portreVaryantAyristir(portrait){
-  const s=String(portrait);
-  const m=/^1(sword|bow|balta|mesale|swordmesale)$/.exec(s);
-  return m ? {numara:1,silah:m[1]} : {numara:typeof portrait==='number'?portrait:parseInt(s,10)||1,silah:''};
-}
-function loadKarakterler(){
-  npcReferans = (liveNpcler||[]).filter(n=>!n.duzenlenebilir);
-  karakterler = (liveNpcler||[]).filter(n=>n.duzenlenebilir).map(n=>({id:n.id,x:n.x,y:n.y,name:n.name,portrait:n.portrait,sabit:n.sabit}));
-  selectedKarakter=-1;
-  portrelerYukle();
-  ozelKarakterlerYukle();
-  renderKarakterList(); syncSelectedKarakter(); updateKarakterExport(); draw();
-}
-async function ozelKarakterlerYukle(){
-  for(const key of (liveOzelKarakterler||[])){
-    if(ozelKarakterler.some(o=>o.key===key))continue;
-    try{
-      const img=await loadImageSrc(`/assets/characters/${key}/D_Idle.png`);
-      ozelKarakterler.push({key,img});
-    }catch{ /* D_Idle yok - bu araçla uretilmemis bir klasor olabilir, atla */ }
-  }
-  renderPortrePalet();
-}
-
-function karakterAt(px,py,liste){
-  for(let i=liste.length-1;i>=0;i--){
-    const o=liste[i];
-    if(Math.hypot(o.x-px,o.y-py)<0.6)return i;
-  }
-  return -1;
-}
-function renderKarakterList(){
-  const el=$('karakterListe');
-  if(!karakterler.length){ el.innerHTML='<i style="color:var(--ink-dim)">Bu araçla eklenmiş NPC yok.</i>'; return; }
-  el.innerHTML = karakterler.map((o,i)=>
-    `<div data-i="${i}" style="padding:4px 6px;cursor:pointer;border-radius:2px;${i===selectedKarakter?'background:#c9a22755':''}">`
-    + `${o.name||'(isimsiz)'} · portrait ${o.portrait} @ (${o.x.toFixed(2)}, ${o.y.toFixed(2)})</div>`
-  ).join('');
-  el.querySelectorAll('[data-i]').forEach(row=>{
-    row.addEventListener('click',()=>{ selectedKarakter=parseInt(row.dataset.i,10); renderKarakterList(); syncSelectedKarakter(); draw(); });
-  });
-}
-function syncSelectedKarakter(){
-  const has=selectedKarakter>=0 && karakterler[selectedKarakter];
-  $('seciliKarakter').style.display = has ? 'block' : 'none';
-  if(!has)return;
-  const o=karakterler[selectedKarakter];
-  $('kAd').value=o.name||''; $('kx').value=o.x.toFixed(2); $('ky').value=o.y.toFixed(2); $('kSabit').checked=!!o.sabit;
-  const {numara,silah}=portreVaryantAyristir(o.portrait);
-  const gosterSilah = numara===1;
-  $('seciliSilahSecimi').style.display = gosterSilah ? 'block' : 'none';
-  if(gosterSilah){
-    const el=$('seciliSilahPalet');
-    el.innerHTML = SILAH_VARYANTLARI.map(v=>{
-      const im=v.key?silahImg[v.key]:portreImg[1];
-      return `<div data-k="${v.key}" title="${v.label}" style="width:36px;height:36px;border:2px solid ${v.key===silah?'#c9a227':'var(--line)'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b;overflow:hidden">`
-        + (im?`<img src="${im.src}" style="width:auto;height:150%;image-rendering:pixelated">`:'?') + `</div>`;
-    }).join('');
-    el.querySelectorAll('[data-k]').forEach(elm=>{
-      elm.addEventListener('click',()=>{
-        karakterler[selectedKarakter].portrait=portreDegeriUret(1,elm.dataset.k);
-        syncSelectedKarakter(); renderKarakterList(); updateKarakterExport();
-      });
-    });
-  }
-}
-$('kAd').addEventListener('input',()=>{ if(selectedKarakter>=0){karakterler[selectedKarakter].name=$('kAd').value; renderKarakterList(); updateKarakterExport();} });
-['kx','ky'].forEach(id=>{
-  $(id).addEventListener('input',()=>{
-    if(selectedKarakter<0)return;
-    const o=karakterler[selectedKarakter];
-    o.x=parseFloat($('kx').value)||0; o.y=parseFloat($('ky').value)||0;
-    draw(); updateKarakterExport();
-  });
-});
-$('kSabit').addEventListener('change',()=>{ if(selectedKarakter>=0){karakterler[selectedKarakter].sabit=$('kSabit').checked; updateKarakterExport();} });
-$('karakterSil').addEventListener('click',()=>{
-  if(selectedKarakter<0)return;
-  karakterler.splice(selectedKarakter,1); selectedKarakter=-1;
-  renderKarakterList(); syncSelectedKarakter(); updateKarakterExport(); draw();
-});
-
-function updateKarakterExport(){
-  const fmt=n=>Math.round(n*100)/100;
-  const portreIfade=p=>typeof p==='number'?p:`'${p}'`;
-  $('karakterExportBox').value = karakterler.length
-    ? karakterler.map(o=>`at({id:'${o.id}',type:'npc',x:${fmt(o.x)},y:${fmt(o.y)},name:'${(o.name||'').replace(/'/g,"\\'")}',portrait:${portreIfade(o.portrait)}${o.sabit?',sabit:true':''}});`).join('\n')
-    : '(NPC yok - kaydedersen önceki eklemeler temizlenir)';
-}
-$('karakterCopyBtn').addEventListener('click', async ()=>{
-  try{ await navigator.clipboard.writeText($('karakterExportBox').value); $('status').textContent='Panoya kopyalandı.'; }
-  catch{ $('karakterExportBox').select(); document.execCommand('copy'); $('status').textContent='Panoya kopyalandı (yedek yöntem).'; }
-});
-$('karakterSaveBtn').addEventListener('click', async ()=>{
-  if(!currentZoneName){ alert('Kaydet sadece hazır mekân listesinden seçilenlerde çalışır (özel görselde değil).'); return; }
-  if(karakterler.some(o=>!o.name)){ alert('Her NPC bir isim almalı.'); return; }
-  $('status').textContent='Kaydediliyor…';
-  try{
-    const list = karakterler.map(o=>({id:o.id,x:o.x,y:o.y,name:o.name,portrait:o.portrait,sabit:!!o.sabit}));
-    const r = await fetch('/__harita/kaydet', {
-      method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ zone: currentZoneName, kind:'karakterler', list }),
-    });
-    const d = await r.json();
-    if(!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
-    $('status').textContent = `✓ world.ts kaydedildi (${currentZoneName}, karakterler). Vite otomatik yeniden yükleyecek - oyunu tazeleyip bak.`;
-  }catch(e){
-    $('status').textContent = `Kaydedilemedi: ${e.message}`;
-  }
-});
-
 function updateExport(){
   if(!grid.length){$('exportBox').value='';return;}
   const rows=grid.map(r=>"'"+r.join('')+"'");
@@ -1163,260 +833,6 @@ $('checkReach').addEventListener('click',()=>{
   draw();
 });
 
-// ============================================================
-// --- Silah Ekle (mevcut yürüyüş/bekleme animasyonunun üstüne
-//     bir silah görseli komposit edip YENİ bir varyant üretir) ---
-// ============================================================
-const SHEET_LISTE=['D_Idle','D_Walk','U_Idle','U_Walk','S_Idle','S_Walk'];
-const SHEET_ETIKET={D_Idle:'Aşağı · Bekleme',D_Walk:'Aşağı · Yürüyüş',U_Idle:'Yukarı · Bekleme',U_Walk:'Yukarı · Yürüyüş',S_Idle:'Yan · Bekleme',S_Walk:'Yan · Yürüyüş'};
-const SILAH_IKONLAR=['rusty','guard','ember','blood','bow','tatar','mizrak','balta','hancer','topuz','yemin','uzunyay','yeminh'];
-const SILAH_KANVAS_OLCEK=6; // 64px kare kare -> 384px tuval
-let silahTemelNumara=null;
-let silahVaryantAdi='';
-let silahKaynakImg=null;
-let silahBaseImg={}; // sheet key -> Image (tam sheet, frame0 onizleme + nihai komposit icin)
-let silahPoz={}; // sheet key -> {dx,dy,scale,rotDeg}[] (HER KARE icin ayri, bkz. silahPozDiziSagla)
-let aktifSheet='D_Idle';
-let aktifKare=0;
-let silahDrag=null;
-function silahKareSayisi(key){ const b=silahBaseImg[key]; return b?Math.floor(b.width/64):0; }
-// Bir sheet'in kare sayisi (temel karakter yuklenince) degisince diziyi o
-// sayiya uydurur; onceki kare-0'in konumunu yeni karelere baslangic olarak
-// verir ki bos/undefined kare olmasin.
-function silahPozDiziSagla(key){
-  const n=silahKareSayisi(key);
-  const onceki=(silahPoz[key]&&silahPoz[key][0])?silahPoz[key][0]:{dx:32,dy:32,scale:1,rotDeg:0};
-  if(!silahPoz[key]||silahPoz[key].length!==n) silahPoz[key]=Array.from({length:n},()=>({...onceki}));
-}
-let ozelKarakterler=[]; // {key,img} - bu aracin urettigi ozel varyantlar (numarali degil)
-const silahCv=document.getElementById('silahCv'), silahCtx=silahCv.getContext('2d');
-
-function silahBaslat(){
-  portrelerYukle();
-  renderSilahTemelPalet();
-  renderSilahIkonPalet();
-  renderSilahSheetSecici();
-  silahVaryantOnizlemeGuncelle();
-}
-function renderSilahTemelPalet(){
-  const el=$('silahTemelPalet');
-  const numaralar=Object.keys(portreImg).map(Number).sort((a,b)=>a-b);
-  if(!numaralar.length){ el.innerHTML='<i style="color:var(--ink-dim)">Yükleniyor…</i>'; return; }
-  el.innerHTML = numaralar.map(n=>
-    `<div data-n="${n}" title="portrait:${n}" style="width:40px;height:40px;border:2px solid ${n===silahTemelNumara?'#c9a227':'var(--line)'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b;overflow:hidden">`
-    + `<img src="${portreImg[n].src}" style="width:auto;height:150%;image-rendering:pixelated"></div>`
-  ).join('');
-  el.querySelectorAll('[data-n]').forEach(elm=>{
-    elm.addEventListener('click', async ()=>{
-      silahTemelNumara=parseInt(elm.dataset.n,10);
-      renderSilahTemelPalet(); silahVaryantOnizlemeGuncelle();
-      $('status').textContent='Temel karakterin çizimleri yükleniyor…';
-      for(const key of SHEET_LISTE){
-        try{ silahBaseImg[key]=await loadImageSrc(`/assets/characters/${silahTemelNumara}/${key}.png?t=${Date.now()}`); }
-        catch{ silahBaseImg[key]=null; }
-        silahPozDiziSagla(key);
-      }
-      aktifKare=0;
-      $('status').textContent='Hazır. Şimdi bir silah seç ve konumlandır.';
-      renderSilahKareSecici();
-      drawSilahCanvas();
-    });
-  });
-}
-function renderSilahIkonPalet(){
-  const el=$('silahIkonPalet');
-  el.innerHTML = SILAH_IKONLAR.map(id=>
-    `<div data-id="${id}" title="${id}" style="width:36px;height:36px;border:2px solid var(--line);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b">`
-    + `<img src="/assets/icons/items/${id}.png" style="max-width:28px;max-height:28px;image-rendering:pixelated"></div>`
-  ).join('');
-  el.querySelectorAll('[data-id]').forEach(elm=>{
-    elm.addEventListener('click', async ()=>{
-      silahKaynakImg = await loadImageSrc(`/assets/icons/items/${elm.dataset.id}.png`);
-      drawSilahCanvas();
-    });
-  });
-}
-$('silahDosya').addEventListener('change', async ()=>{
-  const f=$('silahDosya').files[0];
-  if(!f)return;
-  const dataUrl=await fileToDataUrl(f);
-  silahKaynakImg=await loadImageSrc(dataUrl);
-  drawSilahCanvas();
-});
-function renderSilahSheetSecici(){
-  const el=$('silahSheetSecici');
-  el.innerHTML = SHEET_LISTE.map(k=>
-    `<button data-k="${k}" class="${k===aktifSheet?'active':''}" style="margin:0">${SHEET_ETIKET[k]}</button>`
-  ).join('');
-  el.querySelectorAll('[data-k]').forEach(elm=>{
-    elm.addEventListener('click',()=>{
-      aktifSheet=elm.dataset.k;
-      aktifKare=0;
-      renderSilahSheetSecici();
-      renderSilahKareSecici();
-      const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
-      if(p){ $('silahOlcek').value=p.scale; $('silahAci').value=p.rotDeg; }
-      drawSilahCanvas();
-    });
-  });
-}
-function renderSilahKareSecici(){
-  const el=$('silahKareSecici');
-  const base=silahBaseImg[aktifSheet];
-  const n=silahKareSayisi(aktifSheet);
-  if(!base||!n){ el.innerHTML=''; return; }
-  el.innerHTML = Array.from({length:n},(_,i)=>
-    `<button data-i="${i}" title="kare ${i}" style="width:40px;height:40px;padding:0;overflow:hidden;position:relative;background:#0f0d0b;border-color:${i===aktifKare?'#c9a227':'var(--line)'}">`
-    + `<canvas width="40" height="40" style="image-rendering:pixelated;display:block"></canvas></button>`
-  ).join('');
-  el.querySelectorAll('[data-i]').forEach(btn=>{
-    const i=parseInt(btn.dataset.i,10);
-    const ctx=btn.querySelector('canvas').getContext('2d');
-    ctx.imageSmoothingEnabled=false;
-    ctx.drawImage(base,i*64,0,64,64,0,0,40,40);
-    btn.addEventListener('click',()=>{
-      aktifKare=i;
-      renderSilahKareSecici();
-      const p=silahPoz[aktifSheet][aktifKare];
-      $('silahOlcek').value=p.scale; $('silahAci').value=p.rotDeg;
-      drawSilahCanvas();
-    });
-  });
-}
-$('silahVaryantAd').addEventListener('input',()=>{ silahVaryantAdi=$('silahVaryantAd').value; silahVaryantOnizlemeGuncelle(); });
-function silahVaryantOnizlemeGuncelle(){
-  const ad=(silahVaryantAdi||'').replace(/[^a-zA-Z0-9_-]/g,'');
-  $('silahVaryantOnizleme').textContent = (silahTemelNumara&&ad) ? `Kaydedilecek: characters/${silahTemelNumara}_${ad}/ → yerleştirirken portrait: "${silahTemelNumara}_${ad}"` : '';
-}
-['silahOlcek','silahAci'].forEach(id=>{
-  $(id).addEventListener('input',()=>{
-    const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
-    if(!p)return;
-    p.scale=parseFloat($('silahOlcek').value)||1;
-    p.rotDeg=parseFloat($('silahAci').value)||0;
-    drawSilahCanvas();
-  });
-});
-$('silahKareyiSheeteUygula').addEventListener('click',()=>{
-  const dizi=silahPoz[aktifSheet];
-  if(!dizi||!dizi[aktifKare])return;
-  const kaynak={...dizi[aktifKare]};
-  for(let i=0;i<dizi.length;i++)dizi[i]={...kaynak};
-  $('status').textContent=`Kare ${aktifKare}'in konumu bu çizimin tüm karelerine uygulandı.`;
-});
-$('silahTumSheetleriKopyala').addEventListener('click',()=>{
-  const kaynakDizi=silahPoz[aktifSheet];
-  if(!kaynakDizi)return;
-  SHEET_LISTE.forEach(k=>{
-    if(k===aktifSheet)return;
-    const n=silahKareSayisi(k);
-    if(!n)return;
-    silahPoz[k]=Array.from({length:n},(_,i)=>({...kaynakDizi[Math.min(i,kaynakDizi.length-1)]}));
-  });
-  $('status').textContent='Bu çizimin kare konumları diğer tüm çizimlere kopyalandı.';
-  renderSilahKareSecici();
-});
-
-function drawSilahCanvas(){
-  const K=SILAH_KANVAS_OLCEK;
-  silahCtx.imageSmoothingEnabled=false;
-  silahCtx.clearRect(0,0,silahCv.width,silahCv.height);
-  const base=silahBaseImg[aktifSheet];
-  if(base){
-    silahCtx.drawImage(base,aktifKare*64,0,64,64,0,0,64*K,64*K);
-  }else{
-    silahCtx.fillStyle='#3a352e'; silahCtx.fillRect(0,0,silahCv.width,silahCv.height);
-  }
-  silahCtx.strokeStyle='rgba(255,255,255,.15)';
-  silahCtx.strokeRect(0,0,silahCv.width,silahCv.height);
-  const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
-  if(silahKaynakImg&&p){
-    silahCtx.save();
-    silahCtx.translate(p.dx*K,p.dy*K);
-    silahCtx.rotate(p.rotDeg*Math.PI/180);
-    const w=silahKaynakImg.width*p.scale, h=silahKaynakImg.height*p.scale;
-    silahCtx.drawImage(silahKaynakImg,-w/2,-h/2,w,h);
-    silahCtx.restore();
-  }
-}
-silahCv.addEventListener('mousedown',e=>{
-  const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
-  if(!silahKaynakImg||!p)return;
-  const r=silahCv.getBoundingClientRect();
-  silahDrag={fromX:e.clientX-r.left,fromY:e.clientY-r.top,orig:{...p},shift:e.shiftKey};
-});
-silahCv.addEventListener('mousemove',e=>{
-  if(!silahDrag)return;
-  const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
-  if(!p)return;
-  const r=silahCv.getBoundingClientRect();
-  const x=e.clientX-r.left,y=e.clientY-r.top;
-  if(silahDrag.shift){
-    const cx=silahDrag.orig.dx*SILAH_KANVAS_OLCEK, cy=silahDrag.orig.dy*SILAH_KANVAS_OLCEK;
-    const a0=Math.atan2(silahDrag.fromY-cy,silahDrag.fromX-cx), a1=Math.atan2(y-cy,x-cx);
-    p.rotDeg=Math.round(silahDrag.orig.rotDeg+(a1-a0)*180/Math.PI);
-    $('silahAci').value=p.rotDeg;
-  }else{
-    p.dx=silahDrag.orig.dx+(x-silahDrag.fromX)/SILAH_KANVAS_OLCEK;
-    p.dy=silahDrag.orig.dy+(y-silahDrag.fromY)/SILAH_KANVAS_OLCEK;
-  }
-  drawSilahCanvas();
-});
-window.addEventListener('mouseup',()=>{ silahDrag=null; });
-silahCv.addEventListener('wheel',e=>{
-  const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
-  if(!silahKaynakImg||!p)return;
-  e.preventDefault();
-  p.scale=Math.max(.1,Math.round((p.scale+(e.deltaY<0?.05:-.05))*100)/100);
-  $('silahOlcek').value=p.scale;
-  drawSilahCanvas();
-},{passive:false});
-
-$('silahOlusturBtn').addEventListener('click', async ()=>{
-  if(!silahTemelNumara){ alert('Önce bir temel karakter seç.'); return; }
-  const ad=(silahVaryantAdi||'').replace(/[^a-zA-Z0-9_-]/g,'');
-  if(!ad){ alert('Bir varyant adı yaz.'); return; }
-  if(!silahKaynakImg){ alert('Bir silah görseli seç ya da yükle.'); return; }
-  if(SHEET_LISTE.some(k=>!silahBaseImg[k])){ alert('Temel karakterin çizimleri henüz yüklenmedi, biraz bekle.'); return; }
-  $('status').textContent='Oluşturuluyor…';
-  try{
-    const files=[];
-    for(const key of SHEET_LISTE){
-      const base=silahBaseImg[key];
-      silahPozDiziSagla(key);
-      const dizi=silahPoz[key];
-      const out=document.createElement('canvas');
-      out.width=base.width; out.height=base.height;
-      const octx=out.getContext('2d');
-      octx.imageSmoothingEnabled=false;
-      octx.drawImage(base,0,0);
-      const count=Math.floor(base.width/64);
-      for(let i=0;i<count;i++){
-        const p=dizi[i];
-        octx.save();
-        octx.translate(i*64+p.dx,p.dy);
-        octx.rotate(p.rotDeg*Math.PI/180);
-        const w=silahKaynakImg.width*p.scale, h=silahKaynakImg.height*p.scale;
-        octx.drawImage(silahKaynakImg,-w/2,-h/2,w,h);
-        octx.restore();
-      }
-      files.push({name:`${key}.png`,dataUrl:out.toDataURL('image/png')});
-    }
-    const variant=`${silahTemelNumara}_${ad}`;
-    const r=await fetch('/__harita/sprite-kaydet',{
-      method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({variant,files}),
-    });
-    const d=await r.json();
-    if(!r.ok||d.error)throw new Error(d.error||`HTTP ${r.status}`);
-    $('status').textContent=`✓ Yeni varyant kaydedildi: characters/${variant}/. Karakterler modunda "Özel varyantlar" altında hemen görünür.`;
-    const thumb=await loadImageSrc(`/assets/characters/${variant}/D_Idle.png?t=${Date.now()}`);
-    ozelKarakterler.push({key:variant,img:thumb});
-    renderPortrePalet();
-  }catch(e){
-    $('status').textContent=`Oluşturulamadı: ${e.message}`;
-  }
-});
 </script>
 </body>
 </html>

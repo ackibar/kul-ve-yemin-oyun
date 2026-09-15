@@ -1,23 +1,15 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
-import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const WORLD_TS = fileURLToPath(new URL('./lib/game/world.ts', import.meta.url));
 const NESNE_DIR = fileURLToPath(new URL('./public/assets/nesne/', import.meta.url));
-const CHARACTERS_DIR = fileURLToPath(new URL('./public/assets/characters/', import.meta.url));
 // Bu araç kendi eklediği decor'ları bu yorum sınırları arasında tutar -
 // zone bloğundaki NPC/sandık/ateş gibi elle yazılmış diğer her şeye
 // dokunmadan güvenle silip yeniden yazabilmek için (bkz. asağıdaki 'nesneler').
 const NESNE_BAS = '\n  /* @harita-editor:nesneler */\n';
 const NESNE_SON = '  /* @harita-editor:nesneler-son */\n';
-const KARAKTER_BAS = '\n  /* @harita-editor:karakterler */\n';
-const KARAKTER_SON = '  /* @harita-editor:karakterler-son */\n';
-// Bu aracin ekledigi NPC'ler bu on-ekle ayirt edilir (marker blogu icindeki
-// TUM satirlar zaten bu araca ait oldugu icin blok-tabanli yonetim yetiyor,
-// on-ek sadece GET yanitinda "hangi npc'ler duzenlenebilir" diye
-// isaretlemek icin - elle yazilmis diğer NPC'lere asla dokunulmuyor).
-const KARAKTER_ONEK = 'kd_';
 
 // Dev-only yardimci: harita-editor.html'in "hazir mekan yukle" / "kaydet"
 // ozellikleri icin. world.ts'i SSR modda yukleyip makeWorld() cagirir, o
@@ -43,21 +35,8 @@ function haritaEditoruEklentisi() {
             // NPC/sandık/ateş gibi elle yazılmış diğer entity'lere karışmaz.
             const nesneler = world.entities.filter((e: any) => e.type === 'decor' && e.overlay)
               .map((e: any) => ({ id: e.id, x: (e.x - 8) / 16, y: (e.y - 8) / 16, asset: e.asset, s: e.s ?? 1 }));
-            // TUM npc'ler referans icin (salt-okunur nokta+isim), sadece bu
-            // aracin eklediyi (kd_ on-ekli) olanlar duzenlenebilir listede.
-            const tumNpcler = world.entities.filter((e: any) => e.type === 'npc')
-              .map((e: any) => ({ id: e.id, x: (e.x - 8) / 16, y: (e.y - 8) / 16, name: e.name, portrait: e.portrait, sabit: !!e.sabit, duzenlenebilir: String(e.id).startsWith(KARAKTER_ONEK) }));
-            // Ozel silah-varyanti klasorleri (bu aracin sprite-kaydet ile
-            // urettikleri) - numara olmayan ve oyuncunun kendi kusanma
-            // setleri (1sword vb.) olmayan her klasor bu araca ait sayilir.
-            let ozelKarakterler: string[] = [];
-            try {
-              ozelKarakterler = readdirSync(CHARACTERS_DIR, { withFileTypes: true })
-                .filter((d) => d.isDirectory() && !/^\d+$/.test(d.name) && !/^1(sword|bow|balta|mesale|swordmesale)$/.test(d.name))
-                .map((d) => d.name);
-            } catch { /* klasor yoksa sorun degil */ }
             res.setHeader('content-type', 'application/json');
-            res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler, npcler: tumNpcler, ozelKarakterler }));
+            res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler }));
           } catch (e: any) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: String(e?.message || e) }));
@@ -127,28 +106,6 @@ function haritaEditoruEklentisi() {
                 } else {
                   yeniBlok = blok;
                 }
-              } else if (kind === 'karakterler') {
-                // list: {id,x,y,name,portrait,sabit}[] - id KARAKTER_ONEK ile
-                // baslamak zorunda (istemci zaten oyle uretiyor), yoksa GET
-                // yanitinda "duzenlenebilir" olarak isaretlenmez.
-                const fmt = (n: number) => Math.round(n * 100) / 100;
-                // portrait cogunlukla numara ama oyuncunun silah varyanti
-                // setleri de gecerli STRING'ler ('1sword' gibi, bkz. Entity
-                // tipindeki not) - o yuzden turune gore tirnakli/tirnaksiz yaz.
-                const portreIfade = (p: number | string) => typeof p === 'number' ? String(Math.round(p)) : `'${String(p).replace(/'/g, "\\'")}'`;
-                const satirlar = (list as { id: string; x: number; y: number; name: string; portrait: number | string; sabit?: boolean }[])
-                  .map((o) => `  at({id:'${o.id.startsWith(KARAKTER_ONEK) ? o.id : KARAKTER_ONEK + o.id}',type:'npc',x:${fmt(o.x)},y:${fmt(o.y)},name:'${o.name.replace(/'/g, "\\'")}',portrait:${portreIfade(o.portrait)}${o.sabit ? ',sabit:true' : ''}});\n`)
-                  .join('');
-                const yeniBolum = satirlar ? KARAKTER_BAS + satirlar + KARAKTER_SON : '';
-                const marklıRe = new RegExp(KARAKTER_BAS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[\\s\\S]*?' + KARAKTER_SON.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-                if (marklıRe.test(blok)) {
-                  yeniBlok = blok.replace(marklıRe, yeniBolum);
-                } else if (yeniBolum) {
-                  const eklemeNoktasi = acilis.length;
-                  yeniBlok = blok.slice(0, eklemeNoktasi) + yeniBolum + blok.slice(eklemeNoktasi);
-                } else {
-                  yeniBlok = blok;
-                }
               } else {
                 const zeminRe = /const ZEMIN=\[[^\]]*\];/;
                 if (!zeminRe.test(blok)) throw new Error(`'${zone}' bir ZEMIN dizisiyle tanımlı değil (room()+blockers kullanıyor olabilir) - bu araç onu düzenleyemez`);
@@ -180,36 +137,6 @@ function haritaEditoruEklentisi() {
               writeFileSync(NESNE_DIR + dosyaAdi, Buffer.from(m[1], 'base64'));
               res.setHeader('content-type', 'application/json');
               res.end(JSON.stringify({ ok: true, asset: `nesne/ed_${ad}` }));
-            } catch (e: any) {
-              res.statusCode = 400;
-              res.end(JSON.stringify({ error: String(e?.message || e) }));
-            }
-          });
-          return;
-        }
-        if (req.method === 'POST' && url === '/__harita/sprite-kaydet') {
-          // Silah-katmani araci: bir karakterin D/U/S Idle+Walk sheet'lerine
-          // istemci tarafinda (canvas ile) bir silah gorseli komposit edip
-          // buraya YENI bir varyant klasoru olarak yolluyor. Orijinal
-          // karakter klasorune ASLA yazilmiyor - kullanici acikca "yeni
-          // varyant olarak kaydet, orijinale dokunma" istedi.
-          let body = '';
-          req.on('data', (c: Buffer) => (body += c));
-          req.on('end', () => {
-            try {
-              const { variant, files } = JSON.parse(body);
-              const ad = String(variant).replace(/[^a-zA-Z0-9_-]/g, '');
-              if (!ad) throw new Error('geçersiz varyant adı');
-              const dir = CHARACTERS_DIR + ad + '/';
-              mkdirSync(dir, { recursive: true });
-              for (const f of files as { name: string; dataUrl: string }[]) {
-                const dosyaAdi = String(f.name).replace(/[^a-zA-Z0-9_.-]/g, '');
-                const m = /^data:image\/png;base64,(.+)$/.exec(f.dataUrl);
-                if (!m) throw new Error(`${dosyaAdi}: sadece PNG kabul edilir`);
-                writeFileSync(dir + dosyaAdi, Buffer.from(m[1], 'base64'));
-              }
-              res.setHeader('content-type', 'application/json');
-              res.end(JSON.stringify({ ok: true, portrait: ad }));
             } catch (e: any) {
               res.statusCode = 400;
               res.end(JSON.stringify({ error: String(e?.message || e) }));
