@@ -47,7 +47,7 @@
 <body>
 <aside>
   <h1>Harita Editörü</h1>
-  <p class="hint">Üç düzenleme modu: <b>Zemin</b> (karo boyama → <code>ZEMIN</code>), <b>Engeller</b> (piksel hassas kutu → <code>blockers</code>) ve <b>Nesneler</b> (kendi PNG'ini yükle, sahneye yerleştir → yeni <code>decor</code> varlıkları). Hepsi dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar. <code>H</code> = el (pan) aracını aç/kapat, açıkken tuvali sürükleyerek kaydırabilirsin.</p>
+  <p class="hint">Üç düzenleme modu: <b>Zemin</b> (karo boyama → <code>ZEMIN</code>), <b>Engeller</b> (piksel hassas kutu → <code>blockers</code>) ve <b>Nesneler</b> (kendi PNG'ini yükle, sahneye yerleştir → yeni <code>decor</code> varlıkları). Hepsi dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar. <code>H</code> = el (pan) aracını aç, açıkken tuvali sürükleyerek kaydırabilirsin; <code>V</code> = normal moda geri dön.</p>
 
   <div class="row" style="margin-bottom:10px">
     <button id="modeZemin" class="active">📐 Zemin</button>
@@ -371,6 +371,7 @@ window.addEventListener('keydown',e=>{
   if(e.key==='z'||e.key==='Z')setBrush(1);
   if(e.key==='x'||e.key==='X')setBrush(0);
   if((e.key==='h'||e.key==='H')&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName))setElModu(!elModu);
+  if((e.key==='v'||e.key==='V')&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName))setElModu(false);
 });
 
 $('fillAll').addEventListener('click',()=>{ if(!img)return; grid=grid.map(r=>r.map(()=>1)); draw(); updateExport(); });
