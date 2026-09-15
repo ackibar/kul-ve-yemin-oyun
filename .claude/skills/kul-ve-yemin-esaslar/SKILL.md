@@ -602,6 +602,19 @@ initialization" hatası alırsın (TDZ). Round-trip ile test edildi (haven'a
 NPC ekle→kaydet→boş listeyle kaydet, sıfır fark), canlı oyunda render
 edildiği doğrulandı.
 
+### Minimap: soyut gri kutular yerine gerçek arka plan küçültülmüş — v9.3
+Kullanıcı "minimap saçma duruyor" dedi ama bunun için ayrı bir editör
+istemedi ("o kadar büyük çaplı bir iş değil") - direkt düzeltmemi istedi.
+`app/page.tsx`'teki `MapView`, `w.tiles`'tan gri `<rect>` kareleri çizmek
+yerine artık `/assets/arkaplan/${zone}.png`'yi bir `<image>` olarak
+SVG'nin `viewBox`'ına (`w.w*5 x h.h*5`) geriyor - motorun kendi render()'ı
+da arka planı `w.w*16 x h.h*16` dünya birimine gerdiği için (bkz.
+engine.ts) nokta pozisyonlarıyla (`x/16*5`) aynı oranti, hizalama bedava
+geliyor. Üstüne %40 opaklıkta koyu bir `<rect>` var ki noktalar okunur
+kalsın. `image-rendering:auto` ile inline override edildi çünkü
+`.dungeon-map`'in genel `pixelated` kuralı küçük bir fotoğraf-gibi
+küçültmede (tile-grid'in aksine) daha kaba/gürültülü görünürdü.
+
 ---
 
-*Son güncelleme: 2026-09-15, v9.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v9.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
