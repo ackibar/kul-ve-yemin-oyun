@@ -7,6 +7,25 @@ const R=2;
 const OYUNCU_OLCEK=1.0;
 import {GameAudio,type Sound} from './audio';
 import {makeWorld,walkable,lineOfSight,type EnemySpec,type Entity,type World} from './world';
+/** Bir blocker'in (world.ts'teki dikdortgen/elips/poligon, karo birimi) yolunu
+ *  VERILEN tuval baglaminda dunya-px cinsinden cizer - golgeyi delmek icin
+ *  kullaniliyor (bkz. Engine.golgeCiz), walkable()'daki UZUNLUGA gore ayirma
+ *  mantigiyla ayni. */
+function blockerYolu(ctx:CanvasRenderingContext2D,b:number[]){
+ ctx.beginPath();
+ if(b.length===4){
+  const [x1,y1,x2,y2]=b;
+  ctx.rect(x1*16,y1*16,(x2-x1)*16,(y2-y1)*16);
+ }else if(b.length===5){
+  const [x1,y1,x2,y2]=b;
+  ctx.ellipse((x1+x2)/2*16,(y1+y2)/2*16,Math.max(.01,(x2-x1)/2*16),Math.max(.01,(y2-y1)/2*16),0,0,7);
+ }else{
+  const pts=b.slice(0,-1);
+  for(let i=0;i<pts.length;i+=2){const x=pts[i]*16,y=pts[i+1]*16;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.closePath();
+ }
+ ctx.fill();
+}
 import {bekleyen} from './data';
 /** Oyuncunun bakis yonu. 'S' yan, 'DS' asagi-capraz, 'US' yukari-capraz;
  *  bati tarafi bunlarin aynasi (flip). NPC/dusmanlar 3 yonde kaliyor. */
@@ -24,7 +43,12 @@ export class Engine{
  private decorHp:Record<string,number>={};
  private drops:Drop[]=[];
  private activeTraps:Set<string>=new Set();
- private canvas:HTMLCanvasElement;private ctx:CanvasRenderingContext2D;private images:Record<string,HTMLImageElement>={};private raf=0;private last=0;private tick=0;private notifyAt=0;private savedAt=0;private stepAt=0;private direction:Yon='D';private flip=false;private moving=false;private attackTimer=0;private dodgeTimer=0;private dash=0;private dashVector={x:0,y:1};private invulnerable=0;private tonic=0;private particles:Particle[]=[];
+ private canvas:HTMLCanvasElement;private ctx:CanvasRenderingContext2D;
+ /** Oyuncu golgesini "delmek" icin kucuk bir offscreen tampon (bkz. golgeCiz) -
+  *  ana tuvale dogrudan destination-out ile cizersek arka plan/diger her seyi
+  *  de delerdi, bu yuzden golge ONCE burada izole cizilip sonra yapistiriliyor. */
+ private golgeBuf?:HTMLCanvasElement;
+ private images:Record<string,HTMLImageElement>={};private raf=0;private last=0;private tick=0;private notifyAt=0;private savedAt=0;private stepAt=0;private direction:Yon='D';private flip=false;private moving=false;private attackTimer=0;private dodgeTimer=0;private dash=0;private dashVector={x:0,y:1};private invulnerable=0;private tonic=0;private particles:Particle[]=[];
  /** Yurunen toplam yol. Yurume karesi zamana degil buna baglanir; boylece
   *  hiz degisse de ayaklar yere basar (once 58 birim/sn hizda 7fps animasyon
   *  kullaniliyordu, 2.1 kat uyumsuzdu ve kayiyor gibi duruyordu). */
@@ -60,13 +84,14 @@ export class Engine{
  /** Oyuncu hucre boyu 80px (fh=40): figur bazi karelerde 65-70 satir, 64'te kafa kesiliyordu. Ayak satiri 78 -> capa 39. */
  static readonly OYUNCU_BOY=40;
  static readonly OYUNCU_CAPA=39;
- /** Oyuncunun carpisma kutusu varsayilan olarak 5px'lik bir KARE (yatay=dikey) -
-  *  ama gorsel golgesi (bkz. render, ellipse 8.5x2.8) dikeyde cok daha ince.
-  *  Bu fark, "gecebilecek gibi gorunen bir boslukta takiliyorum" hissi
-  *  veriyordu (golgenin degmedigi bir noktada gorunmez kutu zaten engele
-  *  degmis oluyordu). Dikey yaricap golgeye yakin bir degere cekildi;
-  *  yatay (5) degismedi, bu sadece dikey sikismalari rahatlatiyor. */
- static readonly OYUNCU_DIKEY_YARICAP=3;
+ /** Oyuncunun carpisma kutusu varsayilan olarak 5px'lik bir KARE (yatay=dikey).
+  *  Once golgenin (bkz. render, ellipse 8.5x2.8) dikey boyutuna yaklastirildi
+  *  ama kullanici hala "tam yaklasamiyorum" dedi ve golgeyi carpisma
+  *  mantigina hic KARISTIRMAMAYI istedi - yani bu degerler artik golgeden
+  *  BAGIMSIZ, sadece daha siki bir kutu icin secildi. Onceki 5/5'ten
+  *  kucultuldu; hala fazla siki/gevsek gelirse bu ikisi ayarlanabilir. */
+ static readonly OYUNCU_YATAY_YARICAP=3;
+ static readonly OYUNCU_DIKEY_YARICAP=2;
  /** Okun ciziminde kullanilan gogus yuksekligi (yalnizca gorsel). */
  static readonly OK_YUKSEK=17;
  /** Tepeden cizilmis yaratiklar ve sprite'larinin DOGAL bakis acisi (radyan,
@@ -509,9 +534,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   this.state.hp=0;this.paused=true;this.audio.play('death');
   this.state.journal.unshift(not);this.onEvent({type:'death'});this.emit();
  }
- private move(p:{x:number;y:number},dx:number,dy:number,ben:string|null=null,mobDahil=false,ry?:number){
-  if(walkable(this.world,p.x+dx,p.y,5,undefined,ry)&&!this.carpisir(p.x,p.y,p.x+dx,p.y,ben,mobDahil))p.x+=dx;
-  if(walkable(this.world,p.x,p.y+dy,5,undefined,ry)&&!this.carpisir(p.x,p.y,p.x,p.y+dy,ben,mobDahil))p.y+=dy;
+ private move(p:{x:number;y:number},dx:number,dy:number,ben:string|null=null,mobDahil=false,ry?:number,rx=5){
+  if(walkable(this.world,p.x+dx,p.y,rx,undefined,ry)&&!this.carpisir(p.x,p.y,p.x+dx,p.y,ben,mobDahil))p.x+=dx;
+  if(walkable(this.world,p.x,p.y+dy,rx,undefined,ry)&&!this.carpisir(p.x,p.y,p.x,p.y+dy,ben,mobDahil))p.y+=dy;
  }
   /** Ucurumdan havalanan yarasa surusu. Dagilarak doguyorlar ki tek yigin
   *  halinde gelmesinler; kimlikleri benzersiz, yoksa `killed` listesi bir
@@ -573,7 +598,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      kare:Math.floor(this.yol/Engine.ADIM),flip:this.flip,life:.26});}}
    for(const iz of this.izler)iz.life-=dt;this.izler=this.izler.filter(i=>i.life>0);
    const movement=this.dash>0?this.dashVector:activeInput;const length=Math.hypot(movement.x,movement.y);this.moving=length>.08;/* Ocak zirhinin agirligi (yavaslik) da tanimliydi ama kullanilmiyordu. */
-   const speed=(this.dash>0?205:44)*(ITEMS[this.state.equipment.armor].yavaslik??1)*(this.yavas>0?.6:1);if(this.moving){const dx=movement.x/Math.max(1,length),dy=movement.y/Math.max(1,length);this.face(dx,dy);this.move(this.state,dx*speed*dt,dy*speed*dt,null,false,Engine.OYUNCU_DIKEY_YARICAP);this.bolgeKontrol();this.yol+=speed*dt;if(this.tick-this.stepAt>.29){this.audio.play('step');this.stepAt=this.tick;}}if(this.input.attack)this.attack();
+   const speed=(this.dash>0?205:44)*(ITEMS[this.state.equipment.armor].yavaslik??1)*(this.yavas>0?.6:1);if(this.moving){const dx=movement.x/Math.max(1,length),dy=movement.y/Math.max(1,length);this.face(dx,dy);this.move(this.state,dx*speed*dt,dy*speed*dt,null,false,Engine.OYUNCU_DIKEY_YARICAP,Engine.OYUNCU_YATAY_YARICAP);this.bolgeKontrol();this.yol+=speed*dt;if(this.tick-this.stepAt>.29){this.audio.play('step');this.stepAt=this.tick;}}if(this.input.attack)this.attack();
    // --- Kul Ovasi: can erimesi + ruzgarda savrulan kul ---
    if(this.state.zone==='disari'&&this.state.hp>0&&!this.paused){
     /* Kul pelerininin kulKalkan'i ve Duru su'yun korumasi BURADA isliyor;
@@ -931,6 +956,24 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    capasini geciyor. *//* Oyuncu setleri (characters1, 1sword, 1mesale...; characters10+ DEGIL) 80 satirlik hucrede. */const oyuncuSet=/^characters1(?!\d)/.test(key);const anchor=capa??(actor?(oyuncuSet?Engine.OYUNCU_CAPA:key.startsWith('characters')?31:key.startsWith('enemies1')?22:21):h);/* Tepeden gorulen yaratiklar icin: yon ayri sheet degil DONDURME. Capa
    ayakta oldugu icin cizim dikdortgeninin MERKEZI etrafinda dondurulur,
    yoksa yaratik ayaklarinin ucundan savruluyor. */if(donder){const my=(-anchor+h/2)*scale;c.translate(0,my);c.rotate(donder);c.translate(0,-my);}if(flip)c.scale(-1,1);const top=actor?-anchor*scale:-h*scale+6;c.drawImage(im,(frame%count)*w*R,0,w*R,h*R,-w*scale/2,top,w*scale,h*scale);c.restore()}
+  /** Oyuncunun golgesini cizer, ENGELE denk gelen kismini SILER - boyali
+   *  mobilyanin uzerine golgenin bindirilmesi (ayri bir nesne olarak
+   *  eklenmedigi icin) saçma duruyordu. Ana tuvale DOGRUDAN destination-out
+   *  ile cizilmiyor cunku o zaman arka plan/diger her sey de delinirdi -
+   *  golge once izole bir tamponda cizilip delinir, sonra tek parca olarak
+   *  yapistirilir. */
+  private golgeCiz(x:number,y:number){
+   const GW=40,GH=16,ox=x-GW/2,oy=y+1-GH/2;
+   if(!this.golgeBuf){this.golgeBuf=document.createElement('canvas');this.golgeBuf.width=GW;this.golgeBuf.height=GH;}
+   const g=this.golgeBuf.getContext('2d')!;
+   g.clearRect(0,0,GW,GH);
+   g.fillStyle='#02081280';
+   g.beginPath();g.ellipse(GW/2,GH/2,8.5*OYUNCU_OLCEK,2.8*OYUNCU_OLCEK,0,0,7);g.fill();
+   g.globalCompositeOperation='destination-out';
+   for(const b of this.world.blockers){g.save();g.translate(-ox,-oy);blockerYolu(g,b);g.restore();}
+   g.globalCompositeOperation='source-over';
+   this.ctx.drawImage(this.golgeBuf,ox,oy);
+  }
   /** Isim etiketi: kutu YOK (yuzleri kapatiyordu). Okunurluk icin metin once
   *  koyu renkte 1px kaydirilarak dort yone cizilir, uzerine asil renk gelir. */
   private label(text:string,x:number,y:number,color='#ffffff'){const c=this.ctx;
@@ -992,7 +1035,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    unlem sabit -30'daydi, kucuk karakterlerde (Lin s=0.8) kayik duruyordu. */const etiketY=e.y-30*(e.s||1);const nw=this.label(e.name||'',e.x,etiketY);if(pending)this.label('!',e.x-nw/2-5,etiketY,'#e0453a');}
   }}));
   for(const m of this.mobs)actors.push({y:m.y,draw:()=>{if(m.kind===9){/* Fenerin isigi: ovadaki tek sicak renk. */const g=c.createRadialGradient(m.x,m.y-14,2,m.x,m.y-14,42);g.addColorStop(0,'#ffb35a70');g.addColorStop(1,'#ffb35a00');c.fillStyle=g;c.fillRect(m.x-42,m.y-56,84,84);}c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=Math.floor(time*Engine.DUSMAN_FPS(eylem));if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0));}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim);}else{this.sprite(anahtar,m.x,m.y,kare,Engine.DUSMAN_EN[m.kind]??32,32,yar.mod==='aynali'&&Math.cos(bak)<0,ol,1,0,Engine.DUSMAN_CAPA[m.kind]);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}const yuzuk=this.state.equipment.ring;if(m.kind!==9&&(m.hp<m.max||m.boss||(yuzuk&&ITEMS[yuzuk].canGoster))){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');if(m.kind===10)this.label('SON MUHAFIZ',m.x,m.y-40,'#c9b7d6');}}});
-   actors.push({y:this.state.y,draw:()=>{const s=this.state;c.fillStyle='#02081280';c.beginPath();c.ellipse(s.x,s.y+1,8.5*OYUNCU_OLCEK,2.8*OYUNCU_OLCEK,0,0,7);c.fill();const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';// Dusus: sprite kucule kucule asagi kayiyor, boslugun icine iniyormus gibi.
+   actors.push({y:this.state.y,draw:()=>{const s=this.state;this.golgeCiz(s.x,s.y);const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';// Dusus: sprite kucule kucule asagi kayiyor, boslugun icine iniyormus gibi.
   // Dusus: kucuIme YOK, karakter bir anda kayboluyor.
   const dusuyor=this.dusus>0;
   /* Izler oyuncunun ALTINA cizilir ve solar; en eskisi en sonuk. */
