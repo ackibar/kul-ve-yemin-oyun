@@ -955,7 +955,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   private gpSaldiri=false;
 
   private loop(time:number){const dt=Math.min(.035,(time-this.last)/1000||0);this.last=time;if(this.ready)this.gamepadTara();if(!this.paused&&this.ready)this.update(dt);this.render(time/1000);this.raf=requestAnimationFrame(this.loop)}
-  private sprite(key:string,x:number,y:number,frame=0,fw?:number,fh?:number,flip=false,scale=1,alpha=1,donder=0,capa?:number){const im=this.images[key];if(!im?.naturalWidth)return;const w=fw||im.width/R,h=fh||im.height/R;const count=Math.floor(im.width/(w*R));const c=this.ctx;c.save();c.globalAlpha=alpha;c.translate(Math.round(x),Math.round(y));const actor=key.startsWith('characters')||key.startsWith('enemies');/* Capa hucre icinde zemin cizgisinin satirini belirliyor (satir = 2*capa).
+  private sprite(key:string,x:number,y:number,frame=0,fw?:number,fh?:number,flip=false,scale=1,alpha=1,donder=0,capa?:number){const im=this.images[key];if(!im?.naturalWidth)return;const w=fw||im.width/R,h=fh||im.height/R;const count=Math.floor(im.width/(w*R));const c=this.ctx;c.save();c.globalAlpha=alpha;const actor=key.startsWith('characters')||key.startsWith('enemies');/* Aktorler (oyuncu/mob) HAREKET ederken tam sayiya yuvarlama olmadan
+   piksel titremesi/bulanikligi oluyordu, o yuzden onlar icin kaldi. Decor
+   ise SABIT duruyor - yuvarlama onda sadece boyali arka plandaki bir ozellikle
+   (ustune tam oturmasi gereken nesneler icin, bkz. harita-editor.html
+   Nesneler modu) piksel-hassas hizalanmayi engelliyordu ("milimetrik kayma"
+   sikayeti buradan geliyordu). Decor'da artik YUVARLAMA YOK. */c.translate(actor?Math.round(x):x,actor?Math.round(y):y);/* Capa hucre icinde zemin cizgisinin satirini belirliyor (satir = 2*capa).
    Dusmanlarda 21 idi, yani sprite en fazla 42 satir yuksek olabiliyordu;
    62 satirlik trolun ust yarisi kirpiliyordu. Buyuk dusmanlar kendi
    capasini geciyor. *//* Oyuncu setleri (characters1, 1sword, 1mesale...; characters10+ DEGIL) 80 satirlik hucrede. */const oyuncuSet=/^characters1(?!\d)/.test(key);const anchor=capa??(actor?(oyuncuSet?Engine.OYUNCU_CAPA:key.startsWith('characters')?31:key.startsWith('enemies1')?22:21):h);/* Tepeden gorulen yaratiklar icin: yon ayri sheet degil DONDURME. Capa
