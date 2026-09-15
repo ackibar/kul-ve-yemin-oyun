@@ -159,7 +159,7 @@
   <div id="nesnePalet" class="small" style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:3px;padding:6px;min-height:40px"></div>
 
   <h2>3 · Yerleştir</h2>
-  <p class="hint">Bir görsel seç, tuvale tıkla = o noktaya yerleştirir. Var olan bir nesneye tıkla = seç; gövdesinden sürükle = taşı, köşe tutamağından sürükle = büyüt/küçült (oranlı). <code>Delete</code>/<code>Backspace</code> = seçili nesneyi sil.</p>
+  <p class="hint">Bir görsel seç, tuvale tıkla = o noktaya yerleştirir. Var olan bir nesneye tıkla = seç; gövdesinden sürükle = taşı, herhangi bir tutamaçtan (köşe VEYA kenar ortası) sürükle = büyüt/küçült (her zaman oranlı, form bozulmaz). <code>Delete</code>/<code>Backspace</code> = seçili nesneyi sil. Tuval üzerinde fare tekerleği = yakınlaştır/uzaklaştır.</p>
   <div id="seciliNesne" style="display:none">
     <label>Seçili nesne (karo birimi)</label>
     <div class="row">
@@ -365,6 +365,14 @@ $('fillAll').addEventListener('click',()=>{ if(!img)return; grid=grid.map(r=>r.m
 $('clearAll').addEventListener('click',()=>{ if(!img)return; grid=grid.map(r=>r.map(()=>0)); draw(); updateExport(); });
 $('zoomIn').addEventListener('click',()=>{ scale=Math.min(4,scale*1.25); draw(); });
 $('zoomOut').addEventListener('click',()=>{ scale=Math.max(0.2,scale/1.25); draw(); });
+// Fare tekerlegiyle tuval uzerinde yakinlastir/uzaklastir - +/- dugmeleriyle
+// AYNI scale degiskenini kullanir, sadece daha hizli/dogal bir yol.
+cv.addEventListener('wheel',e=>{
+  if(!img)return;
+  e.preventDefault();
+  scale=Math.min(4,Math.max(0.2,scale*(e.deltaY<0?1.1:1/1.1)));
+  draw();
+},{passive:false});
 
 function draw(){
   if(!img)return;
@@ -454,7 +462,8 @@ function draw(){
       ctx.strokeStyle='#c99bec'; ctx.lineWidth=2;
       ctx.strokeRect(px-iw/2, py-ih, iw, ih);
       ctx.fillStyle='#c99bec';
-      for(const [hx,hy] of [[px-iw/2,py-ih],[px+iw/2,py-ih],[px-iw/2,py],[px+iw/2,py]]){
+      const cy=py-ih/2;
+      for(const [hx,hy] of [[px-iw/2,py-ih],[px+iw/2,py-ih],[px-iw/2,py],[px+iw/2,py],[px,py-ih],[px,py],[px-iw/2,cy],[px+iw/2,cy]]){
         ctx.beginPath(); ctx.arc(hx,hy,5,0,7); ctx.fill();
       }
     }
@@ -862,12 +871,21 @@ function objeAt(px,py){
 /** Secili nesnenin kose tutamaclarindan birine yakin miyiz? Dondugu deger
  *  'tl'|'tr'|'bl'|'br' - hangisi olursa olsun surukleme AYNI (oranli) tek
  *  bir "s" degerini degistirir, bagimsiz genislik/yukseklik yok. */
+/** Secili nesnenin TUM tutamaclarinin (4 kose + 4 kenar-ortasi) karo
+ *  biriminde konumlari - hepsi ORANLI (aspect-locked) buyutup kucultuyor,
+ *  hangisinden tutarsan tut fark etmez (kullanici "sadece koseden degil
+ *  kenardan da" istedi). */
+function objeTutamaclari(b){
+  const cx=(b.left+b.right)/2, cy=(b.top+b.bottom)/2;
+  return {tl:[b.left,b.top],tr:[b.right,b.top],bl:[b.left,b.bottom],br:[b.right,b.bottom],
+    t:[cx,b.top],b:[cx,b.bottom],l:[b.left,cy],r:[b.right,cy]};
+}
 function objeHandleAt(px,py){
   if(selectedObje<0)return null;
   const b=objeKutusu(objeler[selectedObje]);
   if(!b)return null;
   const tp=pxKaro*scale;
-  const pts={tl:[b.left,b.top],tr:[b.right,b.top],bl:[b.left,b.bottom],br:[b.right,b.bottom]};
+  const pts=objeTutamaclari(b);
   for(const k in pts){
     const [hx,hy]=pts[k];
     if(Math.hypot(hx*tp-px*tp,hy*tp-py*tp)<HANDLE_PX)return k;
@@ -914,10 +932,13 @@ $('nesneSil').addEventListener('click',()=>{
 
 function updateNesneExport(){
   const fmt=n=>Math.round(n*100)/100;
-  // -0.5: at()'in +8 (=0.5 karo) merkezleme kaydırmasını ÖNCEDEN telafi
-  // ediyoruz - bkz. vite.config.ts'teki AYNI notu, ikisi tutarlı kalmalı.
+  // x: -0.5 = at()'in +8 (=0.5 karo) merkezlemesini telafi. y: -0.875 =
+  // AYNI +0.5 ARTI decor sprite'larının kendine özgü +6 (=0.375 karo) alt
+  // kenar kaydırması (bkz. engine.ts sprite()'taki "top=-h*scale+6" - x'te
+  // böyle bir sabit yok, sadece y'ye özel). Bkz. vite.config.ts'teki AYNI
+  // not, ikisi tutarlı kalmalı.
   $('nesneExportBox').value = objeler.length
-    ? objeler.map(o=>`at({id:'${o.id}',type:'decor',x:${fmt(o.x-0.5)},y:${fmt(o.y-0.5)},asset:'${o.asset}',s:${fmt(o.s||1)}${o.layer?`,layer:${Math.round(o.layer)}`:''},overlay:true});`).join('\n')
+    ? objeler.map(o=>`at({id:'${o.id}',type:'decor',x:${fmt(o.x-0.5)},y:${fmt(o.y-0.875)},asset:'${o.asset}',s:${fmt(o.s||1)}${o.layer?`,layer:${Math.round(o.layer)}`:''},overlay:true});`).join('\n')
     : '(nesne yok - kaydedersen önceki eklemeler temizlenir)';
 }
 $('nesneCopyBtn').addEventListener('click', async ()=>{

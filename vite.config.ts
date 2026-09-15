@@ -37,10 +37,12 @@ function haritaEditoruEklentisi() {
               // NOT: -8 YOK (at()'in +8 merkezleme kaydırmasının tersini almıyoruz) -
               // editörün kendi x,y'si zaten "world-px/16" olarak tutuluyor (px=o.x*tp
               // ile doğrudan eşleşsin diye), +8 telafisi SAVE tarafında (sx=o.x-0.5)
-              // yapılıyor. Önceden burada (e.x-8)/16 vardı - editör önizlemesi
-              // gerçek oyun konumundan hep YARIM KARO kayık gösteriyordu ("yakın
-              // ama başka yerde duruyor" şikayetinin kaynağı).
-              .map((e: any) => ({ id: e.id, x: e.x / 16, y: e.y / 16, asset: e.asset, s: e.s ?? 1, layer: e.layer ?? 0 }));
+              // yapılıyor. Y'de AYRICA +6 var: engine.ts'teki sprite(), decor (non-actor)
+              // sprite'ları `top=-h*scale+6` ile çiziyor - yani decor'un ALT kenarı
+              // dünya-y'den 6 birim AŞAĞIDA. Bu X'te yok (yatay ortalama simetrik,
+              // stray sabit içermiyor) - sadece Y'ye özel. Bu unutulunca nesne
+              // oyunda editörde göründüğünden hep biraz aşağıda çıkıyordu.
+              .map((e: any) => ({ id: e.id, x: e.x / 16, y: (e.y + 6) / 16, asset: e.asset, s: e.s ?? 1, layer: e.layer ?? 0 }));
             res.setHeader('content-type', 'application/json');
             res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler }));
           } catch (e: any) {
@@ -102,7 +104,7 @@ function haritaEditoruEklentisi() {
                 // ikisi BIRLIKTE tutarli olmali).
                 const fmt = (n: number) => Math.round(n * 100) / 100;
                 const satirlar = (list as { id: string; x: number; y: number; asset: string; s?: number; layer?: number }[])
-                  .map((o) => `  at({id:'${o.id}',type:'decor',x:${fmt(o.x - 0.5)},y:${fmt(o.y - 0.5)},asset:'${o.asset}',s:${fmt(o.s ?? 1)}${o.layer ? `,layer:${Math.round(o.layer)}` : ''},overlay:true});\n`)
+                  .map((o) => `  at({id:'${o.id}',type:'decor',x:${fmt(o.x - 0.5)},y:${fmt(o.y - 0.875)},asset:'${o.asset}',s:${fmt(o.s ?? 1)}${o.layer ? `,layer:${Math.round(o.layer)}` : ''},overlay:true});\n`)
                   .join('');
                 // NESNE_BAS kendi basinda '\n' tasiyor, hem ilk eklemede hem de
                 // eslesme aramasinda AYNI sabit kullaniliyor - boylece kaldirinca
