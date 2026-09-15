@@ -725,7 +725,12 @@ cv.addEventListener('mousedown',e=>{
     if(aktifAsset){
       anlikGoruntuAl();
       objeSayac++;
-      objeler.push({id:`ed${Date.now()}_${objeSayac}`,x:px,y:py,s:1,asset:aktifAsset});
+      // Varsayilan olcek 1 DEGIL 0.1: yuklenen gorseller genelde koca sahne
+      // sayfalari (ör. 1400x1100px), s:1 ile ekleyince harita neredeyse
+      // tamamini kaplayan "dev" bir nesne cikiyordu - kullanici her defasinda
+      // elle kucultmek zorunda kaliyordu. 0.1 cogu gorsel icin makul bir
+      // baslangic; hala buyukse tutamaclardan buyutulebilir.
+      objeler.push({id:`ed${Date.now()}_${objeSayac}`,x:px,y:py,s:0.1,asset:aktifAsset});
       selectedObje=objeler.length-1;
       renderObjeList(); syncSelectedObje(); updateNesneExport(); draw();
     }else{

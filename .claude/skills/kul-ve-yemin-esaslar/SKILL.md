@@ -1114,6 +1114,18 @@ doğrulandı. Eski düz masa görseli silinmedi, sadece "table" gecmeyen
 nötr bir isme (`ed_masa_duz_eski.png`) taşındı ki ileride tekrar
 kullanılırsa yanlışlıkla crafting tetiklemesin.
 
+### v11.9: Nesne yerleştirme varsayılan ölçeği 0.1
+Nesneler modunda paletten tıklayıp yeni bir obje yerleştirirken ölçek hep
+`s:1` ile başlıyordu - yüklenen görseller genelde koca sahne sayfaları
+(1400×1100px gibi) olduğundan, bu da haritayı kaplayan "dev" bir nesneyle
+sonuçlanıyordu, kullanıcı her seferinde elle küçültmek zorunda kalıyordu
+(bkz. v11.7/v11.8'deki "editorde küçük ama oyunda devasa" ve "727.95 ölçek"
+örnekleri - hep AYNI kök sıkıntı: bu görseller küçük ikonlar değil, büyük
+kompozisyonlar). Kullanıcı doğrudan "0.1 scale ile eklensinler" dedi -
+`harita-editor.html`'deki yerleştirme satırı (`cv` mousedown, aktifAsset
+dalı) `s:1` yerine `s:0.1` ile başlıyor artık. Hâlâ küçük/büyük geliyorsa
+tutamaçlardan ayarlanabilir, sadece başlangıç noktası değişti.
+
 ---
 
-*Son güncelleme: 2026-09-16, v11.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-16, v11.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
