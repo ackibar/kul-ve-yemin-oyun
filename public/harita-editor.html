@@ -47,7 +47,7 @@
 <body>
 <aside>
   <h1>Harita Editörü</h1>
-  <p class="hint">Üç düzenleme modu: <b>Zemin</b> (karo boyama → <code>ZEMIN</code>), <b>Engeller</b> (piksel hassas kutu → <code>blockers</code>) ve <b>Nesneler</b> (kendi PNG'ini yükle, sahneye yerleştir → yeni <code>decor</code> varlıkları). Hepsi dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar.</p>
+  <p class="hint">Üç düzenleme modu: <b>Zemin</b> (karo boyama → <code>ZEMIN</code>), <b>Engeller</b> (piksel hassas kutu → <code>blockers</code>) ve <b>Nesneler</b> (kendi PNG'ini yükle, sahneye yerleştir → yeni <code>decor</code> varlıkları). Hepsi dev sunucusu açıkken tek tıkla <code>world.ts</code>'e yazar. <code>H</code> = el (pan) aracını aç/kapat, açıkken tuvali sürükleyerek kaydırabilirsin.</p>
 
   <div class="row" style="margin-bottom:10px">
     <button id="modeZemin" class="active">📐 Zemin</button>
@@ -238,6 +238,17 @@ let objeDrag=null; // {type:'move',from:[x,y],orig:{x,y}} ya da {type:'resize',a
 let objeSayac=0;
 
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+// El (pan) araci: H tusuyla acilip kapanir, acikken tuval uzerinde
+// surukleme mod-ozel islemi (boyama/kutu/nesne) yerine sadece <main>'i
+// kaydirir - buyuk haritalarda gezinmek icin. HANDLE_PX'ten AYRI, tum
+// modlarda calisir.
+let elModu=false;
+let elDrag=null; // {startX,startY,scrollLeft,scrollTop}
+const anaEl=document.querySelector('main');
+function setElModu(v){
+  elModu=v;
+  cv.style.cursor = elModu ? 'grab' : '';
+}
 const $=id=>document.getElementById(id);
 
 function setMode(m){
@@ -359,6 +370,7 @@ $('sekilPoligon').addEventListener('click',()=>setEngelSekli('poligon'));
 window.addEventListener('keydown',e=>{
   if(e.key==='z'||e.key==='Z')setBrush(1);
   if(e.key==='x'||e.key==='X')setBrush(0);
+  if((e.key==='h'||e.key==='H')&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName))setElModu(!elModu);
 });
 
 $('fillAll').addEventListener('click',()=>{ if(!img)return; grid=grid.map(r=>r.map(()=>1)); draw(); updateExport(); });
@@ -531,6 +543,13 @@ function boxBodyAt(px,py){
 }
 
 cv.addEventListener('mousemove',e=>{
+  if(elModu){
+    if(elDrag){
+      anaEl.scrollLeft=elDrag.scrollLeft-(e.clientX-elDrag.startX);
+      anaEl.scrollTop=elDrag.scrollTop-(e.clientY-elDrag.startY);
+    }
+    return;
+  }
   if(mode==='zemin'){
     const t=tileFromEvent(e);
     $('hoverTag').textContent = t ? `karo (${t[0]}, ${t[1]})` : '';
@@ -582,6 +601,11 @@ cv.addEventListener('mousemove',e=>{
   draw(); syncSelectedFields(); updateEngelExport();
 });
 cv.addEventListener('mousedown',e=>{
+  if(elModu){
+    elDrag={startX:e.clientX,startY:e.clientY,scrollLeft:anaEl.scrollLeft,scrollTop:anaEl.scrollTop};
+    cv.style.cursor='grabbing';
+    return;
+  }
   if(mode==='zemin'){
     const t=tileFromEvent(e);
     if(!t)return;
@@ -662,6 +686,7 @@ cv.addEventListener('mousedown',e=>{
   renderBoxList(); draw();
 });
 window.addEventListener('mouseup',()=>{
+  if(elDrag){ elDrag=null; cv.style.cursor='grab'; }
   painting=false;
   objeDrag=null;
   if(boxDrag){
