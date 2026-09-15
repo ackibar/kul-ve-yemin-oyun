@@ -85,13 +85,17 @@ export class Engine{
  static readonly OYUNCU_BOY=40;
  static readonly OYUNCU_CAPA=39;
  /** Oyuncunun carpisma kutusu varsayilan olarak 5px'lik bir KARE (yatay=dikey).
-  *  Once golgenin (bkz. render, ellipse 8.5x2.8) dikey boyutuna yaklastirildi
-  *  ama kullanici hala "tam yaklasamiyorum" dedi ve golgeyi carpisma
-  *  mantigina hic KARISTIRMAMAYI istedi - yani bu degerler artik golgeden
-  *  BAGIMSIZ, sadece daha siki bir kutu icin secildi. Onceki 5/5'ten
-  *  kucultuldu; hala fazla siki/gevsek gelirse bu ikisi ayarlanabilir. */
- static readonly OYUNCU_YATAY_YARICAP=3;
- static readonly OYUNCU_DIKEY_YARICAP=2;
+  *  Once golgenin (bkz. render, ellipse 8.5x2.8) dikey boyutuna yaklastirildi,
+  *  sonra golgeden TAMAMEN BAGIMSIZ 3/2'ye kucultuldu - kullanici "hala
+  *  gereginden fazla yer kapliyor" dedi, bu yuzden tekrar kucultuldu (2/1).
+  *  Hala fazla siki/gevsek gelirse bu ikisi ayarlanabilir. NOT: bu sadece
+  *  world.ts'teki blockers (elle/editorle cizilen mobilya) ile carpisma -
+  *  ayrica decor/chest tipi entity'lerin KENDI sabit yaricapi var (bkz.
+  *  walkable() sonundaki entities.some, 10/6px) ve bu ikisinden ETKILENMEZ;
+  *  "hala fazla yer kapliyor" hissi zanaat masasi/sandik gibi TEKIL bir
+  *  nesneden geliyorsa sorun oradadir, burada degil. */
+ static readonly OYUNCU_YATAY_YARICAP=2;
+ static readonly OYUNCU_DIKEY_YARICAP=1;
  /** Okun ciziminde kullanilan gogus yuksekligi (yalnizca gorsel). */
  static readonly OK_YUKSEK=17;
  /** Tepeden cizilmis yaratiklar ve sprite'larinin DOGAL bakis acisi (radyan,
