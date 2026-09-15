@@ -967,6 +967,22 @@ mekanizmaydı (elips blocker vs decor'un sabit-yarıçaplı collision'ı),
 ikisini birbirine karıştırıp tek bir açıklamayla kapatmaya çalışmak
 yanlış sonuca götürürdü.
 
+### v11.5: Ctrl+Z, P kısayolu, Silgi modu
+Genel geri-al deseni: tek bir ortak `gecmis` yığını, her mutasyondan
+HEMEN ÖNCE o modun (grid/boxes/objeler) derin kopyasını atıyor - hangi
+modda olursa olsun Ctrl+Z o moda geçip son kopyayı geri yüklüyor. Silgi
+poligonlarda NOKTA BAZLI siliyor (şekli küçültür, yok etmez), dikdörtgen/
+daire'de TÜM şekli siliyor (kısmi silme için gerçek bir CSG/boolean-
+subtract motoru gerekirdi, kapsam dışı bırakıldı - kullanıcıya açıkça
+söylendi). Playwright testinde İLK deneme "çalışmıyor" gibi göründü ama
+sebep tunel zone'unun 63 karo boyunda olması ve tıklama koordinatlarının
+(y=20,23) görünür viewport'un (950px) ÇOK dışına düşmesiydi (canvas
+4032px boyundaydı) - küçük/üstteki koordinatlarla tekrar denenince hepsi
+çalıştı. **Ders:** Playwright'ta byte-perfect tıklama koordinatı
+hesaplasan bile, hedef `boundingBox()` viewport'un dışındaysa tıklama
+sessizce hiçbir şey yapmaz - önce `box.height`/`box.width`'i viewport
+boyutuyla kıyaslamak, yanlış-negatif "bug"lardan çok daha hızlı kurtarır.
+
 ---
 
-*Son güncelleme: 2026-09-15, v11.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v11.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
