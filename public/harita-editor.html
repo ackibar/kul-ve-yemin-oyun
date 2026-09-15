@@ -229,13 +229,15 @@
   <input type="file" id="silahDosya" accept="image/png">
 
   <h2>3 · Konumlandır</h2>
-  <p class="hint">Aşağıdaki 6 çizimin (yön × bekleme/yürüyüş) HER biri için silahı ayrı ayrı konumlandır - her birinin ilk karesi tuvalde büyütülmüş gösterilir, ayarladığın konum o çizimin TÜM karelerine aynen uygulanır.</p>
+  <p class="hint">Önce çizimi (yön × bekleme/yürüyüş) seç, sonra altındaki karelerden (frame) birini seç - her kareyi ayrı ayrı, birbirinden bağımsız konumlandırabilirsin.</p>
   <div id="silahSheetSecici" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+  <div id="silahKareSecici" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px"></div>
   <div class="row">
     <div><label class="small">ölçek</label><input type="number" id="silahOlcek" step="0.05" value="1"></div>
     <div><label class="small">döndürme°</label><input type="number" id="silahAci" step="5" value="0"></div>
   </div>
-  <button id="silahTumSheetleriKopyala">Bu konumu tüm çizimlere kopyala</button>
+  <button id="silahKareyiSheeteUygula">Bu kareyi, bu çizimin tüm karelerine uygula</button>
+  <button id="silahTumSheetleriKopyala">Bu çizimi diğer tüm çizimlere kopyala</button>
 
   <h2>4 · Oluştur</h2>
   <button id="silahOlusturBtn" style="border-color:#c9a227">🗡️ Yeni varyantı oluştur ve kaydet</button>
@@ -1173,9 +1175,19 @@ let silahTemelNumara=null;
 let silahVaryantAdi='';
 let silahKaynakImg=null;
 let silahBaseImg={}; // sheet key -> Image (tam sheet, frame0 onizleme + nihai komposit icin)
-let silahPoz={}; SHEET_LISTE.forEach(k=>silahPoz[k]={dx:32,dy:32,scale:1,rotDeg:0});
+let silahPoz={}; // sheet key -> {dx,dy,scale,rotDeg}[] (HER KARE icin ayri, bkz. silahPozDiziSagla)
 let aktifSheet='D_Idle';
+let aktifKare=0;
 let silahDrag=null;
+function silahKareSayisi(key){ const b=silahBaseImg[key]; return b?Math.floor(b.width/64):0; }
+// Bir sheet'in kare sayisi (temel karakter yuklenince) degisince diziyi o
+// sayiya uydurur; onceki kare-0'in konumunu yeni karelere baslangic olarak
+// verir ki bos/undefined kare olmasin.
+function silahPozDiziSagla(key){
+  const n=silahKareSayisi(key);
+  const onceki=(silahPoz[key]&&silahPoz[key][0])?silahPoz[key][0]:{dx:32,dy:32,scale:1,rotDeg:0};
+  if(!silahPoz[key]||silahPoz[key].length!==n) silahPoz[key]=Array.from({length:n},()=>({...onceki}));
+}
 let ozelKarakterler=[]; // {key,img} - bu aracin urettigi ozel varyantlar (numarali degil)
 const silahCv=document.getElementById('silahCv'), silahCtx=silahCv.getContext('2d');
 
@@ -1202,8 +1214,11 @@ function renderSilahTemelPalet(){
       for(const key of SHEET_LISTE){
         try{ silahBaseImg[key]=await loadImageSrc(`/assets/characters/${silahTemelNumara}/${key}.png?t=${Date.now()}`); }
         catch{ silahBaseImg[key]=null; }
+        silahPozDiziSagla(key);
       }
+      aktifKare=0;
       $('status').textContent='Hazır. Şimdi bir silah seç ve konumlandır.';
+      renderSilahKareSecici();
       drawSilahCanvas();
     });
   });
@@ -1236,9 +1251,34 @@ function renderSilahSheetSecici(){
   el.querySelectorAll('[data-k]').forEach(elm=>{
     elm.addEventListener('click',()=>{
       aktifSheet=elm.dataset.k;
+      aktifKare=0;
       renderSilahSheetSecici();
-      $('silahOlcek').value=silahPoz[aktifSheet].scale;
-      $('silahAci').value=silahPoz[aktifSheet].rotDeg;
+      renderSilahKareSecici();
+      const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
+      if(p){ $('silahOlcek').value=p.scale; $('silahAci').value=p.rotDeg; }
+      drawSilahCanvas();
+    });
+  });
+}
+function renderSilahKareSecici(){
+  const el=$('silahKareSecici');
+  const base=silahBaseImg[aktifSheet];
+  const n=silahKareSayisi(aktifSheet);
+  if(!base||!n){ el.innerHTML=''; return; }
+  el.innerHTML = Array.from({length:n},(_,i)=>
+    `<button data-i="${i}" title="kare ${i}" style="width:40px;height:40px;padding:0;overflow:hidden;position:relative;background:#0f0d0b;border-color:${i===aktifKare?'#c9a227':'var(--line)'}">`
+    + `<canvas width="40" height="40" style="image-rendering:pixelated;display:block"></canvas></button>`
+  ).join('');
+  el.querySelectorAll('[data-i]').forEach(btn=>{
+    const i=parseInt(btn.dataset.i,10);
+    const ctx=btn.querySelector('canvas').getContext('2d');
+    ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(base,i*64,0,64,64,0,0,40,40);
+    btn.addEventListener('click',()=>{
+      aktifKare=i;
+      renderSilahKareSecici();
+      const p=silahPoz[aktifSheet][aktifKare];
+      $('silahOlcek').value=p.scale; $('silahAci').value=p.rotDeg;
       drawSilahCanvas();
     });
   });
@@ -1250,15 +1290,31 @@ function silahVaryantOnizlemeGuncelle(){
 }
 ['silahOlcek','silahAci'].forEach(id=>{
   $(id).addEventListener('input',()=>{
-    silahPoz[aktifSheet].scale=parseFloat($('silahOlcek').value)||1;
-    silahPoz[aktifSheet].rotDeg=parseFloat($('silahAci').value)||0;
+    const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
+    if(!p)return;
+    p.scale=parseFloat($('silahOlcek').value)||1;
+    p.rotDeg=parseFloat($('silahAci').value)||0;
     drawSilahCanvas();
   });
 });
+$('silahKareyiSheeteUygula').addEventListener('click',()=>{
+  const dizi=silahPoz[aktifSheet];
+  if(!dizi||!dizi[aktifKare])return;
+  const kaynak={...dizi[aktifKare]};
+  for(let i=0;i<dizi.length;i++)dizi[i]={...kaynak};
+  $('status').textContent=`Kare ${aktifKare}'in konumu bu çizimin tüm karelerine uygulandı.`;
+});
 $('silahTumSheetleriKopyala').addEventListener('click',()=>{
-  const kaynak={...silahPoz[aktifSheet]};
-  SHEET_LISTE.forEach(k=>silahPoz[k]={...kaynak});
-  $('status').textContent='Konum tüm çizimlere kopyalandı.';
+  const kaynakDizi=silahPoz[aktifSheet];
+  if(!kaynakDizi)return;
+  SHEET_LISTE.forEach(k=>{
+    if(k===aktifSheet)return;
+    const n=silahKareSayisi(k);
+    if(!n)return;
+    silahPoz[k]=Array.from({length:n},(_,i)=>({...kaynakDizi[Math.min(i,kaynakDizi.length-1)]}));
+  });
+  $('status').textContent='Bu çizimin kare konumları diğer tüm çizimlere kopyalandı.';
+  renderSilahKareSecici();
 });
 
 function drawSilahCanvas(){
@@ -1267,15 +1323,14 @@ function drawSilahCanvas(){
   silahCtx.clearRect(0,0,silahCv.width,silahCv.height);
   const base=silahBaseImg[aktifSheet];
   if(base){
-    // ilk kare (64x64) onizleme olarak buyutulmus cizilir
-    silahCtx.drawImage(base,0,0,64,64,0,0,64*K,64*K);
+    silahCtx.drawImage(base,aktifKare*64,0,64,64,0,0,64*K,64*K);
   }else{
     silahCtx.fillStyle='#3a352e'; silahCtx.fillRect(0,0,silahCv.width,silahCv.height);
   }
   silahCtx.strokeStyle='rgba(255,255,255,.15)';
   silahCtx.strokeRect(0,0,silahCv.width,silahCv.height);
-  if(silahKaynakImg){
-    const p=silahPoz[aktifSheet];
+  const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
+  if(silahKaynakImg&&p){
     silahCtx.save();
     silahCtx.translate(p.dx*K,p.dy*K);
     silahCtx.rotate(p.rotDeg*Math.PI/180);
@@ -1285,15 +1340,17 @@ function drawSilahCanvas(){
   }
 }
 silahCv.addEventListener('mousedown',e=>{
-  if(!silahKaynakImg)return;
+  const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
+  if(!silahKaynakImg||!p)return;
   const r=silahCv.getBoundingClientRect();
-  silahDrag={fromX:e.clientX-r.left,fromY:e.clientY-r.top,orig:{...silahPoz[aktifSheet]},shift:e.shiftKey};
+  silahDrag={fromX:e.clientX-r.left,fromY:e.clientY-r.top,orig:{...p},shift:e.shiftKey};
 });
 silahCv.addEventListener('mousemove',e=>{
   if(!silahDrag)return;
+  const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
+  if(!p)return;
   const r=silahCv.getBoundingClientRect();
   const x=e.clientX-r.left,y=e.clientY-r.top;
-  const p=silahPoz[aktifSheet];
   if(silahDrag.shift){
     const cx=silahDrag.orig.dx*SILAH_KANVAS_OLCEK, cy=silahDrag.orig.dy*SILAH_KANVAS_OLCEK;
     const a0=Math.atan2(silahDrag.fromY-cy,silahDrag.fromX-cx), a1=Math.atan2(y-cy,x-cx);
@@ -1307,9 +1364,9 @@ silahCv.addEventListener('mousemove',e=>{
 });
 window.addEventListener('mouseup',()=>{ silahDrag=null; });
 silahCv.addEventListener('wheel',e=>{
-  if(!silahKaynakImg)return;
+  const p=silahPoz[aktifSheet]&&silahPoz[aktifSheet][aktifKare];
+  if(!silahKaynakImg||!p)return;
   e.preventDefault();
-  const p=silahPoz[aktifSheet];
   p.scale=Math.max(.1,Math.round((p.scale+(e.deltaY<0?.05:-.05))*100)/100);
   $('silahOlcek').value=p.scale;
   drawSilahCanvas();
@@ -1325,7 +1382,9 @@ $('silahOlusturBtn').addEventListener('click', async ()=>{
   try{
     const files=[];
     for(const key of SHEET_LISTE){
-      const base=silahBaseImg[key], p=silahPoz[key];
+      const base=silahBaseImg[key];
+      silahPozDiziSagla(key);
+      const dizi=silahPoz[key];
       const out=document.createElement('canvas');
       out.width=base.width; out.height=base.height;
       const octx=out.getContext('2d');
@@ -1333,6 +1392,7 @@ $('silahOlusturBtn').addEventListener('click', async ()=>{
       octx.drawImage(base,0,0);
       const count=Math.floor(base.width/64);
       for(let i=0;i<count;i++){
+        const p=dizi[i];
         octx.save();
         octx.translate(i*64+p.dx,p.dy);
         octx.rotate(p.rotDeg*Math.PI/180);
