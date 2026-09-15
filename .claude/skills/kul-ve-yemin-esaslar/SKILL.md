@@ -863,6 +863,29 @@ TÜM otomatik dönüşümlerini (burada: hem `im.width/R` hem `x*16+8`) tek
 tek editörün karşılığıyla eşleştirip doğrulamak, aynı sınıf hatanın
 ikinci kez sürpriz olarak çıkmasını önlerdi.
 
+### v10.9: ÜÇÜNCÜ hata aynı ailede - v10.8 bile kaçırmıştı
+Kullanıcı v10.8'den SONRA "yine olmadı, benim koyduğumdan daha aşağıda
+geliyor" dedi - x doğruydu ama y hâlâ kaymıştı. Kaçırdığım şey: `at()`nin
++8'i tüm entity'ler için ortakken, `engine.ts`'teki `sprite()` decor
+(non-actor) sprite'ları özel olarak `top=-h*scale+6` ile çiziyor - yani
+decor'un alt kenarı dünya-y'den AYRICA 6 birim (0.375 karo) aşağıda.
+Bu X'te YOK (yatay ortalamada böyle bir sabit yok) - sadece Y'ye, ve
+sadece decor tipine özel. Düzeltme: GET `(e.y+6)/16`, SAVE `o.y-0.875`
+(=0.5+6/16); x aynı kaldı (`-0.5`). **Ders (v10.7/v10.8 notlarını
+pekiştiriyor):** "motorun bu yoldaki TÜM otomatik dönüşümlerini tek tek
+eşleştir" tavsiyesi bir öncekinde YARIM yapılmıştı - `at()`'in +8'ini
+buldum ama `sprite()`'ın decor'a özel +6'sını atlamıştım, çünkü o
+render KODUNDA (world.ts'te değil, çizim mantığında) gizliydi. Bu tür
+bir hatayı ararken sadece VERİ dönüşümlerine (world.ts, at()) değil,
+o veriyi TÜKETEN her yerin (render, collision, vb.) render/hesap
+formüllerine de bakmak gerekiyor - hepsini TARAYIP her birini editörün
+karşılığıyla eşleştirmeden "artık düzeldi" denemez.
+
+Aynı commit'te: Nesneler modunda artık köşelerin yanı sıra 4 kenarın da
+ortasından tutup oranlı büyütüp küçültülebiliyor (hangi tutamaç olursa
+olsun aynı davranış), ve tuval üzerinde fare tekerleğiyle yakınlaştırma/
+uzaklaştırma eklendi (+/- düğmeleriyle aynı `scale` değişkeni).
+
 ---
 
-*Son güncelleme: 2026-09-15, v10.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v10.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
