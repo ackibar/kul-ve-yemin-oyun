@@ -579,8 +579,21 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Nokta bir alevin yakma yaricapinda mi. Ates artik oyuncu disindakileri de
   *  yaktigi icin hem hasar turunde hem NPC hedef seciminde kullaniliyor. */
  private atesteMi(x:number,y:number){
-  return this.world.entities.some(e=>e.type==='fire'&&
-   Math.hypot(e.x-x,e.y-y)<Engine.ATES_YARICAP*(e.s??1));
+  return this.world.entities.some(e=>e.type==='fire'&&this.atesTemas(e,x,y));
+ }
+ /** Bir nokta bir ates entity'sinin GERCEKTEN yakan bolgesinde mi. Eskiden
+  *  e.x,e.y merkezli TAM SIMETRIK bir daireydi - sprite yukari dogru uzun
+  *  bir alev cizdigi icin (bkz. sprite()'taki decor "top=-h*scale+6"), bu
+  *  dairenin ust yarisi alevin gorsel TEPESINE kadar yaniyordu, oysa orasi
+  *  sadece duman/ucuk kismi, gercek kor/taban degil. Kullanici "ustu
+  *  yakmasin sadece alti yaksin" dedi - daire artik YUKARI dogru kirpik:
+  *  hedef, ates'in taban noktasindan (e.y) ustPay'dan fazla yukaridaysa
+  *  (kucuk y) hic yanmiyor; yanlarda ve altta eski yaricap aynen gecerli. */
+ private atesTemas(e:Entity,x:number,y:number):boolean{
+  const r=Engine.ATES_YARICAP*(e.s??1);
+  const ustPay=4*(e.s??1);
+  if(e.y-y>ustPay)return false;
+  return Math.hypot(e.x-x,e.y-y)<r;
  }
  private burst(x:number,y:number,color:string,n:number){for(let i=0;i<n;i++)this.particles.push({x,y,vx:(Math.random()-.5)*55,vy:(Math.random()-.6)*55,life:.4+Math.random()*.4,color,size:1+Math.random()})}
   private float(x:number,y:number,text:string,color:string){let targetY=y;for(const f of this.floating){if(Math.abs(f.x-x)<24&&Math.abs(f.y-targetY)<10){targetY-=11;}}this.floating.push({x,y:targetY,text,life:1.1,color})}
@@ -644,20 +657,19 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     let yandi=false;
     for(const e of this.world.entities){
      if(e.type!=='fire')continue;
-     const r=Engine.ATES_YARICAP*(e.s??1);
-     if(Math.hypot(e.x-this.state.x,e.y-this.state.y)<r){
+     if(this.atesTemas(e,this.state.x,this.state.y)){
       if(!ITEMS[this.state.equipment.armor].atesBagisik){
        this.hurt(8);this.float(this.state.x,this.state.y-14,'Ateş yaktı!','#ff6b4a');}
       yandi=true;}
      for(const m of this.mobs){
-      if(m.hp<=0||Math.hypot(e.x-m.x,e.y-m.y)>=r)continue;
+      if(m.hp<=0||!this.atesTemas(e,m.x,m.y))continue;
       m.hp-=Engine.ATES_HASAR;m.hurt=.17;m.burn=Math.max(m.burn,1.5);
       this.float(m.x,m.y-12,String(Engine.ATES_HASAR),'#ff9e5e');
       if(m.hp<=0){if(m.id==='rauf')this.raufDizCok();else this.kill(m);}
       yandi=true;}
      // Yoldas Rauf'un kendi cani var; o da yanar.
      const yoldas=this.state.flags.rauf==='takip'?this.world.entities.find(x=>x.id==='rauf'):null;
-     if(yoldas&&Math.hypot(e.x-yoldas.x,e.y-yoldas.y)<r){
+     if(yoldas&&this.atesTemas(e,yoldas.x,yoldas.y)){
       const kalan=Math.max(0,(Number(this.state.flags.raufCan)||0)-Engine.ATES_HASAR);
       this.state.flags.raufCan=String(Math.round(kalan));
       this.float(yoldas.x,yoldas.y-16,'−'+Engine.ATES_HASAR,'#ff9e5e');

@@ -1126,6 +1126,25 @@ kompozisyonlar). Kullanıcı doğrudan "0.1 scale ile eklensinler" dedi -
 dalı) `s:1` yerine `s:0.1` ile başlıyor artık. Hâlâ küçük/büyük geliyorsa
 tutamaçlardan ayarlanabilir, sadece başlangıç noktası değişti.
 
+### v12.0: Ateşin sadece alt kısmı yaksın
+"Ateşin üst kısmı yakmasın sadece alt kısmı yaksın" - eski `atesteMi()` ve
+ana yanma döngüsü (update()'teki fireBurnCooldown bloğu) `e.x,e.y` merkezli
+TAM SİMETRİK bir daire kullanıyordu (`Math.hypot(...)＜ATES_YARICAP`). Alev
+sprite'ı yukarı doğru uzun çizildiği için (decor anchor'ı `top=-h*scale+6`,
+bkz. v11.7'nin rotate-pivot notu) bu dairenin üst yarısı alevin gerçek
+tabanından çok, görsel TEPESİNE (duman/uç kısmına) kadar yanıyordu. Yeni
+paylaşılan `atesTemas(e,x,y)` yardımcı fonksiyonu daireyi YUKARI doğru
+kırpıyor: hedef `e.y`'den (taban) `ustPay=4*ölçek` biriminden fazla
+yukarıdaysa hiç yanmıyor; yanlarda ve altta eski yarıçap aynen geçerli.
+`atesteMi()` (NPC hedef seçimi de kullanıyor) ve ana hasar döngüsü
+(oyuncu+mob+Rauf, 3 ayrı `Math.hypot` çağrısı) hepsi bu tek fonksiyona
+yönlendirildi - tekrar formül yazmak yerine. Playwright'ta üç nokta
+(taban-üstü 12 birim yukarı, tam taban, taban-altı 10 birim) test edildi;
+İLK denemede mob'ların da hasar verdiği fark edilmeden yanlış sonuç
+çıkıyordu ("üst" hâlâ yanıyor gibi göründü) - `g.mobs=[]` ile düşman
+etkisi dışlanınca (ve `changeZone`'un verdiği 1.5sn dokunulmazlığın
+GEÇMESİNİ bekleyince) doğru sonuç: üst yanmıyor, taban ve alt hâlâ yanıyor.
+
 ---
 
-*Son güncelleme: 2026-09-16, v11.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-16, v12.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
