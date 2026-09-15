@@ -914,8 +914,10 @@ $('nesneSil').addEventListener('click',()=>{
 
 function updateNesneExport(){
   const fmt=n=>Math.round(n*100)/100;
+  // -0.5: at()'in +8 (=0.5 karo) merkezleme kaydırmasını ÖNCEDEN telafi
+  // ediyoruz - bkz. vite.config.ts'teki AYNI notu, ikisi tutarlı kalmalı.
   $('nesneExportBox').value = objeler.length
-    ? objeler.map(o=>`at({id:'${o.id}',type:'decor',x:${fmt(o.x)},y:${fmt(o.y)},asset:'${o.asset}',s:${fmt(o.s||1)}${o.layer?`,layer:${Math.round(o.layer)}`:''},overlay:true});`).join('\n')
+    ? objeler.map(o=>`at({id:'${o.id}',type:'decor',x:${fmt(o.x-0.5)},y:${fmt(o.y-0.5)},asset:'${o.asset}',s:${fmt(o.s||1)}${o.layer?`,layer:${Math.round(o.layer)}`:''},overlay:true});`).join('\n')
     : '(nesne yok - kaydedersen önceki eklemeler temizlenir)';
 }
 $('nesneCopyBtn').addEventListener('click', async ()=>{

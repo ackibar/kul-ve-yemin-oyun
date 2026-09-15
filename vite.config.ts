@@ -34,7 +34,13 @@ function haritaEditoruEklentisi() {
             // Sadece bu aracın kendi eklediği (overlay:true) decor'ları döner -
             // NPC/sandık/ateş gibi elle yazılmış diğer entity'lere karışmaz.
             const nesneler = world.entities.filter((e: any) => e.type === 'decor' && e.overlay)
-              .map((e: any) => ({ id: e.id, x: (e.x - 8) / 16, y: (e.y - 8) / 16, asset: e.asset, s: e.s ?? 1, layer: e.layer ?? 0 }));
+              // NOT: -8 YOK (at()'in +8 merkezleme kaydırmasının tersini almıyoruz) -
+              // editörün kendi x,y'si zaten "world-px/16" olarak tutuluyor (px=o.x*tp
+              // ile doğrudan eşleşsin diye), +8 telafisi SAVE tarafında (sx=o.x-0.5)
+              // yapılıyor. Önceden burada (e.x-8)/16 vardı - editör önizlemesi
+              // gerçek oyun konumundan hep YARIM KARO kayık gösteriyordu ("yakın
+              // ama başka yerde duruyor" şikayetinin kaynağı).
+              .map((e: any) => ({ id: e.id, x: e.x / 16, y: e.y / 16, asset: e.asset, s: e.s ?? 1, layer: e.layer ?? 0 }));
             res.setHeader('content-type', 'application/json');
             res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler }));
           } catch (e: any) {
@@ -88,14 +94,15 @@ function haritaEditoruEklentisi() {
                   yeniBlok = blok; // hem yeni liste bos hem eski yoktu - degisiklik yok
                 }
               } else if (kind === 'nesneler') {
-                // list: {id,x,y,asset,s,layer}[] - x/y karo biriminde (ondalikli olabilir).
-                // at() zaten *16+8 uyguluyor, o yuzden BURADA CARPMA YOK - world.ts'teki
-                // diger tum at({...}) cagrilari da karo birimi aliyor, tutarli kalsin.
-                // layer sadece SIFIR DEGILSE yazilir - eski/normal nesneler world.ts'te
-                // gereksiz "layer:0" ile kirlenmesin (bkz. Entity.layer tipindeki not).
+                // list: {id,x,y,asset,s,layer}[] - editordeki x/y "world-px/16" (yani
+                // px=o.x*tp ekran ciziminde dogrudan kullanilan deger). at() +8 EKLEDIGI
+                // icin burada -0.5 (=8/16) ile ONCEDEN telafi ediyoruz, yoksa at()'in
+                // otomatik merkezlemesi yuzunden nesne oyunda editordeki gorunumunden
+                // YARIM KARO kaymis cikardi (bkz. GET endpoint'indeki e.x/16 notu -
+                // ikisi BIRLIKTE tutarli olmali).
                 const fmt = (n: number) => Math.round(n * 100) / 100;
                 const satirlar = (list as { id: string; x: number; y: number; asset: string; s?: number; layer?: number }[])
-                  .map((o) => `  at({id:'${o.id}',type:'decor',x:${fmt(o.x)},y:${fmt(o.y)},asset:'${o.asset}',s:${fmt(o.s ?? 1)}${o.layer ? `,layer:${Math.round(o.layer)}` : ''},overlay:true});\n`)
+                  .map((o) => `  at({id:'${o.id}',type:'decor',x:${fmt(o.x - 0.5)},y:${fmt(o.y - 0.5)},asset:'${o.asset}',s:${fmt(o.s ?? 1)}${o.layer ? `,layer:${Math.round(o.layer)}` : ''},overlay:true});\n`)
                   .join('');
                 // NESNE_BAS kendi basinda '\n' tasiyor, hem ilk eklemede hem de
                 // eslesme aramasinda AYNI sabit kullaniliyor - boylece kaldirinca
