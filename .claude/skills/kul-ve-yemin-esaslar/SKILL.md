@@ -1182,6 +1182,24 @@ kaydedip yolunu söylemesini istemek gerekti (`~/Desktop/props/`) - resim
 ekleme isteklerinde ilk BUNU sormak, disk taraması yapmadan önce zaman
 kazandırır.
 
+### v12.3: Oyundaki gerçek sandık görseli yenilendi
+"Mapte duran mevcut sandıkla bu sandığı değiştir, öbür sandık ta nesneler
+de kayıtlı kalsın" - oyundaki TÜM `type:'chest'` varlıkları (haven'daki
+hediye sandığı, tünel/sarnıç sandıkları, hepsi) TEK bir paylaşılan sprite
+sheet kullanıyor: `public/assets/nesne/sandik.png`, 96×48px, 2 kare
+(kapalı|açık, her biri 48×48 - `this.sprite('chest',...,opened?1:0,24,24,...)`
+dünya-birimi 24 * R=2 = 48 native px). v12.2'de eklenen iki AYRI Nesneler
+görseli (`ed_sandik_kapali.png`, `ed_sandik_acik.png`) tam bu iki kareye
+karşılık geldiği için ikisi 48×48'e küçültülüp yan yana yeni bir
+`sandik.png` olarak birleştirildi - kod değişikliği gerekmedi, sadece
+asset. **Önemli:** v12.2'de Nesneler paletine eklenen o iki TEKİL dosya
+(`ed_sandik_kapali.png`/`ed_sandik_acik.png`) BUNDAN AYRI, dokunulmadı -
+hâlâ palette'te duruyor, istenirse dekoratif olarak da yerleştirilebilir;
+sadece OYUNUN GERÇEK sandık sprite'ı (fonksiyonel, tüm `chest()` çağrıları)
+bu ikisinden birleştirilen yeni görsele geçti. Playwright ile hem kapalı
+hem açık hali gerçek oyunda (haven'ın hediye sandığı) ekran görüntüsüyle
+doğrulandı.
+
 ---
 
-*Son güncelleme: 2026-09-16, v12.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-16, v12.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
