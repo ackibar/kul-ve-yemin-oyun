@@ -746,6 +746,28 @@ kendi hitbox yarıçapıyla değmesiydi (blockers'la ilgisi yoktu). Çarpışma
 matematiği gibi geometrik bir şeyi doğrularken önce sentetik/izole veriyle
 test et, gerçek içerikle test etmek TALI/onay adımı olsun.
 
+### Oyuncunun çarpışma kutusu golgesine gore dikeyde daraltildi — v10.1
+Kullanıcı "karakter zeminde göründüğünden fazla yer kaplıyor, geçebilecek
+gibi görünen boşluktan geçemiyor" dedi, örnek olarak S (yan) pozisyonda
+gölgesinin çizgiye değdiği yerde durmasını verdi. Kontrol edince: oyuncu
+HER ZAMAN simetrik r=5 kare hitbox ile çarpışıyordu ama render'daki
+gölge elips (bkz. engine.ts, `ellipse(s.x,s.y+1,8.5,2.8,...)`) yatayda
+geniş (8.5px), dikeyde ÇOK ince (2.8px) - yani görünmez kutu dikeyde
+gölgenin neredeyse 2 katı yer kaplıyordu, tam da şikayet ettiği hissin
+kaynağı. `walkable()`'a opsiyonel `ry` (dikey yarıçap, verilmezse r ile
+aynı - GERİYE DÖNÜK UYUMLU, mob/ok/diğer tüm çağrılar değişmedi) eklendi;
+sadece oyuncunun kendi hareket adımı (`engine.ts` içindeki TEK
+`this.move(this.state,...)` çağrısı) `Engine.OYUNCU_DIKEY_YARICAP=3`
+kullanıyor artık. Yatay tarafa DOKUNULMADI - sadece dikey sıkışmalar
+rahatladı. Senkron testlerle doğrulandı (8px dikey boşluk artık
+geçilebiliyor, 4px hâlâ engelli, yatay boşluklarda davranış aynı).
+**Genel ders:** görsel (sprite/gölge) ile görünmez oyun mantığı (hitbox)
+arasında boyut/oran uyuşmazlığı olursa, "büyük görünen ama küçük
+davranan" ya da tam tersi bir his kullanıcıya hep "buradan geçebilmem
+lazımdı" gibi somut bir örnekle geliyor - önce render koduna bakıp
+gerçek görsel boyutları (gölge, sprite capası vb.) hitbox sabitleriyle
+KARŞILAŞTIRMAK, tahminle uğraşmaktan çok daha hızlı kök nedene götürüyor.
+
 ---
 
-*Son güncelleme: 2026-09-15, v10.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v10.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
