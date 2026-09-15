@@ -102,7 +102,10 @@ function haritaEditoruEklentisi() {
                 // otomatik merkezlemesi yuzunden nesne oyunda editordeki gorunumunden
                 // YARIM KARO kaymis cikardi (bkz. GET endpoint'indeki e.x/16 notu -
                 // ikisi BIRLIKTE tutarli olmali).
-                const fmt = (n: number) => Math.round(n * 100) / 100;
+                // 4 ondalik (2 degil): x-0.5/y-0.875 telafisi + tekrarlanan
+                // yukle-duzenle-kaydet dongulerinde 2 ondalik yuvarlama
+                // biriktirip kucuk ("hafif") bir kaymaya yol acabiliyordu.
+                const fmt = (n: number) => Math.round(n * 10000) / 10000;
                 const satirlar = (list as { id: string; x: number; y: number; asset: string; s?: number; layer?: number }[])
                   .map((o) => `  at({id:'${o.id}',type:'decor',x:${fmt(o.x - 0.5)},y:${fmt(o.y - 0.875)},asset:'${o.asset}',s:${fmt(o.s ?? 1)}${o.layer ? `,layer:${Math.round(o.layer)}` : ''},overlay:true});\n`)
                   .join('');

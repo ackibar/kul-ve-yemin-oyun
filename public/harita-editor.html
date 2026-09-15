@@ -931,7 +931,7 @@ $('nesneSil').addEventListener('click',()=>{
 });
 
 function updateNesneExport(){
-  const fmt=n=>Math.round(n*100)/100;
+  const fmt=n=>Math.round(n*10000)/10000; // 4 ondalik - tekrarli duzenlemelerde yuvarlama birikmesin
   // x: -0.5 = at()'in +8 (=0.5 karo) merkezlemesini telafi. y: -0.875 =
   // AYNI +0.5 ARTI decor sprite'larının kendine özgü +6 (=0.375 karo) alt
   // kenar kaydırması (bkz. engine.ts sprite()'taki "top=-h*scale+6" - x'te
