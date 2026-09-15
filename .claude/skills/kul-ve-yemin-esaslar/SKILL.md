@@ -793,6 +793,54 @@ kullan, canlı sahne tuvalinde asla.** Ekran görüntüsüyle doğrulandı: aç�
 zeminde gölge normal, mobilya kenarında gölge oraya binen kısmıyla
 görünmez oluyor.
 
+### v10.3-v10.5: hitbox ince ayarı iki eksende BAĞIMSIZ yapılmalı
+Oyuncunun çarpışma yarıçapı birkaç round'da ayarlandı (yatay/dikey ayrı
+ayrı `OYUNCU_YATAY_YARICAP`/`OYUNCU_DIKEY_YARICAP`, `engine.ts`). **Ders:**
+kullanıcı "W/S'de iyi ama A/D'de kötü" dediğinde, iki eksen birbirini
+TEMSİL ETMİYOR - biri için yapılan düzeltme diğerini otomatik çözmüyor,
+her ekseni kendi şikayetine göre ayrı ayarla. Ayrıca golgeyi (görsel)
+gerekçe olarak kullanma - kullanıcı acikca "golgeyi carpismaya karistirma"
+dedi, sabitler artik golgeden BAGIMSIZ secildi.
+
+### v10.6-v10.7: Nesneler modunda R=2 İKİ KERE uygulanan kritik 2x boyut hatası
+Kullanıcı yeni bir mobilya PNG'i (çamaşır ipi, `ed_props.png`, 1438x1093 -
+kaynak görsel odanın kendi arka planından bile büyük) editörün Nesneler
+modundan yerleştirdi, ölçeği editörde "küçük ve doğru" görününceye kadar
+ayarladı, kaydetti - ama OYUNDA yine devasa çıktı. Bunu ilk seferinde
+(v10.6) haven.png'nin gerçek piksellerini elle ölçüp x/y/s hesaplayarak
+(motorun `im.width/R` formülüyle) çözdüm ve ekran görüntüsüyle
+doğruladım - çalıştı. Ama kullanıcı editörden tekrar ayarlamayı deneyince
+"editörde küçük oyunda devasa" şikayeti AYNEN geri geldi. Kök neden:
+`harita-editor.html`'in Nesneler modu (`draw()` içindeki `iw=p.img.width*
+scale/2*s` VE `objeKutusu()`'ndeki `iw=p.img.width/2/pxKaro*s`) R=2
+katsayısını YANLIŞLIKLA İKİ KERE uyguluyordu (bir kere zaten `pxKaro=32`
+içinde gömülüyken, bir kere de ekstra `/2` ile) - yani editörün önizlemesi
+motorun GERÇEK render formülünden (`im.width/R`, `engine.ts` `sprite()`)
+sistematik olarak YARI boyuttaydı. Kullanıcı editörde "doğru küçüklükte"
+görünceye kadar `s`'yi ayarladıkça, aslında oyunda TAM 2 KATI büyük bir
+değer üretiyordu - hangi sayıyı denerse denesin editör onu YALANLIYORDU.
+Düzeltme: her iki yerden de fazladan `/2`'yi kaldır (`iw=p.img.width*
+scale*s` ve `iw=p.img.width/pxKaro*s`), izole bir hesapla (`native_w/R/16
+=== native_w/pxKaro`) doğrula.
+
+**Genel ders (çok değerli):** bir görsel düzenleme aracının (editör)
+önizlemesi ile onu TÜKETEN gerçek motorun (oyun) render formülü ayrı
+kod yollarında yaşıyorsa, İKİSİ ARASINDAKİ TUTARLILIK asla varsayılmasın
+- kullanıcı "editörde X gördüm ama oyunda Y oldu" dediğinde İLK ŞÜPHE bu
+olmalı (bir sonraki denemede aynı şikayetin AYNEN tekrarlanması bunun
+GÜÇLÜ bir işaretiydi - "az önce düzelttim" diye görmezden gelinmemeli).
+Çözüm sonrası izole bir aritmetik testle (gerçek dosyaya/tarayıcıya hiç
+dokunmadan) iki formülün SAYISAL olarak birebir eşleştiğini doğrulamak,
+ekran görüntüsü karşılaştırmaktan çok daha hızlı ve kesin sonuç verdi.
+
+Aynı commit'te iki yeni özellik de eklendi: Nesneler modunda köşe
+tutamağından sürükleyerek ORANLI büyütme/küçültme (Engeller modundaki
+kutu/daire ile AYNI etkileşim deseni - kullanıcı "kenarından tutup scale
+etmeme izin ver" dedi, var olan deseni yeniden kullanmak yeni bir şey
+icat etmekten hızlıydı) ve `Entity.layer` (varsayılan 0, sıfırdan
+farklıysa y'den ÖNCE bu sıralanıyor - pozitif her zaman önde, negatif
+her zaman arkada, y sadece aynı katmandakiler arasında tie-break).
+
 ---
 
-*Son güncelleme: 2026-09-15, v10.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v10.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
