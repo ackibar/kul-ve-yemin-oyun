@@ -615,6 +615,27 @@ kalsın. `image-rendering:auto` ile inline override edildi çünkü
 `.dungeon-map`'in genel `pixelated` kuralı küçük bir fotoğraf-gibi
 küçültmede (tile-grid'in aksine) daha kaba/gürültülü görünürdü.
 
+### NPC'ye ücretsiz silah varyantı: portrait alanı STRING de olabilir — v9.4
+Kullanıcı "karakterin yürüyüşüne sadece silahı değiştirip aynı animasyonu
+kullanmak mümkün mü" diye sordu - netleştirince (AskUserQuestion) YENİ bir
+PixelLab üretimi DEĞİL, VAR OLAN hazır varyantları kullanmak istediği
+ortaya çıktı. Motor zaten sprite anahtarını `characters${e.portrait}${yon}
+${eylem}` diye düz string-concat ile kuruyordu (bkz. engine.ts satır ~984)
+- yani `e.portrait`'i `'1sword'` gibi bir STRING yapmak, oyuncunun zaten
+yüklenmiş silah-varyantı setlerini (characters/1sword/, 1bow/, 1balta/,
+1mesale/, 1swordmesale/) HİÇBİR yeni üretim olmadan bir NPC'ye giydiriyor.
+`Entity.portrait` tipi `number|string` oldu. Karakterler modunda portrait
+1 (insan-şekilli beden) seçilince bir "silah varyantı" paleti çıkıyor;
+yerleştirirken VEYA sonradan seçili NPC üzerinde değiştirilebiliyor.
+Kaydetme ucu (`vite.config.ts`) portrait'in türüne göre tırnaklı/tırnaksız
+yazıyor - **bunu unutursan** (`Math.round(o.portrait)` gibi sayı
+varsayarsan) string bir portrait NaN'a döner, sessizce kırılır.
+
+**Genel ders:** kullanıcı "X mümkün mü" diye sorduğunda, önce mevcut kod
+gerçekten neyi destekliyor diye bak (`grep`) - burada motor zaten
+string-concat kullandığı için "yeni özellik" aslında var olan bir
+mekanizmanın ücretsiz bir yan kullanımıydı, hiç yeni altyapı gerekmedi.
+
 ---
 
-*Son güncelleme: 2026-09-15, v9.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v9.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

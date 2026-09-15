@@ -1,5 +1,10 @@
 import type {ItemId,Zone} from './data';
-export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;portrait?:number;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number;/** harita-editor.html'in "Nesneler" modunda eklenen tekil PNG - boyali
+export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|'decor'|'trap'|'yatak'|'ceset';x:number;y:number;name?:string;/** Cogunlukla numara (characters/N/), ama oyuncunun silah varyanti setleri
+ *  ('1sword','1bow','1balta','1mesale','1swordmesale') de gecerli - motor
+ *  sprite anahtarini `characters${portrait}${yon}${eylem}` diye kuruyor,
+ *  bu yuzden dogrudan STRING olarak da calisiyor (bkz. harita-editor.html
+ *  Karakterler modu: ayni yuruyus animasyonunu, sadece silahi degistirerek
+ *  tekrar kullanmak icin, yeni bir PixelLab uretimi GEREKMEDEN). */portrait?:number|string;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number;/** harita-editor.html'in "Nesneler" modunda eklenen tekil PNG - boyali
  *  sahnenin UZERINE, actors[] y-sirasina gore cizilir (normal decor gibi
  *  gizli kalmaz). asset public/assets/<asset>.png yolunu gosterir. */overlay?:boolean};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden

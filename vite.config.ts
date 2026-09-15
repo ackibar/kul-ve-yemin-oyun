@@ -122,8 +122,12 @@ function haritaEditoruEklentisi() {
                 // baslamak zorunda (istemci zaten oyle uretiyor), yoksa GET
                 // yanitinda "duzenlenebilir" olarak isaretlenmez.
                 const fmt = (n: number) => Math.round(n * 100) / 100;
-                const satirlar = (list as { id: string; x: number; y: number; name: string; portrait: number; sabit?: boolean }[])
-                  .map((o) => `  at({id:'${o.id.startsWith(KARAKTER_ONEK) ? o.id : KARAKTER_ONEK + o.id}',type:'npc',x:${fmt(o.x)},y:${fmt(o.y)},name:'${o.name.replace(/'/g, "\\'")}',portrait:${Math.round(o.portrait)}${o.sabit ? ',sabit:true' : ''}});\n`)
+                // portrait cogunlukla numara ama oyuncunun silah varyanti
+                // setleri de gecerli STRING'ler ('1sword' gibi, bkz. Entity
+                // tipindeki not) - o yuzden turune gore tirnakli/tirnaksiz yaz.
+                const portreIfade = (p: number | string) => typeof p === 'number' ? String(Math.round(p)) : `'${String(p).replace(/'/g, "\\'")}'`;
+                const satirlar = (list as { id: string; x: number; y: number; name: string; portrait: number | string; sabit?: boolean }[])
+                  .map((o) => `  at({id:'${o.id.startsWith(KARAKTER_ONEK) ? o.id : KARAKTER_ONEK + o.id}',type:'npc',x:${fmt(o.x)},y:${fmt(o.y)},name:'${o.name.replace(/'/g, "\\'")}',portrait:${portreIfade(o.portrait)}${o.sabit ? ',sabit:true' : ''}});\n`)
                   .join('');
                 const yeniBolum = satirlar ? KARAKTER_BAS + satirlar + KARAKTER_SON : '';
                 const marklıRe = new RegExp(KARAKTER_BAS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[\\s\\S]*?' + KARAKTER_SON.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));

@@ -179,6 +179,11 @@
   <p class="hint">Sarı çerçeveli noktalar mevcut (elle yazılmış) NPC'ler - salt okunur referans, bu araç onları düzenleyemez/silemez. Bir portre seçip tuvale tıklarsan YENİ bir NPC eklersin.</p>
   <div id="portrePalet" class="small" style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:3px;padding:6px;max-height:160px;overflow-y:auto"></div>
 
+  <div id="silahSecimi" style="display:none">
+    <label>Silah varyantı (sadece bu insan-şekilli beden için - oyuncunun kendi kuşanma setleri, YENİ üretim gerekmez, ücretsiz)</label>
+    <div id="silahPalet" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  </div>
+
   <h2>3 · Yerleştir</h2>
   <p class="hint">Bir portre seç, tuvale tıkla = o noktaya yerleştirir (mor nokta). Var olan (mor) bir NPC'ye tıkla = seç; sürükle = taşı. <code>Delete</code>/<code>Backspace</code> = seçili NPC'yi sil.</p>
   <div id="seciliKarakter" style="display:none">
@@ -189,6 +194,10 @@
       <div><label class="small">y</label><input type="number" id="ky" step="0.05"></div>
     </div>
     <label class="small"><input type="checkbox" id="kSabit" style="width:auto;margin-right:4px">Sabit (dolaşmaz, yerinde durur)</label>
+    <div id="seciliSilahSecimi" style="display:none">
+      <label class="small">Silah varyantı</label>
+      <div id="seciliSilahPalet" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
     <button id="karakterSil">Seçileni sil</button>
   </div>
   <label>NPC listesi (tıkla = seç, sadece bu aracın eklediği düzenlenebilir)</label>
@@ -256,9 +265,19 @@ let objeSayac=0;
 
 // --- Karakterler (yeni NPC yerlestirme; mevcut NPC'ler salt-okunur referans) ---
 const PORTRE_SAYISI=15;
+// Sadece portrait 1'in (insan-sekilli gezgin govdesi) silah varyanti setleri
+// var - oyuncunun kendi kusanma sistemi icin onceden uretilmisler, YENI bir
+// PixelLab cagrisi gerekmeden tekrar kullanilabilirler (bkz. Entity.portrait
+// tipindeki not). key bos ise 'characters1', dolu ise 'characters1'+key.
+const SILAH_VARYANTLARI=[
+  {key:'',label:'Yumruk (çıplak)'},{key:'sword',label:'Kılıç'},{key:'bow',label:'Yay'},
+  {key:'balta',label:'Balta'},{key:'mesale',label:'Meşale'},{key:'swordmesale',label:'Kılıç+Meşale'},
+];
 let portrelerYuklendi=false;
 let portreImg={}; // n -> Image (D_Idle.png ya da 1 icin portre.png)
+let silahImg={}; // key -> Image (characters1<key>/D_Idle.png), sadece portrait 1 icin
 let aktifPortre=null;
+let aktifSilah=''; // yeni yerlestirilecek NPC icin secili silah varyanti
 let npcReferans=[]; // salt-okunur: TUM npc'ler {x,y,name,duzenlenebilir}
 let karakterler=[]; // bu aracin yonettigi, duzenlenebilir olanlar {id,x,y,name,portrait,sabit}
 let selectedKarakter=-1;
@@ -586,7 +605,7 @@ cv.addEventListener('mousedown',e=>{
     }
     if(aktifPortre){
       karakterSayac++;
-      karakterler.push({id:`kd_${Date.now()}_${karakterSayac}`,x:px,y:py,name:'',portrait:aktifPortre,sabit:false});
+      karakterler.push({id:`kd_${Date.now()}_${karakterSayac}`,x:px,y:py,name:'',portrait:portreDegeriUret(aktifPortre,aktifSilah),sabit:false});
       selectedKarakter=karakterler.length-1;
       renderKarakterList(); syncSelectedKarakter(); updateKarakterExport(); draw();
     }else{
@@ -848,7 +867,12 @@ async function portrelerYukle(){
     try{ portreImg[n]=await loadImageSrc(`/assets/characters/${n}/${n===1?'portre':'D_Idle'}.png`); }
     catch{ /* bu numarada portre yok - atla */ }
   }
-  renderPortrePalet();
+  for(const {key} of SILAH_VARYANTLARI){
+    if(!key)continue; // '' zaten portreImg[1]
+    try{ silahImg[key]=await loadImageSrc(`/assets/characters/1${key}/D_Idle.png`); }
+    catch{ /* bu varyant henuz uretilmemis - atla */ }
+  }
+  renderPortrePalet(); renderSilahPalet();
 }
 function renderPortrePalet(){
   const el=$('portrePalet');
@@ -859,8 +883,28 @@ function renderPortrePalet(){
     + `<img src="${portreImg[n].src}" style="width:auto;height:150%;image-rendering:pixelated"></div>`
   ).join('');
   el.querySelectorAll('[data-n]').forEach(elm=>{
-    elm.addEventListener('click',()=>{ aktifPortre=parseInt(elm.dataset.n,10); renderPortrePalet(); });
+    elm.addEventListener('click',()=>{ aktifPortre=parseInt(elm.dataset.n,10); aktifSilah=''; renderPortrePalet(); renderSilahPalet(); });
   });
+  $('silahSecimi').style.display = aktifPortre===1 ? 'block' : 'none';
+}
+function renderSilahPalet(){
+  const el=$('silahPalet');
+  el.innerHTML = SILAH_VARYANTLARI.map(v=>{
+    const im=v.key?silahImg[v.key]:portreImg[1];
+    return `<div data-k="${v.key}" title="${v.label}" style="width:40px;height:40px;border:2px solid ${v.key===aktifSilah?'#c9a227':'var(--line)'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b;overflow:hidden">`
+      + (im?`<img src="${im.src}" style="width:auto;height:150%;image-rendering:pixelated">`:'<i class="small" style="color:var(--ink-dim)">?</i>') + `</div>`;
+  }).join('');
+  el.querySelectorAll('[data-k]').forEach(elm=>{
+    elm.addEventListener('click',()=>{ aktifSilah=elm.dataset.k; renderSilahPalet(); });
+  });
+}
+/** portrait 1'in silah varyantlari 'characters1<key>' klasor adiyla eslesir -
+ *  bu yuzden Entity.portrait bazen '1sword' gibi bir STRING olur. */
+function portreDegeriUret(numara,silah){ return (numara===1&&silah) ? '1'+silah : numara; }
+function portreVaryantAyristir(portrait){
+  const s=String(portrait);
+  const m=/^1(sword|bow|balta|mesale|swordmesale)$/.exec(s);
+  return m ? {numara:1,silah:m[1]} : {numara:typeof portrait==='number'?portrait:parseInt(s,10)||1,silah:''};
 }
 function loadKarakterler(){
   npcReferans = (liveNpcler||[]).filter(n=>!n.duzenlenebilir);
@@ -894,6 +938,23 @@ function syncSelectedKarakter(){
   if(!has)return;
   const o=karakterler[selectedKarakter];
   $('kAd').value=o.name||''; $('kx').value=o.x.toFixed(2); $('ky').value=o.y.toFixed(2); $('kSabit').checked=!!o.sabit;
+  const {numara,silah}=portreVaryantAyristir(o.portrait);
+  const gosterSilah = numara===1;
+  $('seciliSilahSecimi').style.display = gosterSilah ? 'block' : 'none';
+  if(gosterSilah){
+    const el=$('seciliSilahPalet');
+    el.innerHTML = SILAH_VARYANTLARI.map(v=>{
+      const im=v.key?silahImg[v.key]:portreImg[1];
+      return `<div data-k="${v.key}" title="${v.label}" style="width:36px;height:36px;border:2px solid ${v.key===silah?'#c9a227':'var(--line)'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b;overflow:hidden">`
+        + (im?`<img src="${im.src}" style="width:auto;height:150%;image-rendering:pixelated">`:'?') + `</div>`;
+    }).join('');
+    el.querySelectorAll('[data-k]').forEach(elm=>{
+      elm.addEventListener('click',()=>{
+        karakterler[selectedKarakter].portrait=portreDegeriUret(1,elm.dataset.k);
+        syncSelectedKarakter(); renderKarakterList(); updateKarakterExport();
+      });
+    });
+  }
 }
 $('kAd').addEventListener('input',()=>{ if(selectedKarakter>=0){karakterler[selectedKarakter].name=$('kAd').value; renderKarakterList(); updateKarakterExport();} });
 ['kx','ky'].forEach(id=>{
@@ -913,8 +974,9 @@ $('karakterSil').addEventListener('click',()=>{
 
 function updateKarakterExport(){
   const fmt=n=>Math.round(n*100)/100;
+  const portreIfade=p=>typeof p==='number'?p:`'${p}'`;
   $('karakterExportBox').value = karakterler.length
-    ? karakterler.map(o=>`at({id:'${o.id}',type:'npc',x:${fmt(o.x)},y:${fmt(o.y)},name:'${(o.name||'').replace(/'/g,"\\'")}',portrait:${o.portrait}${o.sabit?',sabit:true':''}});`).join('\n')
+    ? karakterler.map(o=>`at({id:'${o.id}',type:'npc',x:${fmt(o.x)},y:${fmt(o.y)},name:'${(o.name||'').replace(/'/g,"\\'")}',portrait:${portreIfade(o.portrait)}${o.sabit?',sabit:true':''}});`).join('\n')
     : '(NPC yok - kaydedersen önceki eklemeler temizlenir)';
 }
 $('karakterCopyBtn').addEventListener('click', async ()=>{
