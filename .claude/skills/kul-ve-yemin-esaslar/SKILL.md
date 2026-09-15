@@ -888,4 +888,28 @@ uzaklaştırma eklendi (+/- düğmeleriyle aynı `scale` değişkeni).
 
 ---
 
-*Son güncelleme: 2026-09-15, v10.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v11.0: kalan "hafif" kayma - muhtemelen kod hatası değil
+v10.9'dan SONRA bile kullanıcı "hâlâ hafif bir dikey oynama var" dedi.
+Üst kenar/alt kenar/genişlik/yatay merkez hizasını BİR KEZ DAHA (dördüncü
+kez) uçtan uca simgesel olarak doğruladım - hepsi tam eşleşiyor, YENİ bir
+formül hatası bulamadım. İki muhtemel kalan kaynak: (1) `fmt()` 2
+ondalığa yuvarlıyordu, kullanıcı defalarca yükle-düzenle-kaydet
+döngüsünden geçtikçe bu küçük yuvarlama birikebilirdi - 4 ondalığa
+çıkarıldı (kolay, güvenli, muhtemel katkıyı azaltır). (2) Oyunun kamerası
+HER KAREDE world-px'i `Math.round()` ile tam sayıya yuvarlıyor
+(`engine.ts` `render()`) - bu TÜM sahneyi (arka plan+üst üste binen
+nesneler) birlikte kaydırdığı için nesnelerin BİRBİRİNE göre hizasını
+bozmaz, ama editörün kamerasız önizlemesiyle oyun arasında ~1 piksellik
+DOĞAL bir fark yaratabilir - bu veri formülüyle düzeltilecek bir şey
+değil, kasıtlı piksel-hizalı çizimin bir sonucu.
+
+**Ders:** dört tur düzeltmeden sonra hâlâ "biraz" bir şikayet geliyorsa
+ve simgesel doğrulama temiz çıkıyorsa, muhtemelen artık KOD HATASI değil
+KESİN OLAMAYACAK bir şeyle (piksel yuvarlama, kamera hareketi gibi
+render-zamanı davranışlar) uğraşıyorsundur - bunu kullanıcıya AÇIKÇA
+söylemek (ve nedenini açıklamak), sonsuza kadar "başka bir formül hatası
+daha olmalı" diye aramaya devam etmekten daha dürüst ve daha faydalı.
+
+---
+
+*Son güncelleme: 2026-09-15, v11.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
