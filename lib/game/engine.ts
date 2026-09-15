@@ -1113,14 +1113,23 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   for(const iz of this.izler)this.sprite(iz.anahtar,iz.x,iz.y,iz.kare,Engine.OYUNCU_EN,Engine.OYUNCU_BOY,iz.flip,OYUNCU_OLCEK,Math.min(.42,iz.life*1.6));
   if(dusuyor){
    /* Dusus animasyonu: p 0'dan (ayagin bosluga bastigi an) 1'e (kayboldugu
-      an, dusmeBitti cagrilmadan hemen once) gider. Karakter KUCULEREK,
-      hafifce asagi kayarak ve SOLARAK bosluga iniyormus gibi cizilir -
-      eskiden bu satirda hicbir sey cizilmiyordu (bir anda kayboluyordu),
-      "kucule kucule asagi kayiyor" yorumu YAZILMISTI ama hic uygulanmamisti. */
+      an, dusmeBitti cagrilmadan hemen once) gider. Karakter son baktigi
+      yone dogru ivmelenerek kayar (dusmeden hemen once atilmis gibi),
+      DIKEYDE yassilasarak yere paralel yatiyormus gibi doner (kullanici
+      isteği: "biraz ileri gitmeli, rotate olarak yere paralele
+      yaklaşmalı") ve SOLARAK bosluga iniyormus gibi cizilir. Yassilasma,
+      sprite() KENDI translate'ini yapmadan ONCE ayni anchor (px,py)
+      etrafinda bir "translate-scale-translate" ile uygulanir - net etki:
+      X degismez, Y bu noktaya gore squash kadar kucultulur (bkz. matris
+      hesap notu: T(a)*S*T(-a)*T(a) = T(a)*S). */
    const p=1-this.dusus/Engine.DUSUS;
-   const olcek=OYUNCU_OLCEK*(1-p*.82);
-   const alpha=Math.max(0,1-p*1.15);
-   this.sprite(this.poz('Idle'),s.x,s.y+p*14,Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,olcek,alpha);
+   const v=this.yonVektor(),ileri=p*p*22;
+   const px=s.x+v.x*ileri,py=s.y+v.y*ileri;
+   const squash=Math.max(.1,1-p*.88);
+   const alpha=Math.max(0,1-p*1.1);
+   c.save();c.translate(px,py);c.scale(1,squash);c.translate(-px,-py);
+   this.sprite(this.poz('Idle'),px,py,Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK*(1-p*.2),alpha);
+   c.restore();
   } else {
   this.sprite(this.poz(action),s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?Math.floor((this.vurusSure-this.vurusPoz)*16):Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const v=this.yonVektor(),angle=Math.atan2(v.y,v.x);c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-1.1,angle+1.1);c.stroke();}}}});
   actors.sort((a,b)=>(a.layer-b.layer)||(a.y-b.y)).forEach(a=>a.draw());

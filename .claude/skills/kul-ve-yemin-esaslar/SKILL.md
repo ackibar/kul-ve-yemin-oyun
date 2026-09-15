@@ -1280,6 +1280,31 @@ anahtarı `magara` yapmak tek satırlık değişiklik. Playwright ile haven->
 cistern->haven geçişinde `aktifYol()`'un doğru değiştiği ve `calan`
 sayısının hep 1'de kaldığı (eski kaynak birikmiyor) doğrulandı.
 
+### v12.7: Dusus animasyonu - ileri kayma + yere paralel yassilasma
+v12.5'teki ilk denemeye kullanıcı geri bildirimi: "karakter biraz ileri
+gitmeli, rotate olarak yere paralele yaklaşmalı." Üç değişiklik:
+1. **İleri kayma**: `yonVektor()` (son bakılan yön) yönünde, `p²*22` ile
+   İVMELİ (başta yavaş, sona doğru hızlanan) bir kayma - "düşmeden hemen
+   önce bir adım daha atılmış gibi" hissi.
+2. **Yere paralel yassılaşma**: Z-ekseninde döndürme (`donder`) DEĞİL -
+   üstten bakışlı bir oyunda "yere paralel" olmak görsel olarak DİKEYDE
+   YASSILAŞMAK demek (kameraya dik hale geliyor). `c.translate(px,py);
+   c.scale(1,squash);c.translate(-px,-py);` ile sprite()'ın KENDİ
+   translate'inden ÖNCE, aynı ayak-noktası (px,py) etrafında bir
+   "scale-around-point" uygulanıyor (matris özdeşliği: T(a)·S·T(-a)·T(a)
+   = T(a)·S - yani sprite()'a px,py'yi AYNEN vermek, dıştaki transformun
+   o noktayı sabit tutmasıyla doğru sonucu veriyor, ekstra hesap
+   gerekmedi). squash 1'den (dik) 0.1'e (neredeyse düz) iner.
+3. Şekil/ölçek: hafif ek küçülme (`×(1-p·0.2)`) korunuyor ama asıl görsel
+   etki artık yassılaşma; alfa solması aynı mantıkla kaldı.
+
+Test: yapay uzatılmış `dusus`/`DUSUS` (v12.5'teki AYNI "screenshot arası
+zamanlama güvenilmez" dersiyle - sadece GÖRSEL ilerlemeyi yakından
+incelemek için, gerçek zamanlama zaten v12.5'te ayrıca doğrulanmıştı)
+ile karakterin gerçekten yön vektöründe ilerlediği ve dikeyde
+yassılaştığı (enine göre kısaldığı, sadece küçülmediği) ekran
+görüntüleriyle doğrulandı.
+
 ---
 
-*Son güncelleme: 2026-09-16, v12.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-16, v12.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
