@@ -128,7 +128,12 @@ export class Engine{
   {1:{mod:'yan'},5:{mod:'sabit'},7:{mod:'aynali'},9:{mod:'aynali'}};
  /** 'yan' yaratiklarin dikey egim siniri (radyan). Daha fazlasi yine yatiriyor. */
  static readonly EGIM=Math.PI/6;
- static readonly DUSUS=0.5;
+ /** Ucuruma dusme suresi (sn). Eskiden 0.5 idi ama o surede hicbir animasyon
+  *  cizilmiyordu (bir anda kayboluyordu) - simdi kucule-sola-kaybol
+  *  animasyonu var, 0.5sn onu gormeye yetmiyordu (goz bir sey algilamadan
+  *  bitiyordu). 1.1sn animasyonun okunmasina yetiyor ama oyunun tempo
+  *  hissini bozacak kadar uzun degil. */
+ static readonly DUSUS=1.1;
  private sonImza='';
  private sahneSayac=0;
  private dizSayac=0;private dizX=0;private dizY=0;
@@ -556,6 +561,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  private dusmeyeBasla(){
   this.dusus=Engine.DUSUS;this.input={x:0,y:0,attack:false};
   this.audio.play('hurt');this.notify('Ayağın boşluğa bastı…');
+  this.burst(this.state.x,this.state.y,'#8a97a6',10);
  }
  private dusmeBitti(){this.dusus=0;this.oldu('Sarnıç Ağzı’ndaki uçuruma düştün.');}
  private oldu(not:string){
@@ -1100,12 +1106,23 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    unlem sabit -30'daydi, kucuk karakterlerde (Lin s=0.8) kayik duruyordu. */const etiketY=e.y-30*(e.s||1);const nw=this.label(e.name||'',e.x,etiketY);if(pending)this.label('!',e.x-nw/2-5,etiketY,'#e0453a');}
   }}));
   for(const m of this.mobs)actors.push({y:m.y,layer:0,draw:()=>{if(m.kind===9){/* Fenerin isigi: ovadaki tek sicak renk. */const g=c.createRadialGradient(m.x,m.y-14,2,m.x,m.y-14,42);g.addColorStop(0,'#ffb35a70');g.addColorStop(1,'#ffb35a00');c.fillStyle=g;c.fillRect(m.x-42,m.y-56,84,84);}c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=Math.floor(time*Engine.DUSMAN_FPS(eylem));if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0));}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim);}else{this.sprite(anahtar,m.x,m.y,kare,Engine.DUSMAN_EN[m.kind]??32,32,yar.mod==='aynali'&&Math.cos(bak)<0,ol,1,0,Engine.DUSMAN_CAPA[m.kind]);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}const yuzuk=this.state.equipment.ring;if(m.kind!==9&&(m.hp<m.max||m.boss||(yuzuk&&ITEMS[yuzuk].canGoster))){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');if(m.kind===10)this.label('SON MUHAFIZ',m.x,m.y-40,'#c9b7d6');}}});
-   actors.push({y:this.state.y,layer:0,draw:()=>{const s=this.state;this.golgeCiz(s.x,s.y);const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';// Dusus: sprite kucule kucule asagi kayiyor, boslugun icine iniyormus gibi.
-  // Dusus: kucuIme YOK, karakter bir anda kayboluyor.
+   actors.push({y:this.state.y,layer:0,draw:()=>{const s=this.state;const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';
   const dusuyor=this.dusus>0;
+  if(!dusuyor)this.golgeCiz(s.x,s.y);/* Boslukta golge yok - basacak zemin kalmadi. */
   /* Izler oyuncunun ALTINA cizilir ve solar; en eskisi en sonuk. */
   for(const iz of this.izler)this.sprite(iz.anahtar,iz.x,iz.y,iz.kare,Engine.OYUNCU_EN,Engine.OYUNCU_BOY,iz.flip,OYUNCU_OLCEK,Math.min(.42,iz.life*1.6));
-  if(!dusuyor)this.sprite(this.poz(action),s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?Math.floor((this.vurusSure-this.vurusPoz)*16):Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const v=this.yonVektor(),angle=Math.atan2(v.y,v.x);c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-1.1,angle+1.1);c.stroke();}}});
+  if(dusuyor){
+   /* Dusus animasyonu: p 0'dan (ayagin bosluga bastigi an) 1'e (kayboldugu
+      an, dusmeBitti cagrilmadan hemen once) gider. Karakter KUCULEREK,
+      hafifce asagi kayarak ve SOLARAK bosluga iniyormus gibi cizilir -
+      eskiden bu satirda hicbir sey cizilmiyordu (bir anda kayboluyordu),
+      "kucule kucule asagi kayiyor" yorumu YAZILMISTI ama hic uygulanmamisti. */
+   const p=1-this.dusus/Engine.DUSUS;
+   const olcek=OYUNCU_OLCEK*(1-p*.82);
+   const alpha=Math.max(0,1-p*1.15);
+   this.sprite(this.poz('Idle'),s.x,s.y+p*14,Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,olcek,alpha);
+  } else {
+  this.sprite(this.poz(action),s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?Math.floor((this.vurusSure-this.vurusPoz)*16):Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const v=this.yonVektor(),angle=Math.atan2(v.y,v.x);c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-1.1,angle+1.1);c.stroke();}}}});
   actors.sort((a,b)=>(a.layer-b.layer)||(a.y-b.y)).forEach(a=>a.draw());
   c.fillStyle=this.state.zone==='haven'?'#060e1924':'#070b1c42';c.fillRect(cx,cy,this.gorus.en,this.gorus.boy);
   this.karanlik(cx,cy,time);

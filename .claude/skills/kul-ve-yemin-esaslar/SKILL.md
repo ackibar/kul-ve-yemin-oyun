@@ -1208,6 +1208,49 @@ sürüm) geri döndürüldü. Nesneler paletindeki `ed_sandik_acik`/
 `ed_sandik_kapali` dosyalarına dokunulmadı, hâlâ orada duruyorlar - sadece
 oyunun gerçek/fonksiyonel sandık görseli eski haline döndü.
 
+### v12.5: Oyuncu icin ucurumdan dusme animasyonu (Tuhn'dan ONCE, ilk deneme)
+Kullanıcı "uçurumdan düşme animasyonu yapmak istiyorum Tuhn ve ana karakter
+için önce ana karakter üzerinde deneyelim" dedi. Mevcut kod zaten `dusus`
+sayacı ve `dusmeyeBasla()/dusmeBitti()` akışını taşıyordu (bkz.
+`bolgeKontrol()` - `ucurumlar` karosuna basınca tetikleniyor) ama render()
+içinde tam bu satırda ÇOK ÇARPICI bir iz vardı: `// Dusus: sprite kucule
+kucule asagi kayiyor, boslugun icine iniyormus gibi.` YORUMU yazılmış ama
+hemen altında `// Dusus: kucuIme YOK, karakter bir anda kayboluyor.` -
+yani animasyon TASARLANMIŞ ama hiç YAZILMAMIŞTI, `if(!dusuyor)sprite(...)`
+ile düşerken sprite'ın kendisi tamamen ATLANIYORDU (bir anda kayboluyordu).
+
+Eklenen: `dusuyor` iken karakter KÜÇÜLEREK (ölçek ×(1-p·0.82)), hafifçe
+AŞAĞI KAYARAK (`y+p·14`) ve SOLARAK (alpha ×(1-p·1.15)) çiziliyor - p,
+`1-dusus/Engine.DUSUS` (0=düşüşün başı, 1=kaybolduğu an). Düşerken zemin
+gölgesi de kaldırıldı (`golgeCiz` artık `!dusuyor` şartlı - boşlukta
+basacak zemin yok). `dusmeyeBasla()`'ya küçük bir toz parçacık patlaması
+(`burst`) eklendi.
+
+**Önemli bulgu:** `Engine.DUSUS` (düşüş süresi) eskiden 0.5sn'ydi - bu kadar
+kısa bir sürede HERHANGİ bir animasyon göze çarpıklık/"aniden oldu" gibi
+görünüyor, eğri şeklinden bağımsız olarak. 1.1sn'ye çıkarıldı - animasyonun
+gerçekten okunabilmesi için gerekliydi, salt "animasyon ekle" yetmiyordu.
+
+**Test metodolojisi notu (önemli, tekrar karşılaşılabilir):** Playwright'ta
+`page.screenshot()` çağrıları ARASINA `waitForTimeout` koyarak zamanlama
+ölçmek YANILTICI - her screenshot bir compositing/repaint zorluyor gibi
+görünüyor ve bu da beklenenden ÇOK DAHA FAZLA `requestAnimationFrame`
+tetiklenmesine (yani gerçek zamandan hızlı bir simülasyon ilerlemesine)
+yol açıyor (0.5sn'lik bir sayaç ~150ms'de tükenmiş gibi ölçüldü). Saf
+`page.evaluate()` ile (screenshot ARAYA GİRMEDEN) periyodik durum okuma
+gerçek zamanla neredeyse birebir örtüştü (1.1sn sayaç gerçekten ~1.1sn'de
+bitti). Zamanlama doğrulaması için screenshot'suz polling, GÖRSEL
+doğrulama için (zamanlamayı önemsemeden, yalnızca ilerlemenin düzgün
+göründüğünü kontrol için) yapay uzatılmış bir sayaçla (`g.dusus=3`) ayrı
+bir tur gerekti - ikisini TEK bir testte karıştırmak yanlış teşhise
+(“animasyon aşırı hızlı/bozuk” sanılmasına) yol açıyordu.
+
+**Sıradaki adım (kullanıcı onayı bekleniyor):** Tuhn için AYNI görsel
+yaklaşım uygulanacak - Tuhn'un kendi uçurum sahnesi zaten var (bkz.
+engine.ts'te "Tuhn: ikna edilemediyse ucuruma yurur ve atlar" yorumu),
+ama bu oturumda DOKUNULMADI, kullanıcı önce oyuncu üzerinde görüp
+onaylamak istedi.
+
 ---
 
-*Son güncelleme: 2026-09-16, v12.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-16, v12.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
