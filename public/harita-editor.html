@@ -54,8 +54,10 @@
     <button id="modeEngel">🎯 Engeller</button>
     <button id="modeNesne">🖼️ Nesneler</button>
     <button id="modeKarakter">🧑 Karakterler</button>
+    <button id="modeSilah">🗡️ Silah Ekle</button>
   </div>
 
+  <div id="kaynakBolumu">
   <h2>1 · Kaynak</h2>
   <label>Hazır mekân</label>
   <select id="preset">
@@ -85,6 +87,7 @@
   <div class="row">
     <button id="zoomOut">−</button>
     <button id="zoomIn">+</button>
+  </div>
   </div>
 
   <div id="zeminPanel">
@@ -211,6 +214,34 @@
   <p class="hint">Bu aracın önceden eklediği NPC'leri (varsa) DEĞİŞTİRİR - elle yazılmış diğer NPC'lere (Mirna, Alf, Kral, vb.) dokunmaz. Sıfır NPC'yle kaydetmek hepsini temizler.</p>
   </div>
 
+  <div id="silahPanel" style="display:none">
+  <h2>1 · Temel karakter</h2>
+  <p class="hint">Var olan bir karakterin yürüyüş/bekleme animasyonunu aynen kullanıp üstüne bir silah görseli kondurur - YENİ bir üretim yok, orijinal karaktere de dokunulmaz. Sonuç <b>yeni bir varyant klasörü</b> olarak kaydedilir, Karakterler modunda hemen yerleştirebilirsin.</p>
+  <div id="silahTemelPalet" class="small" style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:3px;padding:6px;max-height:140px;overflow-y:auto"></div>
+  <label>Yeni varyant adı</label>
+  <input type="text" id="silahVaryantAd" placeholder="ör. silahli">
+  <p class="small" id="silahVaryantOnizleme" style="color:var(--ink-dim)"></p>
+
+  <h2>2 · Silah görseli</h2>
+  <label>Hazır eşya ikonlarından seç</label>
+  <div id="silahIkonPalet" class="small" style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:3px;padding:6px;max-height:110px;overflow-y:auto"></div>
+  <label>...ya da kendi PNG'ini yükle</label>
+  <input type="file" id="silahDosya" accept="image/png">
+
+  <h2>3 · Konumlandır</h2>
+  <p class="hint">Aşağıdaki 6 çizimin (yön × bekleme/yürüyüş) HER biri için silahı ayrı ayrı konumlandır - her birinin ilk karesi tuvalde büyütülmüş gösterilir, ayarladığın konum o çizimin TÜM karelerine aynen uygulanır.</p>
+  <div id="silahSheetSecici" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+  <div class="row">
+    <div><label class="small">ölçek</label><input type="number" id="silahOlcek" step="0.05" value="1"></div>
+    <div><label class="small">döndürme°</label><input type="number" id="silahAci" step="5" value="0"></div>
+  </div>
+  <button id="silahTumSheetleriKopyala">Bu konumu tüm çizimlere kopyala</button>
+
+  <h2>4 · Oluştur</h2>
+  <button id="silahOlusturBtn" style="border-color:#c9a227">🗡️ Yeni varyantı oluştur ve kaydet</button>
+  <p class="hint">6 dosya da (D/U/S × Idle/Walk) <code>public/assets/characters/&lt;varyant&gt;/</code> altına yazılır. Orijinal karakterin dosyalarına dokunulmaz.</p>
+  </div>
+
   <div class="legend" style="margin-top:14px">
     <span><i class="sw" style="background:var(--zemin)"></i>zemin</span>
     <span><i class="sw" style="background:var(--engel)"></i>engel</span>
@@ -223,6 +254,10 @@
 <main>
   <div id="canvasWrap">
     <canvas id="cv" width="1" height="1"></canvas>
+  </div>
+  <div id="silahCanvasWrap" style="display:none">
+    <canvas id="silahCv" width="384" height="384" style="image-rendering:pixelated;background:#0f0d0b;border:1px solid var(--line);cursor:crosshair"></canvas>
+    <p class="small" style="color:var(--ink-dim);margin-top:8px">Silahı sürükle = taşı. Tekerlek = ölçek. Shift+sürükle = döndür.</p>
   </div>
 </main>
 <div id="hoverTag"></div>
@@ -246,6 +281,7 @@ let reachSet=null, isleSet=null;
 let liveBlockers=null; // ham API yaniti - engel moduna gecince duzenlenebilir listeye kopyalanir
 let liveNesneler=null; // ham API yaniti - {id,x,y,asset,s}[]
 let liveNpcler=null; // ham API yaniti - {id,x,y,name,portrait,sabit,duzenlenebilir}[]
+let liveOzelKarakterler=null; // ham API yaniti - onceki oturumlarda uretilmis ozel varyant klasor adlari
 let currentZoneName=''; // preset ise zone adi, custom ise ''
 let mode='zemin'; // 'zemin' | 'engel' | 'nesne' | 'karakter'
 
@@ -293,25 +329,35 @@ function setMode(m){
   $('modeEngel').classList.toggle('active', m==='engel');
   $('modeNesne').classList.toggle('active', m==='nesne');
   $('modeKarakter').classList.toggle('active', m==='karakter');
+  $('modeSilah').classList.toggle('active', m==='silah');
   $('zeminPanel').style.display = m==='zemin' ? 'block' : 'none';
   $('engelPanel').style.display = m==='engel' ? 'block' : 'none';
   $('nesnePanel').style.display = m==='nesne' ? 'block' : 'none';
   $('karakterPanel').style.display = m==='karakter' ? 'block' : 'none';
+  $('silahPanel').style.display = m==='silah' ? 'block' : 'none';
+  // Silah modu tamamen farkli bir tuval kullanir (zone/zemin degil, tek bir
+  // karakter karesi) - "1 . Kaynak" bolumu ve normal tuval bu modda anlamsiz.
+  $('kaynakBolumu').style.display = m==='silah' ? 'none' : 'block';
+  $('canvasWrap').style.display = m==='silah' ? 'none' : 'block';
+  $('silahCanvasWrap').style.display = m==='silah' ? 'block' : 'none';
   // Sekme basligi moda gore degisir - karakter-editor.html buraya
   // #karakter ile yonlendiriyor, kullanici "iki tane harita editoru acilan
   // gorunuyor" dedi cunku ikisi de ayni <title> ile bitiyordu (redirect
   // sonrasi tarayici bu dosyanin title'ini kullaniyor, kisayolunkini degil).
-  document.title = (m==='karakter' ? 'Karakter Editörü' : 'Harita Editörü') + ' — Kül ve Yemin (dev aracı)';
+  document.title = (m==='karakter'||m==='silah' ? 'Karakter Editörü' : 'Harita Editörü') + ' — Kül ve Yemin (dev aracı)';
   history.replaceState(null,'','#'+m);
-  draw();
+  if(m!=='silah')draw();
+  else drawSilahCanvas();
 }
 $('modeZemin').addEventListener('click',()=>setMode('zemin'));
 $('modeEngel').addEventListener('click',()=>setMode('engel'));
 $('modeKarakter').addEventListener('click',()=>{ setMode('karakter'); portrelerYukle(); });
-// URL'de #karakter / #nesne / #engel ile dogrudan o moda acilabilir
+$('modeSilah').addEventListener('click',()=>{ setMode('silah'); silahBaslat(); });
+// URL'de #karakter / #nesne / #engel / #silah ile dogrudan o moda acilabilir
 // (karakter-editor.html kisayolu bunu kullaniyor).
-if(location.hash.slice(1) && ['zemin','engel','nesne','karakter'].includes(location.hash.slice(1))){
+if(location.hash.slice(1) && ['zemin','engel','nesne','karakter','silah'].includes(location.hash.slice(1))){
   setMode(location.hash.slice(1));
+  if(mode==='silah')silahBaslat();
   if(mode==='karakter')portrelerYukle();
 }
 $('modeNesne').addEventListener('click',()=>setMode('nesne'));
@@ -370,6 +416,7 @@ $('loadBtn').addEventListener('click', async ()=>{
           liveBlockers = d.blockers||[];
           liveNesneler = d.nesneler||[];
           liveNpcler = d.npcler||[];
+          liveOzelKarakterler = d.ozelKarakterler||[];
           $('canliNot').style.display='block';
         }
       }
@@ -879,17 +926,28 @@ async function portrelerYukle(){
     catch{ /* bu varyant henuz uretilmemis - atla */ }
   }
   renderPortrePalet(); renderSilahPalet();
+  if(typeof renderSilahTemelPalet==='function')renderSilahTemelPalet();
 }
 function renderPortrePalet(){
   const el=$('portrePalet');
   const numaralar=Object.keys(portreImg).map(Number).sort((a,b)=>a-b);
-  if(!numaralar.length){ el.innerHTML='<i style="color:var(--ink-dim)">Yükleniyor…</i>'; return; }
-  el.innerHTML = numaralar.map(n=>
+  if(!numaralar.length && !ozelKarakterler.length){ el.innerHTML='<i style="color:var(--ink-dim)">Yükleniyor…</i>'; return; }
+  const sayiHtml = numaralar.map(n=>
     `<div data-n="${n}" title="portrait:${n}" style="width:40px;height:40px;border:2px solid ${n===aktifPortre?'#c9a227':'var(--line)'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b;overflow:hidden">`
     + `<img src="${portreImg[n].src}" style="width:auto;height:150%;image-rendering:pixelated"></div>`
   ).join('');
+  // Ozel varyantlar (silah-katmani araciyla uretilenler): STRING anahtar,
+  // mor cerceveyle ayirt ediliyor - "Silah Ekle" modunda olusturulanlar.
+  const ozelHtml = ozelKarakterler.map(o=>
+    `<div data-ozel="${o.key}" title="portrait:${o.key}" style="width:40px;height:40px;border:2px solid ${o.key===aktifPortre?'#c9a227':'#965ac8'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b;overflow:hidden">`
+    + `<img src="${o.img.src}" style="width:auto;height:150%;image-rendering:pixelated"></div>`
+  ).join('');
+  el.innerHTML = sayiHtml + (ozelHtml?`<div style="width:100%;height:0"></div>`+ozelHtml:'');
   el.querySelectorAll('[data-n]').forEach(elm=>{
     elm.addEventListener('click',()=>{ aktifPortre=parseInt(elm.dataset.n,10); aktifSilah=''; renderPortrePalet(); renderSilahPalet(); });
+  });
+  el.querySelectorAll('[data-ozel]').forEach(elm=>{
+    elm.addEventListener('click',()=>{ aktifPortre=elm.dataset.ozel; aktifSilah=''; renderPortrePalet(); renderSilahPalet(); });
   });
   $('silahSecimi').style.display = aktifPortre===1 ? 'block' : 'none';
 }
@@ -917,7 +975,18 @@ function loadKarakterler(){
   karakterler = (liveNpcler||[]).filter(n=>n.duzenlenebilir).map(n=>({id:n.id,x:n.x,y:n.y,name:n.name,portrait:n.portrait,sabit:n.sabit}));
   selectedKarakter=-1;
   portrelerYukle();
+  ozelKarakterlerYukle();
   renderKarakterList(); syncSelectedKarakter(); updateKarakterExport(); draw();
+}
+async function ozelKarakterlerYukle(){
+  for(const key of (liveOzelKarakterler||[])){
+    if(ozelKarakterler.some(o=>o.key===key))continue;
+    try{
+      const img=await loadImageSrc(`/assets/characters/${key}/D_Idle.png`);
+      ozelKarakterler.push({key,img});
+    }catch{ /* D_Idle yok - bu araçla uretilmemis bir klasor olabilir, atla */ }
+  }
+  renderPortrePalet();
 }
 
 function karakterAt(px,py,liste){
@@ -1090,6 +1159,203 @@ $('checkReach').addEventListener('click',()=>{
     ? `${seen.size}/${toplamZemin} zemin karosu ulaşılabilir.\n${izoleListe.length} karo İZOLE (sarı):\n${izoleListe.slice(0,40).join(' ')}${izoleListe.length>40?' …':''}`
     : `${seen.size}/${toplamZemin} zemin karosu ulaşılabilir. İzole karo yok.`;
   draw();
+});
+
+// ============================================================
+// --- Silah Ekle (mevcut yürüyüş/bekleme animasyonunun üstüne
+//     bir silah görseli komposit edip YENİ bir varyant üretir) ---
+// ============================================================
+const SHEET_LISTE=['D_Idle','D_Walk','U_Idle','U_Walk','S_Idle','S_Walk'];
+const SHEET_ETIKET={D_Idle:'Aşağı · Bekleme',D_Walk:'Aşağı · Yürüyüş',U_Idle:'Yukarı · Bekleme',U_Walk:'Yukarı · Yürüyüş',S_Idle:'Yan · Bekleme',S_Walk:'Yan · Yürüyüş'};
+const SILAH_IKONLAR=['rusty','guard','ember','blood','bow','tatar','mizrak','balta','hancer','topuz','yemin','uzunyay','yeminh'];
+const SILAH_KANVAS_OLCEK=6; // 64px kare kare -> 384px tuval
+let silahTemelNumara=null;
+let silahVaryantAdi='';
+let silahKaynakImg=null;
+let silahBaseImg={}; // sheet key -> Image (tam sheet, frame0 onizleme + nihai komposit icin)
+let silahPoz={}; SHEET_LISTE.forEach(k=>silahPoz[k]={dx:32,dy:32,scale:1,rotDeg:0});
+let aktifSheet='D_Idle';
+let silahDrag=null;
+let ozelKarakterler=[]; // {key,img} - bu aracin urettigi ozel varyantlar (numarali degil)
+const silahCv=document.getElementById('silahCv'), silahCtx=silahCv.getContext('2d');
+
+function silahBaslat(){
+  portrelerYukle();
+  renderSilahTemelPalet();
+  renderSilahIkonPalet();
+  renderSilahSheetSecici();
+  silahVaryantOnizlemeGuncelle();
+}
+function renderSilahTemelPalet(){
+  const el=$('silahTemelPalet');
+  const numaralar=Object.keys(portreImg).map(Number).sort((a,b)=>a-b);
+  if(!numaralar.length){ el.innerHTML='<i style="color:var(--ink-dim)">Yükleniyor…</i>'; return; }
+  el.innerHTML = numaralar.map(n=>
+    `<div data-n="${n}" title="portrait:${n}" style="width:40px;height:40px;border:2px solid ${n===silahTemelNumara?'#c9a227':'var(--line)'};border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b;overflow:hidden">`
+    + `<img src="${portreImg[n].src}" style="width:auto;height:150%;image-rendering:pixelated"></div>`
+  ).join('');
+  el.querySelectorAll('[data-n]').forEach(elm=>{
+    elm.addEventListener('click', async ()=>{
+      silahTemelNumara=parseInt(elm.dataset.n,10);
+      renderSilahTemelPalet(); silahVaryantOnizlemeGuncelle();
+      $('status').textContent='Temel karakterin çizimleri yükleniyor…';
+      for(const key of SHEET_LISTE){
+        try{ silahBaseImg[key]=await loadImageSrc(`/assets/characters/${silahTemelNumara}/${key}.png?t=${Date.now()}`); }
+        catch{ silahBaseImg[key]=null; }
+      }
+      $('status').textContent='Hazır. Şimdi bir silah seç ve konumlandır.';
+      drawSilahCanvas();
+    });
+  });
+}
+function renderSilahIkonPalet(){
+  const el=$('silahIkonPalet');
+  el.innerHTML = SILAH_IKONLAR.map(id=>
+    `<div data-id="${id}" title="${id}" style="width:36px;height:36px;border:2px solid var(--line);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#0f0d0b">`
+    + `<img src="/assets/icons/items/${id}.png" style="max-width:28px;max-height:28px;image-rendering:pixelated"></div>`
+  ).join('');
+  el.querySelectorAll('[data-id]').forEach(elm=>{
+    elm.addEventListener('click', async ()=>{
+      silahKaynakImg = await loadImageSrc(`/assets/icons/items/${elm.dataset.id}.png`);
+      drawSilahCanvas();
+    });
+  });
+}
+$('silahDosya').addEventListener('change', async ()=>{
+  const f=$('silahDosya').files[0];
+  if(!f)return;
+  const dataUrl=await fileToDataUrl(f);
+  silahKaynakImg=await loadImageSrc(dataUrl);
+  drawSilahCanvas();
+});
+function renderSilahSheetSecici(){
+  const el=$('silahSheetSecici');
+  el.innerHTML = SHEET_LISTE.map(k=>
+    `<button data-k="${k}" class="${k===aktifSheet?'active':''}" style="margin:0">${SHEET_ETIKET[k]}</button>`
+  ).join('');
+  el.querySelectorAll('[data-k]').forEach(elm=>{
+    elm.addEventListener('click',()=>{
+      aktifSheet=elm.dataset.k;
+      renderSilahSheetSecici();
+      $('silahOlcek').value=silahPoz[aktifSheet].scale;
+      $('silahAci').value=silahPoz[aktifSheet].rotDeg;
+      drawSilahCanvas();
+    });
+  });
+}
+$('silahVaryantAd').addEventListener('input',()=>{ silahVaryantAdi=$('silahVaryantAd').value; silahVaryantOnizlemeGuncelle(); });
+function silahVaryantOnizlemeGuncelle(){
+  const ad=(silahVaryantAdi||'').replace(/[^a-zA-Z0-9_-]/g,'');
+  $('silahVaryantOnizleme').textContent = (silahTemelNumara&&ad) ? `Kaydedilecek: characters/${silahTemelNumara}_${ad}/ → yerleştirirken portrait: "${silahTemelNumara}_${ad}"` : '';
+}
+['silahOlcek','silahAci'].forEach(id=>{
+  $(id).addEventListener('input',()=>{
+    silahPoz[aktifSheet].scale=parseFloat($('silahOlcek').value)||1;
+    silahPoz[aktifSheet].rotDeg=parseFloat($('silahAci').value)||0;
+    drawSilahCanvas();
+  });
+});
+$('silahTumSheetleriKopyala').addEventListener('click',()=>{
+  const kaynak={...silahPoz[aktifSheet]};
+  SHEET_LISTE.forEach(k=>silahPoz[k]={...kaynak});
+  $('status').textContent='Konum tüm çizimlere kopyalandı.';
+});
+
+function drawSilahCanvas(){
+  const K=SILAH_KANVAS_OLCEK;
+  silahCtx.imageSmoothingEnabled=false;
+  silahCtx.clearRect(0,0,silahCv.width,silahCv.height);
+  const base=silahBaseImg[aktifSheet];
+  if(base){
+    // ilk kare (64x64) onizleme olarak buyutulmus cizilir
+    silahCtx.drawImage(base,0,0,64,64,0,0,64*K,64*K);
+  }else{
+    silahCtx.fillStyle='#3a352e'; silahCtx.fillRect(0,0,silahCv.width,silahCv.height);
+  }
+  silahCtx.strokeStyle='rgba(255,255,255,.15)';
+  silahCtx.strokeRect(0,0,silahCv.width,silahCv.height);
+  if(silahKaynakImg){
+    const p=silahPoz[aktifSheet];
+    silahCtx.save();
+    silahCtx.translate(p.dx*K,p.dy*K);
+    silahCtx.rotate(p.rotDeg*Math.PI/180);
+    const w=silahKaynakImg.width*p.scale, h=silahKaynakImg.height*p.scale;
+    silahCtx.drawImage(silahKaynakImg,-w/2,-h/2,w,h);
+    silahCtx.restore();
+  }
+}
+silahCv.addEventListener('mousedown',e=>{
+  if(!silahKaynakImg)return;
+  const r=silahCv.getBoundingClientRect();
+  silahDrag={fromX:e.clientX-r.left,fromY:e.clientY-r.top,orig:{...silahPoz[aktifSheet]},shift:e.shiftKey};
+});
+silahCv.addEventListener('mousemove',e=>{
+  if(!silahDrag)return;
+  const r=silahCv.getBoundingClientRect();
+  const x=e.clientX-r.left,y=e.clientY-r.top;
+  const p=silahPoz[aktifSheet];
+  if(silahDrag.shift){
+    const cx=silahDrag.orig.dx*SILAH_KANVAS_OLCEK, cy=silahDrag.orig.dy*SILAH_KANVAS_OLCEK;
+    const a0=Math.atan2(silahDrag.fromY-cy,silahDrag.fromX-cx), a1=Math.atan2(y-cy,x-cx);
+    p.rotDeg=Math.round(silahDrag.orig.rotDeg+(a1-a0)*180/Math.PI);
+    $('silahAci').value=p.rotDeg;
+  }else{
+    p.dx=silahDrag.orig.dx+(x-silahDrag.fromX)/SILAH_KANVAS_OLCEK;
+    p.dy=silahDrag.orig.dy+(y-silahDrag.fromY)/SILAH_KANVAS_OLCEK;
+  }
+  drawSilahCanvas();
+});
+window.addEventListener('mouseup',()=>{ silahDrag=null; });
+silahCv.addEventListener('wheel',e=>{
+  if(!silahKaynakImg)return;
+  e.preventDefault();
+  const p=silahPoz[aktifSheet];
+  p.scale=Math.max(.1,Math.round((p.scale+(e.deltaY<0?.05:-.05))*100)/100);
+  $('silahOlcek').value=p.scale;
+  drawSilahCanvas();
+},{passive:false});
+
+$('silahOlusturBtn').addEventListener('click', async ()=>{
+  if(!silahTemelNumara){ alert('Önce bir temel karakter seç.'); return; }
+  const ad=(silahVaryantAdi||'').replace(/[^a-zA-Z0-9_-]/g,'');
+  if(!ad){ alert('Bir varyant adı yaz.'); return; }
+  if(!silahKaynakImg){ alert('Bir silah görseli seç ya da yükle.'); return; }
+  if(SHEET_LISTE.some(k=>!silahBaseImg[k])){ alert('Temel karakterin çizimleri henüz yüklenmedi, biraz bekle.'); return; }
+  $('status').textContent='Oluşturuluyor…';
+  try{
+    const files=[];
+    for(const key of SHEET_LISTE){
+      const base=silahBaseImg[key], p=silahPoz[key];
+      const out=document.createElement('canvas');
+      out.width=base.width; out.height=base.height;
+      const octx=out.getContext('2d');
+      octx.imageSmoothingEnabled=false;
+      octx.drawImage(base,0,0);
+      const count=Math.floor(base.width/64);
+      for(let i=0;i<count;i++){
+        octx.save();
+        octx.translate(i*64+p.dx,p.dy);
+        octx.rotate(p.rotDeg*Math.PI/180);
+        const w=silahKaynakImg.width*p.scale, h=silahKaynakImg.height*p.scale;
+        octx.drawImage(silahKaynakImg,-w/2,-h/2,w,h);
+        octx.restore();
+      }
+      files.push({name:`${key}.png`,dataUrl:out.toDataURL('image/png')});
+    }
+    const variant=`${silahTemelNumara}_${ad}`;
+    const r=await fetch('/__harita/sprite-kaydet',{
+      method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({variant,files}),
+    });
+    const d=await r.json();
+    if(!r.ok||d.error)throw new Error(d.error||`HTTP ${r.status}`);
+    $('status').textContent=`✓ Yeni varyant kaydedildi: characters/${variant}/. Karakterler modunda "Özel varyantlar" altında hemen görünür.`;
+    const thumb=await loadImageSrc(`/assets/characters/${variant}/D_Idle.png?t=${Date.now()}`);
+    ozelKarakterler.push({key:variant,img:thumb});
+    renderPortrePalet();
+  }catch(e){
+    $('status').textContent=`Oluşturulamadı: ${e.message}`;
+  }
 });
 </script>
 </body>

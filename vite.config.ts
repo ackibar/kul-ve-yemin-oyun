@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 
 const WORLD_TS = fileURLToPath(new URL('./lib/game/world.ts', import.meta.url));
 const NESNE_DIR = fileURLToPath(new URL('./public/assets/nesne/', import.meta.url));
+const CHARACTERS_DIR = fileURLToPath(new URL('./public/assets/characters/', import.meta.url));
 // Bu araç kendi eklediği decor'ları bu yorum sınırları arasında tutar -
 // zone bloğundaki NPC/sandık/ateş gibi elle yazılmış diğer her şeye
 // dokunmadan güvenle silip yeniden yazabilmek için (bkz. asağıdaki 'nesneler').
@@ -46,8 +47,17 @@ function haritaEditoruEklentisi() {
             // aracin eklediyi (kd_ on-ekli) olanlar duzenlenebilir listede.
             const tumNpcler = world.entities.filter((e: any) => e.type === 'npc')
               .map((e: any) => ({ id: e.id, x: (e.x - 8) / 16, y: (e.y - 8) / 16, name: e.name, portrait: e.portrait, sabit: !!e.sabit, duzenlenebilir: String(e.id).startsWith(KARAKTER_ONEK) }));
+            // Ozel silah-varyanti klasorleri (bu aracin sprite-kaydet ile
+            // urettikleri) - numara olmayan ve oyuncunun kendi kusanma
+            // setleri (1sword vb.) olmayan her klasor bu araca ait sayilir.
+            let ozelKarakterler: string[] = [];
+            try {
+              ozelKarakterler = readdirSync(CHARACTERS_DIR, { withFileTypes: true })
+                .filter((d) => d.isDirectory() && !/^\d+$/.test(d.name) && !/^1(sword|bow|balta|mesale|swordmesale)$/.test(d.name))
+                .map((d) => d.name);
+            } catch { /* klasor yoksa sorun degil */ }
             res.setHeader('content-type', 'application/json');
-            res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler, npcler: tumNpcler }));
+            res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler, npcler: tumNpcler, ozelKarakterler }));
           } catch (e: any) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: String(e?.message || e) }));
@@ -170,6 +180,36 @@ function haritaEditoruEklentisi() {
               writeFileSync(NESNE_DIR + dosyaAdi, Buffer.from(m[1], 'base64'));
               res.setHeader('content-type', 'application/json');
               res.end(JSON.stringify({ ok: true, asset: `nesne/ed_${ad}` }));
+            } catch (e: any) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: String(e?.message || e) }));
+            }
+          });
+          return;
+        }
+        if (req.method === 'POST' && url === '/__harita/sprite-kaydet') {
+          // Silah-katmani araci: bir karakterin D/U/S Idle+Walk sheet'lerine
+          // istemci tarafinda (canvas ile) bir silah gorseli komposit edip
+          // buraya YENI bir varyant klasoru olarak yolluyor. Orijinal
+          // karakter klasorune ASLA yazilmiyor - kullanici acikca "yeni
+          // varyant olarak kaydet, orijinale dokunma" istedi.
+          let body = '';
+          req.on('data', (c: Buffer) => (body += c));
+          req.on('end', () => {
+            try {
+              const { variant, files } = JSON.parse(body);
+              const ad = String(variant).replace(/[^a-zA-Z0-9_-]/g, '');
+              if (!ad) throw new Error('geçersiz varyant adı');
+              const dir = CHARACTERS_DIR + ad + '/';
+              mkdirSync(dir, { recursive: true });
+              for (const f of files as { name: string; dataUrl: string }[]) {
+                const dosyaAdi = String(f.name).replace(/[^a-zA-Z0-9_.-]/g, '');
+                const m = /^data:image\/png;base64,(.+)$/.exec(f.dataUrl);
+                if (!m) throw new Error(`${dosyaAdi}: sadece PNG kabul edilir`);
+                writeFileSync(dir + dosyaAdi, Buffer.from(m[1], 'base64'));
+              }
+              res.setHeader('content-type', 'application/json');
+              res.end(JSON.stringify({ ok: true, portrait: ad }));
             } catch (e: any) {
               res.statusCode = 400;
               res.end(JSON.stringify({ error: String(e?.message || e) }));
