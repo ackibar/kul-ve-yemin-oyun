@@ -768,6 +768,31 @@ lazımdı" gibi somut bir örnekle geliyor - önce render koduna bakıp
 gerçek görsel boyutları (gölge, sprite capası vb.) hitbox sabitleriyle
 KARŞILAŞTIRMAK, tahminle uğraşmaktan çok daha hızlı kök nedene götürüyor.
 
+### v10.1'in devamı: gölgeden bağımsız küçültme + gölge engelde kırpma — v10.2
+v10.1'deki "dikey yarıçapı gölgeye yaklaştır" çözümü YETMEDİ - kullanıcı
+"hâlâ tam yaklaşamıyorum, gölgeyi çarpışmaya hiç KARIŞTIRMA" dedi. Ders:
+bir önceki düzeltmenin GEREKÇESİ (gölge boyutuna göre ayarlamak) kullanıcı
+için yanlış zemindeydi, sonucu (biraz rahatlama) yeterli değildi - ikisi
+ayrı şeyler, biri düzelince öbürü otomatik doğru sayılmamalı. Şimdi
+`Engine.OYUNCU_YATAY_YARICAP=3` / `OYUNCU_DIKEY_YARICAP=2` gölgeden
+BAĞIMSIZ, sırf daha sıkı olacak şekilde seçildi (5/5'ten küçültüldü);
+yorumda gölge artık gerekçe olarak GEÇMİYOR, sadece "hâlâ dar/geniş
+gelirse bu iki sabiti ayarla" diyor.
+
+Ayrıca kullanıcı ayrı bir şey daha istedi: golgenin bir engelin (mobilya)
+üzerine SAÇMA bir şekilde binmesi - çünkü mobilya "Nesneler" gibi ayrı
+bir entity olarak eklenmedi, tek parça boyalı arka planın içinde, motor
+golgeyi ondan gizleyemiyor. Çözüm: `Engine.golgeCiz()` golgeyi ana tuvale
+DOĞRUDAN çizmiyor - önce küçük bir offscreen tamponda çiziyor, sonra
+`globalCompositeOperation='destination-out'` ile TÜM blockers'i (rect/
+elips/poligon, walkable()'daki ayni uzunluk-tabanli ayirma) o tamponun
+İÇİNDE siliyor, en son tek parça olarak ana tuvale yapıştırıyor. Bunu
+ana tuval üzerinde doğrudan yapmak (izole tampon olmadan) arka plan/diğer
+her şeyi de delerdi - **destination-out'u her zaman izole bir tamponda
+kullan, canlı sahne tuvalinde asla.** Ekran görüntüsüyle doğrulandı: açık
+zeminde gölge normal, mobilya kenarında gölge oraya binen kısmıyla
+görünmez oluyor.
+
 ---
 
-*Son güncelleme: 2026-09-15, v10.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v10.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
