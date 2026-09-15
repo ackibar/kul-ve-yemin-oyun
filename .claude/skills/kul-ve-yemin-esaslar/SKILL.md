@@ -1200,6 +1200,14 @@ bu ikisinden birleştirilen yeni görsele geçti. Playwright ile hem kapalı
 hem açık hali gerçek oyunda (haven'ın hediye sandığı) ekran görüntüsüyle
 doğrulandı.
 
+### v12.4: Sandık görseli geri alındı
+Kullanıcı v12.3'teki yeni sandık görselini beğenmedi ("güzel olmadı, eski
+sandık geri gelsin") - `public/assets/nesne/sandik.png` v12.3'ten HEMEN
+ÖNCEKİ hale (`git checkout dcfbe99 --`, v7.6'daki ton düzeltmesinden sonraki
+sürüm) geri döndürüldü. Nesneler paletindeki `ed_sandik_acik`/
+`ed_sandik_kapali` dosyalarına dokunulmadı, hâlâ orada duruyorlar - sadece
+oyunun gerçek/fonksiyonel sandık görseli eski haline döndü.
+
 ---
 
-*Son güncelleme: 2026-09-16, v12.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-16, v12.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
