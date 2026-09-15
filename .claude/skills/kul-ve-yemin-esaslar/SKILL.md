@@ -636,6 +636,39 @@ gerçekten neyi destekliyor diye bak (`grep`) - burada motor zaten
 string-concat kullandığı için "yeni özellik" aslında var olan bir
 mekanizmanın ücretsiz bir yan kullanımıydı, hiç yeni altyapı gerekmedi.
 
+### Harita editörüne 5. mod: Silah Ekle (sprite üzerine silah yerleştirme) — v9.6
+Kullanıcı v9.4'teki "silah varyantı seç"i "karakter editörü" sandı ama
+asıl istediği farklıydı: "spriteları düzenleyebilmek, silahlar eklemek
+çıkarmak gibi." Netleştirince (AskUserQuestion) istenen: serbest piksel
+fırçası DEĞİL, bir silah görselini animasyon karelerinin üzerine
+KONUMLANDIRMA aracı; sonuç orijinal karakterin üzerine YAZILMAYACAK, YENİ
+bir varyant klasörü olarak kaydedilecek. `vite.config.ts`'e
+`POST /__harita/sprite-kaydet` eklendi (6 sheet - D/U/S × Idle/Walk -
+`public/assets/characters/<taban>_<varyant>/` altına yazıyor), GET
+endpoint'i mevcut varyant klasörlerini (`ozelKarakterler`) tarayıp
+dönüyor ki Karakterler modundaki portre paletinde de seçilebilsinler.
+Aracın kendisi: taban karakter seç → silah görseli seç (hazır ikon ya da
+PNG yükle) → her sheet için TEK TEK offset/ölçek/açı ayarla (frame 0'a
+göre) → "oluştur" TÜM karelere aynı göreli dönüşümü uyguluyor. Uçtan uca
+Playwright ile test edildi (Alf + guard ikonu → `2_silahli` varyantı →
+oyunda NPC olarak yerleştirip ekran görüntüsüyle doğrulandı) - test
+sonunda temizlendi (`2_silahli` klasörü, geçici test scriptleri, geçici
+`__oyun` kancası silindi, hiçbiri commit'e girmedi).
+
+**Tehlikeli ders (veri kaybı, çözülmedi çünkü zaten "özellik"):** harita
+editöründeki HER "kaydet" ucu (blockers/nesneler/karakterler), o mekân
+için BOŞ liste gönderirsen mevcut satırı TAMAMEN temizler - bu arayüzde
+zaten yazıyor ("kutu yok - kaydedersen var olan blockers.push satırı
+temizlenir") ama tarayıcıdan DOĞRUDAN fetch ile test/temizlik yaparken
+(UI'nin kendi state'i olmadan) bu kolayca unutulup yanlış `kind`'a boş
+liste gönderilebiliyor - bir seferinde haven'ın `blockers.push` satırı
+tam da böyle sessizce silindi. **How to apply:** doğrudan
+`/__harita/kaydet` fetch'i ile test/temizlik yaparken önce O ZONE için
+GET ile güncel veriyi çek, sadece değiştirmek istediğin alt-listeyi
+düzenleyip GERİ gönder - asla elle yazılmış boş bir liste gönderme.
+Şüphede kalırsan `git diff --stat` ile satır sayılarını kontrol et,
+beklenenden büyükse tam `git diff`'e bak.
+
 ---
 
-*Son güncelleme: 2026-09-15, v9.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v9.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
