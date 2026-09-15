@@ -936,6 +936,37 @@ SADECE gerçek metin girişini engelle, düğme odağını değil. **Ders:**
 "kullanıcı şu an METİN mi yazıyor" - tagName'e bak, activeElement'in
 body olup olmadığına değil.
 
+### v11.4: "olmayan engel" - decor'un sabit yarıçaplı görünmez çarpışması eski konumda kalmış
+Kullanıcı "karakter bazen olmayan engellere takılıyor" dedi. Kök neden:
+`walkable()`'ın SONUNDAKI `entities.some()` kontrolü - decor tipi HER
+entity'nin (görsel boyutundan/varlığından TAMAMEN BAĞIMSIZ) sabit 10
+birim yarıçaplı bir çarpışma dairesi var (chest 6 birim). Zanaat
+masasının konumu (x:22,y:10) muhtemelen background GÖRSELİ sonradan
+revize edilirken güncellenmemiş - gerçek boyalı masa daha yukarıdaydı
+(y~7.5), eski konum masanın birkaç karo ALTINDAKİ BOŞ ZEMİNDE görünmez
+bir engel yaratıyordu. haven.png'nin piksellerini ölçüp gerçek masa
+merkezine taşıdım (bkz. python ile crop+grid overlay yöntemi, bu
+oturumda tekrar tekrar işe yaradı). **Genel ders:** `type:'decor'`/
+`'chest'` gibi SABİT-YARIÇAPLI (blockers dizisine değil, entity x,y'sine
+bağlı) çarpışmalar, arka plan görseli GÜNCELLENDİĞİNDE elle senkronize
+tutulmalı - otomatik bir bağlantı yok, biri diğerini takip etmiyor.
+Böyle bir şikayet gelince önce `world.ts`'teki TÜM `type:'decor'` ve
+`type:'chest'` çağrılarının x,y'sini background'daki gerçek görselle
+karşılaştır.
+
+**Ayrıca:** aynı oturumda "yuvarlak engeller çalışmıyor" şikayeti geldi -
+hem izole testte hem gerçek oyunda mevcut VE yeni oluşturulan elips
+blocker'ları doğru çarpıştığı için bir kod hatası BULUNAMADI. İlk test
+denemem yanlıştı (dar bir tünel koridorunun TAM genişliğinde bir elips
+seçmiştim, "dışında ama hâlâ zeminde" bir nokta kalmamıştı) - kendi test
+kurulumumun hatasıydı, koddaki değil. Ders: "çalışmıyor" şikayeti
+gelince önce GERÇEKTEN çalışmadığını KENDİN doğrula (izole test +
+gerçek oyunda), sonucu asla varsayma - burada iki ayrı test ("yuvarlak
+engel" ve "olmayan engel") aynı anda geldi ama TAMAMEN FARKLI iki
+mekanizmaydı (elips blocker vs decor'un sabit-yarıçaplı collision'ı),
+ikisini birbirine karıştırıp tek bir açıklamayla kapatmaya çalışmak
+yanlış sonuca götürürdü.
+
 ---
 
-*Son güncelleme: 2026-09-15, v11.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v11.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
