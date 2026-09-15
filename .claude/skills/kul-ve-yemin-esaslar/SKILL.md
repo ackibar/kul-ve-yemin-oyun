@@ -924,6 +924,18 @@ imkansız" ile "bu kod tabanında şu an öyle çünkü kimse ayırmamış"
 birbirinden çok farklı - ikinciyi ilkiyle karıştırmak erken pes etmek
 oluyor.
 
+### v11.2: H ile el (pan) aracı
+Basit özellik ama bir tuzağı vardı: `document.activeElement===document.body`
+gibi "hiçbir şey odakli degilken" kontrolü, kullanıcı herhangi bir DÜĞMEYE
+tıkladıktan sonra YANLIŞ ÇIKAR (düğmeler tıklanınca odağı üstlerinde
+tutar, body'ye dönmez) - Playwright testinde "+ zoom düğmesine bas, sonra
+H'ye bas" sırasıyla YAKALANDI (ilk H basışı sessizce yok sayıldı).
+Düzeltme: `!['INPUT','TEXTAREA'].includes(activeElement.tagName)` - yani
+SADECE gerçek metin girişini engelle, düğme odağını değil. **Ders:**
+"body'ye odaklanmışken" kısayol guard'ı YANLIŞ soru soruyor; asıl soru
+"kullanıcı şu an METİN mi yazıyor" - tagName'e bak, activeElement'in
+body olup olmadığına değil.
+
 ---
 
-*Son güncelleme: 2026-09-15, v11.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v11.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
