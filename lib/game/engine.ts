@@ -60,6 +60,13 @@ export class Engine{
  /** Oyuncu hucre boyu 80px (fh=40): figur bazi karelerde 65-70 satir, 64'te kafa kesiliyordu. Ayak satiri 78 -> capa 39. */
  static readonly OYUNCU_BOY=40;
  static readonly OYUNCU_CAPA=39;
+ /** Oyuncunun carpisma kutusu varsayilan olarak 5px'lik bir KARE (yatay=dikey) -
+  *  ama gorsel golgesi (bkz. render, ellipse 8.5x2.8) dikeyde cok daha ince.
+  *  Bu fark, "gecebilecek gibi gorunen bir boslukta takiliyorum" hissi
+  *  veriyordu (golgenin degmedigi bir noktada gorunmez kutu zaten engele
+  *  degmis oluyordu). Dikey yaricap golgeye yakin bir degere cekildi;
+  *  yatay (5) degismedi, bu sadece dikey sikismalari rahatlatiyor. */
+ static readonly OYUNCU_DIKEY_YARICAP=3;
  /** Okun ciziminde kullanilan gogus yuksekligi (yalnizca gorsel). */
  static readonly OK_YUKSEK=17;
  /** Tepeden cizilmis yaratiklar ve sprite'larinin DOGAL bakis acisi (radyan,
@@ -502,9 +509,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   this.state.hp=0;this.paused=true;this.audio.play('death');
   this.state.journal.unshift(not);this.onEvent({type:'death'});this.emit();
  }
- private move(p:{x:number;y:number},dx:number,dy:number,ben:string|null=null,mobDahil=false){
-  if(walkable(this.world,p.x+dx,p.y)&&!this.carpisir(p.x,p.y,p.x+dx,p.y,ben,mobDahil))p.x+=dx;
-  if(walkable(this.world,p.x,p.y+dy)&&!this.carpisir(p.x,p.y,p.x,p.y+dy,ben,mobDahil))p.y+=dy;
+ private move(p:{x:number;y:number},dx:number,dy:number,ben:string|null=null,mobDahil=false,ry?:number){
+  if(walkable(this.world,p.x+dx,p.y,5,undefined,ry)&&!this.carpisir(p.x,p.y,p.x+dx,p.y,ben,mobDahil))p.x+=dx;
+  if(walkable(this.world,p.x,p.y+dy,5,undefined,ry)&&!this.carpisir(p.x,p.y,p.x,p.y+dy,ben,mobDahil))p.y+=dy;
  }
   /** Ucurumdan havalanan yarasa surusu. Dagilarak doguyorlar ki tek yigin
   *  halinde gelmesinler; kimlikleri benzersiz, yoksa `killed` listesi bir
@@ -566,7 +573,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      kare:Math.floor(this.yol/Engine.ADIM),flip:this.flip,life:.26});}}
    for(const iz of this.izler)iz.life-=dt;this.izler=this.izler.filter(i=>i.life>0);
    const movement=this.dash>0?this.dashVector:activeInput;const length=Math.hypot(movement.x,movement.y);this.moving=length>.08;/* Ocak zirhinin agirligi (yavaslik) da tanimliydi ama kullanilmiyordu. */
-   const speed=(this.dash>0?205:44)*(ITEMS[this.state.equipment.armor].yavaslik??1)*(this.yavas>0?.6:1);if(this.moving){const dx=movement.x/Math.max(1,length),dy=movement.y/Math.max(1,length);this.face(dx,dy);this.move(this.state,dx*speed*dt,dy*speed*dt);this.bolgeKontrol();this.yol+=speed*dt;if(this.tick-this.stepAt>.29){this.audio.play('step');this.stepAt=this.tick;}}if(this.input.attack)this.attack();
+   const speed=(this.dash>0?205:44)*(ITEMS[this.state.equipment.armor].yavaslik??1)*(this.yavas>0?.6:1);if(this.moving){const dx=movement.x/Math.max(1,length),dy=movement.y/Math.max(1,length);this.face(dx,dy);this.move(this.state,dx*speed*dt,dy*speed*dt,null,false,Engine.OYUNCU_DIKEY_YARICAP);this.bolgeKontrol();this.yol+=speed*dt;if(this.tick-this.stepAt>.29){this.audio.play('step');this.stepAt=this.tick;}}if(this.input.attack)this.attack();
    // --- Kul Ovasi: can erimesi + ruzgarda savrulan kul ---
    if(this.state.zone==='disari'&&this.state.hp>0&&!this.paused){
     /* Kul pelerininin kulKalkan'i ve Duru su'yun korumasi BURADA isliyor;
