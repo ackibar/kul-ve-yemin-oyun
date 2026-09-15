@@ -159,7 +159,7 @@
   <div id="nesnePalet" class="small" style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid var(--line);border-radius:3px;padding:6px;min-height:40px"></div>
 
   <h2>3 · Yerleştir</h2>
-  <p class="hint">Bir görsel seç, tuvale tıkla = o noktaya yerleştirir. Var olan bir nesneye tıkla = seç; sürükle = taşı. <code>Delete</code>/<code>Backspace</code> = seçili nesneyi sil.</p>
+  <p class="hint">Bir görsel seç, tuvale tıkla = o noktaya yerleştirir. Var olan bir nesneye tıkla = seç; gövdesinden sürükle = taşı, köşe tutamağından sürükle = büyüt/küçült (oranlı). <code>Delete</code>/<code>Backspace</code> = seçili nesneyi sil.</p>
   <div id="seciliNesne" style="display:none">
     <label>Seçili nesne (karo birimi)</label>
     <div class="row">
@@ -167,6 +167,8 @@
       <div><label class="small">y</label><input type="number" id="ny" step="0.05"></div>
       <div><label class="small">ölçek</label><input type="number" id="ns" step="0.05" min="0.1"></div>
     </div>
+    <label class="small">Katman (0 = karakterle aynı, y konumuna göre sıralanır - normal. Pozitif = HER ZAMAN önde, negatif = HER ZAMAN arkada, kaç katman istersen)</label>
+    <input type="number" id="nl" step="1" value="0">
     <button id="nesneSil">Seçileni sil</button>
   </div>
   <label>Nesne listesi (tıkla = seç)</label>
@@ -230,9 +232,9 @@ let dizilenPoligon=null; // pen tool ile su an cizilmekte olan, henuz bitmemis p
 // --- Nesneler (yuklenen PNG'ler, sahneye yerlestirilen tekil objeler) ---
 let palet=[]; // {asset,img} - yuklenen, sunucuya kaydedilmis gorseller
 let aktifAsset=null; // paletten secili, tuvale tiklayinca yerlesecek
-let objeler=[]; // {id,x,y,s,asset} karo biriminde
+let objeler=[]; // {id,x,y,s,layer,asset} karo biriminde (layer opsiyonel, 0=varsayilan)
 let selectedObje=-1;
-let objeDrag=null; // {from:[x,y], orig:{x,y}}
+let objeDrag=null; // {type:'move',from:[x,y],orig:{x,y}} ya da {type:'resize',anchor:[x,y],startDist,startS}
 let objeSayac=0;
 
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
@@ -445,12 +447,16 @@ function draw(){
   objeler.forEach((o,i)=>{
     const p=palet.find(p=>p.asset===o.asset);
     if(!p)return;
-    const s=(o.s||1), iw=p.img.width*scale/2*s, ih=p.img.height*scale/2*s; // R=2: 2 img px = 1 dunya birimi
+    const s=(o.s||1), iw=p.img.width*scale*s, ih=p.img.height*scale*s; // R=2 zaten pxKaro/tp uzerinden hesaba katiliyor, ekstra /2 YOK (bkz. objeKutusu'ndaki not - oncesinde buradaydi, oyunda 2x buyuk cikmasina sebep oluyordu)
     const px=o.x*tp, py=o.y*tp;
     ctx.drawImage(p.img, px-iw/2, py-ih, iw, ih);
     if(mode==='nesne' && i===selectedObje){
       ctx.strokeStyle='#c99bec'; ctx.lineWidth=2;
       ctx.strokeRect(px-iw/2, py-ih, iw, ih);
+      ctx.fillStyle='#c99bec';
+      for(const [hx,hy] of [[px-iw/2,py-ih],[px+iw/2,py-ih],[px-iw/2,py],[px+iw/2,py]]){
+        ctx.beginPath(); ctx.arc(hx,hy,5,0,7); ctx.fill();
+      }
     }
   });
   ctx.restore();
@@ -526,7 +532,14 @@ cv.addEventListener('mousemove',e=>{
     const [px,py]=pxFromEvent(e);
     $('hoverTag').textContent = `karo (${px.toFixed(2)}, ${py.toFixed(2)})`;
     if(!objeDrag)return;
-    const o=objeler[selectedObje], dx=px-objeDrag.from[0], dy=py-objeDrag.from[1];
+    const o=objeler[selectedObje];
+    if(objeDrag.type==='resize'){
+      const dist=Math.hypot(px-objeDrag.anchor[0],py-objeDrag.anchor[1]);
+      o.s=Math.max(0.02,Math.round(objeDrag.startS*(dist/objeDrag.startDist)*1000)/1000);
+      draw(); syncSelectedObje(); updateNesneExport();
+      return;
+    }
+    const dx=px-objeDrag.from[0], dy=py-objeDrag.from[1];
     o.x=objeDrag.orig.x+dx; o.y=objeDrag.orig.y+dy;
     draw(); syncSelectedObje(); updateNesneExport();
     return;
@@ -575,10 +588,18 @@ cv.addEventListener('mousedown',e=>{
   }
   if(mode==='nesne'){
     const [px,py]=pxFromEvent(e);
+    const h=objeHandleAt(px,py);
+    if(h){
+      const o=objeler[selectedObje];
+      const anchor=[o.x,o.y]; // alt-orta nokta sabit kalir, sadece s degisir
+      const startDist=Math.max(0.02,Math.hypot(px-anchor[0],py-anchor[1]));
+      objeDrag={type:'resize',anchor,startDist,startS:o.s||1};
+      return;
+    }
     const i=objeAt(px,py);
     if(i>=0){
       selectedObje=i;
-      objeDrag={from:[px,py],orig:{x:objeler[i].x,y:objeler[i].y}};
+      objeDrag={type:'move',from:[px,py],orig:{x:objeler[i].x,y:objeler[i].y}};
       renderObjeList(); syncSelectedObje(); draw();
       return;
     }
@@ -774,7 +795,7 @@ async function loadNesneler(){
         palet.push({asset:n.asset,img:im});
       }catch{ /* dosya bulunamadi, yine de listede tut ama gorselsiz */ }
     }
-    objeler.push({id:n.id,x:n.x,y:n.y,s:n.s,asset:n.asset});
+    objeler.push({id:n.id,x:n.x,y:n.y,s:n.s,layer:n.layer||0,asset:n.asset});
   }
   renderPalet(); renderObjeList(); draw();
 }
@@ -815,13 +836,43 @@ function renderPalet(){
   });
 }
 
+/** Bir nesnenin sinirlayici kutusu KARO biriminde (motorun sprite() cizimiyle
+ *  ayni mantik - x,y ayak noktasi/alt-orta, s ile oranli buyur). Hem tiklama
+ *  testi (objeAt) hem de kose tutamaclari (objeHandleAt) bunu kullanir. */
+function objeKutusu(o){
+  const p=palet.find(p=>p.asset===o.asset);
+  if(!p)return null;
+  // KRITIK: burada ESKIDEN yanlislikla ekstra bir /2 vardi (R=2'yi iki kere
+  // uygulamis oluyordu) - editorde "kucuk/dogru" gorunen bir nesne oyunda
+  // TAM 2 KATI buyuk cikiyordu (kullanicinin yasadigi "editorde kucuk ama
+  // oyunda devasa" sikayetinin gercek kaynagi buydu). Dogru formul: R=2
+  // zaten pxKaro=32'nin icinde (1 karo=16 dunya birimi, 1 dunya birimi=2
+  // native piksel, yani 32 native piksel=1 karo) - ayrica bolmeye GEREK YOK.
+  const s=o.s||1, iw=p.img.width/pxKaro*s, ih=p.img.height/pxKaro*s;
+  return {left:o.x-iw/2,right:o.x+iw/2,top:o.y-ih,bottom:o.y};
+}
 function objeAt(px,py){
   for(let i=objeler.length-1;i>=0;i--){
-    const o=objeler[i], p=palet.find(p=>p.asset===o.asset);
-    const iw=p?(p.img.width/2/pxKaro):1, ih=p?(p.img.height/2/pxKaro):1; // 2px/dunya birimi (R=2), /pxKaro -> karo
-    if(px>=o.x-iw/2*(o.s||1)&&px<=o.x+iw/2*(o.s||1)&&py>=o.y-ih*(o.s||1)&&py<=o.y)return i;
+    const b=objeKutusu(objeler[i]);
+    if(!b)continue;
+    if(px>=b.left&&px<=b.right&&py>=b.top&&py<=b.bottom)return i;
   }
   return -1;
+}
+/** Secili nesnenin kose tutamaclarindan birine yakin miyiz? Dondugu deger
+ *  'tl'|'tr'|'bl'|'br' - hangisi olursa olsun surukleme AYNI (oranli) tek
+ *  bir "s" degerini degistirir, bagimsiz genislik/yukseklik yok. */
+function objeHandleAt(px,py){
+  if(selectedObje<0)return null;
+  const b=objeKutusu(objeler[selectedObje]);
+  if(!b)return null;
+  const tp=pxKaro*scale;
+  const pts={tl:[b.left,b.top],tr:[b.right,b.top],bl:[b.left,b.bottom],br:[b.right,b.bottom]};
+  for(const k in pts){
+    const [hx,hy]=pts[k];
+    if(Math.hypot(hx*tp-px*tp,hy*tp-py*tp)<HANDLE_PX)return k;
+  }
+  return null;
 }
 function renderObjeList(){
   const el=$('nesneListe');
@@ -840,6 +891,7 @@ function syncSelectedObje(){
   if(!has)return;
   const o=objeler[selectedObje];
   $('nx').value=o.x.toFixed(2); $('ny').value=o.y.toFixed(2); $('ns').value=(o.s||1).toFixed(2);
+  $('nl').value=String(o.layer||0);
 }
 ['nx','ny','ns'].forEach(id=>{
   $(id).addEventListener('input',()=>{
@@ -848,6 +900,11 @@ function syncSelectedObje(){
     o.x=parseFloat($('nx').value)||0; o.y=parseFloat($('ny').value)||0; o.s=parseFloat($('ns').value)||1;
     draw(); updateNesneExport();
   });
+});
+$('nl').addEventListener('input',()=>{
+  if(selectedObje<0)return;
+  objeler[selectedObje].layer=Math.round(parseFloat($('nl').value))||0;
+  updateNesneExport();
 });
 $('nesneSil').addEventListener('click',()=>{
   if(selectedObje<0)return;
@@ -858,7 +915,7 @@ $('nesneSil').addEventListener('click',()=>{
 function updateNesneExport(){
   const fmt=n=>Math.round(n*100)/100;
   $('nesneExportBox').value = objeler.length
-    ? objeler.map(o=>`at({id:'${o.id}',type:'decor',x:${fmt(o.x)},y:${fmt(o.y)},asset:'${o.asset}',s:${fmt(o.s||1)},overlay:true});`).join('\n')
+    ? objeler.map(o=>`at({id:'${o.id}',type:'decor',x:${fmt(o.x)},y:${fmt(o.y)},asset:'${o.asset}',s:${fmt(o.s||1)}${o.layer?`,layer:${Math.round(o.layer)}`:''},overlay:true});`).join('\n')
     : '(nesne yok - kaydedersen önceki eklemeler temizlenir)';
 }
 $('nesneCopyBtn').addEventListener('click', async ()=>{
@@ -869,7 +926,7 @@ $('nesneSaveBtn').addEventListener('click', async ()=>{
   if(!currentZoneName){ alert('Kaydet sadece hazır mekân listesinden seçilenlerde çalışır (özel görselde değil).'); return; }
   $('status').textContent='Kaydediliyor…';
   try{
-    const list = objeler.map(o=>({id:o.id,x:o.x,y:o.y,asset:o.asset,s:o.s||1}));
+    const list = objeler.map(o=>({id:o.id,x:o.x,y:o.y,asset:o.asset,s:o.s||1,layer:o.layer||0}));
     const r = await fetch('/__harita/kaydet', {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ zone: currentZoneName, kind:'nesneler', list }),

@@ -34,7 +34,7 @@ function haritaEditoruEklentisi() {
             // Sadece bu aracın kendi eklediği (overlay:true) decor'ları döner -
             // NPC/sandık/ateş gibi elle yazılmış diğer entity'lere karışmaz.
             const nesneler = world.entities.filter((e: any) => e.type === 'decor' && e.overlay)
-              .map((e: any) => ({ id: e.id, x: (e.x - 8) / 16, y: (e.y - 8) / 16, asset: e.asset, s: e.s ?? 1 }));
+              .map((e: any) => ({ id: e.id, x: (e.x - 8) / 16, y: (e.y - 8) / 16, asset: e.asset, s: e.s ?? 1, layer: e.layer ?? 0 }));
             res.setHeader('content-type', 'application/json');
             res.end(JSON.stringify({ w: world.w, h: world.h, tiles: world.tiles, blockers: world.blockers, nesneler }));
           } catch (e: any) {
@@ -88,12 +88,14 @@ function haritaEditoruEklentisi() {
                   yeniBlok = blok; // hem yeni liste bos hem eski yoktu - degisiklik yok
                 }
               } else if (kind === 'nesneler') {
-                // list: {id,x,y,asset,s}[] - x/y karo biriminde (ondalikli olabilir).
+                // list: {id,x,y,asset,s,layer}[] - x/y karo biriminde (ondalikli olabilir).
                 // at() zaten *16+8 uyguluyor, o yuzden BURADA CARPMA YOK - world.ts'teki
                 // diger tum at({...}) cagrilari da karo birimi aliyor, tutarli kalsin.
+                // layer sadece SIFIR DEGILSE yazilir - eski/normal nesneler world.ts'te
+                // gereksiz "layer:0" ile kirlenmesin (bkz. Entity.layer tipindeki not).
                 const fmt = (n: number) => Math.round(n * 100) / 100;
-                const satirlar = (list as { id: string; x: number; y: number; asset: string; s?: number }[])
-                  .map((o) => `  at({id:'${o.id}',type:'decor',x:${fmt(o.x)},y:${fmt(o.y)},asset:'${o.asset}',s:${fmt(o.s ?? 1)},overlay:true});\n`)
+                const satirlar = (list as { id: string; x: number; y: number; asset: string; s?: number; layer?: number }[])
+                  .map((o) => `  at({id:'${o.id}',type:'decor',x:${fmt(o.x)},y:${fmt(o.y)},asset:'${o.asset}',s:${fmt(o.s ?? 1)}${o.layer ? `,layer:${Math.round(o.layer)}` : ''},overlay:true});\n`)
                   .join('');
                 // NESNE_BAS kendi basinda '\n' tasiyor, hem ilk eklemede hem de
                 // eslesme aramasinda AYNI sabit kullaniliyor - boylece kaldirinca
