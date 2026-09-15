@@ -67,11 +67,13 @@ function haritaEditoruEklentisi() {
 
               let yeniBlok: string;
               if (kind === 'blockers') {
-                // list: [x1,y1,x2,y2][] - ondalikli olabilir (alt-karo hassasiyet icin,
-                // bkz. walkable() - blockers duz aritmetikle okunuyor, tamsayi sarti yok).
+                // list: number[][] - her eleman degisken uzunlukta: 4 sayi
+                // dikdortgen, 5 sayi elips (son eleman etiket 1), >=7 tek sayi
+                // cokgen (son eleman etiket 2) - bkz. World['blockers'] tipindeki
+                // not. Ondalikli olabilir (alt-karo hassasiyet icin, bkz. walkable()).
                 const fmt = (n: number) => Math.round(n * 100) / 100;
                 const satir = (list as number[][])
-                  .map(([x1, y1, x2, y2]) => `[${fmt(x1)},${fmt(y1)},${fmt(x2)},${fmt(y2)}]`)
+                  .map((b) => `[${b.map(fmt).join(',')}]`)
                   .join(',');
                 const yeniIfade = satir ? `blockers.push(${satir});` : '';
                 const pushRe = /blockers\.push\([^;]*\);\n?/;

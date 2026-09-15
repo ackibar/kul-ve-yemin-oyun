@@ -10,7 +10,14 @@ export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
 export type EnemySpec={id:string;kind:1|2|4|5|6|7|8|9|10;x:number;y:number;boss?:boolean};
-export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[];enemies:EnemySpec[];spawn:[number,number];blockers:[number,number,number,number][];
+export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[];enemies:EnemySpec[];spawn:[number,number];
+ /** Karo biriminde carpisma sekli - UZUNLUGA gore ayirt edilir (harita-editor.html
+  *  "Engeller" modu ile uretilir):
+  *  - 4 sayi [x1,y1,x2,y2]: dikdortgen (eskisi gibi).
+  *  - 5 sayi [x1,y1,x2,y2,1]: elips, ayni sinirlayici kutuya icirilmis.
+  *  - >=7 sayi (tek sayida, son eleman 2) [x0,y0,x1,y1,...,xn,yn,2]: cokgen
+  *    (pen tool), oncesindeki CIFT sayilar en az 3 noktalik duz nokta listesi. */
+ blockers:number[][];
  /** Uzerine BASINCA bolge degistiren kutular (karo birimi, x2/y2 haric).
   *  Kapi nesnesine basmak yerine tunelden yuruyerek gecmek icin. */
  gecisler:{kutu:[number,number,number,number];to:Zone;spawn:[number,number]}[];
@@ -39,7 +46,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  /** Arka plan gorselinde boyali olan mobilyanin carpisma kutulari (karo birimi,
   *  x2/y2 haric). Gorsel carpisma izgarasini bilmedigi icin elle cikarildi;
   *  bkz. scripts/haven_engel.py ve generated/_ENGELLER.png dogrulama katmani. */
- const blockers:[number,number,number,number][]=[];
+ const blockers:number[][]=[];
  const gecisler:World['gecisler']=[];const ucurumlar:World['ucurumlar']=[];const isiklar:World['isiklar']=[];
  const gecis=(x1:number,y1:number,x2:number,y2:number,to:Zone,spawn:[number,number])=>
   gecisler.push({kutu:[x1,y1,x2,y2],to,spawn});
@@ -53,6 +60,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  const chest=(id:string,x:number,y:number,items:[ItemId,number][],gold=0)=>at({id,type:'chest',x,y,items,gold,name:'Sandık'});
  const enemy=(id:string,kind:1|2|4|5|6|7|8|9|10,x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
  if(zone==='haven'){
+  blockers.push([11.7,3.8,12.6,8.6],[10.35,7.3,11.85,9.3],[11,10.55,12.45,11.3],[3.61,13.19,9,13.65],[3.15,10.27,3.65,14.35],[6.28,18.62,10.7,20.4],[6.23,22.31,10.2,24.2],[3.95,22.24,5.6,24.35],[3.8,19.99,5.85,22.6],[19.25,9.63,20.1,10.55],[22.89,11.31,23.7,12.25],[23.45,9.87,24.3,10.75],[20.14,22.82,23.25,24.15],[24.8,18.9,26.7,22.1],[18.3,24.05,19.2,29],[19.22,24.41,26.95,24.85],[17.37,3.74,18.15,7.95],[12.45,0.7,13.25,4.5],[16.75,0.68,17.45,4.45],[16.73,5.37,17.6,6.2],[10.5,22.75,11.8,24.35]);
   // Zemin ve carpisma ARTIK ELLE YAZILMIYOR: yeni mekan tek sahne gorseli +
   // ayri prop sayfasi olarak geldi, ikisi de scripts/mekan_kur.py ile islendi.
   // ZEMIN arka planin aydinlik kismindan, blockers prop katmaninin alfasindan
@@ -262,6 +270,24 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  }
  return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:zone==='tunel'?[6*16+8,6*16+8]:zone==='test100'?[5*16+8,5*16+8]:[7*16,7*16]};
 }
+/** Cokgen (pen tool) carpismasi: son eleman etiket (2), oncesi karo biriminde
+ *  duz [x0,y0,x1,y1,...] nokta listesi. Aktorun kare hitbox'inin DORT kosesi
+ *  (tilesOk'daki ayni teknik) test edilir - herhangi biri poligonun icindeyse
+ *  carpisma sayilir, boylece aktorun yaricapi da hesaba katilmis olur. */
+function cokgenCarpisiyor(b:number[],x:number,y:number,r:number):boolean{
+ const pts=b.slice(0,-1);
+ for(const [dx,dy] of [[-r,-r],[r,-r],[-r,r],[r,r]]){
+  const tx=x+dx,ty=y+dy;
+  let ic=false;
+  for(let i=0,j=pts.length-2;i<pts.length;i+=2){
+   const xi=pts[i]*16,yi=pts[i+1]*16,xj=pts[j]*16,yj=pts[j+1]*16;
+   if(((yi>ty)!==(yj>ty))&&(tx<(xj-xi)*(ty-yi)/(yj-yi)+xi))ic=!ic;
+   j=i;
+  }
+  if(ic)return true;
+ }
+ return false;
+}
 export function walkable(world:World,x:number,y:number,r=5,ignoreId?:string){
  const tilesOk=[[-r,-r],[r,-r],[-r,r],[r,r]].every(([dx,dy])=>world.tiles[Math.floor((y+dy)/16)]?.[Math.floor((x+dx)/16)]===1);
  if(!tilesOk)return false;
@@ -269,8 +295,22 @@ export function walkable(world:World,x:number,y:number,r=5,ignoreId?:string){
  // Tam temas aninda kenar boyunca KAYMA kilitleniyordu (oyuncu tezgaha dayanip
  // sola gidemiyordu). Kucuk bir pay ile birebir degme cakisma sayilmaz.
  const E=0.01;
- for(const [bx1,by1,bx2,by2] of world.blockers)
-  if(x+r>bx1*16+E&&x-r<bx2*16-E&&y+r>by1*16+E&&y-r<by2*16-E)return false;
+ for(const b of world.blockers){
+  if(b.length===4){
+   const [bx1,by1,bx2,by2]=b;
+   if(x+r>bx1*16+E&&x-r<bx2*16-E&&y+r>by1*16+E&&y-r<by2*16-E)return false;
+  }else if(b.length===5){
+   // Elips: sinirlayici kutunun merkezi/yaricapi, aktorun kendi yaricapi
+   // kadar icine cekilerek aktor-elips carpismasi aktor-nokta'ya indirgeniyor.
+   const [bx1,by1,bx2,by2]=b;
+   const ecx=(bx1+bx2)/2*16,ecy=(by1+by2)/2*16;
+   const erx=Math.max(1,(bx2-bx1)/2*16-r),ery=Math.max(1,(by2-by1)/2*16-r);
+   const ndx=(x-ecx)/erx,ndy=(y-ecy)/ery;
+   if(ndx*ndx+ndy*ndy<1)return false;
+  }else if(cokgenCarpisiyor(b,x,y,r)){
+   return false;
+  }
+ }
  return !world.entities.some(e=>{
   if(e.id===ignoreId)return false;
   if(e.type==='decor')return Math.hypot(e.x-x,e.y-y)<10;
