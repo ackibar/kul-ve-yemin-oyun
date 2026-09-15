@@ -185,7 +185,16 @@ for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?1
 for(const set of ['1','1sword','1bow','1balta','1mesale','1swordmesale'])for(const dir of ['D','U','S','DS','US'])for(const action of ['Idle','Walk','Attack']){jobs.push(this.img(`characters${set}${dir}${action}`,`/assets/characters/${set}/${dir}_${action}.png`));/* Mesale seti sonradan uretildi; eksikse oyun acilmaya devam etsin (kit() tabana duser). */optional.push(dir==='DS'||dir==='US'||set.endsWith('mesale'));}for(const z of ['haven','magara','disari','yikik','cistern','tunel','test100'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));/* 'portal' (Trapdoor_D) kaldirildi: kapak sprite'i yalnizca boyali arka
    plani olmayan mekanda ciziliyordu, oyle bir mekan kalmadi. */
 for(const [key,name]of [['fire','Fire1'],['lever','Lever1'],['trap','Spikes']])jobs.push(this.img(key,`/assets/dungeon/3%20Animated%20objects/${name}.png`));/* Sandik artik CraftPix setinden degil: oyunun paletinde uretilmis iki
-   kareli kendi sheet'i (0 kapali, 1 acik). */jobs.push(this.img('chest','/assets/nesne/sandik.png'));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));mark(false);const result=await Promise.allSettled(jobs);
+   kareli kendi sheet'i (0 kapali, 1 acik). */jobs.push(this.img('chest','/assets/nesne/sandik.png'));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));
+/* harita-editor "Nesneler" modunun eklendigi overlay decor'lar (ör. nesne/ed_props)
+   eskiden yalnizca zone degisince overlayNesneleriYukle() ile ISTEGE BAGLI/GECIKMELI
+   yukleniyordu - sayfa yeni acildiginda veya farkli bir kapidan o bolgeye direkt
+   girildiginde resim daha gelmeden ilk birkac kare cizilip nesne "yokmus" gibi
+   gorunuyor, resim gelince kendiliginden beliriyordu ("bir gozukuyor bir
+   kayboluyor" sikayeti buradan geliyordu). Tum bolgelerin overlay resimlerini
+   burada, "ready" kapisina dahil ederek onceden yukluyoruz. */
+for(const z of ['haven','magara','disari','yikik','cistern','tunel'])for(const e of makeWorld(z as Zone).entities)if(e.type==='decor'&&e.overlay&&e.asset&&!this.images[e.asset]){jobs.push(this.img(e.asset,`/assets/${e.asset}.png`));optional.push(true);}
+mark(false);const result=await Promise.allSettled(jobs);
   // Rauf seti (characters/5, enemies/6) sonradan eklenecek; eksikligi oyunu kirmaz.
   const zorunlu=result.filter((_,i)=>!optional[i]);
   this.ready=zorunlu.every(r=>r.status==='fulfilled');if(!this.ready)this.onEvent({type:'message',text:'Bazı görseller yüklenemedi. Bağlantını kontrol edip sayfayı yenile.'});this.emit();}

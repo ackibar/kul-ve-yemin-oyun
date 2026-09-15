@@ -983,6 +983,41 @@ hesaplasan bile, hedef `boundingBox()` viewport'un dışındaysa tıklama
 sessizce hiçbir şey yapmaz - önce `box.height`/`box.width`'i viewport
 boyutuyla kıyaslamak, yanlış-negatif "bug"lardan çok daha hızlı kurtarır.
 
+### v11.6: overlay decor'ların yüklenme yarışı ("bir gözüküyor bir kayboluyor")
+Şikayet: haven'daki perde overlay nesnesi ("ed_props") bazen gözükmüyor,
+sonra kendiliğinden geliyordu - "farklı yönlerde açışlarımda gitmişti"
+(farklı sayfa/oturum açılışlarında kayboluyordu). Önce yanlış yollar
+denendi ve TEK TEK elendi: (1) gezinen NPC'lerin (Mirna/Alf/Undur) y-sort
+ile üstünü kapatması - matematiksel olarak imkansız çıktı, en yakın NPC
+bile nesneden ~67 birim uzakta, gezinme yarıçapı max ~32; (2) haven'ın
+karanlık/meşale-titreme sistemi - `KARANLIK.haven=0`, o sistem zaten
+kapalı; (3) y-sort'un titreşmesi - kontrollü Playwright testinde sabit
+hızda geçişte TEK VE TEMİZ bir flip oldu, çırpınma yok. Gerçek sebep çok
+daha basitti: `overlayNesneleriYukle()` (harita-editor'ün eklediği
+overlay decor'ların resmini yükleyen fonksiyon) yalnızca zone değişince
+çağrılıyordu VE ana `loadAssets()`'in `Promise.allSettled(jobs)` -
+`this.ready` kapısına HİÇ dahil değildi. Yani oyun "ready" olup oyuncuya
+"Yolculuğa başla" düğmesini açtığında bu overlay resmi henüz gelmemiş
+olabiliyordu - ilk birkaç karede sprite() sessizce çizmiyordu
+(`naturalWidth` kontrolü), resim gelince aniden beliriyordu. Sayfa her
+taze açıldığında (veya asset henüz cache'lenmediğinde) bu yarış tekrar
+oluşuyordu. **Fix:** `loadAssets()` artık TÜM bölgelerin (`makeWorld(z)`
+ile, flagsiz) `type:'decor'&&overlay` olan asset'lerini tarayıp ana
+`jobs` dizisine (optional:true olarak, oyunu kilitlememesi için) ekliyor
+- böylece "ready" olduğunda bu overlay resimleri de kesinlikle yüklenmiş
+oluyor. Playwright ile doğrulandı: `page.route` ile bu resmin ağ
+isteğini yapay olarak 1500ms geciktirip, "ready" flag'inin GERÇEKTEN o
+1500ms'den SONRA döndüğü ölçüldü (önce hatalı bir ölçüm metodolojisiyle
+"hiç beklemiyor" gibi göründü - `waitUntil:'networkidle'` zaten geciken
+isteğin bitmesini bekliyordu, ölçüm saati ondan SONRA başlatılmıştı;
+`domcontentloaded` + `Date.now()` damgalı network event logları ile
+düzeltildi). **Genel ders:** "editor↔engine" ile "ilk yükleme↔render"
+arasında da aynı sınıf hata olabilir - bir asset'in NE ZAMAN gerekeceği
+ile NE ZAMAN yüklenmeye başladığı arasında bir "ready" kapısı yoksa,
+her taze sayfa açılışı gizli bir yarış durumu yaratır; bunu görmek için
+durağan/normal-hızda test yeterli değil, ağ gecikmesini YAPAY olarak
+simüle etmek gerekti.
+
 ---
 
-*Son güncelleme: 2026-09-15, v11.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v11.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
