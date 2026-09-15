@@ -841,6 +841,28 @@ icat etmekten hızlıydı) ve `Entity.layer` (varsayılan 0, sıfırdan
 farklıysa y'den ÖNCE bu sıralanıyor - pozitif her zaman önde, negatif
 her zaman arkada, y sadece aynı katmandakiler arasında tie-break).
 
+### v10.8: Nesneler modunda İKİNCİ gizli hata - yarım karo konum kayması
+v10.7'nin 2x boyut hatasını düzelttikten hemen sonra kullanıcı "eklediğim
+nesne koyduğum yerde durmuyor, yakın ama başka yerde" dedi - AYNI ailede
+ama FARKLI bir hataydı. Kök neden: `at()` verilen x,y'ye otomatik `+8`
+(=yarım karo) merkezleme ekliyor (`x:e.x*16+8`) - GET endpoint'i bunu
+`(e.x-8)/16` ile telafi ediyordu ama SAVE tarafı HİÇ telafi etmiyordu
+(`x:o.x` düz yazıyordu), yani editörün ekranda gösterdiği/tıklanan konum
+ile `at()`'in gerçekte çizdiği konum arasında SABİT yarım karo fark
+vardı. Düzeltme: GET artık `e.x/16` (çıkarma YOK - editörün o.x'i
+doğrudan "world-px/16" = ekranda `px=o.x*tp` ile ÇİZİLEN değer), SAVE
+`o.x-0.5` yazıyor (at()'in +8'ini ÖNCEDEN telafi ediyor). İkisi
+BİRLİKTE tutarlı olmalı - biri değişince öbürü de değişmeli.
+
+**Genel ders (v10.7 ile birlikte oku):** Bir "editör önizlemesi ↔ gerçek
+motor" ikilisinde onlarca farklı yerde AYNI temel yanlışlık (burada:
+"motor otomatik bir dönüşüm uyguluyor, editör bunu hesaba katmıyor")
+FARKLI belirtilerle (önce boyut, sonra konum) art arda çıkabilir - biri
+düzelince "artık güvenilir" diye varsaymak yerine, motorun O YOLDAKİ
+TÜM otomatik dönüşümlerini (burada: hem `im.width/R` hem `x*16+8`) tek
+tek editörün karşılığıyla eşleştirip doğrulamak, aynı sınıf hatanın
+ikinci kez sürpriz olarak çıkmasını önlerdi.
+
 ---
 
-*Son güncelleme: 2026-09-15, v10.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v10.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
