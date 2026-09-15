@@ -1251,6 +1251,35 @@ engine.ts'te "Tuhn: ikna edilemediyse ucuruma yurur ve atlar" yorumu),
 ama bu oturumda DOKUNULMADI, kullanıcı önce oyuncu üzerinde görüp
 onaylamak istedi.
 
+### v12.6: Sarnıç (cistern) bölgesine özel müzik
+Kullanıcı Masaüstü'nden bir ses dosyası verdi ("8bit c1625.wav", 31MB PCM),
+"sarnıç bölümüne geçince oyunun müziği olarak bu çalsın" dedi. Önce ffmpeg
+ile mp3'e (libmp3lame, ~3.5MB, orijinal 2dk45sn süre korunarak) sıkıştırıp
+`public/assets/audio/sarnic.mp3` olarak kaydettim.
+
+`lib/game/audio.ts` ÖNCEDEN tek bir kayıtlı müzik parçası (`PARCA`,
+three-steps-beneath.mp3) varsayıyordu - `this.parca/basla/bitis` tekil
+alanlardı, bölge yalnızca SENTEZLENMİŞ (fallback) müziğin nota kalıbını
+etkiliyordu, gerçek dosya hiç bölgeye göre değişmiyordu. Bunu genelleştirdim:
+- `parcalar:Record<yol,{buf,basla,bitis}>` - her parça dosya YOLUYLA
+  anahtarlanıyor, `parcaYukle(yol)` artık parametrik.
+- `ZONE_PARCA:Record<zone,yol>` - şimdilik yalnızca `cistern:SARNIC_PARCA`;
+  yeni bir bölgeye özel müzik eklemek için tek satır yeterli.
+- `aktifYol()` o an hangi dosyanın çalması gerektiğini döner.
+- `setZone()` aktif yol DEĞİŞTİYSE `parcaGecisYap()` çağırır - o an
+  planlanmış (uzun süreli, dakikalarca sürebilen) kaynakları HIZLICA
+  (1.3sn) soldurup durdurur; yoksa eski parça kendi doğal çıkışına kadar
+  (dakikalarca) çalmaya devam edip yeni parçayla üst üste binerdi.
+- `calan` artık `{src,gain}` çiftleri tutuyor (öncesinde yalnız `src` -
+  gain node'a dışarıdan erişim gerekiyordu, geçiş sırasında söndürmek için).
+
+'cistern' (Unutulmuş Sarnıç) seçildi, ÇÜNKÜ 'magara' (Sarnıç AĞZI - girişi,
+farklı bir bölge) da adında "Sarnıç" geçiyor ama kullanıcı muhtemelen asıl
+sarnığı kastetti; emin olunmadığı NOT edildi, yanlışsa `ZONE_PARCA`'daki
+anahtarı `magara` yapmak tek satırlık değişiklik. Playwright ile haven->
+cistern->haven geçişinde `aktifYol()`'un doğru değiştiği ve `calan`
+sayısının hep 1'de kaldığı (eski kaynak birikmiyor) doğrulandı.
+
 ---
 
-*Son güncelleme: 2026-09-16, v12.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-16, v12.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
