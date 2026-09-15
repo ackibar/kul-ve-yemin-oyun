@@ -84,17 +84,18 @@ export class Engine{
  /** Oyuncu hucre boyu 80px (fh=40): figur bazi karelerde 65-70 satir, 64'te kafa kesiliyordu. Ayak satiri 78 -> capa 39. */
  static readonly OYUNCU_BOY=40;
  static readonly OYUNCU_CAPA=39;
- /** Oyuncunun carpisma kutusu varsayilan olarak 5px'lik bir KARE (yatay=dikey).
-  *  Once golgenin (bkz. render, ellipse 8.5x2.8) dikey boyutuna yaklastirildi,
-  *  sonra golgeden TAMAMEN BAGIMSIZ 3/2'ye kucultuldu - kullanici "hala
-  *  gereginden fazla yer kapliyor" dedi, bu yuzden tekrar kucultuldu (2/1).
-  *  Hala fazla siki/gevsek gelirse bu ikisi ayarlanabilir. NOT: bu sadece
-  *  world.ts'teki blockers (elle/editorle cizilen mobilya) ile carpisma -
-  *  ayrica decor/chest tipi entity'lerin KENDI sabit yaricapi var (bkz.
-  *  walkable() sonundaki entities.some, 10/6px) ve bu ikisinden ETKILENMEZ;
-  *  "hala fazla yer kapliyor" hissi zanaat masasi/sandik gibi TEKIL bir
-  *  nesneden geliyorsa sorun oradadir, burada degil. */
- static readonly OYUNCU_YATAY_YARICAP=2;
+ /** Oyuncunun carpisma kutusu varsayilan olarak 5px'lik bir KARE (yatay=dikey)
+  *  idi, golgeden BAGIMSIZ olarak kademeli kucultuldu (3/2, sonra 2/1) ama
+  *  2 YATAYDA fazla kucuk cikti: A/D (yan, 'S' sprite) yonunde karakter
+  *  gorsel olarak engelin UZERINE cikiyordu (W/S=dikey ile gorunum iyiydi,
+  *  demek ki iki eksen birbirinden BAGIMSIZ ayarlanmali, biri digerini
+  *  temsil etmiyor). Yatay 3'e geri cekildi, dikey 1'de kaldi (o eksende
+  *  sikayet yoktu). NOT: bu sadece world.ts'teki blockers (elle/editorle
+  *  cizilen mobilya) ile carpisma - decor/chest tipi entity'lerin KENDI
+  *  sabit yaricapi var (bkz. walkable() sonundaki entities.some, 10/6px)
+  *  ve bu ikisinden ETKILENMEZ; sikayet zanaat masasi/sandik gibi TEKIL
+  *  bir nesneden geliyorsa sorun oradadir, burada degil. */
+ static readonly OYUNCU_YATAY_YARICAP=3;
  static readonly OYUNCU_DIKEY_YARICAP=1;
  /** Okun ciziminde kullanilan gogus yuksekligi (yalnizca gorsel). */
  static readonly OK_YUKSEK=17;
