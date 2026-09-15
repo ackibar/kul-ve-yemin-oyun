@@ -297,6 +297,12 @@ function setMode(m){
   $('engelPanel').style.display = m==='engel' ? 'block' : 'none';
   $('nesnePanel').style.display = m==='nesne' ? 'block' : 'none';
   $('karakterPanel').style.display = m==='karakter' ? 'block' : 'none';
+  // Sekme basligi moda gore degisir - karakter-editor.html buraya
+  // #karakter ile yonlendiriyor, kullanici "iki tane harita editoru acilan
+  // gorunuyor" dedi cunku ikisi de ayni <title> ile bitiyordu (redirect
+  // sonrasi tarayici bu dosyanin title'ini kullaniyor, kisayolunkini degil).
+  document.title = (m==='karakter' ? 'Karakter Editörü' : 'Harita Editörü') + ' — Kül ve Yemin (dev aracı)';
+  history.replaceState(null,'','#'+m);
   draw();
 }
 $('modeZemin').addEventListener('click',()=>setMode('zemin'));
