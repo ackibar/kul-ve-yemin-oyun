@@ -195,7 +195,9 @@ for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?1
    dongusunde yukleniyordu, yani silahsiz modda capraz sheet'ler hic
    kullanilmiyordu - poz() sessizce ana yone dusuyordu. */
 /* Oyuncuda action yalnizca Idle/Walk/Attack olabiliyor (olum ekran paneli, hasar yanip sonme ile gosteriliyor). */
-for(const set of ['1','1sword','1bow','1balta','1mesale','1swordmesale'])for(const dir of ['D','U','S','DS','US'])for(const action of ['Idle','Walk','Attack']){jobs.push(this.img(`characters${set}${dir}${action}`,`/assets/characters/${set}/${dir}_${action}.png`));/* Mesale seti sonradan uretildi; eksikse oyun acilmaya devam etsin (kit() tabana duser). */optional.push(dir==='DS'||dir==='US'||set.endsWith('mesale'));}for(const z of ['haven','magara','disari','yikik','cistern','tunel','test100'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));/* 'portal' (Trapdoor_D) kaldirildi: kapak sprite'i yalnizca boyali arka
+for(const set of ['1','1sword','1bow','1balta','1mesale','1swordmesale'])for(const dir of ['D','U','S','DS','US'])for(const action of ['Idle','Walk','Attack']){jobs.push(this.img(`characters${set}${dir}${action}`,`/assets/characters/${set}/${dir}_${action}.png`));/* Mesale seti sonradan uretildi; eksikse oyun acilmaya devam etsin (kit() tabana duser). */optional.push(dir==='DS'||dir==='US'||set.endsWith('mesale'));}/* Ucurumdan dusus: silahtan bagimsiz TEK animasyon, yalnizca taban ('1')
+   sette D/U/S (bkz. scripts/dusus_uret.py + dusus_kur.py). Istege bagli:
+   dosya yoksa render() eski yassilasma/solma efektine duser. */for(const dir of ['D','U','S']){jobs.push(this.img('characters1'+dir+'Dusus',`/assets/characters/1/${dir}_Dusus.png`));optional.push(true);}for(const z of ['haven','magara','disari','yikik','cistern','tunel','test100'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));/* 'portal' (Trapdoor_D) kaldirildi: kapak sprite'i yalnizca boyali arka
    plani olmayan mekanda ciziliyordu, oyle bir mekan kalmadi. */
 for(const [key,name]of [['fire','Fire1'],['lever','Lever1'],['trap','Spikes']])jobs.push(this.img(key,`/assets/dungeon/3%20Animated%20objects/${name}.png`));/* Sandik artik CraftPix setinden degil: oyunun paletinde uretilmis iki
    kareli kendi sheet'i (0 kapali, 1 acik). */jobs.push(this.img('chest','/assets/nesne/sandik.png'));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));
@@ -1125,11 +1127,25 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    const p=1-this.dusus/Engine.DUSUS;
    const v=this.yonVektor(),ileri=p*p*22;
    const px=s.x+v.x*ileri,py=s.y+v.y*ileri;
-   const squash=Math.max(.1,1-p*.88);
-   const alpha=Math.max(0,1-p*1.1);
-   c.save();c.translate(px,py);c.scale(1,squash);c.translate(-px,-py);
-   this.sprite(this.poz('Idle'),px,py,Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK*(1-p*.2),alpha);
-   c.restore();
+   /* Gercek takla animasyonu varsa (PixelLab v3, characters/1/<D|U|S>_Dusus)
+      o cizilir: kare ilerlemeye (p) baglidir, son ceyrekte bosluga
+      gomulurken solar. Sheet henuz yoksa eski prosedurel efekt (yassilasma +
+      solma) yedek olarak kalir. Silah ne olursa olsun taban set: dusen adam
+      elindekini birakir. */
+   const temel=this.direction==='DS'?'D':this.direction==='US'?'U':this.direction;
+   const dk='characters1'+temel+'Dusus',dim=this.images[dk];
+   if(dim?.naturalWidth){
+    const n=Math.max(1,Math.floor(dim.naturalWidth/(Engine.OYUNCU_EN*R)));
+    const kare=Math.min(n-1,Math.floor(p*n));
+    const alpha=p<.75?1:Math.max(0,1-(p-.75)/.25);
+    this.sprite(dk,px,py+p*6,kare,Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,alpha);
+   }else{
+    const squash=Math.max(.1,1-p*.88);
+    const alpha=Math.max(0,1-p*1.1);
+    c.save();c.translate(px,py);c.scale(1,squash);c.translate(-px,-py);
+    this.sprite(this.poz('Idle'),px,py,Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK*(1-p*.2),alpha);
+    c.restore();
+   }
   } else {
   this.sprite(this.poz(action),s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?Math.floor((this.vurusSure-this.vurusPoz)*16):Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const v=this.yonVektor(),angle=Math.atan2(v.y,v.x);c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-1.1,angle+1.1);c.stroke();}}}});
   actors.sort((a,b)=>(a.layer-b.layer)||(a.y-b.y)).forEach(a=>a.draw());

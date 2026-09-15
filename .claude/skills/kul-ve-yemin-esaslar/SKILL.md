@@ -1307,4 +1307,37 @@ görüntüleriyle doğrulandı.
 
 ---
 
-*Son güncelleme: 2026-09-16, v12.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v12.8: Gerçek düşme animasyonu (PixelLab v3) - önce güney yönü
+Kullanıcı v12.7'nin prosedürel efektini (yassılaşma+solma) "çok kötü" buldu,
+PixelLab ile gerçek bir takla animasyonu istedi. Yöntem `v3_anim.py` ile aynı
+(`/characters/animations`, `mode:'v3'`, `keep_first_frame`, seed 21) ama AYRI
+bir script: `scripts/dusus_uret.py <yon...>` - düşüş silahtan bağımsız TEK
+animasyon, taban karakterden (`gezgin/id.txt`, silahsız) üretilir, yalnızca
+oyuncunun `characters/1` slotuna `<D|U|S>_Dusus.png` olarak kurulur.
+**Ölçülen maliyet: 1 üretim/yön**, 9 kare döndü (frame_count 8 istendi,
+ilk kare dönüş karesi). Kalan bakiye 1477.
+
+**Kurulum ayrı script (`scripts/dusus_kur.py`):** `v3_kur.py`'nin ayak
+çizgisi/kafa tepesi çapaları DİK figür için ölçülmüştü; takla atan gövdede
+"en alt geniş satır" bir kare ayak bir kare kafa olur, figür zıplar. Düşüşte
+dayanak **bbox merkezi** (hücre 80×80, merkez 40,44 - dik karakterin gövde
+merkeziyle aynı hizada başlasın diye). Sadece `*_Dusus.png` yazılır, slotun
+diğer sheet'lerine dokunulmaz (`v3_kur.kur` bütün aksiyonları yeniden işler,
+istenmez); ton uyumu `aktor_uyum.isle(src,dst)` ile yalnızca bu dosyaya.
+
+**Motor:** `loadAssets` `characters1<D|U|S>Dusus`'u istege bağlı yükler;
+render()'ın `dusuyor` dalı sheet varsa kareyi ilerlemeye (p) bağlar
+(`kare=floor(p*n)`), ileri kayma (`p²·22`, yonVektor) kalır, son çeyrekte
+solar; sheet yoksa v12.7'nin prosedürel efekti YEDEK olarak duruyor (kuzey/
+doğu henüz üretilmediyse oralarda bu devreye girer). Tarif: "stumbles forward
+off the edge ... tumbles head over heels ... upright, then horizontal, then
+upside down ... hands completely empty ... same size in every frame" - ilk
+denemede tuttu, kuzey için `TARIF_ARKA` ("seen from behind ... away from the
+camera", kılıç dersi) hazır ama HENÜZ BASILMADI - kullanıcı onayı bekleniyor
+(2 üretim: north + east; batı motorda aynalanır). Tuhn için de aynı yol
+(Tuhn kendi karakter id'sinden, `sabit` NPC; `engine.ts` "Tuhn ... ucuruma
+yurur ve atlar" sahnesi) - onay sonrası.
+
+---
+
+*Son güncelleme: 2026-09-16, v12.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
