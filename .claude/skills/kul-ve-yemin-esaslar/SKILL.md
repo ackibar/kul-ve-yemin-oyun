@@ -1166,6 +1166,22 @@ kaybolup `usluYer`in çevrildiği doğrulandı (önce anlık teleport mu yoksa
 gerçek yürüyüş mü olduğunu ayırt etmek için ARA örnekler alındı, tek bir
 "öncesi/sonrası" karşılaştırması yetmezdi).
 
+### v12.2: İki sandık görseli Nesneler paletine eklendi
+Kullanıcı iki PNG (açık/kapalı sandık) verdi, arka planındaki düz gri
+(~rgb 216,215,210) zemin PIL ile (numpy YOK, `ImageChops.difference` +
+`point()` LUT ile yumuşak eşik) saydamlaştırıldı, içeriğe göre kırpıldı,
+`public/assets/nesne/ed_sandik_acik.png` / `ed_sandik_kapali.png` olarak
+kaydedildi. **Kod değişikliği GEREKMEDİ** - v11.7'de eklenen nesne-katalog
+uç noktası (`GET /__harita/nesne-katalog`, `ed_*.png` dosyalarını tarar)
+sayesinde bu iki dosya editöre otomatik ekli çıktı, canlı editörde
+palette'te göründüğü doğrulandı. **Not:** kullanıcı görselleri doğrudan
+sohbete yapıştırdı ama bu ortamda yapıştırılan görselleri diske YAZAN bir
+araç yok - diskte de bulunamadı (aranan tüm olası yollar: scratchpad,
+/tmp, VSCode depolama). Kullanıcıdan dosyaları Masaüstü'ndeki bir klasöre
+kaydedip yolunu söylemesini istemek gerekti (`~/Desktop/props/`) - resim
+ekleme isteklerinde ilk BUNU sormak, disk taraması yapmadan önce zaman
+kazandırır.
+
 ---
 
-*Son güncelleme: 2026-09-16, v12.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-16, v12.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
