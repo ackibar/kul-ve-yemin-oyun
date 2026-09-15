@@ -156,7 +156,7 @@ export class Engine{
   *  de x:12-18 karo araligi, merkez tile 15). */
  private static readonly USLU_KAPI:Partial<Record<Zone,{x:number;y:number}>>={
   haven:{x:15*16+8,y:27.5*16+8},magara:{x:15*16+8,y:2.5*16+8}};
- private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Kacis izi: dash sirasinda birakilan soluk kopyalar (sprite anahtari + kare). */private izler:{x:number;y:number;anahtar:string;kare:number;flip:boolean;life:number}[]=[];/** Iz birakma sayaci - her karede degil, sabit arayla. */private izSayac=0;/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
+ private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Kacis izi: dash sirasinda birakilan soluk kopyalar (sprite anahtari + kare). */private izler:{x:number;y:number;anahtar:string;kare:number;flip:boolean;life:number}[]=[];/** Iz birakma sayaci - her karede degil, sabit arayla. */private izSayac=0;/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;/** Tuhn'un ucurumdan dusus animasyonu (kalan sn) - bitince entity silinir. */private tuhnDusus=0;/** Dusus animasyonu bir kez baslatildi mi (bitince silme dalina gecsin diye). */private tuhnDususBitti=false;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
  private keys={up:false,down:false,left:false,right:false};
  /** Gamepad: bir onceki karede basili olan tuslar (kenar yakalamak icin).
   *  Standart layout varsayiliyor: 0=A 1=B 2=X 3=Y 4=LB 5=RB 6=LT 7=RT 9=Start,
@@ -197,7 +197,7 @@ for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?1
 /* Oyuncuda action yalnizca Idle/Walk/Attack olabiliyor (olum ekran paneli, hasar yanip sonme ile gosteriliyor). */
 for(const set of ['1','1sword','1bow','1balta','1mesale','1swordmesale'])for(const dir of ['D','U','S','DS','US'])for(const action of ['Idle','Walk','Attack']){jobs.push(this.img(`characters${set}${dir}${action}`,`/assets/characters/${set}/${dir}_${action}.png`));/* Mesale seti sonradan uretildi; eksikse oyun acilmaya devam etsin (kit() tabana duser). */optional.push(dir==='DS'||dir==='US'||set.endsWith('mesale'));}/* Ucurumdan dusus: silahtan bagimsiz TEK animasyon, yalnizca taban ('1')
    sette D/U/S (bkz. scripts/dusus_uret.py + dusus_kur.py). Istege bagli:
-   dosya yoksa render() eski yassilasma/solma efektine duser. */for(const dir of ['D','U','S']){jobs.push(this.img('characters1'+dir+'Dusus',`/assets/characters/1/${dir}_Dusus.png`));optional.push(true);}for(const z of ['haven','magara','disari','yikik','cistern','tunel','test100'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));/* 'portal' (Trapdoor_D) kaldirildi: kapak sprite'i yalnizca boyali arka
+   dosya yoksa render() eski yassilasma/solma efektine duser. */for(const dir of ['D','U','S']){jobs.push(this.img('characters1'+dir+'Dusus',`/assets/characters/1/${dir}_Dusus.png`));optional.push(true);}/* Tuhn'un dususu: yalniz dogu (sahnede hep doguya yuruyor). */jobs.push(this.img('characters6SDusus','/assets/characters/6/S_Dusus.png'));optional.push(true);for(const z of ['haven','magara','disari','yikik','cistern','tunel','test100'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));/* 'portal' (Trapdoor_D) kaldirildi: kapak sprite'i yalnizca boyali arka
    plani olmayan mekanda ciziliyordu, oyle bir mekan kalmadi. */
 for(const [key,name]of [['fire','Fire1'],['lever','Lever1'],['trap','Spikes']])jobs.push(this.img(key,`/assets/dungeon/3%20Animated%20objects/${name}.png`));/* Sandik artik CraftPix setinden degil: oyunun paletinde uretilmis iki
    kareli kendi sheet'i (0 kapali, 1 acik). */jobs.push(this.img('chest','/assets/nesne/sandik.png'));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));
@@ -769,10 +769,19 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      const tx=bd.x/16,ty=bd.y/16;
      const bosta=this.world.ucurumlar.some(([x1,y1,x2,y2])=>tx>=x1&&tx<x2&&ty>=y1&&ty<y2);
      const hx=24*16+8-bd.x,hy=15*16+8-bd.y,hu=Math.hypot(hx,hy);
-     if(!bosta&&hu>4){const v=26*dt;bd.x+=hx/hu*v;bd.y+=hy/hu*v;
+     if(this.tuhnDusus>0){
+      /* Dusus animasyonu oynuyor (render() characters6SDusus cizer, ileri
+         kayma orada). Yurume yok; sayac bitince asagidaki silme dali. */
+      this.tuhnDusus-=dt;
+     }else if(!bosta&&hu>4){const v=26*dt;bd.x+=hx/hu*v;bd.y+=hy/hu*v;
       const y=this.sahneYuru.get('tuhn')||{dir:'S' as const,flip:false,yol:0};
       y.dir='S';y.flip=hx<0;y.yol+=v;this.sahneYuru.set('tuhn',y);
+     }else if(this.images.characters6SDusus?.naturalWidth&&!this.tuhnDususBitti){
+      /* Kenara vardi: hemen silinmek yerine takla animasyonuna baslar
+         (oyuncununkiyle ayni sure). Sheet yoksa eski davranis: aninda kaybolur. */
+      this.tuhnDusus=Engine.DUSUS;this.tuhnDususBitti=true;
      }else{
+      this.tuhnDususBitti=false;
       this.world.entities=this.world.entities.filter(x=>x.id!=='tuhn');
       this.sahneYuru.delete('tuhn');
       // Ses HEMEN degil: ucurum derin. Once sessizlik, sonra asagidan bogur
@@ -1082,7 +1091,15 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(e.type==='chest'){const opened=this.state.opened.includes(e.id);this.sprite('chest',e.x,e.y,opened?1:0,24,24,false,1,1);if(!opened){c.fillStyle='#e8c883';c.fillRect(e.x-1,e.y-20+Math.sin(time*3),2,2);}return;}
    if(e.type==='lever'){this.sprite('lever',e.x,e.y,this.state.flags.gateOpen?3:0,16,18);return;}
    
-   if(e.type==='npc'){const OL=OYUNCU_OLCEK*(e.s||1);c.fillStyle='#03091366';c.beginPath();c.ellipse(e.x,e.y+1,8*OL,2.6*OL,0,0,7);c.fill();if(e.id==='rauf'&&this.state.flags.rauf==='dizcokme'&&this.images.rauf_kneel?.naturalWidth){
+   if(e.type==='npc'){const OL=OYUNCU_OLCEK*(e.s||1);
+    if(e.id==='tuhn'&&this.tuhnDusus>0){/* Tuhn'un ucurumdan takla atarak dususu: oyuncununkiyle ayni
+       mantik (kare = ilerleme, doguya ileri kayma, son ceyrekte solma). Tek yon
+       uretildi (dogu) cunku sahnede hep doguya, (24,15)'e yuruyor. Golge yok. */
+     const p=1-this.tuhnDusus/Engine.DUSUS,dim=this.images.characters6SDusus;
+     const n=Math.max(1,Math.floor(dim.naturalWidth/64)),kare=Math.min(n-1,Math.floor(p*n));
+     const alpha=p<.75?1:Math.max(0,1-(p-.75)/.25);
+     this.sprite('characters6SDusus',e.x+p*p*22,e.y+p*6,kare,32,32,false,OL,alpha,0,e.capa);return;}
+    c.fillStyle='#03091366';c.beginPath();c.ellipse(e.x,e.y+1,8*OL,2.6*OL,0,0,7);c.fill();if(e.id==='rauf'&&this.state.flags.rauf==='dizcokme'&&this.images.rauf_kneel?.naturalWidth){
      // diz cokme: son karede durur, ayaga kalkmaz
      const ilerleme=Math.min(3,Math.floor((2.6-this.dizSayac)*2));
      this.sprite('rauf_kneel',e.x,e.y,ilerleme,32,32,false,OYUNCU_OLCEK);

@@ -1340,4 +1340,31 @@ yurur ve atlar" sahnesi) - onay sonrası.
 
 ---
 
-*Son güncelleme: 2026-09-16, v12.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v12.9: Düşme animasyonu her yönde + Tuhn'un kendi düşüşü
+Oyuncu için kuzey/doğu üretildi (2 üretim; batı motorda doğunun aynası -
+`this.flip`), üç yön de oyunda doğrulandı. Kuzey `TARIF_ARKA` ("seen from
+behind ... falls away from the camera") ilk denemede tuttu.
+
+**Tuhn:** PixelLab karakteri `id_tuhn.txt` DEĞİL `id_kederli.txt` ("kederli
+adam", bkz. `kederli_kur.py` -> `characters/6`). Tek yön yeterli: sahnede
+(engine.ts "Tuhn: ikna edilemediyse ucuruma yurur ve atlar") hep (24,15)'e,
+yani DOĞUYA yürüyor -> yalnız `S_Dusus.png` (1 üretim, 9 kare). NPC hücresi
+64×64, bbox merkezi (32,36). `dusus_uret.py`/`dusus_kur.py` `--kim tuhn`
+ile parametrik.
+
+**Motor (Tuhn):** eskiden uçurum karosuna basınca ANINDA siliniyordu.
+Şimdi `tuhnDusus` sayacı: kenara varınca (sheet yüklüyse) `Engine.DUSUS`
+kadar takla animasyonu oynar (render NPC dalında `e.id==='tuhn'&&tuhnDusus>0`
+-> `characters6SDusus`, kare=ilerleme, doğuya `p²·22` kayma, son çeyrekte
+solma, gölge yok), bitince eski silme dalı (bildirim + `tuhnSayac` ses/yarasa
+zinciri) aynen çalışır. `tuhnDususBitti` bayrağı animasyonun bir kez
+başlayıp sonra silme dalına geçmesini sağlıyor; sheet yoksa eski anlık
+kaybolma davranışı korunur. Playwright ile sahne uçtan uca doğrulandı
+(yürü -> dal -> kaybol -> "Karanlık onu aldı" -> yarasalar).
+
+Toplam maliyet bu tur: 4 üretim (oyuncu N+E 2, Tuhn E 1; güney v12.8'de 1).
+Kalan bakiye ~1473.
+
+---
+
+*Son güncelleme: 2026-09-16, v12.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
