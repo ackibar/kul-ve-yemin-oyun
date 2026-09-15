@@ -142,7 +142,15 @@ export class Engine{
 
  /** NPC dolasmasi: kisa bir yuruyus, sonra bekleme, sonra tekrar. Ev konumundan
   *  fazla uzaklasmazlar ki gorev icin bulunabilir kalsinlar. */
- private gez=new Map<string,{hx:number;hy:number;tx:number;ty:number;bekle:number;dir:'D'|'U'|'S';flip:boolean;yol:number}>();
+ /** giden: bu NPC su an rastgele dolasmiyor, BILEREK kapiya yuruyor (bkz.
+  *  'uslu' - Son Siginak <-> Sarnic Agzi arasi artik gorunmeden isinlanmiyor,
+  *  once kapinin onune gelip oradan "cikiyor"). */
+ private gez=new Map<string,{hx:number;hy:number;tx:number;ty:number;bekle:number;dir:'D'|'U'|'S';flip:boolean;yol:number;giden?:boolean}>();
+ /** Uslu'nun gectigi kapinin, HANGI bolgedeysen o bolgedeki dunya-birimi
+  *  konumu (bkz. world.ts'teki 'haven'<->'magara' gecis() kutulari - ikisi
+  *  de x:12-18 karo araligi, merkez tile 15). */
+ private static readonly USLU_KAPI:Partial<Record<Zone,{x:number;y:number}>>={
+  haven:{x:15*16+8,y:27.5*16+8},magara:{x:15*16+8,y:2.5*16+8}};
  private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Kacis izi: dash sirasinda birakilan soluk kopyalar (sprite anahtari + kare). */private izler:{x:number;y:number;anahtar:string;kare:number;flip:boolean;life:number}[]=[];/** Iz birakma sayaci - her karede degil, sabit arayla. */private izSayac=0;/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
  private keys={up:false,down:false,left:false,right:false};
  /** Gamepad: bir onceki karede basili olan tuslar (kenar yakalamak icin).
@@ -271,13 +279,15 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     }
     if(ilk&&e.items?.some(([id])=>id==='medicine'))this.state.flags.medicineStarted=true;
     this.save();this.onEvent({type:'sandik',id:e.id});this.emit();return;}if(e.type==='lever'){if(this.state.flags.gateOpen){this.notify('Ocak kapısı zaten açık.');return;}this.state.flags.gateOpen=true;this.audio.play('door');this.notify('Kül Ocağı’nın kapısı açıldı.');this.save();this.emit();return;}if(e.type==='portal'&&e.to){this.changeZone(e.to,e.spawn!);}}
- private changeZone(zone:Zone,spawn:[number,number]){this.halka=false;const eskiBolge=this.state.zone;this.state.zone=zone;this.state.x=spawn[0]*16+8;this.state.y=spawn[1]*16+8;
-  /* Uslu artik tek mekana bagli degil: Son Siginak ile Sarnic Agzi arasindaki
-     kapidan gecerken yari ihtimalle o da yer degistirmis gibi davranir - bkz.
-     world.ts'te flags.usluYer okuyan iki yerlesim. */
-  if((eskiBolge==='haven'&&zone==='magara')||(eskiBolge==='magara'&&zone==='haven')){
-   if(Math.random()<.5)this.state.flags.usluYer=this.state.flags.usluYer==='magara'?'siginak':'magara';
-  }
+ private changeZone(zone:Zone,spawn:[number,number]){this.halka=false;this.state.zone=zone;this.state.x=spawn[0]*16+8;this.state.y=spawn[1]*16+8;
+  /* Uslu'nun Son Siginak <-> Sarnic Agzi arasi yer degistirmesi ARTIK burada
+     ANLIK bir zar atisiyla olmuyor (bkz. eski not: oyuncu kapidan gecerken
+     %50 ihtimalle "ısınlanmıs" gibi yer degistiriyordu - gorunmedigi icin
+     tam bir teleport hissi veriyordu, kullanici bunu istemedi). Uslu artik
+     KENDI kapiya YURUYEREK gidiyor (bkz. update()'teki NPC dolasma dongusu,
+     'uslu' icin 'giden' hedefi) - oyuncu o an ayni odadaysa gercekten
+     yururken goruyor, degilse zaten sessizce diger tarafa varmis olur (tipki
+     baska bir NPC'nin nerede oldugunu her an bilmedigin gibi). */
   this.world=makeWorld(zone,this.state.flags as Record<string,string|boolean|undefined>);this.resetMobs();this.overlayNesneleriYukle();this.camera={x:this.state.x-this.gorus.en/2,y:this.state.y-this.gorus.boy/2};this.invulnerable=1.5;this.audio.setZone(zone);this.audio.play('door');this.onEvent({type:'zone',id:zone});this.save();this.emit()}
  useItem(id:ItemId){if(this.paused&&!['potion','tonic','bileme','merhem','toz','tuzet','durusu','petek','torch'].includes(id))return false;if(id==='potion'){if(this.state.hp>=stats(this.state).maxHp){this.notify('Canın zaten dolu.');return false;}if(!removeItem(this.state,id)){this.notify('Can iksirin kalmadı. Alf’ten alabilirsin.');return false;}this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+45);this.float(this.state.x,this.state.y-10,'+45','#8cdda5');}else if(id==='tonic'){if(!removeItem(this.state,id))return false;this.tonic=20;this.notify('Köz toniği: 20 saniye +8 saldırı.');}else if(id==='bileme'){if(!removeItem(this.state,id))return false;this.bileme=30;this.notify('Bileme taşı: 30 saniye %25 daha hızlı vuruş.');}else if(id==='merhem'){if(!removeItem(this.state,id))return false;this.merhem=12;this.notify('Sargı merhemi: 12 saniye boyunca yavaşça iyileşiyorsun.');}else if(id==='toz'){if(!removeItem(this.state,id))return false;this.gizli=8;this.notify('Kül tozu: 8 saniye görünmezsin.');}
    /* Obruk'un kileri. Tuzlu et oyunun en guclu tek seferlik iyilesmesi;
@@ -911,7 +921,23 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     if(g.bekle>0){g.bekle-=dt;continue;}
     const dx=g.tx-e.x,dy=g.ty-e.y,uz=Math.hypot(dx,dy);
     if(uz<1.5){
+     /* Uslu kapiya varmis: gercekten "disari cikmis" gibi bu bolgeden
+        silinir, flags.usluYer cevrilir - bir dahaki zone yuklemesinde
+        (makeWorld) artik OBUR bolgede belirir. Oyuncu o an bu bolgedeyse
+        onu kapidan yururken GORDU; isinlanma yok. */
+     if(e.id==='uslu'&&g.giden){
+      this.state.flags.usluYer=this.state.flags.usluYer==='magara'?'siginak':'magara';
+      const idx=this.world.entities.indexOf(e);if(idx>=0)this.world.entities.splice(idx,1);
+      this.gez.delete('uslu');this.save();continue;
+     }
      g.bekle=1.6+Math.random()*3.4;
+     // Uslu'ya, sabit rastgele dolasma ustune, kucuk bir ihtimalle "kapiya
+     // git" secenegi de var - boylece bazen bu bolgede, bazen obur bolgede
+     // rastlanir ama HER ZAMAN yururken gorulerek gecer.
+     const kapi=e.id==='uslu'?Engine.USLU_KAPI[this.state.zone]:undefined;
+     if(kapi&&Math.random()<.15){
+      g.giden=true;g.tx=kapi.x;g.ty=kapi.y;continue;
+     }
      const a=Math.random()*Math.PI*2,r=10+Math.random()*22;
      const nx=g.hx+Math.cos(a)*r,ny=g.hy+Math.sin(a)*r;
      // Ates artik herkesi yaktigi icin NPC'ler alevin icini hedef secmiyor.

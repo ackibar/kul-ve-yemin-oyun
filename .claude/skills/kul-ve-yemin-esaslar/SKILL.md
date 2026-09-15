@@ -1145,6 +1145,27 @@ yönlendirildi - tekrar formül yazmak yerine. Playwright'ta üç nokta
 etkisi dışlanınca (ve `changeZone`'un verdiği 1.5sn dokunulmazlığın
 GEÇMESİNİ bekleyince) doğru sonuç: üst yanmıyor, taban ve alt hâlâ yanıyor.
 
+### v12.1: Uslu artık ışınlanmıyor, kapıdan gerçek zamanlı geçiyor
+Uslu (Son Sığınak <-> Sarnıç Ağzı arası "gezen" NPC) eskiden `changeZone()`
+içinde OYUNCU o iki bölge arasındaki kapıdan her geçtiğinde %50 ihtimalle
+`flags.usluYer` anlık olarak çevriliyordu - görünmeden olduğu için tam bir
+ışınlanma hissi veriyordu (kullanıcı: "bizim gibi gerçek zamanlı geçsin, biz
+oda değiştirince ışınlanmasın"). Kaldırıldı. Yerine: NPC dolaşma döngüsünde
+(update()'teki 'gez' Map'i) Uslu'ya özel bir "giden" hedefi eklendi - normal
+rastgele gezinme sırasında her hedefe varışta küçük bir ihtimalle (%15)
+rastgele bir nokta yerine KAPIYA (`Engine.USLU_KAPI[zone]` - haven/magara
+arası geçiş kutusunun merkezi, world.ts'teki iki `gecis()` çağrısına karşılık
+gelir) yürümeyi seçiyor; oraya GERÇEKTEN yürüyerek varınca (`g.giden` ve
+`uz<1.5`) `usluYer` çevriliyor ve o an `this.world.entities`'ten çıkarılıyor.
+Oyuncu o sırada aynı bölgedeyse onu kapıya doğru yürürken GÖRÜYOR; değilse
+zaten (herhangi bir NPC gibi) nerede olduğunu bilmiyordu - bu kısım
+değişmedi, sadece "oyuncu izlerken görünmeden kaybolma" ortadan kalktı.
+Playwright'ta `gez.set('uslu',{...giden:true,tx:kapı,ty:kapı})` ile zorlanıp
+birkaç saniyede konumun KADEME KADEME kapıya yaklaştığı, sadece vardığında
+kaybolup `usluYer`in çevrildiği doğrulandı (önce anlık teleport mu yoksa
+gerçek yürüyüş mü olduğunu ayırt etmek için ARA örnekler alındı, tek bir
+"öncesi/sonrası" karşılaştırması yetmezdi).
+
 ---
 
-*Son güncelleme: 2026-09-16, v12.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-16, v12.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
