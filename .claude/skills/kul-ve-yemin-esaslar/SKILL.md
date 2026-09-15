@@ -910,6 +910,20 @@ render-zamanı davranışlar) uğraşıyorsundur - bunu kullanıcıya AÇIKÇA
 söylemek (ve nedenini açıklamak), sonsuza kadar "başka bir formül hatası
 daha olmalı" diye aramaya devam etmekten daha dürüst ve daha faydalı.
 
+**DÜZELTME (v11.1) - yukarıdaki ders EKSİKTİ:** kullanıcı "o zaman tespit
+et ve ona göre uyarla" deyince tekrar bakıldı - "kesin olamaz" dediğim şey
+(sprite() içindeki `Math.round(x,y)`) aslında SADECE hareket eden
+aktörler için gerekliydi (piksel titremesini önlemek), SABİT decor için
+hiçbir amaca hizmet etmiyordu, sadece zararı vardı. Yuvarlamayı decor'da
+kaldırınca fark TAM SIFIRA indi. **Asıl ders:** "bu bir render-zamanı
+davranışı, düzeltilemez" demeden ÖNCE, o davranışın GEREKÇESİNİ sorgula -
+"neden var, kimin için var" diye bak; bir kısıtlama başka bir amaç için
+(aktör hareketi) konmuşken, hiç ilgisi olmayan bir başka kullanım (sabit
+decor) için de körü körüne uygulanıyor olabilir. "Teorik olarak
+imkansız" ile "bu kod tabanında şu an öyle çünkü kimse ayırmamış"
+birbirinden çok farklı - ikinciyi ilkiyle karıştırmak erken pes etmek
+oluyor.
+
 ---
 
-*Son güncelleme: 2026-09-15, v11.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-15, v11.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
