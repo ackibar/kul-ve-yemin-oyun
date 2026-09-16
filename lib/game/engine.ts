@@ -557,6 +557,15 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Buyuk dusmanlarin capasi. Varsayilan 21 sprite'i 42 satira siniriyor. */
  static readonly DUSMAN_CAPA:Record<number,number>={7:31};
  /** Ciz olcegi. Trol bir mini-patron: oyuncudan belirgin buyuk gorunmeli. */
+ /** Yerden cikis toprağinin paleti. OLCULDU: koridor zemininin iskelet
+  *  ayaklarinin bastigi yerlerdeki rengi L 25-30 / a +8.5 / b +7 - yani
+  *  KIRMIZIMSI. Onceki elle secilen tonlar zeytuni-sari (a +4.5 / b +10..18)
+  *  ve cok parlakti (L 39-50), toprak sahneye ait gorunmuyordu. Bu dizi ayni
+  *  eksende (a +8..9.5 / b +5..8), yalniz parlaklikta zeminin bir tik ustune
+  *  cikiyor ki tumsek okunsun: [yarik L12, tumsek tabani L17.5, kesek L33]. */
+ static readonly TOPRAK=['#2b1c1a','#392723','#5f4843'];
+ /** Sicrayan toprak kirintilari - ayni eksenin uc parlakligi. */
+ static readonly TOPRAK_KIR=['#4e3934','#624b45','#775d56'];
  /** Ucusan kemik gorselleri (public/assets/nesne/kemik/*.png). */
  static readonly KEMIKLER=['kafatasi','kaburga','uyluk','omurga','kirik'];
  /** Kemikler 32px'lik kendi tuvalinde uretildi; iskeletin yaninda dogru
@@ -673,7 +682,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    /* Toprak fiskirmasi: cikis ANINDA, ayak hizasinda. */
    for(let i=0;i<10;i++)this.particles.push({x:e.x+(Math.random()-.5)*14,y:e.y+(Math.random()-.5)*4,
     vx:(Math.random()-.5)*40,vy:-20-Math.random()*45,life:.35+Math.random()*.3,
-    color:['#6b5843','#57473a','#8a7358'][Math.floor(Math.random()*3)],size:1+Math.random(),g:150});
+    color:Engine.TOPRAK_KIR[Math.floor(Math.random()*3)],size:1+Math.random(),g:150});
    this.audio.play('trap',Math.max(.25,1-Math.hypot(e.x-this.state.x,e.y-this.state.y)/260));
   }
   this.gomulu=kalan;
@@ -803,7 +812,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
        kirinti sicrar - hareket eden toprak hissini veren asil sey bu. */
     if(Math.random()<dt*30)this.particles.push({x:m.x+(Math.random()-.5)*13,y:m.y-1,
      vx:(Math.random()-.5)*38,vy:-22-Math.random()*36,life:.28+Math.random()*.26,
-     color:['#6b5843','#57473a','#8a7358'][Math.floor(Math.random()*3)],size:1+Math.random(),g:180});
+     color:Engine.TOPRAK_KIR[Math.floor(Math.random()*3)],size:1+Math.random(),g:180});
     continue;}m.cool-=dt;m.hurt=Math.max(0,m.hurt-dt);if(m.zehir&&m.zehir>0){m.zehir-=dt;m.hp-=Engine.ZEHIR_HASAR*dt;
     // Sayilar her karede degil saniyede bir yaziliyor; yoksa ekran doluyor.
     m.zehirTik=(m.zehirTik??0)+dt;
@@ -1246,11 +1255,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
        ust ucunu ortuyor ki iskelet "yerin altindan" degil "yarilan topraktan"
        cikiyor gibi dursun. Tumsek once kabarir (k: 0->1->0), sonra coker. */
     const k=Math.sin(Math.PI*Math.min(1,p*1.04));
-    c.fillStyle='#241c15';c.beginPath();c.ellipse(m.x,m.y+1,(6.5+5.5*k)*ol,(2.1+2.1*k)*ol,0,0,7);c.fill();
-    c.fillStyle='#413428';c.beginPath();c.ellipse(m.x,m.y-.4-1.6*k*ol,(4.6+4*k)*ol,(1.5+1.4*k)*ol,0,0,7);c.fill();
+    c.fillStyle=Engine.TOPRAK[0];c.beginPath();c.ellipse(m.x,m.y+1,(6.5+5.5*k)*ol,(2.1+2.1*k)*ol,0,0,7);c.fill();
+    c.fillStyle=Engine.TOPRAK[1];c.beginPath();c.ellipse(m.x,m.y-.4-1.6*k*ol,(4.6+4*k)*ol,(1.5+1.4*k)*ol,0,0,7);c.fill();
     /* Tumsegin uzerinde donen kesekler: p ilerledikce aci kayiyor, toprak
        kimildiyormus gibi oluyor (ek gorsel istemeden). */
-    c.fillStyle='#57473a';
+    c.fillStyle=Engine.TOPRAK[2];
     for(let i=0;i<6;i++){const a=i*1.047+p*4.2,rr=(4.2+4.4*k)*ol;
      c.fillRect(m.x+Math.cos(a)*rr-1,m.y-1.2-Math.abs(Math.sin(a))*rr*.34-k*1.8*ol,2,2);}
     return;}if(m.kind===9){/* Fenerin isigi: ovadaki tek sicak renk. */const g=c.createRadialGradient(m.x,m.y-14,2,m.x,m.y-14,42);g.addColorStop(0,'#ffb35a70');g.addColorStop(1,'#ffb35a00');c.fillStyle=g;c.fillRect(m.x-42,m.y-56,84,84);}c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=Math.floor(time*Engine.DUSMAN_FPS(eylem));if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0));}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim);}else{this.sprite(anahtar,m.x,m.y,kare,Engine.DUSMAN_EN[m.kind]??32,32,yar.mod==='aynali'&&Math.cos(bak)<0,ol,1,0,Engine.DUSMAN_CAPA[m.kind]);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}const yuzuk=this.state.equipment.ring;if(m.kind!==9&&(m.hp<m.max||m.boss||(yuzuk&&ITEMS[yuzuk].canGoster))){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');if(m.kind===10)this.label('SON MUHAFIZ',m.x,m.y-40,'#c9b7d6');}}});

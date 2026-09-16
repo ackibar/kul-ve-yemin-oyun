@@ -1637,4 +1637,30 @@ yapılıp öyle incelendi.
 
 ---
 
-*Son güncelleme: 2026-09-16, v13.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v14.0: Çıkış toprağının rengi haritadan ÖLÇÜLDÜ
+Kullanıcı: "animasyon rengi tam olmamış, mümkünse PixelLab'den animasyon
+üretelim yoksa da rengi mape uymalı."
+
+**PixelLab burada işe yaramaz** - bunu bir kez yazalım: `/characters/animations`
+mannequin rigli KARAKTER animasyonu üretiyor, VFX değil. Toprak patlaması için
+tek yol `/create-image-pixflux` ile kare kare üretmek; kareler birbirinden
+bağımsız üretildiği için **zamansal tutarlılık olmaz, animasyon titrer**
+(aynı ders: seri tutarlılık prompt'la değil referans kareyle sağlanıyor).
+
+**Renk ölçümü.** `arkaplan/test100.png` üzerinde 42 iskelet karosunun ayak
+hizasındaki pikseller sayıldı: zemin **L 25-30 / a +8.5 / b +7**, yani
+KIRMIZIMSI. Elle seçilmiş tonlar ise zeytuni-sarı (a +4.5 / b +10…+18) ve çok
+parlaktı (L 39-50) - "renk tutmuyor" şikayeti tam olarak buydu. Palet aynı
+a/b ekseninden yeniden türetildi, yalnız parlaklıkta zeminin bir tık üstüne
+çıkıyor ki tümsek okunsun: `TOPRAK` (L 12 / 17.5 / 33) ve `TOPRAK_KIR`
+(L 26 / 34 / 42). Değerler artık `Engine.TOPRAK` / `Engine.TOPRAK_KIR`
+sabitlerinde - başka bir mekâna iskelet konursa o mekânın zemini aynı yöntemle
+ölçülüp buraya yazılmalı.
+
+**Ders:** sahneye uyacak bir renk "gözle seçilmiyor" - arka plan görselinden
+ölçülüyor. İlk denemede L'yi zeminle eşitledim, bu sefer tümsek kayboldu;
+doğru ayar aynı a/b + zeminin ~5 L üstü.
+
+---
+
+*Son güncelleme: 2026-09-16, v14.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
