@@ -133,7 +133,10 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // yataginda olmadigini soyler (engine.ts interact).
   entities.push({id:'yatak2',type:'yatak',x:7*16,y:17.7*16,name:'Uyu'});
   entities.push({id:'yatak3',type:'yatak',x:7*16,y:10.4*16,name:'Uyu'});
-  chest('havenGift',14,22,[['copper',1],['bow',1],['arrow',25],['tonic',1],['torch',1]]);
+  /* Yay sandigi: haritanin DOGU kenarina alindi (eskiden 14,22 - ana yolun
+     uzerindeydi ve oyunun ilk dakikasinda tam donanim veriyordu). Artik
+     yalnizca yay ve ok var; menzilli dovusu denemek isteyen gidip bulsun. */
+  chest('havenGift',25,16,[['bow',1],['arrow',25]]);
   }else if(zone==='disari'){
   // Kul Ovasi: siginakin ust kapisindan cikilan dis dunya (54x30 karo).
   // Zemin ve carpisma scripts/mekan_kur.py ile iki katmandan cikarildi:

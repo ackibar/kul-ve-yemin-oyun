@@ -2267,4 +2267,25 @@ aldı. Ölçüldü: sağdan vurulunca 8 damlanın 8'i de sola gidiyor.
 
 ---
 
-*Son güncelleme: 2026-09-16, v16.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v16.4: Silahsız başlangıç, ilk kılıç Alf'ten, yay sandığı kenara
+Kullanıcı: "oyuna silahsız başlayalım, ilk silahımızı almak için Alf ile
+konuşmamız gereksin. O sandık haritanın biraz daha kenarına taşınsın, oku test
+etmek için o sadece."
+
+* `newState`: envanterden `rusty` çıktı, kuşanılan silah `yumruk` (hasar 2).
+  Günlük ilk satırı da değişti - oyuncu nereye gideceğini bilsin.
+* Alf'in diyaloguna `alf_kilic` seçeneği: kılıcı verir, kuşandırır, 10 XP.
+  Bayrakla korunuyor - ikinci kez alınamıyor ve seçenek listeden kalkıyor
+  (ikisi de test edildi).
+* `havenGift` sandığı (14,22) → **(25,16)**, haritanın doğu kenarı. İçeriği
+  `copper+bow+arrow+tonic+torch` → yalnız **bow+arrow**: eskiden oyunun ilk
+  dakikasında tam donanım veriyordu. Doğrulandı: sandık karesi yürünmez
+  (kendi çarpışması) ama üç komşusu yürünür, yani ulaşılabilir.
+
+**Denge notu:** çıplak elle hasar 2, fare canı 46 - yani 23 vuruş. Sığınakta
+düşman olmadığı için sorun değil, ama aşağı inmeden önce Alf'e uğramak artık
+fiilen zorunlu. Kasıtlı.
+
+---
+
+*Son güncelleme: 2026-09-16, v16.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
