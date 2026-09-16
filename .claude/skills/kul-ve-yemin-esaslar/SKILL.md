@@ -2176,4 +2176,35 @@ KONMAYACAK.
 
 ---
 
-*Son güncelleme: 2026-09-16, v15.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v16.0: Üretim yelpazesi veriye taşındı (6 → 18 tarif) + ESKİ BİR HATA
+Tarifler `app/page.tsx` içine gömülüydü ve hepsi "odun + altın" istiyordu;
+hammadde sistemi gelince anlamsız kaldı. Artık `data.ts`'te `TARIFLER`
+tablosu + `tarifDurum()` / `tarifUygula()`.
+
+**18 tarif.** Tasarım kuralları: her tarif EN AZ bir hammadde ister; altın
+yalnız birkaç tarifte (sığınaktan alınan cam/tuz/ip gibi şeyler). Hammadde tek
+bir düşman türüne bağlı olduğu için **tarif dolaylı olarak "şu yaratığı kes"
+görevine dönüşüyor** - çelik yalnız Muhafız/Bekçi'den, zehir kesesi yalnız
+örümcekten. Ölçüldü: **boş envanterle yapılabilen tarif sayısı 0** - önce
+avlanmak gerekiyor, ki kullanıcının istediği tam buydu.
+
+`Item.sadece` alanı eklendi: `'satin'` (16 eşya - yaylar, iyi kılıçlar,
+yüzükler) ve `'hikaye'` (9 eşya - Yemin kılıcı, mühürler, taç, öz).
+Üretilebilirlerle çakışma yok (doğrulandı).
+
+**BULUNAN HATA - `emit()` state'in KOPYASINI gönderiyor.**
+`emit(){...onChange({state:structuredClone(this.state),...})}` - yani arayüzdeki
+`s` canlı state DEĞİL. Eski üretim kodu `s.inventory.wood=...; addItem(s,...)`
+diye o kopyayı değiştiriyordu: malzeme ekranda düşüyor, üretilen eşya
+görünüyor, ama `engine.state`'e hiç yazılmıyordu ve `game.save()` gerçek
+state'i kaydettiği için **üretilen eşya kayboluyordu**. Üstelik `imza()`
+envanteri hash'lediği için yeni bir emit de tetiklenmiyor, bu yüzden hata
+ekranda hemen görünmüyordu.
+Diğer paneller (`buy`, `equip`, `spendPoint`) zaten `engine.current!.state`
+kullanıyordu - yalnız tezgâh yanlıştı. **Ders: arayüzde state'i değiştiren her
+yol `engine.current!.state` üzerinden gitmeli; `snapshot.state` salt okunurdur.**
+Ölçüldü: düzeltmeden önce meşale 0 / odun 6, sonra meşale 2 / odun 5.
+
+---
+
+*Son güncelleme: 2026-09-16, v16.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
