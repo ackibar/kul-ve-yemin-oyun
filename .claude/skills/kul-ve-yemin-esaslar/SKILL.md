@@ -1858,4 +1858,12 @@ varyasyon, depoya tek dosya. Ölçüldü, 12 çalışta hepsi farklı (0.934-1.0
 
 ---
 
-*Son güncelleme: 2026-09-16, v14.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v14.8: İskelet ölüm sesi 4 dB daha kısıldı
+Kullanıcı hâlâ yüksek buldu. Encode'daki `volume` −4 → **−8 dB**; tepe −7.9 /
+ortalama −33.5 dB (death.mp3: −1.8 / −20.8). Sesi motorda `scale` ile değil
+dosyada kısıyoruz: uzaklık zaten `scale`i kullanıyor, ikisini karıştırmak
+seviyeyi mesafeye bağlı hale getirirdi.
+
+---
+
+*Son güncelleme: 2026-09-16, v14.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
