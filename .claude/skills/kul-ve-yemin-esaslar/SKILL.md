@@ -1606,4 +1606,35 @@ belirgin iri - dağılmanın odak noktası o.
 
 ---
 
-*Son güncelleme: 2026-09-16, v13.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v13.9: Kemikler yere düşüyor, tonu iskeletle eşleşti, çıkışa toprak katmanı
+Kullanıcı: "çok fazla dağılıyor ve çok çabuk opacity 0 oluyor… rengi tutmuyor
+iskelet rengiyle… karakter yerden çıkarken önüne bir layer koyup ufak bir
+toprak hareket ediyor gibi animasyon lazım".
+
+**1) Ton.** Kemikler `create-image-pixflux`ten HAM çıkıyordu, iskelet ise
+`aktor_uyum.grade()`den geçmişti - ölçüldü: kemik açık pikselleri L medyan 68 /
+a −1.89 / b +10.0, iskeletinki 59 / +0.45 / +7.69. **İki aşama gerekti:**
+aynı `grade()` (max 97→81) *ve* ölçülen artık farkı kapatan ikinci adım
+(`L*0.87`, `a+2.34`, `b−2.31`) → 62.1 / +0.44 / +8.34. Affine L eşlemesi de
+denendi, **gölgeleri eziyordu** - çarpan yeterli. `kemik_uret.py --ton` API'ye
+dokunmadan ham dosyadan yeniden üretir (idempotent, bedava).
+
+**2) Savrulma.** Hız ±(28-110) → ±(14-58), doğum yayılması 9→6 birim.
+Asıl fark: parçalar artık havada kaybolmuyor - her parçanın `yer` hizası var,
+değince sekiyor (restitution .32), sürtünme yatırıyor, ömür 0.8-1.3s → 2.1-2.9s
+ve solma `life/omur` ile son ~0.9 saniyeye yayıldı. Yerde kemik yığını kalıyor.
+
+**3) Çıkış toprağı.** Yerden çıkan iskeletin ÖNÜNE (kırpma `restore()`inden
+SONRA) canvas ile toprak tümseği çiziliyor: koyu taban + açık üst elips +
+`p*4.2` ile dönen 6 kesek. `k=sin(π·min(1,p·1.04))` ile kabarıp çöküyor.
+Ayrıca `update()` içinde çıkış boyunca sürekli toprak kırıntısı fışkırıyor -
+**hareket hissini veren asıl şey tümsek değil bu sürekli parçacık akışı.**
+Ek görsel üretilmedi.
+
+**Test notu:** çıkış 0.75 sn ve screenshot'lar fazladan rAF tetiklediği için
+kare kare bakılamıyor; `Engine.ISKELET_CIKIS` testte `defineProperty` ile 4 sn
+yapılıp öyle incelendi.
+
+---
+
+*Son güncelleme: 2026-09-16, v13.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

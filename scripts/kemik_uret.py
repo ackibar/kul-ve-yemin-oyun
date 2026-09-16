@@ -13,12 +13,21 @@ NOT: API 16x16 kabul ETMIYOR ("Canvas must be size 32x32 area or larger"),
 32x32 uretilip iceriğe gore kirpiliyor - zaten kucuk bir nesne, kirpinca
 parca kendi olcusunde kaliyor.
 
+TON: ham uretim iskeletten DAHA PARLAK cikiyor (olculdu: kemik L 97'ye kadar,
+iskeletin en acik pikseli 75.6) - yan yana durunca kemikler sahneye ait gibi
+gorunmuyordu. Cozum ayri bir kural degil, aktor sheet'leriyle AYNI derece:
+aktor_uyum.grade(). Sonrasinda kemik max ~76-81'e iniyor.
+
 kullanim: python3 scripts/kemik_uret.py [ad...]   (varsayilan: hepsi)
+          python3 scripts/kemik_uret.py --ton     (uretmeden yalniz ton, bedava)
 cikti: public/assets/nesne/kemik/<ad>.png
 """
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pxl
+import aktor_uyum as AU
+import pixelize as P
+from tone_transfer import lab_to_srgb
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,6 +46,19 @@ TARIF = {
 }
 
 
+# grade() tek basina yetmedi: OLCULDU, derecelenmis kemigin acik pikselleri
+# (L>45) medyan 68 / a -1.89 / b +10.00 iken iskeletinki 59 / +0.45 / +7.69.
+# Yani kemikler hala bir tik parlak ve serin-sari. Ikinci adim bu farki
+# kapatiyor: L'yi carpanla indir, a/b'yi olculen ortalama farki kadar kaydir.
+# (Affine L eslemesi de denendi, golgeleri eziyordu - carpan yeterli.)
+L_CARPAN, A_KAY, B_KAY = 0.87, 2.34, -2.31
+
+
+def esle(c):
+    L, a, b = P._srgb_to_lab(c)
+    return lab_to_srgb(min(100.0, L * L_CARPAN), a + A_KAY, b + B_KAY)
+
+
 def uret(ad):
     os.makedirs(HAM, exist_ok=True); os.makedirs(HEDEF, exist_ok=True)
     r = pxl.call('/create-image-pixflux', {
@@ -47,15 +69,32 @@ def uret(ad):
     got = pxl.walk_images(r, HAM, ad)
     if not got:
         print('  !!', ad, 'gorsel donmedi'); return
-    im = Image.open(got[0]).convert('RGBA')
+    kirp_ton(got[0], ad)
+
+
+def kirp_ton(ham_yol, ad):
+    """Ham uretimi kirpar ve aktor dercesinden gecirir. Hep HAM dosyadan
+    uretilir, yani tekrar calistirmak tonu ust uste bindirmez."""
+    im = Image.open(ham_yol).convert('RGBA')
     bb = im.getbbox()          # bos kenarlari at: parca kendi olcusunde kalsin
     if bb:
         im = im.crop(bb)
+    px = im.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if a:
+                px[x, y] = (*esle(AU.grade((r, g, b))), a)
+    os.makedirs(HEDEF, exist_ok=True)
     im.save(f'{HEDEF}/{ad}.png')
-    print(f'  nesne/kemik/{ad}.png hazir')
+    print(f'  nesne/kemik/{ad}.png hazir ({im.width}x{im.height})')
 
 
 if __name__ == '__main__':
+    if '--ton' in sys.argv:          # API'ye hic dokunmaz
+        for a in TARIF:
+            kirp_ton(f'{HAM}/{a}_0.png', a)
+        sys.exit()
     once = pxl.balance()[0]
     for a in (sys.argv[1:] or list(TARIF)):
         uret(a)
