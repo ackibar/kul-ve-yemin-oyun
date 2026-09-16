@@ -2349,4 +2349,29 @@ Alf dünyada kalıyor; ikinci karar engelleniyor.
 
 ---
 
-*Son güncelleme: 2026-09-17, v16.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v16.7: Sığınak deposu - kıtlık döngüsü
+Kullanıcının brifingindeki "ellerinde kısıtlı gıda ve su var, biz burada
+hayatta kalmaya çalışıyoruz" maddesi. Bu, üç sistemi tek şeye bağlıyor:
+**hammadde → üretim → gün**.
+
+Zincir: fare avla → `et` → (kurum ile) **tuzlu et** → depoya bırak → 2 gün
+yiyecek. Yarasa avla → `kanat` → (kurum ile) **duru su** → 2 gün su.
+
+* `State.erzak{yiyecek,su}` (5/5 başlar) ve `State.kayip`. İkisi de
+  `parseSave`'de eski kayıtlar için dolduruluyor.
+* Her gün birer azalıyor. Depo boşken geçen her gün, **boş olan her kalem için
+  bir can** götürüyor - kıtlık bir sayaç değil, insan kaybı.
+* Depo 1'e inince uyarı; 0'a inince bir gün mühlet var (o gün tüketecek bir şey
+  kalmadığı için ölüm ertesi gün başlıyor). Ölçüldü: hiç beslenmezsen 5 günlük
+  depo 6. günde biter, ilk kayıp 7. günde, 8. günde toplam 4 kayıp.
+* Bırakma Mirna'da, çünkü kimin aç kaldığını o biliyor. Elde eşya yoksa seçenek
+  görünmüyor.
+* `sonMetni` artık kayıpları ve kral kararını hatırlatıyor: sığınak "kurtuldu"
+  bile olsa kimin kurtulmadığı yazılı kalıyor.
+
+Ölçüldü: 3 tuzlu et + 3 duru su bırakmak 10 günü **kayıpsız** geçiriyor, yani
+avlanma temposu sığınağın ömrüyle doğrudan orantılı.
+
+---
+
+*Son güncelleme: 2026-09-17, v16.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

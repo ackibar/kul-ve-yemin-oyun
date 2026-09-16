@@ -1070,7 +1070,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(this.uyku<=0){this.uyku=0;
     /* GUN GECISI tam uyanma aninda: dunya (world.ts) bayraklari okuyor,
        bu yuzden olay uygulandiktan SONRA bolge yeniden kurulmali. */
-    const olay=gunGec(this.state);
+    const rapor=gunGec(this.state);const olay=rapor.olay;
     this.world=makeWorld(this.state.zone,this.state.flags as Record<string,string|boolean|undefined>);
     this.resetMobs();
     /* Uykuda can DOLUYOR - eskiden uyumak yalnizca ekrani karartip geri
@@ -1078,8 +1078,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
        BIR GUN: gunler olaylari tetikliyor, yani dinlenmek hikayeyi ilerletiyor. */
     this.state.hp=stats(this.state).maxHp;
     this.save();
-    this.notify(olay?olay.baslik:`${this.state.gun}. gün. Kül hâlâ yağıyor.`);
+    const e=this.state.erzak;
+    this.notify(olay?olay.baslik
+     :rapor.acliktan?'Sığınakta biri uyanmadı.'
+     :`${this.state.gun}. gün. Depoda ${e.yiyecek} gün yiyecek, ${e.su} gün su var.`);
     if(olay)this.onEvent({type:'message',text:olay.metin});
+    else if(rapor.acliktan)this.onEvent({type:'message',text:this.state.journal[0]});
+    else if(rapor.uyari)this.onEvent({type:'message',text:rapor.uyari});
     this.emit();}
    return;}
   if(this.dusus>0){this.dusus-=dt;if(this.dusus<=0)this.dusmeBitti();return;}
