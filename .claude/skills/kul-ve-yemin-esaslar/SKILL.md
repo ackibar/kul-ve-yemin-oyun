@@ -2435,4 +2435,26 @@ planı bitirmeden yeni istek araya girerse kalan adımı açıkça yaz.*
 
 ---
 
-*Son güncelleme: 2026-09-17, v16.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v17.0: Ok türleri artık farklı görünüyor (üretim harcanmadan)
+Kullanıcı "farklı ok türlerinin atınca farklı görünmesini" istedi. **Üretim
+gerekmedi:** oklar zaten kodla çiziliyor ve tür bayrakları (`yakar/zehir/
+delici/ceker`) mermide taşınıyordu - ama çizimde HİÇ okunmuyordu, dört ok da
+birebir aynı görünüyordu.
+
+`OK_GORUNUM` tablosu: sap rengi, uç rengi/boyu/genişliği, tüy, iz.
+* **Ateş:** turuncu uç + arkasında kısa parlama izi.
+* **Zehir:** yeşil uç + soluk yeşil iz.
+* **Delici:** uzun ince çelik uç, daha uzun sap, iz yok.
+* **Çengelli:** ters diken çizgileri, iz yok.
+* **Sade:** eski değerleriyle BİREBİR aynı bırakıldı.
+
+Ayrı sprite üretilmedi: ok 6 piksel uzunluğunda, orada okunacak şey **uç ve iz**,
+şekil değil. İz dönmüş koordinatta değil DÜNYA koordinatında çiziliyor, yoksa
+okla birlikte dönüp yanlış yöne uzuyor.
+
+Ölçüldü (okun çevresindeki parlak piksel sayısı): sade 0, ateş 40, zehir 32,
+delici 26, çengelli 0 - yani türler gerçekten ayrışıyor.
+
+---
+
+*Son güncelleme: 2026-09-17, v17.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

@@ -791,6 +791,15 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Dusmanin vurulma duruşu ve FLASI. Hurt .17 idi: 11 fps'te iki kare tam
   *  182 ms, .17 son kareyi eksik gosteriyordu. Flas daha kisa - o bir vurgu,
   *  durus degil; uzun olursa strobe gibi oluyor. */
+ /** Ok turlerinin gorunumu: [sap rengi, uc rengi, tuy, sap boyu, uc uzunlugu,
+  *  uc genisligi, iz rengi]. Sade ok eski degerleriyle birebir ayni kaldi. */
+ static readonly OK_GORUNUM:Record<string,{sap:string;uc:string;tuy:string;boy:number;ucBoy:number;ucEn:number;iz?:string}>={
+  sade:   {sap:'#54402a',uc:'#79818a',tuy:'#63403a',boy:2.8,ucBoy:0,ucEn:1},
+  ates:   {sap:'#5a3626',uc:'#ff9142',tuy:'#7a3a2a',boy:2.8,ucBoy:.4,ucEn:1.3,iz:'#ff7a2e'},
+  zehir:  {sap:'#3f4a30',uc:'#9fd47a',tuy:'#5a6b45',boy:2.8,ucBoy:.2,ucEn:1.2,iz:'#7fb45e'},
+  delici: {sap:'#6b6f74',uc:'#c6ced6',tuy:'#4d5257',boy:3.6,ucBoy:1.2,ucEn:.6},
+  cengel: {sap:'#4a3a2a',uc:'#8a7b63',tuy:'#5c4636',boy:2.8,ucBoy:0,ucEn:1.1},
+ };
  static readonly HURT_SURE=.18;
  static readonly FLAS_SURE=.07;
  static readonly FLAS_GUC=.85;
@@ -1746,7 +1755,28 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      mesafe testinde kullaniliyor, 21 birim kaldirinca ok hicbir seye
      degmiyordu. Yukseklik yalnizca cizime verilir. */c.translate(s.x,s.y-Engine.OK_YUKSEK);c.rotate(Math.atan2(s.vy,s.vx));// Ikinci kucultme: 8 -> 5.6 birim. Uc de koyulastirildi - #aab2b8 magara
     // zemininde sahnenin en parlak pikseliydi, ok fosforlu gibi duruyordu.
-    c.strokeStyle='#54402a';c.lineWidth=.8;c.beginPath();c.moveTo(-2.8,0);c.lineTo(1.8,0);c.stroke();c.fillStyle='#79818a';c.beginPath();c.moveTo(2.8,0);c.lineTo(1,-1);c.lineTo(1,1);c.closePath();c.fill();c.strokeStyle='#63403a';c.lineWidth=.6;c.beginPath();c.moveTo(-1.8,0);c.lineTo(-3.2,-1);c.moveTo(-1.8,0);c.lineTo(-3.2,1);c.stroke();c.restore();}else{c.fillStyle='#f2bd76';c.fillRect(s.x-2,s.y-2,4,4);c.fillStyle='#fff0bd';c.fillRect(s.x-1,s.y-1,2,2);}}
+    /* OK TURLERI GORSEL OLARAK AYRISIR. Tur bayraklari (yakar/zehir/delici/ceker)
+    zaten mermide tasiniyordu ama cizimde HIC okunmuyordu: dort ok da birebir
+    ayni goruntuyordu. Ayri sprite uretilmedi - ok 6 piksel uzunlugunda, orada
+    okunacak sey UC ve IZ, sekil degil. */
+    const tur=s.yakar?'ates':s.zehir?'zehir':s.delici?'delici':s.ceker?'cengel':'sade';
+    const g=Engine.OK_GORUNUM[tur];
+    /* Sap: delici okun sapi daha uzun ve celik gri. */
+    c.strokeStyle=g.sap;c.lineWidth=.8;c.beginPath();c.moveTo(-(g.boy),0);c.lineTo(1.8,0);c.stroke();
+    /* Uc */
+    c.fillStyle=g.uc;c.beginPath();c.moveTo(2.8+g.ucBoy,0);c.lineTo(1,-g.ucEn);c.lineTo(1,g.ucEn);c.closePath();c.fill();
+    /* Cengelli okta ters diken, delicide ikinci bir sivri */
+    if(tur==='cengel'){c.strokeStyle=g.uc;c.lineWidth=.6;c.beginPath();c.moveTo(2,-1);c.lineTo(.4,-1.8);c.moveTo(2,1);c.lineTo(.4,1.8);c.stroke();}
+    /* Tuy */
+    c.strokeStyle=g.tuy;c.lineWidth=.6;c.beginPath();c.moveTo(-1.8,0);c.lineTo(-3.2,-1);c.moveTo(-1.8,0);c.lineTo(-3.2,1);c.stroke();
+    c.restore();
+    /* IZ: ates ve zehir okunun arkasinda kisa bir parlama. Dondurulmus
+       koordinatta degil DUNYA koordinatinda cizilir, yoksa iz okla birlikte
+       donup yanlis yone dogru uzar. */
+    if(g.iz){const n=Math.hypot(s.vx,s.vy)||1,ux=s.vx/n,uy=s.vy/n;
+     c.globalAlpha=.55;c.strokeStyle=g.iz;c.lineWidth=1.4;c.beginPath();
+     c.moveTo(s.x-ux*3,s.y-Engine.OK_YUKSEK-uy*3);c.lineTo(s.x-ux*9,s.y-Engine.OK_YUKSEK-uy*9);c.stroke();c.globalAlpha=1;}
+    }else{c.fillStyle='#f2bd76';c.fillRect(s.x-2,s.y-2,4,4);c.fillStyle='#fff0bd';c.fillRect(s.x-1,s.y-1,2,2);}}
   /* Savrulan kemikler: kendi etrafinda donerek ucar, sonuna dogru solar.
      Parcaciklardan ONCE cizilir ki kemik tozu ustlerinde kalsin. */
   for(const f of this.parcalar){const im=this.images['kemik/'+f.anahtar];if(!im?.naturalWidth)continue;
