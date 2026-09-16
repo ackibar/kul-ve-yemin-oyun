@@ -1,4 +1,4 @@
-import {addItem,DUSURME,gainXp,ITEMS,sandikAc,removeItem,stats,type ItemId,type State,type Zone} from './data';
+import {addItem,DUSURME,gainXp,gunGec,ITEMS,sandikAc,removeItem,stats,type ItemId,type State,type Zone} from './data';
 /** Render yogunlugu: gorsel pikseli / dunya birimi. Dunya 16px karo, 32px aktor
  *  biriminde kalir; gorseller 2x cozunurlukte (32px karo, 64px aktor) uretilir. */
 const R=2;
@@ -1067,7 +1067,20 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     if(this.direction==='D')this.direction='U';
     else if(this.direction==='U')this.direction='D';
     else this.flip=!this.flip;}
-   if(this.uyku<=0)this.uyku=0;
+   if(this.uyku<=0){this.uyku=0;
+    /* GUN GECISI tam uyanma aninda: dunya (world.ts) bayraklari okuyor,
+       bu yuzden olay uygulandiktan SONRA bolge yeniden kurulmali. */
+    const olay=gunGec(this.state);
+    this.world=makeWorld(this.state.zone,this.state.flags as Record<string,string|boolean|undefined>);
+    this.resetMobs();
+    /* Uykuda can DOLUYOR - eskiden uyumak yalnizca ekrani karartip geri
+       donduruyordu, hicbir ise yaramiyordu. Bedava gibi gorunuyor ama bedeli
+       BIR GUN: gunler olaylari tetikliyor, yani dinlenmek hikayeyi ilerletiyor. */
+    this.state.hp=stats(this.state).maxHp;
+    this.save();
+    this.notify(olay?olay.baslik:`${this.state.gun}. gün. Kül hâlâ yağıyor.`);
+    if(olay)this.onEvent({type:'message',text:olay.metin});
+    this.emit();}
    return;}
   if(this.dusus>0){this.dusus-=dt;if(this.dusus<=0)this.dusmeBitti();return;}
   this.tick+=dt;this.state.playtime+=dt;

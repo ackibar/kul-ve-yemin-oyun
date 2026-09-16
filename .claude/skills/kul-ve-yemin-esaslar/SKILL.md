@@ -2288,4 +2288,31 @@ fiilen zorunlu. Kasıtlı.
 
 ---
 
-*Son güncelleme: 2026-09-16, v16.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v16.5: Gün sistemi (altyapı)
+Kullanıcı gün bazlı olaylar istedi ("bir sabah kral öldürülür…"). Bu sürüm
+yalnızca ALTYAPI; olayın kendisi ayrı, çünkü faili seçmek yazarlık kararı.
+
+* `State.gun` (1'den başlar), `parseSave` eski kayıtlarda 1'e çekiyor.
+* Yatakta uyumak **bir gün ilerletiyor** ve **canı dolduruyor**. Eskiden uyumak
+  ekranı karartıp geri döndürüyordu, hiçbir işe yaramıyordu. Bedava gibi
+  görünüyor ama bedeli bir gün: günler olayları tetikliyor, yani dinlenmek
+  hikâyeyi ilerletiyor.
+* `GUN_OLAYLARI` tablosu + `gunGec(s)`. Olay bir kez çalışır (`flags.olay_<id>`).
+  **Koşulu tutmayan olay ATLANMAZ, ERTELENİR** - şart sağlandığında ilk
+  uyanışta çalışır, böylece oyuncu hikâyeyi kaçırmaz.
+* Uyanışta dünya yeniden kuruluyor (`makeWorld` + `resetMobs`), çünkü world.ts
+  bayrakları okuyor - olay bir bayrak değiştirince köşedeki şey değişebilmeli.
+* Günlük panelinin üst yazısı artık `N. gün`.
+
+Ölçüldü: gün 1→2→3→4, can her uyanışta doluyor, test olayı bir kez çalışıp
+günlüğe yazıyor ve ikinci uykuda tekrarlamıyor.
+
+**Kral cinayeti için hazır zemin:** `flags.kral==='oldu'` içeriği ZATEN yazılı
+(köşede ceset, Mirna/Lin/Alf replikleri, `flags.tac==='satildi'` ile Obruk
+tacı ocağın üstüne asıyor) ama kral öldürülemez yapıldığı için **ulaşılamaz**
+durumda. Cinayet olayı bu içeriği canlandıracak. Mevcut repliklerin bir kısmı
+"sen öldürdün" varsayıyor; fail başkasıysa onlar dallandırılmalı.
+
+---
+
+*Son güncelleme: 2026-09-17, v16.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
