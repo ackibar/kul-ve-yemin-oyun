@@ -666,7 +666,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   this.save();this.emit();
  }
  /** dokunulmazlik: vurustan sonraki i-frame suresi. OLCULDU - kalabalik bir iskelet cemberi 5 saniyede 23 kez vuruyor ama oyuncu yalnizca 20 can kaybediyordu: .72 sn'lik sabit i-frame yuzunden 23 vurusun 19'u yutuluyordu. Yani kalabaligin tehdidi tek bir dusmanla AYNIYDI; 'oldurmesi cok kolay' hissinin asil sebebi hiz ya da can degil buydu. Zayif ve kalabalik dusmanlar (iskelet) daha kisa i-frame ile vurur - tek tek hala zararsizlar ama surunun arasinda durmak artik bedel odetir. */
- private hurt(damage:number,iframe=.72,kx?:number,ky?:number){if(this.invulnerable>0||this.state.hp<=0)return;/* Geri tepme ve sarsinti KAYNAKTAN UZAGA. Kaynak verilmediyse (tuzak, ates) bakis yonunun tersi kullanilir - yonsuz sarsinti 'nereden yedim' bilgisini kaybettiriyor. */{let ux=0,uy=0;if(kx!==undefined&&ky!==undefined){const dx=this.state.x-kx,dy=this.state.y-ky,d=Math.hypot(dx,dy)||1;ux=dx/d;uy=dy/d;}else{const v=this.yonVektor();ux=-v.x;uy=-v.y;}this.hasarGeri=Engine.HASAR_GERI_SURE;this.hasarGeriYon={x:ux,y:uy};this.sarsinti=Engine.SARSINTI_SURE;this.sarsintiYon={x:-ux,y:-uy};this.kirmiziFlas=Engine.KIRMIZI_SURE;}const n=Math.max(2,damage-stats(this.state).defense);this.state.hp=Math.max(0,this.state.hp-n);this.invulnerable=iframe;this.audio.play('hurt');this.float(this.state.x,this.state.y-14,'−'+n,'#ff8b89');this.burst(this.state.x,this.state.y,'#dc7777',7);if(this.state.hp<=0){this.paused=true;this.audio.play('death');this.onEvent({type:'death'});}this.emit();}
+ private hurt(damage:number,iframe=.72,kx?:number,ky?:number){if(this.invulnerable>0||this.state.hp<=0)return;/* Geri tepme ve sarsinti KAYNAKTAN UZAGA. Kaynak verilmediyse (tuzak, ates) bakis yonunun tersi kullanilir - yonsuz sarsinti 'nereden yedim' bilgisini kaybettiriyor. */{let ux=0,uy=0;if(kx!==undefined&&ky!==undefined){const dx=this.state.x-kx,dy=this.state.y-ky,d=Math.hypot(dx,dy)||1;ux=dx/d;uy=dy/d;}else{const v=this.yonVektor();ux=-v.x;uy=-v.y;}this.hasarGeri=Engine.HASAR_GERI_SURE;this.hasarGeriYon={x:ux,y:uy};this.sarsinti=Engine.SARSINTI_SURE;this.sarsintiYon={x:-ux,y:-uy};this.kirmiziFlas=Engine.KIRMIZI_SURE;this.kanSic(ux,uy);}const n=Math.max(2,damage-stats(this.state).defense);this.state.hp=Math.max(0,this.state.hp-n);this.invulnerable=iframe;this.audio.play('hurt');this.float(this.state.x,this.state.y-14,'−'+n,'#ff8b89');this.burst(this.state.x,this.state.y,'#dc7777',4);if(this.state.hp<=0){this.paused=true;this.audio.play('death');this.onEvent({type:'death'});}this.emit();}
   respawn(){/* Olum bir sifirlama: kapida bekleyenler de unutulur. */this.bekleyen={};this.state.hp=stats(this.state).maxHp;this.state.gold=Math.floor(this.state.gold*.9);this.state.journal.unshift('Sığınağa döndün. Altınının %10’unu yolda kaybettin.');this.changeZone('haven',[15,14]);this.paused=false;this.save();this.emit();}
   /** 8 dilim: her yon 45 derece. tan(67.5)=2.414 sinirlari veriyor.
    *  Dikey yonlerde flip kapatilir, yatay ve caprazlarda dx isaretini izler. */
@@ -787,6 +787,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly HASAR_GERI_SURE=.16;
  static readonly HASAR_SARSINTI=2.1;
  static readonly KIRMIZI_SURE=.24;
+ /** Kan sicramasi: az ve koyu. Parlak kirmizi bu paletin disina tasiyordu. */
+ static readonly KAN_ADET=8;
+ static readonly KAN_RENK=['#8e2b2b','#6d1f22','#a63a34'];
  static readonly VURUS_ILERI=2.4;
  static readonly VURUS_ILERI_SURE=.13;
  /** Kesme yayinin suresi (slash sayacinin baslangici). */
@@ -1039,6 +1042,20 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   for(let i=0;i<7;i++)this.particles.push({x:m.x,y:m.y-4,
    vx:(Math.random()-.5)*45,vy:-8-Math.random()*22,life:.4+Math.random()*.3,
    color:'#6b5f4d',size:1+Math.random(),g:90});
+ }
+ /** Hasar alinca UFAK kan sicramasi. burst() kullanilmiyor cunku o yonsuz ve
+  *  ayak hizasindan doguyor; kan darbenin GELDIGI yonden govdeye vurup ayni
+  *  yone devam etmeli. Az sayida, kisa omurlu ve agir (g yuksek) - havada
+  *  asili kalan bulut degil, yere dusen birkac damla. */
+ private kanSic(ux:number,uy:number){
+  const s=this.state;
+  for(let i=0;i<Engine.KAN_ADET;i++){
+   const a=Math.atan2(uy,ux)+(Math.random()-.5)*1.1,h=38+Math.random()*78;
+   this.particles.push({x:s.x+(Math.random()-.5)*5,y:s.y-9-Math.random()*7,
+    vx:Math.cos(a)*h,vy:Math.sin(a)*h-26,life:.22+Math.random()*.26,
+    color:Engine.KAN_RENK[Math.floor(Math.random()*Engine.KAN_RENK.length)],
+    size:1+Math.random()*1.3,g:230});
+  }
  }
  private burst(x:number,y:number,color:string,n:number){for(let i=0;i<n;i++)this.particles.push({x,y,vx:(Math.random()-.5)*55,vy:(Math.random()-.6)*55,life:.4+Math.random()*.4,color,size:1+Math.random()})}
   private float(x:number,y:number,text:string,color:string){let targetY=y;for(const f of this.floating){if(Math.abs(f.x-x)<24&&Math.abs(f.y-targetY)<10){targetY-=11;}}this.floating.push({x,y:targetY,text,life:1.1,color})}

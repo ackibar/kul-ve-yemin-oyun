@@ -2257,4 +2257,14 @@ kuşağı daha da göze sokuyor:
 
 ---
 
-*Son güncelleme: 2026-09-16, v16.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v16.3: Hasar alınca küçük kan sıçraması
+`kanSic(ux,uy)` - `burst()` kullanılmadı çünkü o **yönsüz** ve **ayak
+hizasından** doğuyor; kan gövdeden çıkıp darbenin geldiği yönün TERSİNE gitmeli.
+8 damla, ömür .22-.48 sn, `g:230` (havada asılı kalan bulut değil, yere düşen
+birkaç damla), koyu palet (`#8e2b2b/#6d1f22/#a63a34` - parlak kırmızı bu
+paletin dışına taşıyordu). Eski genel `burst` 7 → 4'e indirildi, yerini kan
+aldı. Ölçüldü: sağdan vurulunca 8 damlanın 8'i de sola gidiyor.
+
+---
+
+*Son güncelleme: 2026-09-16, v16.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
