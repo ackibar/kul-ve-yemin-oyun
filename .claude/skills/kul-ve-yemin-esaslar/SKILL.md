@@ -2404,4 +2404,35 @@ ikinci seçim engelleniyor.
 
 ---
 
-*Son güncelleme: 2026-09-17, v16.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v16.9: Vuruş hissi 3/3 - DÜŞÜRÜLEN ADIM tamamlandı
+**Süreç hatası, not edilsin:** v15.5-15.7 planında üçüncü adım "düşman flaşı +
+geri itme + parçacık" idi. Kullanıcı araya "hasar alınca da tepki versin"
+deyince v15.7 numarasını ona verdim ve **düşman tarafı sessizce listeden
+düştü**. Kullanıcı "yapacak bir şeyin kaldı mı" diye sorunca fark edildi.
+*Ders: plan adımı yeniden numaralandırılırsa eski adım kaybolabilir; onaylanan
+planı bitirmeden yeni istek araya girerse kalan adımı açıkça yaz.*
+
+* **Düşman flaşı:** `sprite()`'a 12. parametre `flas`; aynı kare
+  `globalCompositeOperation='lighter'` ile üstüne bir daha basılıyor. Ana
+  tuvalde güvenli (offscreen tampon gerekmiyor) ve siluet birebir korunuyor -
+  tam beyaz dolgu figürü siliyordu. Şiddet `m.hurt/HURT_SURE`.
+  Ölçüldü (düşmanın ekran dikdörtgeninin parlaklığı): `FLAS_GUC` .55 → +22,
+  .85 → +27, 1.15 → +29. **Doyuma giriyor** (lighter koyu pikselleri ancak bu
+  kadar kaldırıyor), .85'te bırakıldı: 163.7 → 190.4, yani **+%16**.
+* **Hurt animasyonu baştan başlıyor.** Kare indeksi global saatten geliyordu,
+  sheet 2 kare olduğu için yarı ihtimalle darbe anında nötr poz görünüyordu.
+  Oyuncunun kendi vuruşunda bu v15.1'de bilerek çözülmüştü, düşmanda
+  çözülmemişti. `HURT_SURE=.18` (11 fps'te iki kare tam 182 ms; .17 son kareyi
+  eksik gösteriyordu) ve dört kopya sabite çevrildi.
+* **Yakın dövüş geri itmesi 5 → 13** (`KILIC_ITME`). Ok 18, dash 30 iken en
+  zayıf halka oydu. Ölçüldü: vuruş sonrası yer değiştirme 13 birim.
+  Süreye yayılmış itme sistemi KURULMADI - `dusmanYurut` ve ayrışma itmesiyle
+  üç yönlü etkileşim riski var, değeri yükseltmek yeterli geldi.
+* **Kıvılcım yeri ve yönü:** `burst()` yönsüz ve ayak hizasından doğuyordu,
+  yani kılıcın değdiği yerden değil yerden çıkıyordu. `darbeKivilcim()` gövde
+  yüksekliğinden, darbe yönünde konik demet atıyor. **Sayı artırılmadı (8)** -
+  daha fazlası darbeyi değil bulanıklığı artırır.
+
+---
+
+*Son güncelleme: 2026-09-17, v16.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
