@@ -73,7 +73,7 @@ export class Engine{
  /** Kul Ovasi'nda saniyede eriyen can. Haritanin kenarina gorunmez duvar
   *  koymak yerine sure basinci var: yolun ucuna varmadan geri donmek gerekiyor. */
  static readonly KUL_HASAR=8;
- private dusus=0;
+ private dusus=0;/** Dusus bitti ve karakter bosluga gitti (dusus=0 olduktan sonra da gecerli). */private dustu=false;
  /** Dusus suresi. Once 0.9 sn'lik yumusak kucuIme vardi; istenen "bir anda
   *  kaybolmak" oldugu icin kisaltildi ve sprite kupsel egriyle hizla siliniyor
   *  - ilk 0.15 sn'de gorunmez oluyor, kalan sure olum ekranina gecis. */
@@ -220,7 +220,7 @@ mark(false);const result=await Promise.allSettled(jobs);
   if(s.flags.rauf==='takip'){let r=this.world.entities.find(x=>x.id==='rauf');
    if(!r){r={id:'rauf',type:'npc',x:0,y:0,name:'Rauf',portrait:5};this.world.entities.push(r);}
    r.x=s.x-14;r.y=s.y+6;}
-if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x-this.gorus.en/2,y:s.y-this.gorus.boy/2};this.izler=[];this.resetMobs();/* Mesale kayitta kaldiysa yanmaya devam eder. */this.mesale=Number(this.state.flags.mesaleKalan||0);this.attackTimer=this.dodgeTimer=this.dash=this.invulnerable=this.tonic=0;this.input={x:0,y:0,attack:false};this.audio.setZone(s.zone);this.emit();}
+if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x-this.gorus.en/2,y:s.y-this.gorus.boy/2};this.izler=[];this.resetMobs();/* Mesale kayitta kaldiysa yanmaya devam eder. */this.mesale=Number(this.state.flags.mesaleKalan||0);this.attackTimer=this.dodgeTimer=this.dash=this.invulnerable=this.tonic=this.dusus=0;this.dustu=false;this.input={x:0,y:0,attack:false};this.audio.setZone(s.zone);this.emit();}
  start(){this.audio.start();this.paused=false;this.save();this.emit()}
  setPaused(v:boolean){this.paused=v;this.input={x:0,y:0,attack:false};if(v)this.save();this.emit()}
  sound(s:Sound){this.audio.play(s)}
@@ -286,7 +286,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     }
     if(ilk&&e.items?.some(([id])=>id==='medicine'))this.state.flags.medicineStarted=true;
     this.save();this.onEvent({type:'sandik',id:e.id});this.emit();return;}if(e.type==='lever'){if(this.state.flags.gateOpen){this.notify('Ocak kapısı zaten açık.');return;}this.state.flags.gateOpen=true;this.audio.play('door');this.notify('Kül Ocağı’nın kapısı açıldı.');this.save();this.emit();return;}if(e.type==='portal'&&e.to){this.changeZone(e.to,e.spawn!);}}
- private changeZone(zone:Zone,spawn:[number,number]){this.halka=false;this.state.zone=zone;this.state.x=spawn[0]*16+8;this.state.y=spawn[1]*16+8;
+ private changeZone(zone:Zone,spawn:[number,number]){this.halka=false;this.dusus=0;this.dustu=false;/* respawn() buradan geciyor: dususten sonra yeniden dogan karakter gorunur olmali. */this.state.zone=zone;this.state.x=spawn[0]*16+8;this.state.y=spawn[1]*16+8;
   /* Uslu'nun Son Siginak <-> Sarnic Agzi arasi yer degistirmesi ARTIK burada
      ANLIK bir zar atisiyla olmuyor (bkz. eski not: oyuncu kapidan gecerken
      %50 ihtimalle "ısınlanmıs" gibi yer degistiriyordu - gorunmedigi icin
@@ -561,11 +561,14 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(tx>=x1&&tx<x2&&ty>=y1&&ty<y2){this.dusmeyeBasla();return;}}
  }
  private dusmeyeBasla(){
-  this.dusus=Engine.DUSUS;this.input={x:0,y:0,attack:false};
+  this.dusus=Engine.DUSUS;this.dustu=false;this.input={x:0,y:0,attack:false};
   this.audio.play('hurt');this.notify('Ayağın boşluğa bastı…');
   this.burst(this.state.x,this.state.y,'#8a97a6',10);
  }
- private dusmeBitti(){this.dusus=0;this.oldu('Sarnıç Ağzı’ndaki uçuruma düştün.');}
+ /* dustu: sayac sifirlandiktan SONRA da "bosluga dustu" durumunu tasir. Yoksa
+    dusus=0 olur olmaz render normal (ayakta) sprite'a donuyordu ve olum paneli
+    acilana kadar birkac kare karakter dimdik gorunuyordu. */
+ private dusmeBitti(){this.dusus=0;this.dustu=true;this.oldu('Sarnıç Ağzı’ndaki uçuruma düştün.');}
  private oldu(not:string){
   this.state.hp=0;this.paused=true;this.audio.play('death');
   this.state.journal.unshift(not);this.onEvent({type:'death'});this.emit();
@@ -769,10 +772,14 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      const tx=bd.x/16,ty=bd.y/16;
      const bosta=this.world.ucurumlar.some(([x1,y1,x2,y2])=>tx>=x1&&tx<x2&&ty>=y1&&ty<y2);
      const hx=24*16+8-bd.x,hy=15*16+8-bd.y,hu=Math.hypot(hx,hy);
-     if(this.tuhnDusus>0){
-      /* Dusus animasyonu oynuyor (render() characters6SDusus cizer, ileri
-         kayma orada). Yurume yok; sayac bitince asagidaki silme dali. */
-      this.tuhnDusus-=dt;
+     /* Dusus animasyonu oynuyor (render() characters6SDusus cizer, ileri kayma
+        orada). Azaltma KOSULUN ICINDE: sayac bu tikte sifirlanirsa AYNI tikte
+        asagidaki silme dalina dusulur. Ayri bir "if(...){azalt}" olsaydi sayac
+        sifirlanmis ama entity hala durur, render de o kareyi "dusmuyor" sayip
+        Tuhn'u bir kare AYAKTA cizerdi (kullanici: "finale yakin bir an icin
+        ayakta gozukuyorlar"). */
+     if(this.tuhnDusus>0&&(this.tuhnDusus-=dt)>0){
+      // hala havada; cizim render'da
      }else if(!bosta&&hu>4){const v=26*dt;bd.x+=hx/hu*v;bd.y+=hy/hu*v;
       const y=this.sahneYuru.get('tuhn')||{dir:'S' as const,flip:false,yol:0};
       y.dir='S';y.flip=hx<0;y.yol+=v;this.sahneYuru.set('tuhn',y);
@@ -1126,7 +1133,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   }}));
   for(const m of this.mobs)actors.push({y:m.y,layer:0,draw:()=>{if(m.kind===9){/* Fenerin isigi: ovadaki tek sicak renk. */const g=c.createRadialGradient(m.x,m.y-14,2,m.x,m.y-14,42);g.addColorStop(0,'#ffb35a70');g.addColorStop(1,'#ffb35a00');c.fillStyle=g;c.fillRect(m.x-42,m.y-56,84,84);}c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=Math.floor(time*Engine.DUSMAN_FPS(eylem));if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0));}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim);}else{this.sprite(anahtar,m.x,m.y,kare,Engine.DUSMAN_EN[m.kind]??32,32,yar.mod==='aynali'&&Math.cos(bak)<0,ol,1,0,Engine.DUSMAN_CAPA[m.kind]);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}const yuzuk=this.state.equipment.ring;if(m.kind!==9&&(m.hp<m.max||m.boss||(yuzuk&&ITEMS[yuzuk].canGoster))){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');if(m.kind===10)this.label('SON MUHAFIZ',m.x,m.y-40,'#c9b7d6');}}});
    actors.push({y:this.state.y,layer:0,draw:()=>{const s=this.state;const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';
-  const dusuyor=this.dusus>0;
+  const dusuyor=this.dusus>0||this.dustu;
   if(!dusuyor)this.golgeCiz(s.x,s.y);/* Boslukta golge yok - basacak zemin kalmadi. */
   /* Izler oyuncunun ALTINA cizilir ve solar; en eskisi en sonuk. */
   for(const iz of this.izler)this.sprite(iz.anahtar,iz.x,iz.y,iz.kare,Engine.OYUNCU_EN,Engine.OYUNCU_BOY,iz.flip,OYUNCU_OLCEK,Math.min(.42,iz.life*1.6));
@@ -1141,7 +1148,10 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
       etrafinda bir "translate-scale-translate" ile uygulanir - net etki:
       X degismez, Y bu noktaya gore squash kadar kucultulur (bkz. matris
       hesap notu: T(a)*S*T(-a)*T(a) = T(a)*S). */
-   const p=1-this.dusus/Engine.DUSUS;
+   /* dustu ise sayac zaten sifir; p=1 demek "artik ekranda yok" - asagida
+      cizim tamamen atlanir, karakter olum paneli acilirken ayakta belirmez. */
+   const p=this.dustu?1:1-this.dusus/Engine.DUSUS;
+   if(p>=1)return;
    const v=this.yonVektor(),ileri=p*p*22;
    const px=s.x+v.x*ileri,py=s.y+v.y*ileri;
    /* Gercek takla animasyonu varsa (PixelLab v3, characters/1/<D|U|S>_Dusus)

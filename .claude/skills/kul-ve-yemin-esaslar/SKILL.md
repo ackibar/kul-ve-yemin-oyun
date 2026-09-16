@@ -1367,4 +1367,34 @@ Kalan bakiye ~1473.
 
 ---
 
-*Son güncelleme: 2026-09-16, v12.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v13.0: "Finale yakın bir an ayakta görünüyor" - sayaç sıfırlanınca eski sprite
+Kullanıcı: düşme animasyonunun sonuna doğru karakterler bir kare **ayakta**
+beliriyordu. Tek kök sebep, iki yerde: **sayaç sıfırlandığı anda render o kareyi
+"düşmüyor" sayıp NORMAL sprite'a dönüyordu.**
+
+* **Oyuncu:** `update()` içinde `if(this.dusus>0){this.dusus-=dt;if(this.dusus<=0)
+  this.dusmeBitti();}` - `dusmeBitti()` `dusus=0` yapıyor, dolayısıyla o kareden
+  itibaren `dusuyor=false` → ayakta sprite. Ölüm paneli React state'i olduğu için
+  birkaç kare sonra kapatıyor; arada karakter dimdik görünüyordu. Çözüm: sayaçtan
+  AYRI, kalıcı bir `dustu` bayrağı (`dusmeBitti`'de true). `dusuyor=dusus>0||dustu`,
+  `p=dustu?1:...`, `p>=1` ise çizim tamamen atlanır. `dustu`
+  `changeZone()`/`setState()`/`dusmeyeBasla()`'da temizlenir - **respawn buradan
+  geçiyor**, yoksa karakter kalıcı görünmez kalırdı (düzeltilen hatadan beteri;
+  ayrıca test edildi).
+* **Tuhn:** `if(this.tuhnDusus>0){this.tuhnDusus-=dt;}` ayrı bir dal olduğu için
+  sayaç sıfırlandığı tikte entity HÂLÂ duruyordu ve render onu ayakta çiziyordu;
+  silme ancak bir SONRAKİ tikte oluyordu. Çözüm azaltmayı koşulun içine almak:
+  `if(this.tuhnDusus>0&&(this.tuhnDusus-=dt)>0){}else if(...)` → sayaç bittiği
+  AYNI tikte silme dalına düşer.
+
+**Test yöntemi (bu tür "tek kare" hatalarında doğru olan):** ekran görüntüsü
+YANILTICI - ölüm paneli canvas'ı kapatıyor ve `page.screenshot()` çağrıları rAF'i
+hızlandırıp zamanlamayı bozuyor (bkz. v12.5/v12.7 notları). Bunun yerine
+`sprite()` prototip üzerinden sarmalanıp ÇİZİM ÇAĞRILARI kaydedildi: son
+`*_Dusus` karesinden sonra oyuncu (`/^characters1(?!\d)/`) ve Tuhn
+(`characters6*`) sheet'i **0 kez** çizilmiş; aynı aralıkta 1500+ başka sprite
+çizilmiş, yani test kör değil, döngü gerçekten çalışıyordu.
+
+---
+
+*Son güncelleme: 2026-09-16, v13.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
