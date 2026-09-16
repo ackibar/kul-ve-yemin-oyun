@@ -1998,4 +1998,20 @@ oynadığı için görsel olarak eksik kalmıyor.
 
 ---
 
-*Son güncelleme: 2026-09-16, v15.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v15.4: İskelet saldırı sesine daha çok yankı
+Yaş oranı `0.4 → 1.3`. Ölçüm (tepeye göre sönme, hepsi aynı −36 dB'e
+normalize edilerek):
+
+| yaş | 0.15s | 0.3s | 0.45s | 0.6s |
+|---|---|---|---|---|
+| 0.4 | −10.6 | −19.3 | −31.8 | −43.1 |
+| 1.3 | −6.1 | −14.4 | −26.8 | −37.9 |
+| 2.0 | −4.9 | −13.2 | −25.6 | −36.7 |
+
+Yani 0.4→1.3 kuyruğu ~5 dB kaldırıyor, 1.3→2.0 yalnızca 1 dB daha ekliyor -
+kuru sinyal erken kısmı domine ettiği için yaşı artırmanın faydası doyuyor,
+karşılığında normalizasyon seviyeyi düşürüyor. **1.3 doyum noktası.**
+
+---
+
+*Son güncelleme: 2026-09-16, v15.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
