@@ -11,7 +11,7 @@ import {GameAudio} from '@/lib/game/audio';
 import {makeWorld} from '@/lib/game/world';
 type Panel='sandik'|'inventory'|'journal'|'character'|'pause'|'settings'|'help'|'credits'|'dialogue'|'shop'|'death'|'ending'|'crafting'|null;
 const INITIAL=newState();INITIAL.started=false;
-const ITEM_ICONS=new Set(['torch','migfer','tuzet','durusu','petek','muhur','okzehir','mizrak','balta','hancer','topuz','yemin','uzunyay','okates','okdelici','okcengel','pelerin','ocakz','kanm','yeminh','merhem','kavanoz','toz','tatar','kemik','yelek','gozu','bileme','rusty','guard','ember','blood','bow','arrow','leather','chain','ash','copper','life','wind','potion','tonic','wood','torch','medicine','ledger','core']);
+const ITEM_ICONS=new Set(['torch','migfer','tuzet','durusu','petek','muhur','okzehir','mizrak','balta','hancer','topuz','yemin','uzunyay','okates','okdelici','okcengel','pelerin','ocakz','kanm','yeminh','merhem','kavanoz','toz','tatar','kemik','yelek','gozu','bileme','rusty','guard','ember','blood','bow','arrow','leather','chain','ash','copper','life','wind','potion','tonic','wood','torch','medicine','ledger','core','kemikp','ag','zehirk','kurum','pacavra','post','et','kanat','celik']);
 /** Esya ikonu: PixelLab ile uretilmis 32x32 PNG varsa onu, yoksa lucide simgesini cizer. */
 /** Arayuz piksel ikonu. Cizgisel lucide ikonlari yalnizca uretimi iyi
  *  cikmayanlarda kaldi: ruzgar, duraklat ve konusma balonu gibi soyut

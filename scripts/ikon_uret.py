@@ -46,6 +46,18 @@ TARIF = {
     'merhem':  'a small clay jar of pale salve with a linen bandage wrapped round it',
     'kavanoz': 'a glass jar filled with glowing orange embers, cork stopper',
     'toz':     'a small leather pouch spilling fine grey ash powder',
+    # ---- HAMMADDELER (v15.8). Envanterde yan yana duracaklar, bu yuzden her
+    # birinin SILUETI farkli olmali: uzun kemik, yumak, kese, toz yigini,
+    # bez, deri, et, zar, kulce. Ayni palet, ayni tek kontur.
+    'kemikp':  'a single pale bleached bone with knobbly rounded ends, dry and cracked',
+    'ag':      'a loose tangled ball of pale spider silk, sticky strands trailing off it',
+    'zehirk':  'a small translucent green venom gland sac, swollen, a dark vein across it',
+    'kurum':   'a small conical heap of fine black soot, loose and powdery',
+    'pacavra': 'a torn strip of dirty grey cloth, frayed edges, loosely rolled',
+    'post':    'a small square of cured brown rat hide with rough edges and short fur',
+    'et':      'a raw dark red cut of meat, glistening, uncooked',
+    'kanat':   'a single thin leathery bat wing membrane, folded, ribbed with thin bones',
+    'celik':   'a short rough bar of rusted scrap steel, pitted and dented',
 }
 
 

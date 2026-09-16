@@ -2161,4 +2161,19 @@ için ayrı `kind` açmak yerine tek dal. Yerdeki görünüm ayrı sprite değil
 
 ---
 
-*Son güncelleme: 2026-09-16, v15.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v15.9: Hammadde ikonları (8 üretim)
+`ikon_uret.py`'ye dokuz tarif eklendi ve üretildi. Tarif yazarken tek kural:
+envanterde YAN YANA duracaklar, bu yüzden her birinin **silueti** farklı
+olmalı - uzun kemik, yumak, kese, koni toz yığını, bez şeridi, deri karesi,
+et dilimi, zar kanat, külçe. Palet ve kontur ortak.
+Bakiye 1453 → ~1445. `ITEM_ICONS`'a eklendi; lucide yedeği dosya gelmezse
+diye duruyor.
+
+**Rauf (kind 6) düşman DEĞİL** - kullanıcı hatırlattı. Motorda zaten öyle:
+`kill()` onu öldürmüyor (`raufDizCok`), kapıda bekleyenlere girmiyor,
+`DUSURME`'de yok. Gelecek denge geçişinde de düşman canı/seviye tablolarına
+KONMAYACAK.
+
+---
+
+*Son güncelleme: 2026-09-16, v15.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
