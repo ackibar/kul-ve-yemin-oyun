@@ -217,7 +217,16 @@ export class Engine{
   *  de x:12-18 karo araligi, merkez tile 15). */
  private static readonly USLU_KAPI:Partial<Record<Zone,{x:number;y:number}>>={
   haven:{x:15*16+8,y:27.5*16+8},magara:{x:15*16+8,y:2.5*16+8}};
- private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0};private slash=0;/** Bu savurus isabet etti mi - kesme yayi isabette daha kalin/parlak cizilir. */private slashIsabet=false;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Kacis izi: dash sirasinda birakilan soluk kopyalar (sprite anahtari + kare). */private izler:{x:number;y:number;anahtar:string;kare:number;flip:boolean;life:number}[]=[];/** Iz birakma sayaci - her karede degil, sabit arayla. */private izSayac=0;/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;/** Tuhn'un ucurumdan dusus animasyonu (kalan sn) - bitince entity silinir. */private tuhnDusus=0;/** Dusus animasyonu bir kez baslatildi mi (bitince silme dalina gecsin diye). */private tuhnDususBitti=false;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
+ private floating:Floating[]=[];private shots:Shot[]=[];private camera={x:0,y:0}; /** Darbe DONMASI: kalan sure (sn). update() DURUR, render devam eder. */
+ private donma=0;
+ /** Donmanin toplami - render saatinden dusulur ki sprite kareleri de dursun. */
+ private donmaToplam=0;
+ /** Kamera sarsintisi: kalan sure ve darbenin yonu. */
+ private sarsinti=0;private sarsintiYon={x:0,y:0};
+ /** Oyuncunun vurus ATILIMI: yalnizca CIZIME uygulanan ileri kayma (0..1).
+  *  Gercek konum degismez - carpisma ve yurume mantigina hic dokunmaz. */
+ private vurusIleri=0;private vurusIleriYon={x:0,y:0};
+ private slash=0;/** Bu savurus isabet etti mi - kesme yayi isabette daha kalin/parlak cizilir. */private slashIsabet=false;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Kacis izi: dash sirasinda birakilan soluk kopyalar (sprite anahtari + kare). */private izler:{x:number;y:number;anahtar:string;kare:number;flip:boolean;life:number}[]=[];/** Iz birakma sayaci - her karede degil, sabit arayla. */private izSayac=0;/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;/** Tuhn'un ucurumdan dusus animasyonu (kalan sn) - bitince entity silinir. */private tuhnDusus=0;/** Dusus animasyonu bir kez baslatildi mi (bitince silme dalina gecsin diye). */private tuhnDususBitti=false;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
  private keys={up:false,down:false,left:false,right:false};
  /** Gamepad: bir onceki karede basili olan tuslar (kenar yakalamak icin).
   *  Standart layout varsayiliyor: 0=A 1=B 2=X 3=Y 4=LB 5=RB 6=LT 7=RT 9=Start,
@@ -541,7 +550,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    carpanla ciziliyor ki gorsel menzille tutsun. */const eris=38*(silah.menzil??1);let targets=this.mobs.filter(m=>Math.hypot(m.x-s.x,m.y-s.y)<eris&&lineOfSight(this.world,s.x,s.y,m.x,m.y));targets.sort((a,b)=>Math.hypot(a.x-s.x,a.y-s.y)-Math.hypot(b.x-s.x,b.y-s.y));if(targets[0])this.face(targets[0].x-s.x,targets[0].y-s.y);/* Varsayilan TEK hedef. Once her silah menzildeki herkese birden
      vuruyordu; kalabalik dalgalar tek savurusla eriyordu. Alan hasari
      artik silaha ozel bir ozellik (Yarma baltasi). */let vurdu=false;for(const m of targets.slice(0,silah.alan??1)){vurdu=true;let damage=stats(s).attack+(this.tonic>0?8:0);/* Arkadan vurus: dusmanin bakis yonu ile ona giden yon AYNI taraftaysa
-   (ic carpim pozitif) sirtini donmus demektir. */if(silah.arkadan&&m.aci!==undefined){const vx=m.x-s.x,vy=m.y-s.y,n=Math.hypot(vx,vy)||1;if((Math.cos(m.aci)*vx+Math.sin(m.aci)*vy)/n>.35){damage=Math.round(damage*silah.arkadan);this.float(m.x,m.y-22,'SIRTTAN!','#ffd1a3');}}m.hp-=damage;m.hurt=.17;if(silah.sersemlet)m.sersem=silah.sersemlet;if(s.equipment.weapon==='ember')m.burn=3;if(silah.yakar)m.burn=Math.max(m.burn,silah.yakar);if(s.equipment.weapon==='blood')s.hp=Math.min(stats(s).maxHp,s.hp+3);this.float(m.x,m.y-12,String(damage),'#ffdaa3');this.burst(m.x,m.y,'#c76b5d',8);/* Dusmana vurus sesi KALDIRILDI (kullanici: "8bit bir ses cikiyor"). 'hit' kare dalga sentezi - tahta esya kirmada hala kullaniliyor ama dusmana her vurusta calinca oyunun geri kalanindan kopuk duruyordu. Yerine kayitli bir darbe gelirse ORNEKLER'e yeni bir ad eklenir. */const d=Math.hypot(m.x-s.x,m.y-s.y)||1;this.move(m,(m.x-s.x)/d*5,(m.y-s.y)/d*5);if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);}/* ISABET SESI - dongunun DISINDA, savurus basina TEK kez. Yarma baltasi (alan:3) uc hedefe birden vuruyor; ses uc kez calarsa master kompresoru muzigi de birlikte eziyor. 'swing' iskada da caliyor, bu ses yalnizca isabette biniyor - iska ile isabetin ayrimi tam olarak bu. */if(vurdu){this.slashIsabet=true;this.audio.play('vurus');}this.emit();}
+   (ic carpim pozitif) sirtini donmus demektir. */if(silah.arkadan&&m.aci!==undefined){const vx=m.x-s.x,vy=m.y-s.y,n=Math.hypot(vx,vy)||1;if((Math.cos(m.aci)*vx+Math.sin(m.aci)*vy)/n>.35){damage=Math.round(damage*silah.arkadan);this.float(m.x,m.y-22,'SIRTTAN!','#ffd1a3');}}m.hp-=damage;m.hurt=.17;if(silah.sersemlet)m.sersem=silah.sersemlet;if(s.equipment.weapon==='ember')m.burn=3;if(silah.yakar)m.burn=Math.max(m.burn,silah.yakar);if(s.equipment.weapon==='blood')s.hp=Math.min(stats(s).maxHp,s.hp+3);this.float(m.x,m.y-12,String(damage),'#ffdaa3');this.burst(m.x,m.y,'#c76b5d',8);/* Dusmana vurus sesi KALDIRILDI (kullanici: "8bit bir ses cikiyor"). 'hit' kare dalga sentezi - tahta esya kirmada hala kullaniliyor ama dusmana her vurusta calinca oyunun geri kalanindan kopuk duruyordu. Yerine kayitli bir darbe gelirse ORNEKLER'e yeni bir ad eklenir. */const d=Math.hypot(m.x-s.x,m.y-s.y)||1;this.move(m,(m.x-s.x)/d*5,(m.y-s.y)/d*5);if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);}/* ISABET SESI - dongunun DISINDA, savurus basina TEK kez. Yarma baltasi (alan:3) uc hedefe birden vuruyor; ses uc kez calarsa master kompresoru muzigi de birlikte eziyor. 'swing' iskada da caliyor, bu ses yalnizca isabette biniyor - iska ile isabetin ayrimi tam olarak bu. */if(vurdu){this.slashIsabet=true;this.audio.play('vurus');const hedef=targets[0],hd=Math.hypot(hedef.x-s.x,hedef.y-s.y)||1;const ux=(hedef.x-s.x)/hd,uy=(hedef.y-s.y)/hd;/* Oldurucu darbe iki kat donar - son vurus ayri okunsun. */this.donma=Math.max(this.donma,Engine.DARBE_DONMA*(silah.hiz??1)*(hedef.hp<=0?2:1));this.sarsinti=Engine.SARSINTI_SURE;this.sarsintiYon={x:ux,y:uy};this.vurusIleri=Engine.VURUS_ILERI_SURE;this.vurusIleriYon={x:ux,y:uy};}this.emit();}
   /** Fener tasiyan: saldirmaz. Oyuncu yaklasinca isik soner ve etrafa
    *  Bogulmus dolar - firtinada isiga gidenin basina gelen bu. Uzaktayken
    *  oyuncudan yavasca uzaklasir, yani pesinden gidersin. */
@@ -733,6 +742,20 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Ciz olcegi. Trol bir mini-patron: oyuncudan belirgin buyuk gorunmeli. */
  /** Dash siyirmasi: temas yaricapi, hasari ve geri itmesi. Hasar KUCUK -
   *  kacis bir saldiri hilesine donusmemeli, yalnizca "carptim" hissi versin. */
+ /** DARBE GERI BILDIRIMI. Kullanici "cok hafif" dedi: 30 ms, silah agirligina
+  *  gore olceklenir (hancer .5 -> 15 ms, balta 1.35 -> 40 ms). Oldurucu
+  *  darbede iki kati. */
+ static readonly DARBE_DONMA=.03;
+ /** Kamera sarsintisi. 4x olcekte 1 dunya birimi = 4 ekran pikseli, yani
+  *  genlik kucuk tutulmali; desen rastgele degil, darbe yonunde isaret
+  *  degistiren 2-3 adim - yon hissi veriyor ve ayni genlikte daha az yoruyor. */
+ static readonly SARSINTI_GUC=1.3;
+ static readonly SARSINTI_SURE=.11;
+ /** Oyuncunun ileri atilmasi: cizim ofseti (dunya birimi) ve suresi. Kullanici
+  *  "vurunca karakter cok stabil duruyor" dedi - butun geri bildirim dusmanda
+  *  ve ekrandaydi, govdenin kendisi hic tepki vermiyordu. */
+ static readonly VURUS_ILERI=2.4;
+ static readonly VURUS_ILERI_SURE=.13;
  /** Kesme yayinin suresi (slash sayacinin baslangici). */
  static readonly SLASH_SURE=.2;
  static readonly SLASH_ISABET_RENK='#fff3d2';
@@ -1405,7 +1428,22 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   /** Saldiri tusunu gamepad mi basili tutuyordu. */
   private gpSaldiri=false;
 
-  private loop(time:number){const dt=Math.min(.035,(time-this.last)/1000||0);this.last=time;if(this.ready)this.gamepadTara();if(!this.paused&&this.ready)this.update(dt);this.render(time/1000);this.raf=requestAnimationFrame(this.loop)}
+  private loop(time:number){const dt=Math.min(.035,(time-this.last)/1000||0);this.last=time;if(this.ready)this.gamepadTara();/* DONMA ve arkadaslari update() DISINDA iner. Sebebi yapisal: sayac listesi
+     (bkz. update() icindeki tek satirlik dongu) update()'in icinde; donma
+     sayaci orada olsaydi donma kendi sayacini da dondurur ve oyun KALICI
+     kilitlenirdi. Buradaki dt duvar saatinden gelir, update'ten bagimsizdir. */
+  /* Gorsel sayaclar donma sirasinda da ISLER - donmus kare titriyorsa "vurus"
+     okunur, donmus kare de donuksa "takildi" okunur. */
+  for(const k of ['sarsinti','vurusIleri']as const)this[k]=Math.max(0,this[k]-dt);
+  /* Donmada once KONTROL, sonra azaltma. Tersi sirada 30 ms'lik donma 60 Hz'de
+     tek kareye (17 ms) dusuyordu: ilk karede sayac zaten 0.013'e inip ikinci
+     kare calisiyordu. Olculdu. */
+  if(this.donma>0){this.donma=Math.max(0,this.donma-dt);this.donmaToplam+=dt;}
+  else if(!this.paused&&this.ready)this.update(dt);
+  /* Render saatinden donma toplami dusuluyor: yoksa simulasyon dururken
+     sprite kareleri, ates titremesi ve isik salinimi akmaya devam eder ve
+     goz bunu 'vurus dondu' degil 'oyun takildi' diye okur. */
+  this.render(time/1000-this.donmaToplam);this.raf=requestAnimationFrame(this.loop)}
   private sprite(key:string,x:number,y:number,frame=0,fw?:number,fh?:number,flip=false,scale=1,alpha=1,donder=0,capa?:number){const im=this.images[key];if(!im?.naturalWidth)return;const w=fw||im.width/R,h=fh||im.height/R;const count=Math.floor(im.width/(w*R));const c=this.ctx;c.save();c.globalAlpha=alpha;const actor=key.startsWith('characters')||key.startsWith('enemies');/* Aktorler (oyuncu/mob) HAREKET ederken tam sayiya yuvarlama olmadan
    piksel titremesi/bulanikligi oluyordu, o yuzden onlar icin kaldi. Decor
    ise SABIT duruyor - yuvarlama onda sadece boyali arka plandaki bir ozellikle
@@ -1446,7 +1484,17 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   c.fillStyle='#140d07';for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]])c.fillText(text,x+dx,y+dy);
   c.fillStyle=color;c.fillText(text,x,y);
   return c.measureText(text).width;}
-  private render(time:number){const c=this.ctx;const canvas=this.canvas;const cw=canvas.clientWidth||1280,ch=canvas.clientHeight||720,oran=cw/ch;let en=320,boy=180;if(oran>16/9)en=Math.min(560,Math.round(180*oran));else boy=Math.min(340,Math.round(320/oran));this.gorus={en,boy};const bw=en*4,bh=boy*4;if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;}c.setTransform(4,0,0,4,0,0);c.imageSmoothingEnabled=false;c.fillStyle='#0a111b';c.fillRect(0,0,en,boy);const targetX=this.state.x-en/2,targetY=this.state.y-boy/2;this.camera.x+=(targetX-this.camera.x)*.12;this.camera.y+=(targetY-this.camera.y)*.12;const cx=Math.round(this.camera.x),cy=Math.round(this.camera.y);c.translate(-cx,-cy);
+  private render(time:number){const c=this.ctx;const canvas=this.canvas;const cw=canvas.clientWidth||1280,ch=canvas.clientHeight||720,oran=cw/ch;let en=320,boy=180;if(oran>16/9)en=Math.min(560,Math.round(180*oran));else boy=Math.min(340,Math.round(320/oran));this.gorus={en,boy};const bw=en*4,bh=boy*4;if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;}c.setTransform(4,0,0,4,0,0);c.imageSmoothingEnabled=false;c.fillStyle='#0a111b';c.fillRect(0,0,en,boy);const targetX=this.state.x-en/2,targetY=this.state.y-boy/2;this.camera.x+=(targetX-this.camera.x)*.12;this.camera.y+=(targetY-this.camera.y)*.12;/* Sarsinti ofseti kameranin KENDISINE degil, yalniz bu kareye eklenir:
+     camera.x'e yazilsaydi lerp hedefi bozulur ve sarsinti sonumlenmezdi.
+     Yuvarlamanin ICINDE, cunku cx/cy yalniz sahne degil bolge tinti ve
+     isik haritasi icin de goruntu penceresinin dunya koordinati - ofseti
+     translate'e ayrica eklersek o katmanlar kaymaz ve kenarda tintlenmemis
+     serit acilir. */
+  let sx=0,sy=0;
+  if(this.sarsinti>0){const k=this.sarsinti/Engine.SARSINTI_SURE,g=Engine.SARSINTI_GUC*k*k;
+   const isaret=Math.floor(this.sarsinti*60)%2?1:-1;
+   sx=-this.sarsintiYon.x*g*isaret;sy=-this.sarsintiYon.y*g*isaret;}
+  const cx=Math.round(this.camera.x+sx),cy=Math.round(this.camera.y+sy);c.translate(-cx,-cy);
   const bg=this.images['bg_'+this.state.zone];
   // Tek parca arka plan: karo tekrarini ve desen olcegi sorununu ortadan kaldirir.
   // Gorsel carpisma haritasiyla maskelenerek uretilir (bkz. scripts/arkaplan_maske.py),
@@ -1522,7 +1570,14 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     return;}if(m.kind===9){/* Fenerin isigi: ovadaki tek sicak renk. */const g=c.createRadialGradient(m.x,m.y-14,2,m.x,m.y-14,42);g.addColorStop(0,'#ffb35a70');g.addColorStop(1,'#ffb35a00');c.fillStyle=g;c.fillRect(m.x-42,m.y-56,84,84);}c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=this.dusmanKare(m,eylem,time);if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0));}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim);}else{this.sprite(anahtar,m.x,m.y,kare,Engine.DUSMAN_EN[m.kind]??32,32,yar.mod==='aynali'&&Math.cos(bak)<0,ol,1,0,Engine.DUSMAN_CAPA[m.kind]);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,this.dusmanKare(m,eylem,time),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}const yuzuk=this.state.equipment.ring;if(m.kind!==9&&(m.hp<m.max||m.boss||(yuzuk&&ITEMS[yuzuk].canGoster))){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');if(m.kind===10)this.label('SON MUHAFIZ',m.x,m.y-40,'#c9b7d6');}}});
    actors.push({y:this.state.y,layer:0,draw:()=>{const s=this.state;const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';
   const dusuyor=this.dusus>0||this.dustu;
-  if(!dusuyor)this.golgeCiz(s.x,s.y);/* Boslukta golge yok - basacak zemin kalmadi. */
+  /* VURUS ATILIMI: yalnizca CIZIME uygulanan ileri kayma - gercek konum
+     degismiyor, carpisma/yurume/bolge gecisi mantigina hic dokunmuyor.
+     GOLGE de ayni ofsetle kayar: govde kayip golge yerinde kalinca karakter
+     havada suzuluyormus gibi gorunuyordu (olculdu, ekran goruntusuyle). */
+  const ik=this.vurusIleri>0?this.vurusIleri/Engine.VURUS_ILERI_SURE:0;
+  const ig=ik*(2-ik)*Engine.VURUS_ILERI;
+  const px=s.x+this.vurusIleriYon.x*ig,py=s.y+this.vurusIleriYon.y*ig;
+  if(!dusuyor)this.golgeCiz(px,py);/* Boslukta golge yok - basacak zemin kalmadi. */
   /* Izler oyuncunun ALTINA cizilir ve solar; en eskisi en sonuk. */
   for(const iz of this.izler)this.sprite(iz.anahtar,iz.x,iz.y,iz.kare,Engine.OYUNCU_EN,Engine.OYUNCU_BOY,iz.flip,OYUNCU_OLCEK,Math.min(.42,iz.life*1.6));
   if(dusuyor){
@@ -1562,7 +1617,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     c.restore();
    }
   } else {
-  this.sprite(this.poz(action),s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?this.vurusKare():Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){/* Yay eskiden 0.2 sn boyunca SABIT bir cizgiydi - efekt degil artefakt gibi duruyordu. Artik zamana bagli: dar baslayip acilan, solan bir supurme. Isabette daha kalin ve daha parlak cizilir; iska ile isabetin GORSEL ayrimi. */const p=1-this.slash/Engine.SLASH_SURE;c.globalAlpha=Math.max(0,1-p*p);c.strokeStyle=this.slashIsabet?Engine.SLASH_ISABET_RENK:'#f5db9a';c.lineWidth=(this.slashIsabet?Engine.SLASH_ISABET_KALIN:1.5)*(1-p*.45);const v=this.yonVektor(),angle=Math.atan2(v.y,v.x),ac=.55+.62*p;c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-ac,angle+ac);c.stroke();c.globalAlpha=1;}}}});
+  /* VURUS ATILIMI: yalnizca CIZIME uygulanan ileri kayma. Gercek konum
+     degismiyor - carpisma, yurume ve bolge gecisi mantigina hic dokunmuyor,
+     yani oynanis riski sifir. Egri: hizli cik, yavas don (1-k)^2 degil k*(2-k)
+     ile tepe basta. */
+  this.sprite(this.poz(action),px,py,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?this.vurusKare():Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){/* Yay eskiden 0.2 sn boyunca SABIT bir cizgiydi - efekt degil artefakt gibi duruyordu. Artik zamana bagli: dar baslayip acilan, solan bir supurme. Isabette daha kalin ve daha parlak cizilir; iska ile isabetin GORSEL ayrimi. */const p=1-this.slash/Engine.SLASH_SURE;c.globalAlpha=Math.max(0,1-p*p);c.strokeStyle=this.slashIsabet?Engine.SLASH_ISABET_RENK:'#f5db9a';c.lineWidth=(this.slashIsabet?Engine.SLASH_ISABET_KALIN:1.5)*(1-p*.45);const v=this.yonVektor(),angle=Math.atan2(v.y,v.x),ac=.55+.62*p;c.beginPath();c.arc(px,py-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-ac,angle+ac);c.stroke();c.globalAlpha=1;}}}});
   actors.sort((a,b)=>(a.layer-b.layer)||(a.y-b.y)).forEach(a=>a.draw());
   c.fillStyle=this.state.zone==='haven'?'#060e1924':'#070b1c42';c.fillRect(cx,cy,this.gorus.en,this.gorus.boy);
   this.karanlik(cx,cy,time);

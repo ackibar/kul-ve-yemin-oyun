@@ -2057,4 +2057,45 @@ testinde kırılıyor (senaryo o günden beri değişti), (c) artık var olmayan
 
 ---
 
-*Son güncelleme: 2026-09-16, v15.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v15.6: Vuruş hissi 2/3 - donma, sarsıntı ve karakterin ATILIMI
+Kullanıcı: "vurunca bizim karakter çok stabil duruyor, bu yüzden sanırım çok
+iyi hissettirmiyor." **Teşhis planımdaki eksiği yakaladı:** hazırladığım her
+şey (donma, sarsıntı, düşman flaşı, geri itme) düşmana ve ekrana bakıyordu;
+oyuncunun kendi gövdesi hiç tepki vermiyordu.
+
+**1) Atılım.** İsabette oyuncu hedefe doğru `VURUS_ILERI=2.4` birim kayıyor,
+`.13 sn`'de geri yerleşiyor (eğri `k(2-k)`, tepe başta). **Yalnızca ÇİZİME**
+uygulanıyor - gerçek konum değişmiyor, yani çarpışma/yürüme/bölge geçişi
+mantığına hiç dokunmuyor, oynanış riski sıfır.
+*Kusur (ekran görüntüsüyle yakalandı):* ilk halde gövde kayıyor, **gölge
+yerinde kalıyordu** - karakter havada süzülüyor gibi görünüyordu. Gölge de
+(`golgeCiz`) aynı ofsetle kaydırıldı. Değer de 3.2 → 2.4'e indirildi (4x
+ölçekte 3.2 birim = 13 ekran pikseli, fazlaydı).
+
+**2) Donma (hit-stop).** `DARBE_DONMA=.03`, silah ağırlığıyla ölçekli
+(`*silah.hiz`: hançer 15 ms, balta 40 ms), öldürücü darbede iki katı.
+**Yapısal karar:** donma `loop()` içinde yaşıyor, `update()` içinde DEĞİL.
+Sebep: merkezi sayaç listesi `update()`'in içinde; donma sayacı orada olsaydı
+donma kendi sayacını da dondurur ve oyun **kalıcı kilitlenirdi**.
+*Ölçüm hatası ve düzeltmesi:* ilk yazımda sayacı kontrolden ÖNCE azaltıyordum;
+60 Hz'de 30 ms donma tek kareye (17 ms) düşüyordu çünkü ilk karede sayaç zaten
+0.013'e iniyordu. Önce kontrol, sonra azaltma → ölçüldü: **2 kare, 33 ms**.
+Render saatinden `donmaToplam` düşülüyor ki sprite kareleri de dursun; yoksa
+simülasyon dururken animasyonlar akar ve göz bunu "vuruş dondu" değil "oyun
+takıldı" diye okur.
+
+**3) Kamera sarsıntısı.** `SARSINTI_GUC=1.3`, `SARSINTI_SURE=.11`, darbe
+yönünde işaret değiştiren sönümlü desen (rastgele gürültü değil - yön hissi
+veriyor ve aynı genlikte daha az yoruyor). Ofset `camera.x`'in kendisine
+DEĞİL, yalnız o kareye ve **yuvarlamanın içine** ekleniyor: `cx/cy` yalnız
+sahne değil bölge tinti ve ışık haritası için de pencerenin dünya koordinatı,
+ofseti `translate`'e ayrıca eklersek o katmanlar kaymaz ve kenarda tintlenmemiş
+şerit açılır.
+
+**Kilitlenme testi (zorunlu regresyon):** saniyede 3 saldırı × 3 sn sonrası
+`donma=0`, tick normal ilerliyor, `attackTimer=0`. Bu test donma `update()`
+içine kaçarsa anında kırılır.
+
+---
+
+*Son güncelleme: 2026-09-16, v15.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
