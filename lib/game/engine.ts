@@ -30,7 +30,7 @@ import {bekleyen} from './data';
 /** Oyuncunun bakis yonu. 'S' yan, 'DS' asagi-capraz, 'US' yukari-capraz;
  *  bati tarafi bunlarin aynasi (flip). NPC/dusmanlar 3 yonde kaliyor. */
 type Yon='U'|'D'|'S'|'DS'|'US';
-type Mob=EnemySpec&{hp:number;max:number;cool:number;windup:number;burn:number;hurt:number;homeX:number;homeY:number;gezX?:number;gezY?:number;gezBekle?:number;aci?:number;sersem?:number;zehir?:number;zehirTik?:number;/** Yerden cikma animasyonu: kalan sure (sn). >0 iken yurumez/vurmaz. */cikis?:number};
+type Mob=EnemySpec&{hp:number;max:number;cool:number;windup:number;burn:number;hurt:number;homeX:number;homeY:number;gezX?:number;gezY?:number;gezBekle?:number;aci?:number;sersem?:number;zehir?:number;zehirTik?:number;/** Yerden cikma animasyonu: kalan sure (sn). >0 iken yurumez/vurmaz. */cikis?:number;/** Kalabalikta dolasma yonu (+1/-1), mob'a sabit - bkz. dusmanYurut(). */yan?:number};
 type Particle={x:number;y:number;vx:number;vy:number;life:number;color:string;size:number;g?:number};
 /** Olen iskeletten savrulan KEMIK PARCASI: kafatasi/kaburga/uyluk... ayri
  *  uretilmis kucuk gorseller (bkz. scripts/kemik_uret.py). Onceden sprite
@@ -635,13 +635,25 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly ATES_YARICAP=14;
  static readonly ATES_HASAR=10;
  static readonly CARP_MOB=14;
+ /** KUSATMA AYARI (tum dusmanlar). Eskiden hedefe duz cizgide yuruyup
+  *  move()'un mob carpismasina takiliyorlardi: on saf oyuncuya yapisiyor,
+  *  arkadakiler oldugu yerde kalip SIRA olusturuyordu. Artik yoldaki
+  *  komsulari teget bir itkiyle dolaniyorlar. */
+ static readonly KACIN_YARICAP=26;   // bu uzakliktaki komsular yolu kapatiyor sayilir
+ static readonly KACIN_GUC=1.15;     // teget itkinin hedef yonune gore agirligi
+ static readonly SIYIRMA_ACI=Math.PI/3;  // tam kilitlenince denenen ilk sapma
+ /** Dusmanin dusmani SERT engelledigi yaricap. Ayrisma itmesi (CARP_MOB=14)
+  *  bundan genis: aradaki farkta birbirlerine GIREBILIYOR ama surekli itiliyorlar.
+  *  Ikisi esitken on saf katı bir duvar oluyordu ve arkadakiler sirada bekliyordu
+  *  (kullanici: "belli bir siraya gecip sirada bekliyorlar"). */
+ static readonly ENGEL_MOB=9;
  private *karakterler(ben:string|null,mobDahil=false){
   if(ben!==null)yield{x:this.state.x,y:this.state.y,r:Engine.CARP};
   for(const e of this.world.entities)if(e.type==='npc'&&e.id!==ben)yield{x:e.x,y:e.y,r:Engine.CARP};
   // Dusmanlar hicbir carpisma listesinde yoktu, yani suru tek bir yigin
   // halinde ust uste binerek geliyordu. Yalnizca DUSMAN hareketinde acilir:
   // oyuncunun icinden gecebilmesi degismesin diye.
-  if(mobDahil)for(const m of this.mobs)if(m.hp>0&&m.id!==ben)yield{x:m.x,y:m.y,r:m.boss?Engine.CARP:Engine.CARP_MOB};
+  if(mobDahil)for(const m of this.mobs)if(m.hp>0&&m.id!==ben)yield{x:m.x,y:m.y,r:m.boss?Engine.CARP:Engine.ENGEL_MOB};
  }
  /** Yalnizca YAKLASAN hareket engellenir. Duz "yakinsa durdur" deseydik ic ice
   *  girmis iki karakter birbirine kilitlenip yerinden kimildayamazdi. */
@@ -676,6 +688,44 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  private oldu(not:string){
   this.state.hp=0;this.paused=true;this.audio.play('death');
   this.state.journal.unshift(not);this.onEvent({type:'death'});this.emit();
+ }
+ /** Dusmani hedefe dogru yurutur ve onu KAPATANLARIN ETRAFINDAN dolastirir.
+  *  Iki asama: (a) onumdeki komsular icin teget bir kacinma itkisi, (b) buna
+  *  ragmen hic ilerleyemediysem tegetleri tek tek dene. Boylece kalabalik
+  *  sira olmak yerine oyuncunun cevresini sariyor. Tum dusmanlar icin gecerli. */
+ private dusmanYurut(m:Mob,hx:number,hy:number,v:number,dt:number){
+  const dx=hx-m.x,dy=hy-m.y,d=Math.hypot(dx,dy)||1;
+  let ux=dx/d,uy=dy/d;
+  /* Yalnizca EN YAKIN ONDEKI komsu hesaba katilir. Once hepsi toplanıyordu ama
+     kalabalikta saga ve sola dusen komsularin teget itkileri BIRBIRINI GOTURUYOR,
+     toplam sifira yaklasip yaratik yine duz yuruyordu. */
+  let en:Mob|null=null,enD=1e9;
+  for(const o of this.mobs){if(o===m||o.hp<=0)continue;
+   const ox=o.x-m.x,oy=o.y-m.y,od=Math.hypot(ox,oy);
+   if(od<.01||od>Engine.KACIN_YARICAP||od>=enD)continue;
+   if((ox*ux+oy*uy)/od<.3)continue;   // arkamdakinden kacinmak sacma
+   en=o;enD=od;
+  }
+  let kx=0,ky=0;
+  if(en){
+   /* Donus yonu MOB'A SABIT (m.yan): her karede capraz carpimdan hesaplanirsa
+      yaratik iki komsu arasinda saga-sola titriyor ve ilerlemiyor. Sabit yon
+      onu komsunun etrafindan gercekten DOLASTIRIYOR. */
+   if(m.yan===undefined)m.yan=Math.random()<.5?-1:1;
+   const g=1-enD/Engine.KACIN_YARICAP;
+   kx=-uy*m.yan*g;ky=ux*m.yan*g;
+  }
+  const hx2=ux+kx*Engine.KACIN_GUC,hy2=uy+ky*Engine.KACIN_GUC;
+  const n=Math.hypot(hx2,hy2)||1;ux=hx2/n;uy=hy2/n;
+  const ox0=m.x,oy0=m.y,adim=v*dt,esik=adim*.25;
+  this.move(m,ux*adim,uy*adim,m.id,true);
+  if(Math.hypot(m.x-ox0,m.y-oy0)>=esik)return;
+  /* Tam kilit: dar gecitte iki yaratik ayni anda girmeye calisiyor. */
+  for(const a of [Engine.SIYIRMA_ACI,-Engine.SIYIRMA_ACI,Math.PI/2,-Math.PI/2]){
+   const c=Math.cos(a),sn=Math.sin(a);
+   this.move(m,(ux*c-uy*sn)*adim,(ux*sn+uy*c)*adim,m.id,true);
+   if(Math.hypot(m.x-ox0,m.y-oy0)>=esik)return;
+  }
  }
  private move(p:{x:number;y:number},dx:number,dy:number,ben:string|null=null,mobDahil=false,ry?:number,rx=5){
   if(walkable(this.world,p.x+dx,p.y,rx,undefined,ry)&&!this.carpisir(p.x,p.y,p.x+dx,p.y,ben,mobDahil))p.x+=dx;
@@ -869,12 +919,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     m.zehirTik=(m.zehirTik??0)+dt;
     if(m.zehirTik>=1){m.zehirTik=0;this.float(m.x,m.y-12,String(Engine.ZEHIR_HASAR),'#9fd47a');}
     if(m.hp<=0){if(m.id==='rauf')this.raufDizCok();else this.kill(m);continue;}}
-   if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.kind===9){this.fener(m,d,dx,dy,dt);continue;}if(m.windup>0){m.windup-=dt;/* Iskelet HAMLE yapar: digerleri vurus hazirliginda cakili dururken iskelet oyuncuya dogru atilir. Olculdu: hamlesiz surumde skelet (38) oyuncudan (44) yavas oldugu icin windup biterken oyuncu menzilden cikiyordu ve 8 saniyelik bir gecis yalnizca 24 cana mal oluyordu - 'oldurmesi cok kolay' hissinin asil sebebi buydu. Hamle hizi oyuncunun ustunde ama yalnizca .26 sn surer. */if(m.kind===11)this.move(m,dx/d*Engine.ISKELET_HAMLE*dt,dy/d*Engine.ISKELET_HAMLE*dt,m.id,true);if(m.windup<=0){/* Ses uzakliga gore kisiliyor: ekranin obur ucundaki bir yaratik yanindaki
+   if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.kind===9){this.fener(m,d,dx,dy,dt);continue;}if(m.windup>0){m.windup-=dt;/* Iskelet HAMLE yapar: digerleri vurus hazirliginda cakili dururken iskelet oyuncuya dogru atilir. Olculdu: hamlesiz surumde skelet (38) oyuncudan (44) yavas oldugu icin windup biterken oyuncu menzilden cikiyordu ve 8 saniyelik bir gecis yalnizca 24 cana mal oluyordu - 'oldurmesi cok kolay' hissinin asil sebebi buydu. Hamle hizi oyuncunun ustunde ama yalnizca .26 sn surer. */if(m.kind===11)this.dusmanYurut(m,this.state.x,this.state.y,Engine.ISKELET_HAMLE,dt);if(m.windup<=0){/* Ses uzakliga gore kisiliyor: ekranin obur ucundaki bir yaratik yanindaki
      kadar yuksek vurmamali. */this.audio.play('dusmanVur',Math.max(0,1-d/190));if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:m.kind===10?30:m.kind===11?Engine.ISKELET_VURUS_MENZIL:25)){this.hurt(m.boss?30:Engine.HASAR[m.kind]??10+m.kind*3,m.kind===11?Engine.ISKELET_IFRAME:.72);/* Bogulmus sarilinca kul cigere doluyor: oyuncu 3 sn agirlasir. */if(m.kind===8&&this.state.hp>0){this.yavas=3;this.float(this.state.x,this.state.y-18,'AĞIRLAŞTIN','#b9b2a6');}}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:m.kind===11?Engine.ISKELET_COOL:1.15;}continue;}if(d<(m.kind===11?Engine.ISKELET_GORUS:135)&&visible){m.aci=Math.atan2(dy,dx);/* SALDIRIYI BASLATMA menzili. Iskelette ayri: asil darbogaz burasiydi -
      cemberin arka safi 22-28 birimde takilip kaliyor ve 20'lik esige hic
      giremedigi icin windup'a bile baslamiyordu (olculdu: 9 dusman yanibasindayken
      5 saniyede yalniz 23 vurus). */
-    const range=m.kind===2?95:m.boss?34:m.kind===10?26:m.kind===11?Engine.ISKELET_SALDIRI_MENZIL:20;if(d>range){const v=(Engine.HIZ[m.kind]??27)*(m.zehir&&m.zehir>0?Engine.ZEHIR_YAVAS:1);this.move(m,dx/d*v*dt,dy/d*v*dt,m.id,true);}if(d<=range&&m.cool<=0)m.windup=m.boss?.8:m.kind===2?.55:m.kind===10?.7:m.kind===11?Engine.ISKELET_WINDUP:.4;}else if(!m.boss){// Oyuncu uzaktayken yaratiklar cakili duruyordu; magara olu gorunuyordu.
+    const range=m.kind===2?95:m.boss?34:m.kind===10?26:m.kind===11?Engine.ISKELET_SALDIRI_MENZIL:20;if(d>range){const v=(Engine.HIZ[m.kind]??27)*(m.zehir&&m.zehir>0?Engine.ZEHIR_YAVAS:1);this.dusmanYurut(m,this.state.x,this.state.y,v,dt);}if(d<=range&&m.cool<=0)m.windup=m.boss?.8:m.kind===2?.55:m.kind===10?.7:m.kind===11?Engine.ISKELET_WINDUP:.4;}else if(!m.boss){// Oyuncu uzaktayken yaratiklar cakili duruyordu; magara olu gorunuyordu.
     // Doguş yerinin cevresinde yavasca dolasirlar - takip hizinin yarisi.
     m.gezBekle=(m.gezBekle??0)-dt;
     if(m.gezBekle<=0||m.gezX===undefined){const a=Math.random()*Math.PI*2,r=18+Math.random()*44;
@@ -889,7 +939,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    // yaratik birbirini kilitlemesin.
    for(const o of this.mobs){if(o===m||o.hp<=0)continue;
     const ax=m.x-o.x,ay=m.y-o.y,ad=Math.hypot(ax,ay);
-    if(ad>.01&&ad<Engine.CARP_MOB){const it=(Engine.CARP_MOB-ad)*2.4*dt;this.move(m,ax/ad*it,ay/ad*it);}}}
+    if(ad>.01&&ad<Engine.CARP_MOB){const it=(Engine.CARP_MOB-ad)*3.8*dt;this.move(m,ax/ad*it,ay/ad*it);}}}
    this.mobs=this.mobs.filter(m=>m.hp>0);
    for(const shot of this.shots){shot.life-=dt;shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;const kavanoz=shot.gecti?.[0]==='*kavanoz';if(!walkable(this.world,shot.x,shot.y,2))shot.life=0;if(kavanoz){if(shot.life<=0)this.kavanozPatla(shot.x,shot.y);continue;}if(shot.isHero){for(const d of this.world.entities.filter(e=>(e.type==='decor'&&!e.asset?.includes('Table'))||(e.type==='chest'&&this.state.opened.includes(e.id)))){if(Math.hypot(shot.x-d.x,shot.y-d.y)<16){shot.life=0;const currentHp=(this.decorHp[d.id]??3)-1;this.decorHp[d.id]=currentHp;if(currentHp<=0){delete this.decorHp[d.id];this.world.entities=this.world.entities.filter(e=>e.id!==d.id);this.burst(d.x,d.y,d.type==='chest'?'#b88a52':'#8b5a2b',16);this.audio.play('hit');this.spawnDrop(d.x,d.y,'wood',1);this.notify(d.type==='chest'?'Boş sandığı kırdın: +1 Odun':'Ahşap eşyayı kırdın: +1 Odun');}else{this.burst(d.x,d.y,d.type==='chest'?'#b88a52':'#8b5a2b',5);this.audio.play('hit');}break;}}for(const m of this.mobs){if(m.hp>0&&Math.hypot(shot.x-m.x,shot.y-m.y)<14){/* Ok TURLERI burada isliyor. Bu blok eskiden sadeydi: ok turu bayraklari
         (yakar/zehir/delici/ceker) atista mermiye yaziliyordu ama isabette hic

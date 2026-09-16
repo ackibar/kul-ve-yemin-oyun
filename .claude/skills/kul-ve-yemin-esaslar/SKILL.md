@@ -1722,4 +1722,38 @@ Sonuç: çemberin ortasında durmak 5 saniyede ~48 can, koridoru yürüyerek ge�
 
 ---
 
-*Son güncelleme: 2026-09-16, v14.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v14.3: Kuşatma - düşmanlar sıra olmak yerine birbirini iterek geliyor
+Kullanıcı: "iskeletler belli bir yerden sonra belli bir sıraya geçip sırada
+bekliyorlar; birbirlerinin etrafından dolaşıp birbirlerini iterek saldırmalılar
+- sadece iskeletler değil TÜM düşmanlar."
+
+**Asıl sebep sert çarpışma yarıçapıydı.** Düşman-düşman engelleme ve ayrışma
+itmesi aynı değerdeydi (`CARP_MOB=14`): ön saf katı bir duvar oluyor, arkadaki
+hiç kimse içeri giremiyordu. İkisi ayrıldı - engel `ENGEL_MOB=9`, itme hâlâ 14
+(gücü 2.4 → 3.8). Aradaki farkta birbirlerine **girebiliyorlar** ama sürekli
+itiliyorlar; yer varken açılıyorlar, baskı altında sıkışıyorlar.
+
+**İkincisi yön bulma.** `dusmanYurut()`: hedefe düz gitmek yerine önündeki
+komşunun etrafından teğet geçiyor. İki tuzak ölçülerek bulundu:
+* **Tüm komşuları toplamak İŞE YARAMIYOR** - sağdaki ve soldaki komşuların teğet
+  itkileri birbirini götürüyor, toplam sıfıra yaklaşıyor ve yaratık yine düz
+  yürüyor. Yalnızca EN YAKIN öndeki komşu sayılır.
+* **Dönüş yönü mob'a sabit olmalı** (`m.yan`, ±1). Her karede çapraz çarpımdan
+  hesaplanınca yaratık iki komşu arasında sağa-sola titreyip ilerlemiyor.
+Buna rağmen ilerleyemeyen (dar geçit) için teğet açılar tek tek deneniyor.
+
+**Ölçüm (20 iskeletin ortasında 5 sn durarak):**
+| | saldırı | 25 birim içinde | en yakın 6 |
+|---|---|---|---|
+| önce | 47 | 8 | 13,13,13,13,16,17 |
+| sonra | **84** | **13** | 4,7,12,13,13,13 |
+Can kaybı 56'da sabit kaldı - i-frame tavanı (v14.2) devrede, doğrusu bu.
+
+**Test tuzağı:** düşmanları `state.x+40`'a ışınlayıp "yaklaşmıyorlar" diye
+regresyon sandım; duvarın içine/görüş hattı dışına düşmüşlerdi. `git stash` ile
+commit'teki kodda da aynı sonuç çıktı - ışınlamalı testte hedef noktanın
+`walkable` ve görüş hattında olduğu doğrulanmalı.
+
+---
+
+*Son güncelleme: 2026-09-16, v14.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
