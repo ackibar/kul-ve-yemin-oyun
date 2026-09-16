@@ -2488,4 +2488,48 @@ erişim değil, kimsenin ayrı cepte mahsur kalmaması.
 
 ---
 
-*Son güncelleme: 2026-09-17, v17.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v17.2: İkinci saldırı setleri, Alf'in kılıcı, daha geniş üretim
+**Üretim: 9 üretim** (bakiye 1444 → 1435). `v3_anim.py`/`v3_kur.py`'ye
+`yumruk2` ve `kilic2` setleri eklendi; yalnız `Attack2` üretiliyor, mevcut
+klasöre EK oluyor (duruş işleri boş, yoksa Idle/Hurt/Death ezilir).
+*Yan yön (east) ilk denemede API tarafında **failed** döndü* - kılıç için en
+önemli yön o, tek yön yeniden basıldı (1 üretim). **Ders: v3_anim çıktısında
+"basarisiz" satırını ara; sheet kurulumu eksik yönü sessizce atlıyor.**
+
+* Yumruk: ilki düz yumruk, ikincisi **öteki elle kroşe**.
+* Kılıç: ilki yukarıdan aşağı kesme, ikincisi **yatay savurma**.
+
+**Sıra KARIŞIK** (kullanıcı düz alternatiften vazgeçti): rastgele seç ama
+aynısı ikiden fazla üst üste gelmesin (`vurusSetSec`). Ölçüldü, 30 vuruş:
+`010110011001001001101010010011` - en uzun seri 2, dağılım 16/14.
+Set yoksa sessizce `Attack`'a düşüyor, yani balta/meşale/yay davranışı aynı.
+
+**`VURUS_ATLA` artık AKSİYONA da bağlı.** Anahtar `kit+yön+aksiyon` oldu,
+çünkü Attack2'nin kare profili bambaşka - ölçüldü (öne uzanım):
+`1sword S_Attack [6,-3,1,14,16,11,11]` tepe 4 → 2 kare atla;
+`1sword S_Attack2 [6,8,19,11,6,2,12]` tepe **2** → **atlama YOK** (bıçak baştan
+öne gidiyor, atlarsak tepeyi keseriz); `1 S_Attack2` tepe 4 → 2 atla.
+Aksiyon anahtara eklenmeseydi yeni yatay savurmanın en iyi karesi kesilirdi.
+
+**Hit-stop denendi ve GERİ ALINDI.** Kullanıcı artırmak istedi; ölçüldü:
+0.03→33 ms (2 kare), 0.05→50, 0.07→83, 0.09→100 ms; kilitlenme hiçbirinde yok.
+Ama sürüyle dövüşürken (her vuruş öldürme, öldürme donmayı ikiye katlıyor)
+**karelerin donuk oranı 0.03'te %13, 0.06'da %27**. Kullanıcı "çok olmuş, eski
+hali iyiydi" dedi, `.03`'e dönüldü. *Ölçüm kullanıcının hissini doğruladı.*
+
+**Diğer istekler:**
+* **İlk görev "Boş el"**: Alf ile konuş. Alf kılıcı İSTENMEDEN veriyor -
+  karşılama metninde uzatıyor ("Al şunu, ihtiyacın olur"), seçenek yalnızca
+  "…Sağ ol." Yani oyuncu dilenmiyor, Alf veriyor.
+* **Üretim 18 → 24 tarif**: Gezgin ceketi, Kül pelerini, Bileme taşı, Delici
+  ok, Çengelli ok, Köz kavanozu. Bunların `sadece:'satin'` işareti kaldırıldı.
+  Üretilemeyen GÜÇLÜ silahlar: Muhafız kılıcı, Köz kılıcı, Gece dişi ve üç yay -
+  hepsi Alf'ten alınıyor.
+* **İksir kıtlaştı**: başlangıç 3 → 1, fiyat 12 → 22.
+* **Uyumak canı dolduruyor** (v16.5'te gelmişti, doğrulandı).
+* **Mirna köşedeki yatağı söylüyor** (`mira_yatak`), uyuduktan sonra seçenek
+  kalkıyor: "Şuradaki yatak senin. …ama uyandığında bir gün geçmiş olur."
+
+---
+
+*Son güncelleme: 2026-09-17, v17.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

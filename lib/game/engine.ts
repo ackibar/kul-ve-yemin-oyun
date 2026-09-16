@@ -232,6 +232,9 @@ export class Engine{
  private hasarGeri=0;private hasarGeriYon={x:0,y:0};
  /** Hasar alinca ekran kenarinda kisa kirmizi vinyet (kalan sure). */
  private kirmiziFlas=0;
+ /** Bu vurusta hangi saldiri seti (0 = Attack, 1 = Attack2) ve aynisinin
+  *  kac kez ust uste geldigi. Bkz. vurusSetSec(). */
+ private vurusSet=0;private vurusTekrar=0;
  private slash=0;/** Bu savurus isabet etti mi - kesme yayi isabette daha kalin/parlak cizilir. */private slashIsabet=false;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Kacis izi: dash sirasinda birakilan soluk kopyalar (sprite anahtari + kare). */private izler:{x:number;y:number;anahtar:string;kare:number;flip:boolean;life:number}[]=[];/** Iz birakma sayaci - her karede degil, sabit arayla. */private izSayac=0;/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;/** Tuhn'un ucurumdan dusus animasyonu (kalan sn) - bitince entity silinir. */private tuhnDusus=0;/** Dusus animasyonu bir kez baslatildi mi (bitince silme dalina gecsin diye). */private tuhnDususBitti=false;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
  private keys={up:false,down:false,left:false,right:false};
  /** Gamepad: bir onceki karede basili olan tuslar (kenar yakalamak icin).
@@ -271,6 +274,9 @@ for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?1
    dongusunde yukleniyordu, yani silahsiz modda capraz sheet'ler hic
    kullanilmiyordu - poz() sessizce ana yone dusuyordu. */
 /* Oyuncuda action yalnizca Idle/Walk/Attack olabiliyor (olum ekran paneli, hasar yanip sonme ile gosteriliyor). */
+/* Ikinci saldiri seti (v17.2): yalniz silahsiz ve kilicli sette uretildi.
+   ISTEGE BAGLI - eksikse vurusEylem() birinciye duser. */
+for(const set of ['1','1sword'])for(const dir of ['D','U','S','DS','US']){jobs.push(this.img(`characters${set}${dir}Attack2`,`/assets/characters/${set}/${dir}_Attack2.png`));optional.push(true);}
 for(const set of ['1','1sword','1bow','1balta','1mesale','1swordmesale'])for(const dir of ['D','U','S','DS','US'])for(const action of ['Idle','Walk','Attack']){jobs.push(this.img(`characters${set}${dir}${action}`,`/assets/characters/${set}/${dir}_${action}.png`));/* Mesale seti sonradan uretildi; eksikse oyun acilmaya devam etsin (kit() tabana duser). */optional.push(dir==='DS'||dir==='US'||set.endsWith('mesale'));}/* Ucurumdan dusus: silahtan bagimsiz TEK animasyon, yalnizca taban ('1')
    sette D/U/S (bkz. scripts/dusus_uret.py + dusus_kur.py). Istege bagli:
    dosya yoksa render() eski yassilasma/solma efektine duser. */for(const dir of ['D','U','S']){jobs.push(this.img('characters1'+dir+'Dusus',`/assets/characters/1/${dir}_Dusus.png`));optional.push(true);}/* Tuhn'un dususu: yalniz dogu (sahnede hep doguya yuruyor). */jobs.push(this.img('characters6SDusus','/assets/characters/6/S_Dusus.png'));optional.push(true);for(const z of ['haven','magara','disari','yikik','cistern','tunel','test100'])jobs.push(this.img('bg_'+z,`/assets/arkaplan/${z}.png`));/* 'portal' (Trapdoor_D) kaldirildi: kapak sprite'i yalnizca boyali arka
@@ -533,7 +539,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     // dogup isabet etmezdi.
     const ileri=targets[0]?Math.max(9,Math.min(20,Math.hypot(targets[0].x-s.x,targets[0].y-s.y)*.6)):20;
     this.shots.push({x:s.x+vx/hz*ileri,y:s.y-4+vy/hz*ileri,vx,vy,life:1.3,damage,isHero:true,yakar:okTur.yakar,zehir:okTur.zehir,delici:okTur.delici,ceker:okTur.ceker,gecti:okTur.delici?[]:undefined});};this.save();this.emit();return;}
-   this.slash=Engine.SLASH_SURE;this.slashIsabet=false;this.audio.play('swing');
+   this.slash=Engine.SLASH_SURE;this.slashIsabet=false;this.vurusSetSec();this.audio.play('swing');
    /* Acilmis sandiklar ARTIK KIRILAMAZ: sandik iki yonlu bir kap oldu, icine
       esya konabiliyor - vurup yok etmek konulani da yok ediyordu. */
    const decors=this.world.entities.filter(e=>e.type==='decor'&&!e.asset?.includes('Table')&&Math.hypot(e.x-s.x,e.y-s.y)<38);
@@ -695,14 +701,43 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   *  (D 4 ama bicak tum hazirlik boyunca ONDE duruyor, geri cekilme yok).
   *  Diger setler (balta/mesale/kilicmesale tepe 2, yay ATIS_BASA ile zaten
   *  duzeltilmis) dokunulmadan kaliyor. */
- static readonly VURUS_ATLA:Record<string,number>={characters1swordS:2,characters1S:4};
+ static readonly VURUS_ATLA:Record<string,number>={
+  /* Anahtar: kit + yon + AKSIYON. Aksiyon SART: Attack2'nin kare profili
+     bambaska. Olculdu (govdeden one uzanim, kare kare):
+       1sword S_Attack  [6,-3,1,14,16,11,11]  tepe 4  -> 2 kare atla
+       1sword S_Attack2 [6, 8,19,11, 6, 2,12]  tepe 2  -> ATLAMA YOK
+                        (bicak bastan one gidiyor; atlarsak tepeyi keseriz)
+       1      S_Attack  [-4,-4,-2,7,8,16,17]  tepe 6  -> 4 kare atla
+       1      S_Attack2 [-4,-4,-4,-2,3,0,-1]  tepe 4  -> 2 kare atla
+     (kroşe govdenin onunden gectigi icin bbox one az tasiyor.) */
+  characters1swordSAttack:2,characters1SAttack:4,characters1SAttack2:2};
  /** Vurus karesi. Son karede DURUR (basa sarmaz): atlama yuzunden animasyon
   *  suresi kisaliyor, sarsa "ikinci kez hazirlaniyor" gibi gorunurdu. */
  private vurusKare(){
-  const atla=Engine.VURUS_ATLA[this.kit()+this.direction]??0;
-  const im=this.images[this.poz('Attack')];
+  const atla=Engine.VURUS_ATLA[this.kit()+this.direction+this.vurusEylem()]??0;
+  const im=this.images[this.poz(this.vurusEylem())];
   const n=im?.naturalWidth?Math.floor(im.width/(Engine.OYUNCU_EN*R)):7;
   return Math.min(n-1,Math.floor((this.vurusSure-this.vurusPoz)*16)+atla);
+ }
+ /** Bu vurusta hangi saldiri seti oynayacak. Kullanici "cıplak elle bir sag
+  *  bir sol yumruk" ve kilicta "alternatif bir set" istedi: tek numarali
+  *  vuruslarda Attack2 oynar. Set YOKSA sessizce Attack'a duser - yeni sheet
+  *  uretilmemis silahlarda (balta, mesale, yay) davranis aynen korunur. */
+ /** Saldiri seti secimi - KARISIK sira (kullanici istegi). Duz alternatif
+  *  (A B A B) bir ritim yaratiyor ve goz onu kalip olarak okuyor; duz rastgele
+  *  ise ayni animasyonu uc-dort kez arka arkaya verebiliyor. Ikisinin arasi:
+  *  rastgele sec ama AYNISI ikiden fazla ust uste gelmesin. Savurma
+  *  seslerindeki torba yonteminin iki elemanli hali. */
+ private vurusSetSec(){
+  const yeni=this.vurusTekrar>=2?1-this.vurusSet:(Math.random()<.5?0:1);
+  this.vurusTekrar=yeni===this.vurusSet?this.vurusTekrar+1:1;
+  this.vurusSet=yeni;
+ }
+ private vurusEylem(){
+  if(this.vurusSet===0)return 'Attack';
+  const k=this.kit(),t=this.direction==='DS'?'D':this.direction==='US'?'U':this.direction;
+  const var_=this.images[k+this.direction+'Attack2']?.naturalWidth||this.images[k+t+'Attack2']?.naturalWidth;
+  return var_?'Attack2':'Attack';
  }
  private poz(action:string){const k=this.kit();
    if(this.images[k+this.direction+action]?.naturalWidth)return k+this.direction+action;
@@ -1099,6 +1134,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(this.uyku<=0){this.uyku=0;
     /* GUN GECISI tam uyanma aninda: dunya (world.ts) bayraklari okuyor,
        bu yuzden olay uygulandiktan SONRA bolge yeniden kurulmali. */
+    this.state.flags.uyudu=true;
     const rapor=gunGec(this.state);const olay=rapor.olay;
     this.world=makeWorld(this.state.zone,this.state.flags as Record<string,string|boolean|undefined>);
     this.resetMobs();
@@ -1679,7 +1715,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      vurusKare() ile bilerek cozulmustu, dusmanda cozulmemisti. */
     const hurtKare=Math.floor((Engine.HURT_SURE-m.hurt)*Engine.DUSMAN_FPS('Hurt'));
     const flas=m.hurt>0?m.hurt/Engine.HURT_SURE*Engine.FLAS_GUC:0;const ol=(m.boss?1.7:Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=eylem==='Hurt'?hurtKare:this.dusmanKare(m,eylem,time);if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0),undefined,flas);}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim,undefined,flas);}else{this.sprite(anahtar,m.x,m.y,kare,Engine.DUSMAN_EN[m.kind]??32,32,yar.mod==='aynali'&&Math.cos(bak)<0,ol,1,0,Engine.DUSMAN_CAPA[m.kind],flas);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,eylem==='Hurt'?hurtKare:this.dusmanKare(m,eylem,time),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol,1,0,undefined,flas);}const yuzuk=this.state.equipment.ring;if(m.kind!==9&&(m.hp<m.max||m.boss||(yuzuk&&ITEMS[yuzuk].canGoster))){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');if(m.kind===10)this.label('SON MUHAFIZ',m.x,m.y-40,'#c9b7d6');}}});
-   actors.push({y:this.state.y,layer:0,draw:()=>{const s=this.state;const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';
+   actors.push({y:this.state.y,layer:0,draw:()=>{const s=this.state;const action=this.vurusPoz>0?this.vurusEylem():this.moving&&!this.paused?'Walk':'Idle';
   const dusuyor=this.dusus>0||this.dustu;
   /* VURUS ATILIMI: yalnizca CIZIME uygulanan ileri kayma - gercek konum
      degismiyor, carpisma/yurume/bolge gecisi mantigina hic dokunmuyor.
