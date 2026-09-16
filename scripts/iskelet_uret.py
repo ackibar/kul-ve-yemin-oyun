@@ -23,16 +23,22 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # cikis animasyonu), gorselin bunu anlatmasina gerek yok.
 TARIF = ('a bare skeleton warrior standing hunched and ready to fight, bleached '
          'bone-white skull and ribcage clearly visible with dark empty eye sockets, '
-         'no skin and no flesh at all, tattered grey rags hanging off the bones, '
+         'no skin and no flesh at all, bare shoulders and bare spine, '
+         'a torn grey loincloth around its hips, '
          'a short rusted iron sword in one bony hand, hunched forward, '
-         'muted ash-grey palette, soot-stained, single dark outline, '
-         'NO backpack, NO satchel, NO modern clothing')
-# NOT: model ayaklarin altina bir TOPRAK/CIM yamasi ciziyor. Tarife
-# "NO ground, NO soil, NO grass, NO base..." eklemek DENENDI (2 uretim) ve
-# ISE YARAMADI: zemin yine geldi, ustune bir de tarifte ACIKCA yasaklanmis
-# olan SIRT CANTASI eklendi. Yani bu modelde olumsuz talimatlar guvenilir
-# degil. Zemin artik uretimden sonra scripts/iskelet_zemin_sil.py ile
-# kesiliyor. Iyi karakterin id'si: 778b71aa (ikinci/cantali: 3feda690).
+         'muted ash-grey palette, soot-stained, single dark outline')
+# TARIHCE - bu modelde OLUMSUZ talimat ise yaramiyor, cozum hep tarifin
+# kendi POZITIF ifadesini degistirmek oldu:
+#  v1 778b71aa: "clawing its way up out of the ground" -> ayaklarin altinda
+#     toprak/cim yamasi. "NO ground/soil/grass" eklemek (2 uretim) ISE
+#     YARAMADI, ustelik tarifte yasakli SIRT CANTASI'ni getirdi (3feda690).
+#  v2 8bacd212: "out of the ground" silindi -> zemin TAMAMEN gitti. Ama
+#     "tattered rags HANGING OFF the bones" yan/arka gorunumde sirt cantasi
+#     gibi bir bohca olarak cizildi; "NO backpack" satiri bunu engellemedi.
+#  v3 (bu): asilan pacavralar yerine "bare shoulders and bare spine" +
+#     kalcada "torn grey loincloth". Sirta bir sey asilmasini ISTEYEN ifade
+#     kalmadi; NO-listesi de kaldirildi (fayda yok, zarari olcüldu).
+# Zemin temizligi yine de scripts/iskelet_zemin_sil.py ile yapiliyor.
 
 if __name__ == '__main__':
     b0 = pxl.balance()[0]

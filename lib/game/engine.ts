@@ -557,8 +557,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Ucusan kemik gorselleri (public/assets/nesne/kemik/*.png). */
  static readonly KEMIKLER=['kafatasi','kaburga','uyluk','omurga','kirik'];
  /** Kemikler 32px'lik kendi tuvalinde uretildi; iskeletin yaninda dogru
-  *  boyda durmasi icin kucultulur (24px kemik -> ~5 birim). */
- static readonly KEMIK_OLCEK=.58;
+  *  boyda durmasi icin kucultulur. 0.42 oyun olceginde FARK EDILMIYORDU,
+  *  0.58 de zayif kaldi; 0.85'te kemik karakterin onkolu kadar. */
+ static readonly KEMIK_OLCEK=.85;
+ /** Tek kafatasi digerlerinden iri cizilir - dagilmanin odak noktasi. */
+ static readonly KAFATASI_BUYUT=1.35;
  static readonly DUSMAN_OLCEK:Record<number,number>={7:1.7};
  /** Alevin yakma yaricapi (dunya birimi) ve tur basina hasar. Oyuncunun
   *  hasari ayri (8) cunku zirh savunmasi ondan dusuluyor. */
@@ -685,18 +688,20 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   const capa=Engine.DUSMAN_CAPA[m.kind]??21;
   /* Kemikler govde yuksekliginde (ayak: m.y, tepe: m.y-capa*ol) dogar.
      Kafatasi hep tepeden ve en hizli firlar; kalan parcalar govdeye dagilir. */
-  const at=(anahtar:string,h:number,hiz:number)=>{
+  const at=(anahtar:string,h:number,hiz:number,buyut=1)=>{
    const yon2=Math.random()<.5?-1:1;
    this.parcalar.push({anahtar,
-    x:m.x+(Math.random()-.5)*7*ol,y:m.y-capa*ol*h,
-    vx:yon2*(28+Math.random()*78)*hiz,vy:-(62+Math.random()*80)*hiz,
+    x:m.x+(Math.random()-.5)*9*ol,y:m.y-capa*ol*h,
+    vx:yon2*(28+Math.random()*82)*hiz,vy:-(62+Math.random()*82)*hiz,
     aci:Math.random()*6.28,donus:(Math.random()-.5)*13,
-    life:.8+Math.random()*.5,omur:.85,olcek:ol*Engine.KEMIK_OLCEK});
+    life:.8+Math.random()*.5,omur:.85,olcek:ol*Engine.KEMIK_OLCEK*buyut});
   };
-  at('kafatasi',.92,1.15);
+  /* Kafatasi TEK: birden fazlasi "iki kafali iskelet" gibi duruyor. Buna
+     karsilik digerlerinden belirgin buyuk cizilir, dagilmanin odagi o. */
+  at('kafatasi',.92,1.15,Engine.KAFATASI_BUYUT);
   const kalan=Engine.KEMIKLER.filter(k=>k!=='kafatasi');
-  const adet=5+Math.floor(Math.random()*3);
-  for(let i=0;i<adet;i++)at(kalan[Math.floor(Math.random()*kalan.length)],.15+Math.random()*.7,1);
+  const adet=10+Math.floor(Math.random()*4);
+  for(let i=0;i<adet;i++)at(kalan[Math.floor(Math.random()*kalan.length)],.12+Math.random()*.76,1,.85+Math.random()*.4);
   for(let i=0;i<14;i++)this.particles.push({x:m.x,y:m.y-8-Math.random()*10,
    vx:(Math.random()-.5)*95,vy:-30-Math.random()*70,life:.5+Math.random()*.45,
    color:['#e9e2cf','#cfc6ad','#a99e86'][Math.floor(Math.random()*3)],size:1+Math.random()*1.6,g:190});

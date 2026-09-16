@@ -1585,4 +1585,25 @@ doğru - kemik ~7 birim, karakterin kolu kadar.
 
 ---
 
-*Son güncelleme: 2026-09-16, v13.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v13.8: Sırt çantası da POZİTİF ifadeyi değiştirerek gitti + daha bol/iri kemik
+Kullanıcı: "daha bol kemik ve daha büyük kemikler, kafatası bir adet kalsın ama
+biraz daha büyük olsun"; "modeli beğenmedim sırt çantalı, onu değiştirelim".
+
+**1) Çanta.** v13.7'de zemini çözen ders ikinci kez işe yaradı. Çantayı getiren
+ifade `"tattered grey rags HANGING OFF the bones"`ti - sırta asılan bir şey
+tarif ediyordu, model bunu bohça/çanta olarak çizdi; `NO backpack` satırı hiç
+işe yaramadı. Yerine **`"bare shoulders and bare spine"` + kalçada
+`"torn grey loincloth"`** yazıldı, NO-listesi tamamen silindi. Sonuç (v3
+`44e3a451`, 2 üretim): çanta yok, zemin yok, arkadan omurga görünüyor.
+**Kalıp: istemediğin şeyi yasaklama - onu İSTEYEN kendi cümleni bul ve
+yerine istediğini yaz.** Eski id'ler `id_iskelet_v1.txt` (zeminli),
+`id_iskelet_v2_cantali.txt`.
+
+**2) Kemikler.** `KEMIK_OLCEK` 0.42 → 0.58 → **0.85**; parça sayısı 5-7 →
+**10-13**; her parçaya ayrıca 0.85-1.25 rastgele çarpan. Kafatası tek kalıyor
+(iki tanesi "iki kafalı iskelet" gibi duruyor) ama `KAFATASI_BUYUT=1.35` ile
+belirgin iri - dağılmanın odak noktası o.
+
+---
+
+*Son güncelleme: 2026-09-16, v13.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
