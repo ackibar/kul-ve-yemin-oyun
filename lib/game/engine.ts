@@ -163,10 +163,17 @@ export class Engine{
  static readonly DUSUS=1.1;
  /** Iskeletin yerden cikmasi: bu uzakliga girilince uyanir, bu kadar sn surer.
   *  Uyanma 118 -> 150: surunun onu kapanmadan icine dalinabiliyordu.
-  *  Cikis .75 -> .55: yarim saniye yerin altinda beklemek kalabaligin
-  *  baskisini kiriyordu. */
+  *  Cikis .75 -> .55 yapilmisti (kalabaligin baskisi icin), ama kullanici
+  *  "cok hizli cikiyorlar" dedi - toprak yarilip bir govdenin dogrulmasi
+  *  yarim saniyeye sigmiyor. 1.25: animasyon okunuyor, ses de sigiyor. */
  static readonly ISKELET_UYANMA=150;
- static readonly ISKELET_CIKIS=.55;
+ static readonly ISKELET_CIKIS=1.25;
+ /** Menzile girenlerin cikisi bu araliga YAYILIR (sn). Hepsi ayni karede
+  *  firlayinca "yerden cikma" degil "aniden belirme" gibi duruyordu
+  *  (kullanici: "hepsi bir anda cikmasin"). Gecikme KIMLIKTEN turetiliyor:
+  *  durum tutmaya gerek yok, ayni iskelet hep ayni sirada cikar ve dagilim
+  *  duzgun olur (bkz. dusmanKare'deki ayni yontem). */
+ static readonly ISKELET_YAYILMA=2.6;
  /** ISKELET DOVUS AYARI. Tek vurusta oldugu icin tehdidi candan degil HIZ ve
   *  SIKLIK'tan gelmeli. Olculdu: eski degerlerle (hiz 27, windup .4, cool
   *  1.15, gorus 135) oyuncu 44 hiziyla yuruyerek surunun icinden hic
@@ -275,13 +282,23 @@ mark(false);const result=await Promise.allSettled(jobs);
   *  "gomulu mu" kontrolu eklemek gerekmesin diye ayri tutuluyorlar. Oyuncu
   *  yaklasinca (bkz. update icindeki iskeletKontrol) mob'a donusurler. */
  private gomulu:EnemySpec[]=[];
+ /** Menzile girmis ama henuz cikmamis iskeletlerin kalan gecikmesi (sn). */
+ private cikisBekle:Record<string,number>={};
  /** Bolgeden CIKARKEN pesimizde olan dusmanlar (bolge -> kayit). Geri
   *  donunce kapinin basinda bizi bekliyorlar. Eskiden resetMobs() herkesi
   *  dolu canla ev konumuna koyuyor, iskeletleri de yeniden gomuyordu: yan
   *  odaya gecip donunce dusmanlar YOK OLMUS gibi goruntu veriyordu. */
  private bekleyen:Record<string,{id:string;hp:number}[]>={};
- /** Son iskelet olum sesinin zamani - ust uste binmeyi engeller. */
- private iskeletSesAt=-1;
+ /** Iskelet seslerinin son calma zamani (ses adina gore). Ayni karede birkac
+  *  iskelet olebiliyor/cikabiliyor/vurabiliyor; ayni ornek tam fazda ust uste
+  *  binince tek bir gumburtu gibi duyuluyor. Sayac SES BASINA tutuluyor -
+  *  tek ortak sayac olsaydi olum sesi vurus sesini bastirabilirdi. */
+ private iskeletSesAt:Record<string,number>={};
+ /** Ayni iskelet sesi bu araliktan sik calmaz (sn). */
+ private iskeletSes(ad:'iskeletOlum'|'iskeletCikis'|'iskeletVur',guc:number){
+  if(this.tick-(this.iskeletSesAt[ad]??-9)<=Engine.ISKELET_SES_ARA)return;
+  this.iskeletSesAt[ad]=this.tick;this.audio.play(ad,guc);
+ }
  /** Bolgeden ayrilirken pesimizdekileri not eder. "Pesimizde" = ya yara
   *  almis ya da takip menzilinde. Patron kendi arenasinda kalir, Rauf'un ve
   *  fenerin (kind 9) burada isi yok. */
@@ -346,7 +363,7 @@ mark(false);const result=await Promise.allSettled(jobs);
    .map(e=>{const n=this.yurunurDogum(e.x,e.y);return n?{...e,x:n.x,y:n.y}:null;})
    .filter((e):e is EnemySpec=>e!==null);
   this.gomulu=diri.filter(e=>e.kind===11);
-  this.mobs=diri.filter(e=>e.kind!==11).map(e=>{const max=e.boss?300:(Engine.CAN[e.kind]??40);return {...e,hp:max,max,cool:1+Math.random(),windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y}});this.shots=[];this.particles=[];this.drops=[];this.activeTraps.clear();}
+  this.mobs=diri.filter(e=>e.kind!==11).map(e=>{const max=e.boss?300:(Engine.CAN[e.kind]??40);return {...e,hp:max,max,cool:1+Math.random(),windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y}});this.cikisBekle={};this.shots=[];this.particles=[];this.drops=[];this.activeTraps.clear();}
  setState(s:State){this.bekleyen={};this.state=s;this.world=makeWorld(s.zone,s.flags as Record<string,string|boolean|undefined>);
   // Takipteyse Rauf yeni bolgede oyuncunun yaninda belirir; makeWorld onu
   // kendi ev konumuna koyuyor ve geride kaliyordu.
@@ -606,8 +623,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    /* Dash bir surunun icinden gecerken AYNI KAREDE birkac iskelet oluyor;
       ayni ornek tam fazda ust uste binince tek bir patlama gibi duyuluyor.
       Kisa bir aralik yeterli - ikinci olum sesi yutulur, tempo bozulmaz. */
-   if(this.tick-this.iskeletSesAt>Engine.ISKELET_SES_ARA){this.iskeletSesAt=this.tick;
-    this.audio.play('iskeletOlum',Math.max(.3,1-u/300));}
+   this.iskeletSes('iskeletOlum',Math.max(.3,1-u/300));
    this.iskeletDagit(m,this.dusmanYon(m));this.spawnDrop(m.x,m.y,'xp',6);return;
   }
   if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);
@@ -897,11 +913,16 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  }
  /** Oyuncu yaklasinca gomulu iskeletleri yerden cikarir. Cikis suresince
   *  (cikis>0) yurumez ve vurmazlar; render onlari yerden yukselirken cizer. */
- private iskeletKontrol(){
+ private iskeletKontrol(dt:number){
   if(!this.gomulu.length)return;
   const kalan:EnemySpec[]=[];
   for(const e of this.gomulu){
    if(Math.hypot(e.x-this.state.x,e.y-this.state.y)>Engine.ISKELET_UYANMA){kalan.push(e);continue;}
+   /* Menzile girdi ama SIRASI gelmedi: kendi gecikmesini bekler. Gecikme ilk
+      girildiginde kimlikten kurulur, sonra geri sayar. */
+   let bek=this.cikisBekle[e.id];
+   if(bek===undefined)bek=this.cikisBekle[e.id]=Engine.karma(e.id+'~cikis')*Engine.ISKELET_YAYILMA;
+   if(bek>0){this.cikisBekle[e.id]=bek-dt;kalan.push(e);continue;}
    const max=Engine.CAN[11]??1;
    this.mobs.push({...e,hp:max,max,cool:.6+Math.random()*.6,windup:0,burn:0,hurt:0,
     homeX:e.x,homeY:e.y,cikis:Engine.ISKELET_CIKIS});
@@ -909,7 +930,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    for(let i=0;i<10;i++)this.particles.push({x:e.x+(Math.random()-.5)*14,y:e.y+(Math.random()-.5)*4,
     vx:(Math.random()-.5)*40,vy:-20-Math.random()*45,life:.35+Math.random()*.3,
     color:Engine.TOPRAK_KIR[Math.floor(Math.random()*3)],size:1+Math.random(),g:150});
-   this.audio.play('trap',Math.max(.25,1-Math.hypot(e.x-this.state.x,e.y-this.state.y)/260));
+   /* Ayni karede birkac iskelet cikabiliyor (olculdu: sesler arasi 0.00 sn);
+      ayni ornek tam fazda ust uste binince tek bir gumburtu gibi duyuluyor. */
+   this.iskeletSes('iskeletCikis',Math.max(.25,1-Math.hypot(e.x-this.state.x,e.y-this.state.y)/260));
   }
   this.gomulu=kalan;
  }
@@ -1045,7 +1068,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     if(m.zehirTik>=1){m.zehirTik=0;this.float(m.x,m.y-12,String(Engine.ZEHIR_HASAR),'#9fd47a');}
     if(m.hp<=0){if(m.id==='rauf')this.raufDizCok();else this.kill(m);continue;}}
    if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.kind===9){this.fener(m,d,dx,dy,dt);continue;}if(m.windup>0){m.windup-=dt;/* Iskelet HAMLE yapar: digerleri vurus hazirliginda cakili dururken iskelet oyuncuya dogru atilir. Olculdu: hamlesiz surumde skelet (38) oyuncudan (44) yavas oldugu icin windup biterken oyuncu menzilden cikiyordu ve 8 saniyelik bir gecis yalnizca 24 cana mal oluyordu - 'oldurmesi cok kolay' hissinin asil sebebi buydu. Hamle hizi oyuncunun ustunde ama yalnizca .26 sn surer. */if(m.kind===11)this.dusmanYurut(m,this.state.x,this.state.y,Engine.ISKELET_HAMLE,dt);if(m.windup<=0){/* Ses uzakliga gore kisiliyor: ekranin obur ucundaki bir yaratik yanindaki
-     kadar yuksek vurmamali. */this.audio.play('dusmanVur',Math.max(0,1-d/190));if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:m.kind===10?30:m.kind===11?Engine.ISKELET_VURUS_MENZIL:25)){this.hurt(m.boss?30:Engine.HASAR[m.kind]??10+m.kind*3,m.kind===11?Engine.ISKELET_IFRAME:.72);/* Bogulmus sarilinca kul cigere doluyor: oyuncu 3 sn agirlasir. */if(m.kind===8&&this.state.hp>0){this.yavas=3;this.float(this.state.x,this.state.y-18,'AĞIRLAŞTIN','#b9b2a6');}}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:m.kind===11?Engine.ISKELET_COOL:1.15;}continue;}if(d<(m.kind===11?Engine.ISKELET_GORUS:135)&&visible){m.aci=Math.atan2(dy,dx);/* SALDIRIYI BASLATMA menzili. Iskelette ayri: asil darbogaz burasiydi -
+     kadar yuksek vurmamali. */if(m.kind===11)this.iskeletSes('iskeletVur',Math.max(0,1-d/190));else this.audio.play('dusmanVur',Math.max(0,1-d/190));if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:m.kind===10?30:m.kind===11?Engine.ISKELET_VURUS_MENZIL:25)){this.hurt(m.boss?30:Engine.HASAR[m.kind]??10+m.kind*3,m.kind===11?Engine.ISKELET_IFRAME:.72);/* Bogulmus sarilinca kul cigere doluyor: oyuncu 3 sn agirlasir. */if(m.kind===8&&this.state.hp>0){this.yavas=3;this.float(this.state.x,this.state.y-18,'AĞIRLAŞTIN','#b9b2a6');}}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:m.kind===11?Engine.ISKELET_COOL:1.15;}continue;}if(d<(m.kind===11?Engine.ISKELET_GORUS:135)&&visible){m.aci=Math.atan2(dy,dx);/* SALDIRIYI BASLATMA menzili. Iskelette ayri: asil darbogaz burasiydi -
      cemberin arka safi 22-28 birimde takilip kaliyor ve 20'lik esige hic
      giremedigi icin windup'a bile baslamiyordu (olculdu: 9 dusman yanibasindayken
      5 saniyede yalniz 23 vurus). */
@@ -1112,7 +1135,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      if(this.tuhnYarasa<=0){this.audio.play('door');
       this.notify('Karanlıktan kanat sesleri yükseliyor.');
       this.yarasaSurusu(24,13,7);this.emit();}}}
-   this.iskeletKontrol();
+   this.iskeletKontrol(dt);
    // --- Tuhn: ikna edilemediyse ucuruma yurur ve atlar ---
    if(this.state.flags.tuhn==='atladi'&&this.state.zone==='magara'){
     const bd=this.world.entities.find(x=>x.id==='tuhn');

@@ -1,4 +1,4 @@
-export type Sound='step'|'hit'|'hurt'|'swing'|'dodge'|'chest'|'coin'|'level'|'talk'|'drink'|'door'|'death'|'select'|'trap'|'dusmanVur'|'dusmanOlum'|'iskeletOlum';
+export type Sound='step'|'hit'|'hurt'|'swing'|'dodge'|'chest'|'coin'|'level'|'talk'|'drink'|'door'|'death'|'select'|'trap'|'dusmanVur'|'dusmanOlum'|'iskeletOlum'|'iskeletCikis'|'iskeletVur';
 // Sabit guc (constant power) capraz gecis egrileri: in^2+out^2=1 oldugu icin
 // dongu dikisinde toplam enerji sabit kalir, klasik dogrusal fade'deki orta
 // nokta cukuru olusmaz.
@@ -27,6 +27,12 @@ const ORNEKLER:Record<string,string|string[]>={death:'/assets/audio/death.mp3',
  /* Iskelet parcalanmasi: kayitli ornek (kullanici verdi). Ayri bir ad, cunku
     'dusmanOlum' TUM dusmanlarda caliyor - kemik catirtisi yalniz iskelete ait. */
  iskeletOlum:'/assets/audio/iskelet_olum.mp3',
+ /* Iskeletin topraktan cikisi (kullanici verdi: saksidan toprak bosaltma).
+    Ayni tas koridor yankisindan gecirildi ki olum sesiyle ayni mekanda dursun. */
+ iskeletCikis:'/assets/audio/iskelet_cikis.mp3',
+ /* Iskeletin saldirisi (kullanici verdi: Sword Stab). Ayri ad, cunku
+    'dusmanVur' TUM dusmanlarda caliyor. Ayni koridor yankisindan gecti. */
+ iskeletVur:'/assets/audio/iskelet_vur.mp3',
  /* Kilic savurma: DORT ayri kayit. Secim torbadan cekiliyor (bkz. ornekCek) -
     duz Math.random ayni sesi arka arkaya verebiliyor, sabit sira ise ritim
     yaratiyor; kullanici ikisini de istemedi. */
@@ -38,7 +44,7 @@ const ORNEK_KAT=1.35;   // ornekler sentez tonlarindan daha sakin masterlanmis
    "makine" gibi gosteriyor. playbackRate ile hem perde hem sure kayiyor;
    ayri dosyalar uretmek yerine boyle SINIRSIZ varyasyon cikiyor ve depoya
    tek dosya giriyor. .07 ~ +-1.2 yarim ton: fark ediliyor ama ses bozulmuyor. */
-const ORNEK_PERDE:Record<string,number>={iskeletOlum:.07};
+const ORNEK_PERDE:Record<string,number>={iskeletOlum:.07,iskeletCikis:.09,iskeletVur:.1};
 // Muzik yolu kazanci. Sentezlenmis muzik tek tek zayif tonlardan olustugu icin .2
 // yetiyordu; kayitli parca masterlanmis (ortalama -14 dBFS) oldugundan ayni katsayi
 // onu one cikarip adim/vurus efektlerini bastiriyor - ustelik master kompresoru de
@@ -151,10 +157,10 @@ export class GameAudio{
    const sac=ORNEK_PERDE[name];if(sac)src.playbackRate.value=1+(Math.random()*2-1)*sac;
    const g=this.ctx.createGain();g.gain.value=Math.min(1,Math.max(0,scale))*ORNEK_KAT;
    src.connect(g);g.connect(this.fxBus);src.start();
-   src.onended=()=>{src.disconnect();g.disconnect()};return;}const t=this.ctx.currentTime,b=this.fxBus,s=Math.min(1,Math.max(0,scale));const notes=(ns:number[],d=.1,v=.3,type:OscillatorType='triangle')=>ns.forEach((f,i)=>this.tone(f,t+i*d,d*2,v*s,type,b));switch(name){case 'step':this.tone(85+Math.random()*30,t,.04,.13*s,'triangle',b);break;case 'swing':notes([250,130,70],.025,.25,'sawtooth');break;case 'hit':notes([110,65],.03,.55,'square');break;case 'hurt':notes([180,100,70],.06,.35,'sawtooth');break;case 'dodge':notes([120,230,380],.025,.16,'sine');break;case 'chest':notes([330,440,554,660],.1,.25);break;case 'coin':notes([880,1320],.07,.2);break;case 'level':notes([293.66,369.99,440,587.33,739.99,880],.11,.3);break;case 'talk':notes([330,440],.055,.12);break;case 'drink':notes([220,330,550],.075,.2,'sine');break;case 'door':notes([146,220,293],.12,.22);break;case 'death':notes([293,261,220,146],.25,.25);break;case 'select':notes([480],.05,.15);break;case 'trap':notes([180,240,120],.04,.3,'sawtooth');break;/* Dusman sesleri GECICI sentez. Hazir kayit gelince tek yapilacak sey
+   src.onended=()=>{src.disconnect();g.disconnect()};return;}const t=this.ctx.currentTime,b=this.fxBus,s=Math.min(1,Math.max(0,scale));const notes=(ns:number[],d=.1,v=.3,type:OscillatorType='triangle')=>ns.forEach((f,i)=>this.tone(f,t+i*d,d*2,v*s,type,b));switch(name){case 'step':this.tone(85+Math.random()*30,t,.04,.13*s,'triangle',b);break;case 'swing':notes([250,130,70],.025,.25,'sawtooth');break;case 'hit':notes([110,65],.03,.55,'square');break;case 'hurt':notes([180,100,70],.06,.35,'sawtooth');break;case 'dodge':notes([120,230,380],.025,.16,'sine');break;case 'chest':notes([330,440,554,660],.1,.25);break;case 'coin':notes([880,1320],.07,.2);break;case 'level':notes([293.66,369.99,440,587.33,739.99,880],.11,.3);break;case 'talk':notes([330,440],.055,.12);break;case 'drink':notes([220,330,550],.075,.2,'sine');break;case 'door':notes([146,220,293],.12,.22);break;case 'death':notes([293,261,220,146],.25,.25);break;case 'select':notes([480],.05,.15);break;case 'trap':case 'iskeletCikis':notes([180,240,120],.04,.3,'sawtooth');break;/* Dusman sesleri GECICI sentez. Hazir kayit gelince tek yapilacak sey
      ORNEKLER'e dosyayi eklemek: play() ornek varsa sentezi hic calistirmiyor.
      Perde her seferinde biraz kaydiriliyor, yoksa ust uste calinca makine
-     gibi duyuluyor. */case 'dusmanVur':{const k=.92+Math.random()*.16;notes([96*k,58*k,40*k],.045,.34,'square');break;}case 'dusmanOlum':case 'iskeletOlum':{const k=.92+Math.random()*.16;/* Olculdu: ses calisiyordu ama duyulmuyordu. Oldurme aninda ayni 100 ms
+     gibi duyuluyor. */case 'dusmanVur':case 'iskeletVur':{const k=.92+Math.random()*.16;notes([96*k,58*k,40*k],.045,.34,'square');break;}case 'dusmanOlum':case 'iskeletOlum':{const k=.92+Math.random()*.16;/* Olculdu: ses calisiyordu ama duyulmuyordu. Oldurme aninda ayni 100 ms
      icinde 'hit' (0.55, 110/65 Hz) ve iki 'coin' calıyor; olum sesi de alcak
      bantta oldugu icin onlarin altinda kaliyordu. Iki degisiklik: 0.15 sn
      GECIKME ile carpismadan cikarildi ve BOS BANDA tasindi - once yuksek bir

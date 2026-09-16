@@ -1968,4 +1968,34 @@ karo). Erişilebilirlik iddiası için bu yöntem kullanılmamalı.
 
 ---
 
-*Son güncelleme: 2026-09-16, v15.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v15.3: İskelet çıkışı yavaşladı + dağıldı, iki yeni ses
+Kullanıcı: "topraktan çıkma sesi olsun; hepsi bir anda çıkmasın, çok hızlı
+çıkıyorlar" + ayrıca saldırı sesi (Sword Stab) verdi.
+
+**Çıkış süresi** `.55 → 1.25 sn`. (v14.2'de kalabalığın baskısı için .55'e
+indirilmişti; kullanıcı okunmadığını söyledi - toprağın yarılıp bir gövdenin
+doğrulması yarım saniyeye sığmıyor.)
+
+**Dağılma:** menzile giren her iskelet kendi gecikmesini bekliyor
+(`ISKELET_YAYILMA=2.6 sn`). Gecikme **kimlikten** türetiliyor (animasyon
+fazındaki yöntemin aynısı) - durum tutmaya gerek yok, aynı iskelet hep aynı
+sırada çıkar. Ölçüm: 42 iskelet 0.5 sn'de 5, 1 sn'de 11, 2 sn'de 9 çıkmakta /
+9 ayakta... 4 sn'de dalga bitiyor. Öncesinde hepsi tek karede fırlıyordu.
+
+**Sesler** (ikisi de `scripts/ses_oda.py` ile aynı taş koridor yankısından
+geçti; `dusmanVur`/`trap` TÜM düşmanlarda çalıyor, bu yüzden ayrı adlar):
+* `iskeletCikis` - saksıdan toprak boşaltma, 1.25 sn'ye kırpıldı (çıkış
+  süresiyle aynı), ort −36.5 dB.
+* `iskeletVur` - Sword Stab, gövde 0.5 sn, ort −36.5 dB (**−14 dB telafi**
+  gerekti; iskelet kalabalığı saniyede 8 kez vurabiliyor).
+* Perde saçılması: çıkış ±%9, vuruş ±%10.
+
+**Üst üste binme koruması artık SES BAŞINA.** Tek ortak sayaç ölüm sesinin
+vuruş sesini bastırmasına yol açardı. Ölçüldü: koruma öncesi aynı sesin iki
+çalması arasında 0.00 sn görülüyordu, sonrasında en kısa ara 0.08 sn.
+Kalabalıkta çıkışların ~%36'sı yutuluyor - parçacık ve tümsek her çıkışta
+oynadığı için görsel olarak eksik kalmıyor.
+
+---
+
+*Son güncelleme: 2026-09-16, v15.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
