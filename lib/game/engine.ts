@@ -32,10 +32,11 @@ import {bekleyen} from './data';
 type Yon='U'|'D'|'S'|'DS'|'US';
 type Mob=EnemySpec&{hp:number;max:number;cool:number;windup:number;burn:number;hurt:number;homeX:number;homeY:number;gezX?:number;gezY?:number;gezBekle?:number;aci?:number;sersem?:number;zehir?:number;zehirTik?:number;/** Yerden cikma animasyonu: kalan sure (sn). >0 iken yurumez/vurmaz. */cikis?:number};
 type Particle={x:number;y:number;vx:number;vy:number;life:number;color:string;size:number;g?:number};
-/** Olen iskeletin sprite'indan kopan parca: kaynak sheet'in bir dilimi, kendi
- *  hizi/donusuyle savrulur. Parcacik degil GORSEL parca - "dagilma" hissi
- *  tek tek piksellerden degil, govdenin kopan kemik kutlelerinden geliyor. */
-type Parca={anahtar:string;sx:number;sy:number;sw:number;sh:number;x:number;y:number;
+/** Olen iskeletten savrulan KEMIK PARCASI: kafatasi/kaburga/uyluk... ayri
+ *  uretilmis kucuk gorseller (bkz. scripts/kemik_uret.py). Onceden sprite
+ *  sheet'i 2x3 dilime bolunuyordu ama dilimler dikdortgen oldugu icin
+ *  "kesilmis gorsel" gibi duruyordu, kemik gibi degil. */
+type Parca={anahtar:string;x:number;y:number;
  vx:number;vy:number;aci:number;donus:number;life:number;omur:number;olcek:number};
 type Floating={x:number;y:number;text:string;life:number;color:string};
 type Shot={x:number;y:number;vx:number;vy:number;life:number;damage:number;isHero?:boolean;yakar?:number;zehir?:number;delici?:boolean;ceker?:boolean;gecti?:string[]};
@@ -209,6 +210,9 @@ for(const set of ['1','1sword','1bow','1balta','1mesale','1swordmesale'])for(con
    plani olmayan mekanda ciziliyordu, oyle bir mekan kalmadi. */
 for(const [key,name]of [['fire','Fire1'],['lever','Lever1'],['trap','Spikes']])jobs.push(this.img(key,`/assets/dungeon/3%20Animated%20objects/${name}.png`));/* Sandik artik CraftPix setinden degil: oyunun paletinde uretilmis iki
    kareli kendi sheet'i (0 kapali, 1 acik). */jobs.push(this.img('chest','/assets/nesne/sandik.png'));for(const a of ["camasir", "fener", "fici", "kasa", "masa", "ocak", "odun", "raf", "sandik", "tabure", "tezgah", "yatak1", "yatak2"])jobs.push(this.img('nesne/'+a+'.png',`/assets/nesne/${a}.png`));
+/* Iskelet olunce ucusan kemik parcalari (scripts/kemik_uret.py). Istege
+   bagli: eksik olsalar dagilma yalnizca toz bulutu olur, oyun kirilmaz. */
+for(const a of Engine.KEMIKLER){jobs.push(this.img('kemik/'+a,`/assets/nesne/kemik/${a}.png`));optional.push(true);}mark(false);
 /* harita-editor "Nesneler" modunun eklendigi overlay decor'lar (ör. nesne/ed_props)
    eskiden yalnizca zone degisince overlayNesneleriYukle() ile ISTEGE BAGLI/GECIKMELI
    yukleniyordu - sayfa yeni acildiginda veya farkli bir kapidan o bolgeye direkt
@@ -550,6 +554,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Buyuk dusmanlarin capasi. Varsayilan 21 sprite'i 42 satira siniriyor. */
  static readonly DUSMAN_CAPA:Record<number,number>={7:31};
  /** Ciz olcegi. Trol bir mini-patron: oyuncudan belirgin buyuk gorunmeli. */
+ /** Ucusan kemik gorselleri (public/assets/nesne/kemik/*.png). */
+ static readonly KEMIKLER=['kafatasi','kaburga','uyluk','omurga','kirik'];
+ /** Kemikler 32px'lik kendi tuvalinde uretildi; iskeletin yaninda dogru
+  *  boyda durmasi icin kucultulur (24px kemik -> ~5 birim). */
+ static readonly KEMIK_OLCEK=.58;
  static readonly DUSMAN_OLCEK:Record<number,number>={7:1.7};
  /** Alevin yakma yaricapi (dunya birimi) ve tur basina hasar. Oyuncunun
   *  hasari ayri (8) cunku zirh savunmasi ondan dusuluyor. */
@@ -663,38 +672,31 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   }
   this.gomulu=kalan;
  }
- /** Iskelet olunce DAGILIR: sprite'i 2x3'luk dilimlere bolup her dilimi kendi
-  *  hizi ve donusuyle savurur, ustune kemik kiymigi + toz atar. Dilimler
-  *  kaynak sheet'ten okunuyor (kopyalanan piksel yok), bu yuzden bedava.
-  *  Yon: 'D' sabit degil, oldugu andaki bakis yonu verilir ki on/arka
-  *  gorunumu tutsun. */
+ /** Iskelet olunce DAGILIR: govdesinden kafatasi + kemik parcalari firlar,
+  *  ustune kemik kiymigi + toz atilir. Parcalar ayri uretilmis kucuk
+  *  gorseller (public/assets/nesne/kemik), sprite dilimi degil. */
  /** Bir mob'un oyuncuya gore bakis yonu (yalniz D/U/S - enemies sheet'leri
   *  bu uc yonde; render de capraz yonleri bunlara dusuruyor). */
  private dusmanYon(m:Mob){const dx=this.state.x-m.x,dy=this.state.y-m.y;
   return Math.abs(dy)>Math.abs(dx)?(dy<0?'U':'D'):'S';}
  private iskeletDagit(m:Mob,yon:string){
-  const anahtar=this.dusmanPoz(m.kind,yon,'Walk');
-  const im=this.images[anahtar];
+  void yon;
   const ol=(Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;
-  if(im?.naturalWidth){
-   const KARE=32*R;                    // hucrenin kaynak piksel genisligi
-   const SUT=2,SAT=3;                  // 2 sutun x 3 satir dilim
-   const dw=KARE/SUT,dh=KARE/SAT;
-   for(let sy=0;sy<SAT;sy++)for(let sx=0;sx<SUT;sx++){
-    /* Dilimin hucre icindeki yeri: ust dilimler daha yukari/hizli firlar,
-       alt dilimler (bacaklar) yere daha yakin kalir. */
-    /* Dilimin GERCEK ekran yeri: sprite ayak noktasindan (m.y) capa kadar
-       YUKARI cizilir (bkz. sprite(): top=-anchor*scale), yani hucrenin ust
-       kenari m.y-capa*ol. Bu hesaba katilmazsa parcalar ayak hizasinda,
-       govdenin altinda doguyordu. */
-    const merkezX=(sx+.5)/SUT-.5,merkezY=(sy+.5)/SAT-.5;
-    const capa=Engine.DUSMAN_CAPA[m.kind]??21;
-    this.parcalar.push({anahtar,sx:sx*dw,sy:sy*dh,sw:dw,sh:dh,
-     x:m.x+merkezX*32*ol,y:m.y-capa*ol+(sy+.5)*(32*ol/SAT),
-     vx:merkezX*150+(Math.random()-.5)*70,vy:-70-Math.random()*85+merkezY*40,
-     aci:0,donus:(Math.random()-.5)*11,life:.75+Math.random()*.4,omur:.75,olcek:ol});
-   }
-  }
+  const capa=Engine.DUSMAN_CAPA[m.kind]??21;
+  /* Kemikler govde yuksekliginde (ayak: m.y, tepe: m.y-capa*ol) dogar.
+     Kafatasi hep tepeden ve en hizli firlar; kalan parcalar govdeye dagilir. */
+  const at=(anahtar:string,h:number,hiz:number)=>{
+   const yon2=Math.random()<.5?-1:1;
+   this.parcalar.push({anahtar,
+    x:m.x+(Math.random()-.5)*7*ol,y:m.y-capa*ol*h,
+    vx:yon2*(28+Math.random()*78)*hiz,vy:-(62+Math.random()*80)*hiz,
+    aci:Math.random()*6.28,donus:(Math.random()-.5)*13,
+    life:.8+Math.random()*.5,omur:.85,olcek:ol*Engine.KEMIK_OLCEK});
+  };
+  at('kafatasi',.92,1.15);
+  const kalan=Engine.KEMIKLER.filter(k=>k!=='kafatasi');
+  const adet=5+Math.floor(Math.random()*3);
+  for(let i=0;i<adet;i++)at(kalan[Math.floor(Math.random()*kalan.length)],.15+Math.random()*.7,1);
   for(let i=0;i<14;i++)this.particles.push({x:m.x,y:m.y-8-Math.random()*10,
    vx:(Math.random()-.5)*95,vy:-30-Math.random()*70,life:.5+Math.random()*.45,
    color:['#e9e2cf','#cfc6ad','#a99e86'][Math.floor(Math.random()*3)],size:1+Math.random()*1.6,g:190});
@@ -1278,12 +1280,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      degmiyordu. Yukseklik yalnizca cizime verilir. */c.translate(s.x,s.y-Engine.OK_YUKSEK);c.rotate(Math.atan2(s.vy,s.vx));// Ikinci kucultme: 8 -> 5.6 birim. Uc de koyulastirildi - #aab2b8 magara
     // zemininde sahnenin en parlak pikseliydi, ok fosforlu gibi duruyordu.
     c.strokeStyle='#54402a';c.lineWidth=.8;c.beginPath();c.moveTo(-2.8,0);c.lineTo(1.8,0);c.stroke();c.fillStyle='#79818a';c.beginPath();c.moveTo(2.8,0);c.lineTo(1,-1);c.lineTo(1,1);c.closePath();c.fill();c.strokeStyle='#63403a';c.lineWidth=.6;c.beginPath();c.moveTo(-1.8,0);c.lineTo(-3.2,-1);c.moveTo(-1.8,0);c.lineTo(-3.2,1);c.stroke();c.restore();}else{c.fillStyle='#f2bd76';c.fillRect(s.x-2,s.y-2,4,4);c.fillStyle='#fff0bd';c.fillRect(s.x-1,s.y-1,2,2);}}
-  /* Kopan sprite parcalari: kendi etrafinda donerek savrulur, sonuna dogru
-     solar. Parcaciklardan ONCE cizilir ki kemik tozu ustlerinde kalsin. */
-  for(const f of this.parcalar){const im=this.images[f.anahtar];if(!im?.naturalWidth)continue;
+  /* Savrulan kemikler: kendi etrafinda donerek ucar, sonuna dogru solar.
+     Parcaciklardan ONCE cizilir ki kemik tozu ustlerinde kalsin. */
+  for(const f of this.parcalar){const im=this.images['kemik/'+f.anahtar];if(!im?.naturalWidth)continue;
    c.save();c.globalAlpha=Math.min(1,f.life/f.omur*2.2);c.translate(f.x,f.y);c.rotate(f.aci);
-   const w=f.sw/R*f.olcek,h=f.sh/R*f.olcek;
-   c.drawImage(im,f.sx,f.sy,f.sw,f.sh,-w/2,-h/2,w,h);c.restore();}
+   const w=im.naturalWidth/R*f.olcek,h=im.naturalHeight/R*f.olcek;
+   c.drawImage(im,-w/2,-h/2,w,h);c.restore();}
   c.globalAlpha=1;
   for(const p of this.particles){c.globalAlpha=Math.min(1,p.life*3);c.fillStyle=p.color;c.fillRect(p.x,p.y,p.size,p.size);}c.globalAlpha=1;
   for(const f of this.floating){c.globalAlpha=Math.min(1,f.life*3);c.font='bold 7px Arial';c.textAlign='center';c.lineWidth=2;c.strokeStyle='#111';c.strokeText(f.text,f.x,f.y);c.fillStyle=f.color;c.fillText(f.text,f.x,f.y);}c.globalAlpha=1;

@@ -1556,4 +1556,33 @@ prompt'uyla listeliyor, iyi olan oradan bulundu (`778b71aa`, çantalı olan
 
 ---
 
-*Son güncelleme: 2026-09-16, v13.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v13.7: Zeminin ASIL sebebi tarifin kendisiydi + gerçek kemik parçaları
+Kullanıcı: "hâlâ ayaklarının altında bir şey var, pixellab'e yerden çıkacak
+diye bahsetmene gerek yok"; "görseli parçalara ayırmışsın, ben daha gerçekçi
+istedim - küçük kafatası ve kemik parçaları görselleri üretelim".
+
+**1) Zemin, negatif talimatla değil POZİTİF ifadeyi silerek gitti.** v13.6'da
+"NO ground" eklemek işe yaramamıştı; sebebi tarifin kendi açılışıydı:
+*"clawing its way up out of the ground"*. Model "out of the ground" deyince
+ayakların altına toprak çiziyordu. İfade kaldırıldı, zemin **tamamen** yok
+oldu (2 üretim). **Ders: modele bir şeyi yaptırmayı bırakmak için önce kendi
+tarifinde onu İSTEYEN cümleyi ara; olumsuz talimat son çare, hatta zararlı.**
+Yerden çıkma zaten motorda (`gomulu` listesi + `cikis` animasyonu), görselin
+anlatmasına gerek yok. Yan/arka görünümde bir **sırt çantası** kaldı - oyun
+ölçeğinde pelerin/paçavra gibi okunuyor, üretim harcamaya değmedi.
+Eski (iyi ama zeminli) id `_arsiv/uretim/pixellab/id_iskelet_v1.txt`'de.
+
+**2) Dağılma artık sprite dilimi değil, ayrı kemik görselleri.** v13.6'daki
+2x3 dilim "kesilmiş görsel parçası" gibi duruyordu. `scripts/kemik_uret.py`
+beş küçük nesne üretti (`public/assets/nesne/kemik/`): kafatasi, kaburga,
+uyluk, omurga, kirik - **4 üretim**, ikon boru hattı (`/create-image-pixflux`).
+*API 16x16 KABUL ETMİYOR* ("Canvas must be size 32x32 area or larger"); 32x32
+üretip `getbbox()` ile kırpılıyor, parça kendi ölçüsünde kalıyor.
+`iskeletDagit()` artık gövde yüksekliği boyunca 1 kafatası + 5-7 kemik
+savuruyor (`Parca` tipinden `sx/sy/sw/sh` kalktı, görsel bütün çiziliyor).
+Ölçek `KEMIK_OLCEK`: 0.42 denendi, oyun ölçeğinde **fark edilmiyordu**; 0.58
+doğru - kemik ~7 birim, karakterin kolu kadar.
+
+---
+
+*Son güncelleme: 2026-09-16, v13.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

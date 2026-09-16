@@ -17,7 +17,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # ORTAK tarif dusman_yeni_uret.py'dekiyle ayni cizgide: kul grisi palet, tek
 # koyu kontur. "Human" YAZILMIYOR - mannequin govdesi zaten insan siluetinde;
 # burada istenen etsiz bir iskelet, "human" deyince model et/deri ekliyor.
-TARIF = ('a bare skeleton warrior clawing its way up out of the ground, bleached '
+# "clawing its way up out of the ground" ifadesi KALDIRILDI: zemin yamasinin
+# asil sebebi buydu - model "out of the ground" deyince ayaklarin altina
+# toprak/cim ciziyordu. Yerden cikma zaten MOTORDA yapiliyor (gomulu liste +
+# cikis animasyonu), gorselin bunu anlatmasina gerek yok.
+TARIF = ('a bare skeleton warrior standing hunched and ready to fight, bleached '
          'bone-white skull and ribcage clearly visible with dark empty eye sockets, '
          'no skin and no flesh at all, tattered grey rags hanging off the bones, '
          'a short rusted iron sword in one bony hand, hunched forward, '
