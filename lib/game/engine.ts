@@ -1,4 +1,4 @@
-import {addItem,gainXp,ITEMS,sandikAc,removeItem,stats,type ItemId,type State,type Zone} from './data';
+import {addItem,DUSURME,gainXp,ITEMS,sandikAc,removeItem,stats,type ItemId,type State,type Zone} from './data';
 /** Render yogunlugu: gorsel pikseli / dunya birimi. Dunya 16px karo, 32px aktor
  *  biriminde kalir; gorseller 2x cozunurlukte (32px karo, 64px aktor) uretilir. */
 const R=2;
@@ -43,7 +43,9 @@ type Parca={anahtar:string;x:number;y:number;
  olcek:number};
 type Floating={x:number;y:number;text:string;life:number;color:string};
 type Shot={x:number;y:number;vx:number;vy:number;life:number;damage:number;isHero?:boolean;yakar?:number;zehir?:number;delici?:boolean;ceker?:boolean;gecti?:string[]};
-export type Drop={id:string;x:number;y:number;kind:'wood'|'xp'|'gold'|'bow';amount:number;vx:number;vy:number;life:number};
+/** Yerdeki ganimet. 'esya' turu GENEL: hangi esya oldugunu `item` tasiyor -
+ *  her hammadde icin ayri bir kind acmak yerine tek dal. */
+export type Drop={id:string;x:number;y:number;kind:'wood'|'xp'|'gold'|'bow'|'esya';item?:ItemId;amount:number;vx:number;vy:number;life:number};
 export type Snapshot={state:State;near:Entity|null;attackCooldown:number;dodgeCooldown:number;tonic:number;mesale:number;saveStatus:string;ready:boolean};
 export type GameEvent={type:'dialogue'|'death'|'message'|'zone'|'sandik';id?:string;text?:string};
 const SAVE='kul-ve-yemin-save-v1';
@@ -411,7 +413,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   this.sonImza=im;
   this.onChange({state:structuredClone(this.state),near,attackCooldown:this.attackTimer,dodgeCooldown:this.dodgeTimer,tonic:this.tonic,mesale:this.mesale,saveStatus:this.saveStatus,ready:this.ready});}
  notify(text:string){this.onEvent({type:'message',text});}
- spawnDrop(x:number,y:number,kind:'wood'|'xp'|'gold'|'bow',amount:number){this.drops.push({id:`drop_${Date.now()}_${Math.random()}`,x,y,kind,amount,vx:(Math.random()-.5)*45,vy:(Math.random()-.6)*45,life:30});}
+ spawnDrop(x:number,y:number,kind:Drop['kind'],amount:number,item?:ItemId){this.drops.push({id:`drop_${Date.now()}_${Math.random()}`,x,y,kind,item,amount,vx:(Math.random()-.5)*45,vy:(Math.random()-.6)*45,life:30});}
  nearest(){let near:Entity|null=null,best=40;for(const e of this.world.entities){if(['fire','trap'].includes(e.type))continue;if(e.type==='decor'&&!e.asset?.toLowerCase().includes('table')&&!e.asset?.startsWith('nesne/'))continue;const d=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(d<best&&lineOfSight(this.world,this.state.x,this.state.y,e.x,e.y,e.id)){near=e;best=d}}return near;}
  interact(){if(this.paused||!this.ready)return;const e=this.nearest();if(!e){this.notify('Konuşmak veya açmak için biraz yaklaş.');return;}if(e.type==='yatak'){
    if(e.id!=='yatak'){this.notify('Çok yorgunum… ama bu benim yatağım değil.');return;}
@@ -625,6 +627,16 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(m.id==='rauf'&&m.hp<=m.max*.18)this.raufDizCok();else if(m.hp<=0)this.kill(m);
   }
  }
+ /** Dusman turune gore HAMMADDE dusurur (bkz. data.ts DUSURME).
+  *  Parcalar dusmanin cevresine sacilir ki tek bir yigin olarak ust uste
+  *  binmesinler - toplama yaricapi 65 birim, hepsi zaten kendiliginden gelir. */
+ private ganimetDus(m:Mob){
+  for(const g of DUSURME[m.kind]??[]){
+   if(Math.random()>=g.sans)continue;
+   const adet=g.az+Math.floor(Math.random()*(g.cok-g.az+1));
+   this.spawnDrop(m.x+(Math.random()-.5)*10,m.y+(Math.random()-.5)*8,'esya',adet,g.id);
+  }
+ }
  private kill(m:Mob){
   if(m.id==='rauf'){this.raufDizCok();return;}
   /* Iskelet: tek vurusta olur ve PARCALANIR. Ayri dal cunku (a) altin
@@ -637,11 +649,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
       ayni ornek tam fazda ust uste binince tek bir patlama gibi duyuluyor.
       Kisa bir aralik yeterli - ikinci olum sesi yutulur, tempo bozulmaz. */
    this.iskeletSes('iskeletOlum',Math.max(.3,1-u/300));
-   this.iskeletDagit(m,this.dusmanYon(m));this.spawnDrop(m.x,m.y,'xp',6);return;
+   this.iskeletDagit(m,this.dusmanYon(m));this.spawnDrop(m.x,m.y,'xp',6);this.ganimetDus(m);return;
   }
   if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);
   if(m.id==='muhafiz'){this.state.flags.muhafiz='oldu';addItem(this.state,'migfer',1);this.state.journal.unshift('Kralın son muhafızını yendin. Miğferi kül doluydu; boşaltmadın.');this.notify('Son muhafız düştü. Miğferi heybende.');}/* Menzil 190'di: yayla uzaktan oldurunce ses neredeyse duyulmuyordu. */
-  {const u=Math.hypot(m.x-this.state.x,m.y-this.state.y);this.audio.play('dusmanOlum',Math.max(.35,1-u/300));}/* Kan muhrunun oldurunceCan'i da tanitiliyor ama hic uygulanmiyordu. */{const y=this.state.equipment.ring;const can=y?ITEMS[y].oldurunceCan:0;if(can&&this.state.hp>0&&this.state.hp<stats(this.state).maxHp){this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+can);this.float(this.state.x,this.state.y-10,'+'+can,'#d9838b');}}this.burst(m.x,m.y,m.boss?'#eeb559':'#a56a70',18);const xp=m.boss?210:([0,20,25,30,40,24,60,150,48,0,280][m.kind]??30);const gold=m.boss?60:m.kind===9?0:5+m.kind*2;this.spawnDrop(m.x,m.y,'xp',xp);this.spawnDrop(m.x+(Math.random()-.5)*12,m.y+(Math.random()-.5)*12,'gold',gold);if(m.boss){this.notify('Kül Bekçisi yenildi. Kanı hâlâ sıcak bir mühür bıraktı.');addItem(this.state,'potion',2);addItem(this.state,'kanm',1);}this.save();}
+  {const u=Math.hypot(m.x-this.state.x,m.y-this.state.y);this.audio.play('dusmanOlum',Math.max(.35,1-u/300));}/* Kan muhrunun oldurunceCan'i da tanitiliyor ama hic uygulanmiyordu. */{const y=this.state.equipment.ring;const can=y?ITEMS[y].oldurunceCan:0;if(can&&this.state.hp>0&&this.state.hp<stats(this.state).maxHp){this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+can);this.float(this.state.x,this.state.y-10,'+'+can,'#d9838b');}}this.burst(m.x,m.y,m.boss?'#eeb559':'#a56a70',18);const xp=m.boss?210:([0,20,25,30,40,24,60,150,48,0,280][m.kind]??30);const gold=m.boss?60:m.kind===9?0:5+m.kind*2;this.spawnDrop(m.x,m.y,'xp',xp);this.spawnDrop(m.x+(Math.random()-.5)*12,m.y+(Math.random()-.5)*12,'gold',gold);this.ganimetDus(m);if(m.boss){this.notify('Kül Bekçisi yenildi. Kanı hâlâ sıcak bir mühür bıraktı.');addItem(this.state,'potion',2);addItem(this.state,'kanm',1);}this.save();}
   /** Rauf olmez: cani kritige dusunce dovus biter ve diz coker.
   *  Esik %18 - oldurucu darbeyi hic yemesin, olum animasyonu oynamasin. */
  private raufDizCok(){
@@ -772,6 +784,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly SLASH_SURE=.2;
  static readonly SLASH_ISABET_RENK='#fff3d2';
  static readonly SLASH_ISABET_KALIN=2.6;
+ /** Yerdeki hammadde ganimetinin rengi [ic, kontur]. */
+ static readonly HAM_RENK:Record<string,[string,string]>={
+  kemikp:['#e6dcc4','#8f8365'],ag:['#d9d9d9','#7e7e7e'],zehirk:['#9fd47a','#4e6b3c'],
+  kurum:['#6b6660','#332f2b'],pacavra:['#9a8b76','#544a3c'],post:['#b08a62','#5f4630'],
+  et:['#c4706b','#6d3a37'],kanat:['#8a6a86','#4a394a'],celik:['#b9c0c7','#5e666d'],
+ };
  static readonly DASH_YARICAP=13;
  static readonly DASH_HASAR=4;
  static readonly DASH_ITME=30;
@@ -1132,7 +1150,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
         (yakar/zehir/delici/ceker) atista mermiye yaziliyordu ama isabette hic
         okunmuyordu - yani Ates, Delici ve Cengelli ok sade ok gibi davraniyordu. */if(shot.gecti){if(shot.gecti.includes(m.id))continue;shot.gecti.push(m.id);}else shot.life=0;m.hp-=shot.damage;m.hurt=.17;if(shot.yakar)m.burn=Math.max(m.burn,shot.yakar);if(shot.zehir){m.zehir=Math.max(m.zehir??0,shot.zehir);this.float(m.x,m.y-24,'ZEHİR','#9fd47a');}this.float(m.x,m.y-12,String(shot.damage),'#95e086');this.burst(m.x,m.y,'#c76b5d',6);const d=Math.hypot(m.x-this.state.x,m.y-this.state.y)||1;/* Cengelli ok geri itmek yerine CEKER: itme yonu tersine cevrilir. */const it=shot.ceker?-22:(m.boss?5:18);this.move(m,(m.x-this.state.x)/d*it,(m.y-this.state.y)/d*it);if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);if(!shot.gecti)break;}}}else if(Math.hypot(shot.x-this.state.x,shot.y-this.state.y)<9){shot.life=0;this.hurt(shot.damage,.72,shot.x,shot.y);}}this.shots=this.shots.filter(s=>s.life>0);
    for(const e of this.world.entities){if(e.type==='trap'){const active=this.trapActive(e);const wasActive=this.activeTraps.has(e.id);if(active&&!wasActive){this.activeTraps.add(e.id);const dist=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(dist<100)this.audio.play('trap',1-dist/100);}else if(!active&&wasActive){this.activeTraps.delete(e.id);}if(this.trapCooldown<=0&&active&&Math.hypot(e.x-this.state.x,e.y-this.state.y)<10){this.hurt(15,.72,e.x,e.y);this.trapCooldown=1;break;}}}
-   for(const d of this.drops){d.life-=dt;d.vx*=.84;d.vy*=.84;d.x+=d.vx*dt;d.y+=d.vy*dt;const dist=Math.hypot(this.state.x-d.x,this.state.y-4-d.y);if(dist<65){const speed=160*(1-dist/65)+50;d.x+=(this.state.x-d.x)/dist*speed*dt;d.y+=(this.state.y-4-d.y)/dist*speed*dt;}if(dist<10){d.life=0;if(d.kind==='wood'){addItem(this.state,'wood',d.amount);this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} Odun`,'#dca574');}else if(d.kind==='xp'){if(gainXp(this.state,d.amount)){this.audio.play('level');this.notify(`Seviye ${this.state.level}! Yetenek puanını karakter ekranında kullan.`);this.burst(this.state.x,this.state.y,'#e7cb76',25);}else this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} XP`,'#b9dca5');}else if(d.kind==='gold'){const r=this.state.equipment.ring;d.amount=Math.round(d.amount*(r?ITEMS[r].altinKat||1:1));this.state.gold+=d.amount;this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} Altın`,'#f2d480');}else if(d.kind==='bow'){addItem(this.state,'bow',1);addItem(this.state,'arrow',30);this.audio.play('level');this.notify('Avcı yayı ve 30 ok aldın! Q veya R ile yaya geçebilirsin.');this.float(d.x,d.y-8,'+1 YAY & +30 OK','#f2d480');}this.save();this.emit();}}this.drops=this.drops.filter(d=>d.life>0);
+   for(const d of this.drops){d.life-=dt;d.vx*=.84;d.vy*=.84;d.x+=d.vx*dt;d.y+=d.vy*dt;const dist=Math.hypot(this.state.x-d.x,this.state.y-4-d.y);if(dist<65){const speed=160*(1-dist/65)+50;d.x+=(this.state.x-d.x)/dist*speed*dt;d.y+=(this.state.y-4-d.y)/dist*speed*dt;}if(dist<10){d.life=0;if(d.kind==='esya'&&d.item){addItem(this.state,d.item,d.amount);this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} ${ITEMS[d.item].name}`,'#d8c7a4');}else if(d.kind==='wood'){addItem(this.state,'wood',d.amount);this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} Odun`,'#dca574');}else if(d.kind==='xp'){if(gainXp(this.state,d.amount)){this.audio.play('level');this.notify(`Seviye ${this.state.level}! Yetenek puanını karakter ekranında kullan.`);this.burst(this.state.x,this.state.y,'#e7cb76',25);}else this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} XP`,'#b9dca5');}else if(d.kind==='gold'){const r=this.state.equipment.ring;d.amount=Math.round(d.amount*(r?ITEMS[r].altinKat||1:1));this.state.gold+=d.amount;this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} Altın`,'#f2d480');}else if(d.kind==='bow'){addItem(this.state,'bow',1);addItem(this.state,'arrow',30);this.audio.play('level');this.notify('Avcı yayı ve 30 ok aldın! Q veya R ile yaya geçebilirsin.');this.float(d.x,d.y-8,'+1 YAY & +30 OK','#f2d480');}this.save();this.emit();}}this.drops=this.drops.filter(d=>d.life>0);
    for(const p of this.particles){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.g??40)*dt;}this.particles=this.particles.filter(p=>p.life>0);for(const f of this.parcalar){f.life-=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=260*dt;f.aci+=f.donus*dt;f.vx*=1-.9*dt;
    /* Zemine degince: once kucuk bir sekme, sonra surtunme kemigi yatiriyor.
       Boylece parcalar havada kaybolmuyor, yerde birikip soluyorlar. */
@@ -1648,7 +1666,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    for(const [x,y,r] of this.world.isiklar)sicak(x,y,r*.9+Math.sin(time*3+x)*3);
    /* Sicak hale yalnizca mesale ELDEYKEN: kemerdeyken (yay/balta) karakterin ustunde turuncu leke kaliyordu. */if(this.mesaleElde())sicak(this.state.x,this.state.y-16,70+Math.sin(time*4)*3);}
   for(const e of this.world.entities.filter(e=>e.type==='fire'||e.type==='core')){if(Math.abs(e.x-this.state.x)>230||Math.abs(e.y-this.state.y)>160)continue;const radius=48+Math.sin(time*3+e.x)*3;const glow=c.createRadialGradient(e.x,e.y-6,0,e.x,e.y-6,radius);glow.addColorStop(0,'#f7af3936');glow.addColorStop(.35,'#ee8e1815');glow.addColorStop(1,'#ee8e1800');c.fillStyle=glow;c.fillRect(e.x-radius,e.y-radius-6,radius*2,radius*2);}
-  for(const d of this.drops){c.save();c.translate(d.x,d.y);if(d.kind==='wood'){c.fillStyle='#b87c4c';c.fillRect(-3,-2,6,4);c.fillStyle='#6e4729';c.fillRect(-2,-1,4,2);}else if(d.kind==='xp'){const p=2.5+Math.sin(time*10)*.8;c.fillStyle='#8ee675';c.beginPath();c.arc(0,0,p,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(0,0,p*.5,0,Math.PI*2);c.fill();}else if(d.kind==='gold'){c.fillStyle='#ffd700';c.beginPath();c.arc(0,0,2.5,0,Math.PI*2);c.fill();c.fillStyle='#b89200';c.fillRect(-.8,-.8,1.6,1.6);}else if(d.kind==='bow'){c.strokeStyle='#c78d4c';c.lineWidth=1.5;c.beginPath();c.arc(0,0,5,-Math.PI/2,Math.PI/2);c.stroke();c.strokeStyle='#dedede';c.lineWidth=0.8;c.beginPath();c.moveTo(0,-5);c.lineTo(0,5);c.stroke();}c.restore();}
+  for(const d of this.drops){c.save();c.translate(d.x,d.y);if(d.kind==='esya'){/* Hammadde: kucuk iki katmanli kare. Ayri sprite uretilmedi - yerde 5x5
+    pikselde okunacak sey renk, sekil degil. */const r=Engine.HAM_RENK[d.item??'']??['#cfc3a8','#8a7f68'];
+   c.fillStyle=r[1];c.fillRect(-3,-3,6,6);c.fillStyle=r[0];c.fillRect(-2,-2,4,4);}else if(d.kind==='wood'){c.fillStyle='#b87c4c';c.fillRect(-3,-2,6,4);c.fillStyle='#6e4729';c.fillRect(-2,-1,4,2);}else if(d.kind==='xp'){const p=2.5+Math.sin(time*10)*.8;c.fillStyle='#8ee675';c.beginPath();c.arc(0,0,p,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(0,0,p*.5,0,Math.PI*2);c.fill();}else if(d.kind==='gold'){c.fillStyle='#ffd700';c.beginPath();c.arc(0,0,2.5,0,Math.PI*2);c.fill();c.fillStyle='#b89200';c.fillRect(-.8,-.8,1.6,1.6);}else if(d.kind==='bow'){c.strokeStyle='#c78d4c';c.lineWidth=1.5;c.beginPath();c.arc(0,0,5,-Math.PI/2,Math.PI/2);c.stroke();c.strokeStyle='#dedede';c.lineWidth=0.8;c.beginPath();c.moveTo(0,-5);c.lineTo(0,5);c.stroke();}c.restore();}
   for(const s of this.shots){if(s.isHero){c.save();/* Ok ayaklardan cikiyor gibi duruyordu. shot.y'yi yukseltmek YANLIS olurdu:
      ayni deger hem walkable() hem de ayak hizasindaki mob merkezlerine olan
      mesafe testinde kullaniliyor, 21 birim kaldirinca ok hicbir seye

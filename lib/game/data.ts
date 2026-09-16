@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='15.7';
+export const SURUM='15.8';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -14,7 +14,7 @@ export const ASAMA = 'alpha';
  *  Id BILEREK degistirilmedi: mevcut kayitlarda state.zone='test100' olabilir,
  *  yeniden adlandirmak onlari kirardi. */
 export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern' | 'tunel' | 'test100';
-export type ItemId = 'elmesale'|'tac'|'migfer'|'cakil'|'tuzet'|'durusu'|'petek'|'muhur'|'okzehir'|'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'wood'|'torch'|'arrow'|'kurdele';
+export type ItemId = 'elmesale'|'tac'|'migfer'|'cakil'|'tuzet'|'durusu'|'petek'|'muhur'|'okzehir'|'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'wood'|'torch'|'arrow'|'kurdele'|'kemikp'|'ag'|'zehirk'|'kurum'|'pacavra'|'post'|'et'|'kanat'|'celik';
 /** Item alanlari. attack/defense/hp dogrudan stats()'e girer; asagidakiler
  *  motorun tek tek okudugu DAVRANIS bayraklaridir - her yeni item icin kod
  *  yazmak yerine burada tanimlanir.
@@ -43,7 +43,7 @@ export type ItemId = 'elmesale'|'tac'|'migfer'|'cakil'|'tuzet'|'durusu'|'petek'|
  *   alan       - tek vurusta kac dusmana isabet eder (yoksa 1). Varsayilan
  *                TEK hedef: eskiden her silah menzildeki herkese birden
  *                vuruyordu ve kalabalik savaslar fazla kolaydi. */
-export type Item = {id:ItemId;name:string;kind:'weapon'|'armor'|'ring'|'ammo'|'consumable'|'quest';description:string;rarity:'Sıradan'|'Nadir'|'Eşsiz'|'Görev';icon:string;attack?:number;defense?:number;hp?:number;price:number;menzilli?:boolean;hiz?:number;okHasar?:number;atesBagisik?:boolean;altinKat?:number;canGoster?:boolean;menzil?:number;arkadan?:number;sersemlet?:number;okHiz?:number;yakar?:number;delici?:boolean;ceker?:boolean;zehir?:number;kulKalkan?:number;yavaslik?:number;oldurunceCan?:number;kurtarma?:number;alan?:number;iyilesme?:number;sprite?:string};
+export type Item = {id:ItemId;name:string;kind:'weapon'|'armor'|'ring'|'ammo'|'consumable'|'quest'|'material';description:string;rarity:'Sıradan'|'Nadir'|'Eşsiz'|'Görev';icon:string;attack?:number;defense?:number;hp?:number;price:number;menzilli?:boolean;hiz?:number;okHasar?:number;atesBagisik?:boolean;altinKat?:number;canGoster?:boolean;menzil?:number;arkadan?:number;sersemlet?:number;okHiz?:number;yakar?:number;delici?:boolean;ceker?:boolean;zehir?:number;kulKalkan?:number;yavaslik?:number;oldurunceCan?:number;kurtarma?:number;alan?:number;iyilesme?:number;sprite?:string};
 export const ITEMS:Record<ItemId,Item>={
  // Silahsiz mod bir "esya" olarak tutuluyor: boylece silah secme ekraninda
  // digerleriyle ayni sirada cikiyor ve kusanma akisi degismiyor.
@@ -93,6 +93,18 @@ export const ITEMS:Record<ItemId,Item>={
  muhur:{id:'muhur',name:'Obruk mührü',kind:'ring',description:'Bir soylunun mühür yüzüğü. Kimse tanımıyor artık — altın hâlâ tanıyor: bulduğun altın %35 artar.',rarity:'Eşsiz',icon:'ring',price:120,altinKat:1.35},
  potion:{id:'potion',name:'Can iksiri',kind:'consumable',description:'45 can yeniler. Savaş sırasında da içilebilir.',rarity:'Sıradan',icon:'potion',price:12},
  tonic:{id:'tonic',name:'Köz toniği',kind:'consumable',description:'20 saniye boyunca +8 saldırı.',rarity:'Nadir',icon:'flame',price:20},
+ /* ---- HAMMADDELER (dusmanlardan duser, uretimde harcanir) ----
+    Not: 'kemik' kimligi ZATEN Kemik gogusluk zirhinda kullaniliyor; hammadde
+    bu yuzden 'kemikp'. Isimler ekranda gorunen adlardir, kimlikler degil. */
+ kemikp:{id:'kemikp',name:'Kemik',kind:'material',description:'Kuru, hafif, keskin kırılıyor. İskeletlerden toplanır.',rarity:'Sıradan',icon:'bone',price:3},
+ ag:{id:'ag',name:'Örümcek ağı',kind:'material',description:'Yapışkan ve şaşırtıcı derecede sağlam. Bağlamaya yarar.',rarity:'Sıradan',icon:'web',price:4},
+ zehirk:{id:'zehirk',name:'Zehir kesesi',kind:'material',description:'Delme. İçindekiler ok ucuna sürülür.',rarity:'Nadir',icon:'flask',price:14},
+ kurum:{id:'kurum',name:'Kurum',kind:'material',description:'Yanmış etin ve bezin külü. Her yerde var, işe yarıyor.',rarity:'Sıradan',icon:'ash',price:2},
+ pacavra:{id:'pacavra',name:'Paçavra',kind:'material',description:'Birinin üstünden kalan bez. Sarmaya ve tutuşturmaya yarar.',rarity:'Sıradan',icon:'cloth',price:3},
+ post:{id:'post',name:'Post',kind:'material',description:'Fare derisi. Küçük ama dikilince iş görüyor.',rarity:'Sıradan',icon:'hide',price:5},
+ et:{id:'et',name:'Çiğ et',kind:'material',description:'Ateşte pişirilmeden yenmez. Burada et ettir.',rarity:'Sıradan',icon:'meat',price:4},
+ kanat:{id:'kanat',name:'Yarasa kanadı',kind:'material',description:'İnce zar. Gerilince su geçirmiyor.',rarity:'Sıradan',icon:'wing',price:4},
+ celik:{id:'celik',name:'Çelik hurdası',kind:'material',description:'Paslı ama hâlâ çelik. Sığınakta bundan kıymetlisi az.',rarity:'Nadir',icon:'ingot',price:18},
  wood:{id:'wood',name:'Odun',kind:'consumable',description:'Ateşin yanına gidip yakarak meşale yapabilirsin.',rarity:'Sıradan',icon:'book',price:5},
  torch:{id:'torch',name:'Meşale',kind:'consumable',description:'90 saniye boyunca etrafını aydınlatır. Karanlık yerlerde onsuz iki adım ötesini göremezsin.',rarity:'Sıradan',icon:'flame',price:9},
  tac:{id:'tac',name:'Ongun’un tacı',kind:'quest',description:'Paslı demir. Bildiği tek işlev Obruk’a satılmak; başka kimse istemiyor. Taşıyan bilir.',rarity:'Görev',icon:'gem',price:0},
@@ -112,6 +124,27 @@ export interface State {version:1;started:boolean;zone:Zone;x:number;y:number;hp
  sandikAltin?:Record<string,number>;}
 export const XP=[0,100,260,490,790];
 export const newState=():State=>({version:1,sandiklar:{},sandikAltin:{},started:true,zone:'haven',x:15*16,y:14*16,hp:100,xp:0,level:1,gold:18,points:0,skills:{power:0,vigor:0,agility:0},inventory:{yumruk:1,rusty:1,leather:1,potion:3},equipment:{weapon:'rusty',armor:'leather',ring:null,ok:'arrow'},flags:{},opened:[],killed:[],journal:['Son Sığınak’a vardın. Önce şifacı Mirna ile konuş.'],playtime:0,ending:null});
+/** HAMMADDE DUSURME TABLOSU - dusman turu -> {esya, olasilik, en az, en cok}.
+ *  Tasarim kurallari:
+ *   * Her turun BIR "kesin" (sans 1) malzemesi var ki oldurmek hep bir sey
+ *     versin; ikinci malzeme nadir ve o ture kimlik katan sey.
+ *   * Iskelet (11) kalabalik ve tek vurusta oluyor - dusurmesi en zayif olan o,
+ *     yoksa koridordan cuval dolusu kemikle cikilir.
+ *   * Rauf (6) ve fenerci (9) hikaye karakteri, hicbir sey dusurmez.
+ *   * Kul Bekcisi (7) ve Son Muhafiz (10) nadir malzemenin tek kaynagi.
+ *  Motor bu tabloyu kill() icinde okuyor (bkz. engine.ts).
+ */
+export const DUSURME:Record<number,{id:ItemId;sans:number;az:number;cok:number}[]>={
+ 1:[{id:'et',sans:.55,az:1,cok:1},{id:'post',sans:.35,az:1,cok:1}],                 // fare
+ 2:[{id:'ag',sans:.8,az:1,cok:2},{id:'zehirk',sans:.12,az:1,cok:1}],                // orumcek
+ 4:[{id:'kurum',sans:.7,az:1,cok:2},{id:'pacavra',sans:.45,az:1,cok:1}],            // kullenmis
+ 5:[{id:'kanat',sans:.6,az:1,cok:1}],                                              // yarasa
+ 7:[{id:'celik',sans:1,az:2,cok:3},{id:'kurum',sans:1,az:3,cok:5}],                 // Kul Bekcisi
+ 8:[{id:'pacavra',sans:.6,az:1,cok:2},{id:'kurum',sans:.5,az:1,cok:2}],             // bogulmus
+ 10:[{id:'celik',sans:1,az:2,cok:4}],                                              // Son Muhafiz
+ 11:[{id:'kemikp',sans:.35,az:1,cok:1}],                                           // iskelet
+};
+
 export function stats(s:State){const weapon=ITEMS[s.equipment.weapon],armor=ITEMS[s.equipment.armor],ring=s.equipment.ring?ITEMS[s.equipment.ring]:null;return {maxHp:100+(s.level-1)*12+s.skills.vigor*18+(armor.hp||0)+(ring?.hp||0),attack:(weapon.attack||0)+(s.equipment.weapon==='yemin'&&Number(s.flags.raufCan||0)>0?6:0)+(ring?.attack||0)+(s.level-1)*2+s.skills.power*4,defense:armor.defense||0,dodge:Math.max(.65,2.2-s.skills.agility*.25-(s.equipment.ring==='wind'?.6:0))}}
 export function addItem(s:State,id:ItemId,count=1){s.inventory[id]=(s.inventory[id]||0)+count;}
 export function removeItem(s:State,id:ItemId){if(!s.inventory[id])return false;s.inventory[id]!--;if(!s.inventory[id])delete s.inventory[id];return true;}

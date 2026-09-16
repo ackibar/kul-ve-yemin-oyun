@@ -2122,4 +2122,43 @@ tersi kullanılıyor - yönsüz sarsıntı "nereden yedim" bilgisini kaybettiriy
 
 ---
 
-*Son güncelleme: 2026-09-16, v15.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v15.8: Hammaddeler ve düşman türüne göre ganimet
+Kullanıcının büyük tasarım brifingindeki ilk blok: "düşmanlardan hammadde
+düşsün, Minecraft'taki gibi türe göre farklı şeyler". Kullanıcı sıralamayı
+**hammadde → üretim → denge** olarak, finali de **üçü de alternatif final**
+olarak seçti.
+
+**Düşman türleri (sprite'lara bakılarak doğrulandı, tahmin değil):**
+1 fare · 2 örümcek · 4 küllenmiş · 5 yarasa · 6 Rauf · 7 Kül Bekçisi ·
+8 boğulmuş · 9 fenerci · 10 Son Muhafız · 11 iskelet.
+
+**Dokuz hammadde** (`kind:'material'`, yeni bir Item türü): kemikp, ag,
+zehirk, kurum, pacavra, post, et, kanat, celik.
+*Kimlik çakışması:* `kemik` ZATEN Kemik göğüslük zırhı; hammadde `kemikp`.
+
+**`DUSURME` tablosu** (data.ts) - tasarım kuralları:
+* Her türün bir "kesin"e yakın malzemesi var ki öldürmek hep bir şey versin;
+  ikinci malzeme nadir ve o türe kimlik katan şey (örümcek → zehir kesesi).
+* **İskelet en zayıf düşüren** (%35): kalabalık ve tek vuruşta ölüyor, yoksa
+  koridordan çuval dolusu kemikle çıkılır.
+* Rauf ve fenerci hiçbir şey düşürmez (hikâye karakterleri).
+* Çelik yalnızca Son Muhafız ve Kül Bekçisi'nden - tek kaynak.
+
+**Ölçüm (tür başına 200 ölüm simülasyonu):** fare %29 boş / et 0.61, post 0.32;
+örümcek ağ 1.19, zehir kesesi 0.10; küllenmiş kurum 1.06, paçavra 0.44;
+yarasa kanat 0.63; boğulmuş paçavra 0.82, kurum 0.69; Muhafız çelik 2.9;
+iskelet %67 boş, kemik 0.33. Gerçek akışta da doğrulandı: 14 iskelet
+öldürüldü, yerdeki eşya toplandı, envantere geçti.
+
+**Motor:** `Drop` tipine `'esya'` dalı ve `item?:ItemId` eklendi - her hammadde
+için ayrı `kind` açmak yerine tek dal. Yerdeki görünüm ayrı sprite değil,
+`HAM_RENK` tablosundan iki katmanlı 6px kare: 5 pikselde okunacak şey renk,
+şekil değil.
+
+**Eksik:** hammaddelerin piksel ikonu YOK. Şimdilik çizgisel lucide simgeleri
+(bone/web/flask/…) - hepsi aynı varsayılana düşmesin diye. Piksel ikon üretimi
+9 üretim tutar, kullanıcı onayı bekliyor.
+
+---
+
+*Son güncelleme: 2026-09-16, v15.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
