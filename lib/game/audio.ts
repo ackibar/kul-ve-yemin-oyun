@@ -23,10 +23,15 @@ const ATES_KAT=.9;
 /* Hazir ses ornekleri. Buraya eklenen ad, play() icindeki sentezi EZER;
    yani dusman seslerini degistirmek icin sadece dosya yolu yazmak yeterli:
    dusmanVur:'/assets/audio/...', dusmanOlum:'/assets/audio/...' */
-const ORNEKLER:Record<string,string>={death:'/assets/audio/death.mp3',
+const ORNEKLER:Record<string,string|string[]>={death:'/assets/audio/death.mp3',
  /* Iskelet parcalanmasi: kayitli ornek (kullanici verdi). Ayri bir ad, cunku
     'dusmanOlum' TUM dusmanlarda caliyor - kemik catirtisi yalniz iskelete ait. */
- iskeletOlum:'/assets/audio/iskelet_olum.mp3'};
+ iskeletOlum:'/assets/audio/iskelet_olum.mp3',
+ /* Kilic savurma: DORT ayri kayit. Secim torbadan cekiliyor (bkz. ornekCek) -
+    duz Math.random ayni sesi arka arkaya verebiliyor, sabit sira ise ritim
+    yaratiyor; kullanici ikisini de istemedi. */
+ swing:['/assets/audio/savurma1.mp3','/assets/audio/savurma2.mp3',
+        '/assets/audio/savurma3.mp3','/assets/audio/savurma4.mp3']};
 const ORNEK_KAT=1.35;   // ornekler sentez tonlarindan daha sakin masterlanmis
 /* Ornek basina PERDE SACILMASI (± oran). Ayni kaydin her seferinde birebir
    ayni calmasi - ozellikle iskelet surusunde saniyede birkac kez - kaydi
@@ -51,7 +56,7 @@ export class GameAudio{
   *  tutulur, boylece bolgeye gore hangisinin calacagina schedule() karar verir. */
  private parcalar:Record<string,{buf:AudioBuffer;basla:number;bitis:number}>={};
  private parcaYukleniyor=new Set<string>();
- private calan:{src:AudioBufferSourceNode;gain:GainNode}[]=[];private bekleniyor=true;private ornek:Record<string,AudioBuffer>={};private ruzgarKazanc:GainNode|null=null;private ates:AudioBufferSourceNode|null=null;private atesKazanc:GainNode|null=null;private atesPan:StereoPannerNode|null=null;private muzikKat=SENTEZ_KAT;
+ private calan:{src:AudioBufferSourceNode;gain:GainNode}[]=[];private bekleniyor=true;private ornek:Record<string,AudioBuffer[]>={};/** Varyant torbasi: kalan indisler; bitince yeniden karistirilir. */private torba:Record<string,number[]>={};/** Her ad icin en son calinan varyant - torba yenilenince tekrar etmesin. */private sonVaryant:Record<string,number>={};private ruzgarKazanc:GainNode|null=null;private ates:AudioBufferSourceNode|null=null;private atesKazanc:GainNode|null=null;private atesPan:StereoPannerNode|null=null;private muzikKat=SENTEZ_KAT;
  start(){if(!this.ctx){const C=window.AudioContext||(window as unknown as {webkitAudioContext:typeof AudioContext}).webkitAudioContext;if(!C)return;this.ctx=new C();this.musicBus=this.ctx.createGain();this.fxBus=this.ctx.createGain();const compressor=this.ctx.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=10;compressor.ratio.value=4;compressor.attack.value=.006;compressor.release.value=.18;const master=this.ctx.createGain();master.gain.value=1.45;compressor.connect(master);master.connect(this.ctx.destination);this.musicBus.connect(compressor);this.fxBus.connect(compressor);this.setVolumes(this.music,this.effects);void this.parcaYukle(PARCA);for(const yol of new Set(Object.values(ZONE_PARCA)))void this.parcaYukle(yol);void this.atesYukle();void this.ornekYukle();void this.ruzgarYukle();}void this.ctx.resume().catch(()=>{});if(!this.timer){this.next=this.ctx.currentTime+.05;this.timer=setInterval(()=>this.schedule(),100)}}
  setVolumes(m:number,f:number){this.music=m;this.effects=f;this.musicBus?.gain.setTargetAtTime(m*this.muzikKat,this.ctx!.currentTime,.08);this.fxBus?.gain.setTargetAtTime(f*.5,this.ctx!.currentTime,.02)}
  /** O an calmasi gereken parcanin dosya yolu - ZONE_PARCA'da bolgeye ozel bir
@@ -78,10 +83,33 @@ export class GameAudio{
   if(yol===PARCA){this.muzikKat=PARCA_KAT;this.setVolumes(this.music,this.effects);}
   if(yol===this.aktifYol())this.next=this.ctx!.currentTime+.06;
   }catch{/* dosya okunamadiysa (yalniz PARCA icin) sentezlenmis muzik yedege gecer */}finally{this.parcaYukleniyor.delete(yol);if(yol===PARCA)this.bekleniyor=false;}}
- private async ornekYukle(){for(const[ad,yol]of Object.entries(ORNEKLER))try{
-   const r=await fetch(yol);if(!r.ok)continue;
-   this.ornek[ad]=await this.ctx!.decodeAudioData(await r.arrayBuffer());
-  }catch{/* yuklenemezse sentez karsiligi calar */}}
+ private async ornekYukle(){for(const[ad,giris]of Object.entries(ORNEKLER)){
+   const yollar=Array.isArray(giris)?giris:[giris];const buf:AudioBuffer[]=[];
+   for(const yol of yollar)try{
+    const r=await fetch(yol);if(!r.ok)continue;
+    buf.push(await this.ctx!.decodeAudioData(await r.arrayBuffer()));
+   }catch{/* yuklenemezse sentez karsiligi calar */}
+   /* Varyantlarin BIR KISMI gelse bile calisir: kalanlardan secilir. */
+   if(buf.length)this.ornek[ad]=buf;
+  }}
+ /** Varyant secimi - TORBA yontemi. Duz rastgele secim ayni sesi ust uste
+  *  verebiliyor ("hep ayni geliyor"), sabit sira ise dongu hissi yaratiyor
+  *  ("hep ayni sirayla geliyor"). Torba: her varyant bir tur icinde tam bir
+  *  kez calar, tur bitince yeniden karistirilir; yeni turun ilki bir onceki
+  *  turun sonuncusuyla ayniysa bir sonrakiyle yer degistirir, boylece iki
+  *  tur sinirinda da tekrar olmaz. */
+ private ornekCek(ad:string,n:number){
+  if(n<=1)return 0;
+  let t=this.torba[ad];
+  if(!t?.length){
+   t=[...Array(n).keys()];
+   for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[t[i],t[j]]=[t[j],t[i]];}
+   /* pop() SONDAN cekiyor: sinir kontrolu son elemana bakmali. */
+   const z=t.length-1;if(t[z]===this.sonVaryant[ad])[t[z],t[z-1]]=[t[z-1],t[z]];
+   this.torba[ad]=t;
+  }
+  const s=t.pop()!;this.sonVaryant[ad]=s;return s;
+ }
  private async ruzgarYukle(){try{const r=await fetch(RUZGAR_SES);if(!r.ok)return;
    const buf=await this.ctx!.decodeAudioData(await r.arrayBuffer());if(!this.ctx||!this.fxBus)return;
    const d=buf.getChannelData(0),tara=Math.min(buf.length,buf.sampleRate);let b=0,e=buf.length-1;
@@ -118,8 +146,8 @@ export class GameAudio{
    // Bir sonraki tur, bu turun cikisiyla tam ust uste binsin: dikis duyulmaz.
    this.next=t+gercek-XF;}}
  play(name:Sound,scale=1){if(!this.ctx||!this.fxBus||this.ctx.state!=='running'||this.effects===0||scale<=0.001)return;
-  const buf=this.ornek[name];
-  if(buf){const src=this.ctx.createBufferSource();src.buffer=buf;
+  const kova=this.ornek[name];
+  if(kova?.length){const src=this.ctx.createBufferSource();src.buffer=kova[this.ornekCek(name,kova.length)];
    const sac=ORNEK_PERDE[name];if(sac)src.playbackRate.value=1+(Math.random()*2-1)*sac;
    const g=this.ctx.createGain();g.gain.value=Math.min(1,Math.max(0,scale))*ORNEK_KAT;
    src.connect(g);g.connect(this.fxBus);src.start();

@@ -1866,4 +1866,31 @@ seviyeyi mesafeye bağlı hale getirirdi.
 
 ---
 
-*Son güncelleme: 2026-09-16, v14.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v14.9: Kılıç savurma sesi - 4 varyant, torba yöntemiyle karışık
+Kullanıcı 4 kayıt verdi: "karışık gelsin, hep aynı gelmesin, hep aynı sırayla
+da gelmesin."
+
+**Seçim: TORBA (shuffle bag).** Düz `Math.random` aynı sesi arka arkaya
+verebiliyor ("hep aynı"), sabit sıra döngü hissi yaratıyor ("hep aynı sırayla").
+Torba ikisini de çözüyor: her varyant bir turda tam bir kez çalar, tur bitince
+yeniden karıştırılır. **Tur sınırı ayrıca kontrol edilmeli** - yeni turun ilki
+önceki turun sonuncusuyla aynı çıkabiliyor. `pop()` SONDAN çektiği için sınır
+kontrolü dizinin SON elemanına bakar (ilk yazımda `t[0]`e bakıyordum, sessizce
+yanlıştı). Ölçüm: 40 çekimde 0 ardarda tekrar, dağılım 10/10/10/10, 10 bloğun
+10'u farklı sıra.
+
+**`ORNEKLER` artık dizi de kabul ediyor** (`string|string[]`), `ornek` kaydı
+`AudioBuffer[]`. Varyantların bir kısmı yüklenemezse kalanlardan seçiliyor.
+
+**`scripts/ses_varyant.py`:** kırp + EŞİT YÜKSEKLİĞE getir + mp3. Dört kayıt
+-22.8..-25.4 dB aralığındaydı; rastgele seçilince biri ötekinden yüksek
+duyulursa çeşitlilik değil HATA gibi algılanıyor, bu yüzden her dosyaya kendi
+telafisi veriliyor (hepsi ort. -30.5 dB). Kuyruk uzun ama sessiz: gövde ilk
+~0.2 sn, 0.4'te -49 dB. 0.6 sn'ye kırpılıp 80 ms sönümle bitiriliyor - uzun
+kuyruklar üst üste binip çamur yapıyordu.
+
+Ham kayıtlar `_arsiv/uretim/ses_ham/` (gitignore).
+
+---
+
+*Son güncelleme: 2026-09-16, v14.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
