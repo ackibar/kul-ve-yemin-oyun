@@ -165,6 +165,25 @@ ISK_VUR = ('swings the short rusted sword down and across in a diagonal cut in f
            'the body, then pulls it back to a ready guard; the sword is a solid rusted '
            'steel blade and stays gripped in the bony hand in every frame; the body '
            'stays a bare skeleton with no flesh on it')
+# ---- IKINCI VURUS SETLERI (v17.1). Kullanici: "cıplak elle bir sag bir sol
+# yumruk atsin" ve "normal savasirken alternatif bir animasyon seti olsun".
+# Motor iki saldiriyi SIRAYLA oynatiyor, bu yuzden ikinci animasyonun birinciden
+# gorunur bicimde FARKLI olmasi gerek - ayni hareketin varyasyonu degil, oteki
+# el / oteki yay.
+YUMRUK_VUR2 = ('throws a hooking punch with the OTHER hand, the rear fist coming across '
+               'the body in a short arc, hips and shoulder turning into it, then pulls '
+               'back to a boxing guard; both hands are bare fists and hold no weapon '
+               'of any kind')
+# Birinci kilic vurusu YUKARIDAN ASAGI kesiyor; ikincisi YATAY savuruyor ki iki
+# vurus arka arkaya oynayinca tekrar hissi olmasin.
+KILIC_VUR2 = ('swings the sword in a wide FLAT HORIZONTAL arc across the body at waist '
+              'height, from one side all the way to the other, then recovers to a ready '
+              'guard; the blade stays level and never goes above the shoulder; the sword '
+              'is a solid steel blade and stays gripped in the hand in every frame')
+KILIC_VUR2_ARKA = ('seen from behind, swings the sword in a wide flat horizontal arc at '
+                   'waist height across the body, the blade sweeping away from the camera '
+                   'and never rising above the shoulder; the sword is a solid steel blade '
+                   'and stays gripped in the hand in every frame')
 KUL_VUR = ('lunges forward and swings both clawed arms down and across at the target, '
            'then pulls them back; the body leans into the blow')
 
@@ -238,7 +257,9 @@ OZEL = {('kilic', 'Attack', 'east'): KILIC_VUR_YAN,
         # Iskelet de kilicli: yan/arka yonlerde ayni kesme yonu dersleri gecerli.
         ('iskelet', 'Attack', 'east'): KILIC_VUR_YAN,
         ('iskelet', 'Attack', 'north'): KILIC_VUR_ARKA,
-        ('mesale', 'Attack', 'north-east'): MESALE_VUR_ARKA}
+        ('mesale', 'Attack', 'north-east'): MESALE_VUR_ARKA,
+        ('kilic2', 'Attack2', 'north'): KILIC_VUR2_ARKA,
+        ('kilic2', 'Attack2', 'north-east'): KILIC_VUR2_ARKA}
 
 SETLER = {
     'kilic': ('_arsiv/uretim/pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILIC_YUR), ('Attack', 6, KILIC_VUR)]),
@@ -253,6 +274,9 @@ SETLER = {
     'balta':  ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Attack', 6, BALTA_VUR), ('Walk', 8, BALTA_YUR)]),
     'mesale': ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Walk', 8, MESALE_YUR), ('Attack', 6, MESALE_VUR)]),
     'kilicmesale': ('_arsiv/uretim/pixellab/gezgin/id_kilic.txt', [('Walk', 8, KILICMES_YUR), ('Attack', 6, KILIC_VUR + MES_EK)]),
+    # Ikinci vurus setleri: yalniz 'Attack2' uretilir, mevcut sheet'lere EK olur.
+    'yumruk2': ('_arsiv/uretim/pixellab/gezgin/id.txt',       [('Attack2', 6, YUMRUK_VUR2)]),
+    'kilic2':  ('_arsiv/uretim/pixellab/gezgin/id_kilic.txt', [('Attack2', 6, KILIC_VUR2)]),
 }
 
 

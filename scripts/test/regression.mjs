@@ -1,29 +1,326 @@
+/**
+ * KUL VE YEMIN - regresyon testleri.
+ *
+ * Calistirma:  node scripts/test/regression.mjs      (ya da: npm test)
+ *
+ * Neden var: bu depoda dogrulama tek seferlik Playwright betikleriyle yapiliyor
+ * ve sonra atiliyor. Kalici bir ag olmayinca sessiz bozulmalar gozden kaciyor -
+ * ornekler: uretim tezgahi state'in KOPYASINI degistiriyordu (uretilen esya
+ * kayboluyordu, v16.0'da bulundu) ve onaylanmis bir plan adimi yeniden
+ * numaralandirma sirasinda tamamen dusmustu (v16.9'da bulundu). Ikisi de
+ * burada bir test olsa aninda yakalanirdi.
+ *
+ * Yapi: TS dosyalari gecici bir klasore derlenip import ediliyor (tarayici
+ * yok, bundler yok). Motor testleri icin sahte tuval/Image/rAF kuruluyor.
+ *
+ * KURAL: bir test kirilirsa once GERCEGIN degistigini dogrula. Hikaye metni
+ * degistiyse test guncellenir; davranis degistiyse kod duzeltilir. Testi
+ * "gecsin diye" gevsetme - bu dosya v4.3'te tam olarak oyle terk edilmisti
+ * (yanlis import yolu + eskimis hikaye iddialari + artik olmayan 'forge'
+ * bolgesi), 13 surum boyunca kimse calistirmadi.
+ */
 import assert from 'node:assert/strict';
 import {readFile,mkdtemp,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import ts from 'typescript';
+
 const dir=await mkdtemp(join(tmpdir(),'kul-yemin-test-'));
-for(const name of ['data','world','audio','engine']){const src=await readFile(new URL(`../lib/game/${name}.ts`,import.meta.url),'utf8');const js=ts.transpileModule(src,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/from '(\.\/\w+)'/g,"from '$1.mjs'");await writeFile(join(dir,name+'.mjs'),js)}
-const D=await import(pathToFileURL(join(dir,'data.mjs'))),W=await import(pathToFileURL(join(dir,'world.mjs')));
-let passed=0;const test=(name,fn)=>{fn();passed++;console.log('PASS',name)};
-test('All medicine, fugitive and ending branches finish without duplicate rewards',()=>{for(const medicine of ['haven','rauf'])for(const fugitive of ['protected','reported'])for(const ending of ['seal','claim']){const s=D.newState();D.choose(s,'mira_start');D.choose(s,'boran_start');D.choose(s,'ekin_start');D.addItem(s,'medicine');if(medicine==='rauf'){D.choose(s,'rauf_heal');D.choose(s,'mira_confess')}else D.choose(s,'mira_deliver');D.choose(s,fugitive==='protected'?'rauf_protect':'rauf_report');D.choose(s,'boran_deliver');D.addItem(s,'core');D.choose(s,'ending_'+ending);assert.equal(s.ending,null);assert.equal(s.flags.talk,ending==='seal'?'ekin:muhur':'ekin:besle');D.choose(s,ending==='seal'?'story:ekin:yeminNobet':'story:ekin:yeminBesle');assert.equal(s.ending,ending);assert.equal(s.inventory.core,undefined);assert.equal(D.questList(s).filter(q=>q.id!=='ates'&&q.done).length,3);assert.equal(s.flags.medicine,medicine);const original=JSON.stringify(s);for(const a of ['mira_deliver','mira_confess','rauf_protect','rauf_report','boran_deliver','ending_seal','ending_claim','story:ekin:yeminNobet','story:ekin:yeminBesle'])D.choose(s,a);assert.equal(JSON.stringify(s),original);}});
-test('Cannot finish early or spend nonexistent quest items',()=>{const s=D.newState();D.choose(s,'mira_deliver');D.choose(s,'boran_deliver');D.choose(s,'ending_seal');D.choose(s,'story:ekin:yeminNobet');assert.equal(s.flags.medicineDone,undefined);assert.equal(s.flags.ledgerDone,undefined);assert.equal(s.ending,null);assert.equal(s.gold,18)});
-test('Equipment stats, shop affordability, point budget and level cap',()=>{const s=D.newState();assert.equal(D.buy(s,'guard'),false);assert.equal(D.equip(s,'ember'),false);D.addItem(s,'ash');D.addItem(s,'life');D.equip(s,'ash');D.equip(s,'life');assert.equal(D.stats(s).maxHp,145);D.gainXp(s,2000);assert.equal(s.level,5);assert.equal(s.points,4);for(let i=0;i<4;i++)assert.equal(D.spendPoint(s,'vigor'),true);assert.equal(D.spendPoint(s,'power'),false);assert.equal(s.points,0);assert.equal(D.stats(s).maxHp,265);s.gold=24;assert.equal(D.buy(s,'potion'),true);assert.equal(D.buy(s,'potion'),true);assert.equal(D.buy(s,'potion'),false);assert.equal(s.gold,0);});
-test('Save round trip and malformed data rejection',()=>{const s=D.newState();assert.deepEqual(D.parseSave(JSON.stringify(s)),s);for(const raw of ['bad','{}',JSON.stringify({...s,level:9}),JSON.stringify({...s,hp:-1}),JSON.stringify({...s,inventory:{cheat:1}}),JSON.stringify({...s,equipment:{weapon:'potion',armor:'leather',ring:null}}),JSON.stringify({...s,x:Infinity})])assert.equal(D.parseSave(raw),null);});
-test('All map objectives are reachable from every zone spawn',()=>{for(const zone of ['haven','cistern','forge']){const w=W.makeWorld(zone);const start=[Math.floor(w.spawn[0]/16),Math.floor(w.spawn[1]/16)];const queue=[start],seen=new Set([start.join(',')]);while(queue.length){const [x,y]=queue.shift();for(const [dx,dy]of [[0,1],[0,-1],[1,0],[-1,0]]){const key=[x+dx,y+dy].join(',');if(w.tiles[y+dy]?.[x+dx]===1&&!seen.has(key)){seen.add(key);queue.push([x+dx,y+dy]);}}}for(const e of w.entities.filter(e=>!['decor','fire','trap'].includes(e.type)))assert.ok(seen.has([Math.floor(e.x/16),Math.floor(e.y/16)].join(',')),zone+':'+e.id);assert.equal(W.walkable(w,-10,-10),false);}});
-test('Oath ledger: Nil kept, Selvi broken by sealing, Ayaz open; final oath recorded',()=>{const s=D.newState();D.choose(s,'story:nil:sozVerildi');D.choose(s,'story:selvi:sozVerildi');D.choose(s,'story:ayaz:sozVerildi');assert.deepEqual(D.yeminler(s).map(y=>y.durum),['acik','acik','acik']);s.flags.ayaz='tanisti';assert.equal(D.yeminler(s)[0].durum,'bozuldu');D.choose(s,'ayaz_haber');assert.equal(D.yeminler(s)[0].durum,'tutuldu');assert.equal(D.choose(s,'ayaz_haber').message,'');D.choose(s,'mira_start');D.choose(s,'boran_start');D.addItem(s,'medicine');D.choose(s,'mira_deliver');D.choose(s,'rauf_protect');D.choose(s,'boran_deliver');D.addItem(s,'core');D.choose(s,'ending_seal');D.choose(s,'story:ekin:yeminYukari');assert.equal(s.ending,'seal');assert.equal(s.flags.yemin,'yukari');const y=D.yeminler(s);assert.equal(y.find(v=>v.kime==='Selvi').durum,'bozuldu');assert.equal(y.find(v=>v.kime==='Kapıya').soz,'Yukarıda kalanları arayacağım.');assert.ok(D.sonMetni(s).includes('aramaya söz verdin'));});
-test('Ayaz needs a key: Nil or Tuhn must be met before he leaves; both routes end with Sare promise',()=>{const s=D.newState();let d=D.dialogue({...s,flags:{talk:'ayaz:3'}},'ayaz');assert.deepEqual(d.choices.map(c=>c.label).filter(l=>l.includes('Nil')||l.includes('Tuhn')),[]);d=D.dialogue({...s,flags:{talk:'ayaz:3',nil:'tanisti',tuhnTanisti:true}},'ayaz');assert.equal(d.choices.filter(c=>c.label.includes('Nil')||c.label.includes('Tuhn')).length,2);D.choose(s,'story:ayaz:indi');assert.equal(s.flags.ayaz,'indi');D.choose(s,'story:ayaz:kal');assert.equal(s.flags.ayaz,'indi');assert.equal(D.questList(s).find(q=>q.id==='ates').done,true);const w=W.makeWorld('haven',s.flags);assert.ok(w.entities.some(e=>e.id==='ayaz'));assert.ok(!W.makeWorld('yikik',s.flags).entities.some(e=>e.id==='ayaz'));assert.ok(W.makeWorld('yikik').entities.some(e=>e.id==='ayaz'));});
-test('Mirna secret to Selvi changes the count and Tuhn line; Tuhn moves to haven when he steps back',()=>{const s=D.newState();s.flags.selvi='tanisti';let d=D.dialogue({...s,flags:{...s.flags,talk:'mira:7'}},'mira');assert.ok(d.choices.some(c=>c.label.startsWith('Yetmiş birinci')));D.choose(s,'story:mira:selviSoyle');assert.equal(s.flags.mirnaSir,'biliyorum');d=D.dialogue(s,'selvi');assert.ok(d.choices.some(c=>c.action==='story:selvi:sir'));D.choose(s,'story:selvi:sir');assert.equal(s.flags.selviSir,'soylendi');d=D.dialogue({...s,flags:{...s.flags,talk:'tuhn:3'}},'tuhn');const labels=d.choices.map(c=>c.label);assert.ok(labels.some(l=>l.startsWith('Aşağıda yirmi')));assert.ok(!labels.some(l=>l.startsWith('Aşağıda on dokuz')));assert.ok(!labels.some(l=>l.startsWith('Sare su bulmuş')));s.flags.ayaz='tanisti';d=D.dialogue({...s,flags:{...s.flags,talk:'tuhn:3'}},'tuhn');assert.ok(d.choices.some(c=>c.label.startsWith('Sare su bulmuş')));D.choose(s,'story:tuhn:kaldiSare');assert.equal(s.flags.tuhn,'kaldi');assert.ok(!W.makeWorld('magara',s.flags).entities.some(e=>e.id==='tuhn'));assert.ok(W.makeWorld('haven',s.flags).entities.some(e=>e.id==='tuhn'));assert.ok(!W.makeWorld('magara',{tuhn:'atladi'}).entities.some(e=>e.id==='tuhn'));});
-test('Ribbon: taken once from the corpse, given once to Alf',()=>{const s=D.newState();D.choose(s,'ceset_kurdele');assert.equal(s.inventory.kurdele,1);D.choose(s,'ceset_kurdele');assert.equal(s.inventory.kurdele,1);assert.ok(D.dialogue(s,'boran').choices.some(c=>c.action==='alf_kurdele'));D.choose(s,'alf_kurdele');assert.equal(s.inventory.kurdele,undefined);assert.equal(s.flags.alfKurdele,'verildi');assert.equal(D.choose(s,'alf_kurdele').message,'');});
-test('New shelter NPCs stand on reachable floor in every flag state',()=>{for(const flags of [{},{ayaz:'indi',tuhn:'kaldi'},{ayaz:'kaldi',tuhn:'atladi',rauf:'teslim'}])for(const zone of ['haven','yikik','magara']){const w=W.makeWorld(zone,flags);const start=zone==='yikik'?[15,28]:zone==='magara'?[15,5]:[Math.floor(w.spawn[0]/16),Math.floor(w.spawn[1]/16)];const queue=[start],seen=new Set([start.join(',')]);while(queue.length){const [x,y]=queue.shift();for(const [dx,dy]of [[0,1],[0,-1],[1,0],[-1,0]]){const key=[x+dx,y+dy].join(',');if(w.tiles[y+dy]?.[x+dx]===1&&!seen.has(key)){seen.add(key);queue.push([x+dx,y+dy]);}}}for(const e of w.entities.filter(e=>e.type==='npc'||e.type==='ceset')){assert.ok(seen.has([Math.floor(e.x/16),Math.floor(e.y/16)].join(',')),zone+':'+e.id);assert.ok(W.walkable(w,e.x,e.y,6,e.id),zone+':'+e.id+' walkable');}}});
-globalThis.requestAnimationFrame=()=>1;globalThis.cancelAnimationFrame=()=>{};globalThis.localStorage={setItem(){}};globalThis.Image=class{naturalWidth=128;width=128;height=32;set src(v){queueMicrotask(()=>this.onload?.())}};
-const {Engine}=await import(pathToFileURL(join(dir,'engine.mjs')));const audio={play(){},setZone(){},start(){},setFire(){}};
-const create=()=>{const g=new Engine({getContext:()=>({})},D.newState(),audio,()=>{},()=>{});g.ready=true;g.paused=false;return g;};
-test('Dodge ends without leaving an idle joystick moving',()=>{const g=create();g.dodge();for(let i=0;i<15;i++)g.update(.02);const pos=[g.state.x,g.state.y];for(let i=0;i<30;i++)g.update(.02);assert.deepEqual([g.state.x,g.state.y],pos);g.destroy();});
-test('A chest only gives loot once, and healing does not waste full-health potions',()=>{const g=create();const chest=g.world.entities.find(e=>e.type==='chest');g.state.x=chest.x;g.state.y=chest.y;g.interact();assert.equal(g.state.inventory.copper,1);g.interact();assert.equal(g.state.inventory.copper,1);assert.equal(g.useItem('potion'),false);assert.equal(g.state.inventory.potion,3);g.state.hp=30;assert.equal(g.useItem('potion'),true);assert.equal(g.state.hp,75);assert.equal(g.state.inventory.potion,2);g.destroy();});
-test('Combat kills award once, boss unlocks core, and respawn preserves progress',()=>{const g=create();g.state.zone='forge';g.world=W.makeWorld('forge');g.resetMobs();const boss=g.mobs.find(e=>e.boss);g.state.x=boss.x;g.state.y=boss.y+12;boss.hp=1;g.attack();assert.ok(g.state.killed.includes('warden'));const xp=g.state.xp;g.kill(boss);assert.equal(g.state.xp,xp);const core=g.world.entities.find(e=>e.type==='core');g.state.x=core.x;g.state.y=core.y;g.interact();assert.equal(g.state.inventory.core,1);g.state.gold=100;g.state.flags.test='kept';g.respawn();assert.equal(g.state.zone,'haven');assert.equal(g.state.gold,90);assert.equal(g.state.flags.test,'kept');assert.equal(g.state.inventory.core,1);g.destroy();});
-test('Bow uses arrows and notifies when out of arrows',()=>{const g=create();g.state.inventory.bow=1;g.state.inventory.arrow=10;g.toggleWeapon();assert.equal(g.state.equipment.weapon,'bow');const arrowCount=g.state.inventory.arrow;assert.ok(arrowCount>0);g.attack();assert.equal(g.state.inventory.arrow,arrowCount-1);g.state.inventory.arrow=1;g.update(1);g.attack();assert.equal(g.state.inventory.arrow,undefined);g.update(1);g.attack();assert.equal(g.state.inventory.arrow,undefined);g.toggleWeapon();assert.equal(g.state.equipment.weapon,'rusty');g.destroy();});
-test('Walls block damage and conversations',()=>{const g=create();g.state.zone='cistern';g.world=W.makeWorld('cistern');g.resetMobs();g.state.x=15*16;g.state.y=15*16;const m=g.mobs[0];m.x=g.state.x+20;m.y=g.state.y;const hp=m.hp;g.attack();assert.equal(m.hp,hp);assert.equal(g.nearest(),null);g.destroy();});
-console.log(`${passed} regression groups passed.`);
+for(const name of ['data','world','audio','engine']){
+ const src=await readFile(new URL(`../../lib/game/${name}.ts`,import.meta.url),'utf8');
+ const js=ts.transpileModule(src,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}})
+   .outputText.replace(/from '(\.\/\w+)'/g,"from '$1.mjs'");
+ await writeFile(join(dir,name+'.mjs'),js);
+}
+const D=await import(pathToFileURL(join(dir,'data.mjs')));
+const W=await import(pathToFileURL(join(dir,'world.mjs')));
+
+let gecti=0,kaldi=0;
+const test=(ad,fn)=>{try{fn();gecti++;console.log('  PASS',ad);}
+ catch(e){kaldi++;console.log('  FAIL',ad,'\n        ',String(e.message).split('\n')[0]);}};
+const grup=ad=>console.log(`\n${ad}`);
+
+/* ============ VERI: esyalar, tarifler, fiyatlar ============ */
+grup('Veri bütünlüğü');
+test('Her tarifin çıktısı ve malzemesi geçerli bir eşya',()=>{
+ for(const t of D.TARIFLER){
+  assert.ok(D.ITEMS[t.id],'gecersiz cikti: '+t.id);
+  assert.ok(t.adet>0);
+  for(const k of Object.keys(t.malzeme))assert.ok(D.ITEMS[k],'gecersiz malzeme: '+k);
+ }});
+test('Üretilebilen bir eşya aynı anda "sadece satın/hikaye" olamaz',()=>{
+ const uretilen=new Set(D.TARIFLER.map(t=>t.id));
+ for(const i of Object.values(D.ITEMS))
+  if(i.sadece)assert.ok(!uretilen.has(i.id),i.id+' hem uretiliyor hem sadece:'+i.sadece);
+});
+test('Düşürme tablosundaki her eşya geçerli; Rauf ve fenerci bir şey düşürmez',()=>{
+ for(const [kind,liste] of Object.entries(D.DUSURME)){
+  assert.ok(![6,9].includes(Number(kind)),'kind '+kind+' dusurmemeli');
+  for(const g of liste){assert.ok(D.ITEMS[g.id],'gecersiz ganimet: '+g.id);
+   assert.ok(g.sans>0&&g.sans<=1&&g.az>=1&&g.cok>=g.az);}
+ }});
+test('Satıcıların listesindeki her eşya var ve fiyatı pozitif',()=>{
+ for(const [ad,v] of Object.entries(D.SATICILAR))
+  for(const id of v.liste){assert.ok(D.ITEMS[id],ad+' gecersiz esya: '+id);
+   assert.ok(D.ITEMS[id].price>0,id+' fiyati yok');}
+});
+
+/* ============ BASLANGIC ve ILK SILAH ============ */
+grup('Açılış');
+test('Oyun silahsız başlıyor',()=>{
+ const s=D.newState();
+ assert.equal(s.equipment.weapon,'yumruk');
+ assert.equal(s.inventory.rusty,undefined);
+ assert.equal(D.stats(s).attack,D.ITEMS.yumruk.attack);
+});
+test('Alf ilk kılıcı bir kez verir, sonra teklif kalkar',()=>{
+ const s=D.newState();
+ assert.ok(D.dialogue(s,'boran').choices.some(c=>c.action==='alf_kilic'));
+ D.choose(s,'alf_kilic');
+ assert.equal(s.equipment.weapon,'rusty');
+ assert.equal(D.choose(s,'alf_kilic').message,'','ikinci kez vermemeli');
+ assert.ok(!D.dialogue(s,'boran').choices.some(c=>c.action==='alf_kilic'));
+});
+
+/* ============ URETIM ============ */
+grup('Üretim tezgâhı');
+test('Boş envanterle hiçbir tarif yapılamaz (önce avlanmak gerek)',()=>{
+ const s=D.newState();
+ assert.equal(D.TARIFLER.filter(t=>D.tarifDurum(s,t).olur).length,0);
+});
+test('Üretim malzemeyi harcar ve eşyayı verir',()=>{
+ const s=D.newState();Object.assign(s.inventory,{wood:2,pacavra:2});
+ const t=D.TARIFLER.find(x=>x.id==='torch');
+ assert.equal(D.tarifUygula(s,t),true);
+ assert.equal(s.inventory.torch,t.adet);
+ assert.equal(s.inventory.wood,1);assert.equal(s.inventory.pacavra,1);
+});
+test('Kuşanılır eşyanın ikincisi üretilemez',()=>{
+ const s=D.newState();Object.assign(s.inventory,{celik:4,post:2});
+ const t=D.TARIFLER.find(x=>x.id==='hancer');
+ assert.equal(D.tarifUygula(s,t),true);
+ assert.equal(D.tarifDurum(s,t).zaten,true);
+ assert.equal(D.tarifUygula(s,t),false);
+});
+test('Eksik malzemeyle üretim yapılmaz ve envanter bozulmaz',()=>{
+ const s=D.newState();s.inventory.wood=1;
+ const t=D.TARIFLER.find(x=>x.id==='torch');
+ assert.equal(D.tarifUygula(s,t),false);
+ assert.equal(s.inventory.wood,1);
+});
+
+/* ============ GUN ve ERZAK ============ */
+grup('Gün ve erzak');
+test('Uyumak günü ilerletir',()=>{
+ const s=D.newState();assert.equal(s.gun,1);D.gunGec(s);assert.equal(s.gun,2);
+});
+test('Depo her gün azalır; boşalınca can kaybı başlar',()=>{
+ const s=D.newState();
+ const bas=s.erzak.yiyecek;
+ for(let i=0;i<bas;i++)D.gunGec(s);
+ assert.equal(s.erzak.yiyecek,0);
+ assert.equal(s.kayip,0,'depo yeni bosaldi, henuz kayip olmamali');
+ const r=D.gunGec(s);
+ assert.equal(r.acliktan,2,'yiyecek ve su ayri ayri birer can');
+ assert.equal(s.kayip,2);
+});
+test('Depoya bırakmak iki gün ekler ve eşyayı harcar',()=>{
+ const s=D.newState();s.inventory.tuzet=1;
+ const once=s.erzak.yiyecek;
+ assert.equal(D.depoBirak(s,'tuzet'),true);
+ assert.equal(s.erzak.yiyecek,once+2);
+ assert.equal(s.inventory.tuzet,undefined);
+ assert.equal(D.depoBirak(s,'tuzet'),false,'elde yokken birakilamaz');
+});
+test('Gün olayı bir kez çalışır ve koşulu tutmazsa ertelenir',()=>{
+ const s=D.newState();
+ for(let i=0;i<8;i++)D.gunGec(s);
+ assert.equal(s.flags.kral,undefined,'kral gorulmeden tetiklenmemeli');
+ s.flags.kralGoruldu=true;
+ const r=D.gunGec(s);
+ assert.ok(r.olay,'kosul saglaninca ilk uyanista calismali');
+ assert.equal(s.flags.kral,'oldu');
+ const r2=D.gunGec(s);
+ assert.equal(r2.olay,null,'ayni olay tekrar calismamali');
+});
+
+/* ============ KRAL CINAYETI ============ */
+grup('Kral cinayeti');
+const cinayet=()=>{const s=D.newState();s.flags.kralGoruldu=true;
+ for(let i=0;i<5;i++)D.gunGec(s);return s;};
+test('Olaydan sonra altı ifade de alınabilir',()=>{
+ const s=cinayet();
+ for(const a of ['ifade_mirna','ifade_alf','ifade_obruk','ifade_karga','ifade_cakal','ifade_lin'])
+  assert.notEqual(D.choose(s,a).message,'',a+' bos dondu');
+});
+test('"Kendi eliyle" seçeneği yalnız Mirna’nın ifadesiyle açılır',()=>{
+ const s=cinayet();D.choose(s,'ifade_lin');
+ const yok=D.dialogue(s,'mira').choices.map(c=>c.action);
+ assert.ok(!yok.includes('karar_kendi'));
+ assert.ok(yok.includes('karar_karga'),'digerleri acik olmali');
+ D.choose(s,'ifade_mirna');
+ assert.ok(D.dialogue(s,'mira').choices.some(c=>c.action==='karar_kendi'));
+});
+test('Karar bir kez verilir',()=>{
+ const s=cinayet();D.choose(s,'ifade_mirna');
+ D.choose(s,'karar_kendi');
+ assert.equal(s.flags.kralKarar,'kendi');
+ assert.equal(D.choose(s,'karar_karga').message,'');
+ assert.equal(s.flags.kralKarar,'kendi');
+});
+test('Suçlanan tüccar satmaz; Karga sürgün edilince haritadan kalkar',()=>{
+ const a=cinayet();D.choose(a,'ifade_obruk');D.choose(a,'karar_obruk');a.gold=999;
+ assert.equal(D.buy(a,'tuzet','obruk'),false);
+ const b=cinayet();D.choose(b,'ifade_alf');D.choose(b,'karar_alf');b.gold=999;
+ assert.equal(D.buy(b,'potion','boran'),false);
+ assert.ok(W.makeWorld('haven',b.flags).entities.some(e=>e.id==='boran'),
+  'Alf dunyada KALMALI - defter gorevi onunla kapaniyor');
+ const c=cinayet();D.choose(c,'ifade_cakal');D.choose(c,'karar_karga');
+ assert.ok(!W.makeWorld('magara',c.flags).entities.some(e=>e.id==='karga'));
+});
+
+/* ============ FINALLER ============ */
+grup('Üç final');
+test('Başlangıçta hiçbir final hazır değil ve Undur teklif etmez',()=>{
+ const s=D.newState();
+ assert.equal(D.finalDurum(s).filter(f=>f.hazir).length,0);
+ assert.equal(D.dialogue(s,'ekin').choices.filter(c=>c.action?.startsWith('final_')).length,0);
+});
+test('Adımları biten final seçilebilir, hazır olmayan reddedilir',()=>{
+ const s=D.newState();
+ s.killed.push('warden');s.flags.muhafiz='gecti';
+ s.inventory.balta=1;s.inventory.chain=1;s.equipment.armor='chain';
+ const av=D.finalDurum(s).find(f=>f.id==='av');
+ assert.equal(av.hazir,true,'eksik: '+av.adimlar.filter(a=>!a.bitti).map(a=>a.id));
+ assert.ok(D.dialogue(s,'ekin').choices.some(c=>c.action==='final_av'));
+ assert.equal(D.choose(s,'final_goc').message,'Henüz değil. Eksiklerini günlükten görebilirsin.');
+ D.choose(s,'final_av');
+ assert.equal(s.ending,'av');
+ assert.equal(D.choose(s,'final_gercek').message,'','ikinci final secilememeli');
+});
+test('Her finalin metni yazılı ve kayıpları hatırlatıyor',()=>{
+ for(const id of ['goc','gercek','av']){
+  const s=D.newState();s.ending=id;s.kayip=2;
+  const m=D.sonMetni(s);
+  assert.ok(m.length>80,id+' metni cok kisa');
+  assert.ok(m.includes('2 kez boş kaldı'),id+' kayiplari anmiyor');
+ }});
+
+/* ============ KAYIT ============ */
+grup('Kayıt');
+test('Kayıt gidip geri geliyor',()=>{
+ const s=D.newState();assert.deepEqual(D.parseSave(JSON.stringify(s)),s);
+});
+test('Bozuk kayıt reddediliyor',()=>{
+ const s=D.newState();
+ for(const raw of ['bad','{}',
+  JSON.stringify({...s,level:9}),JSON.stringify({...s,hp:-1}),
+  JSON.stringify({...s,inventory:{hile:1}}),JSON.stringify({...s,x:Infinity}),
+  JSON.stringify({...s,equipment:{weapon:'potion',armor:'leather',ring:null}})])
+  assert.equal(D.parseSave(raw),null,'kabul etmemeli: '+raw.slice(0,30));
+});
+test('Eski kayıtta gün ve erzak yoksa varsayılana çekiliyor',()=>{
+ const s=D.newState();delete s.gun;delete s.erzak;delete s.kayip;
+ const y=D.parseSave(JSON.stringify(s));
+ assert.equal(y.gun,1);assert.equal(y.kayip,0);
+ assert.ok(y.erzak.yiyecek>0&&y.erzak.su>0);
+});
+
+/* ============ DUNYA ============ */
+grup('Dünya');
+test('Bölgedeki hedefler aynı yürünebilir alanda; kimse ayrı cepte kalmıyor',()=>{
+ /* Zone.spawn'dan tasma doldurma YAPILMIYOR: 'yikik'in spawn alani yurunmez
+    bir karoyu gosteriyor (oyuncu oraya kapidan giriyor, o alani hic
+    kullanmiyor) ve test yanlis yerde hata veriyordu. Dogru degismez su:
+    butun hedefler AYNI bagli alanda olmali, yani hicbiri ayri bir cepte
+    mahsur kalmamali. */
+ for(const zone of ['haven','cistern','magara','yikik','disari','tunel']){
+  const w=W.makeWorld(zone);
+  const anahtar=(x,y)=>x+','+y;
+  const gorulen=new Set(),parcalar=[];
+  for(let y=0;y<w.h;y++)for(let x=0;x<w.w;x++){
+   if(w.tiles[y][x]!==1||gorulen.has(anahtar(x,y)))continue;
+   const grup=new Set([anahtar(x,y)]),kuyruk=[[x,y]];gorulen.add(anahtar(x,y));
+   while(kuyruk.length){const [cx,cy]=kuyruk.pop();
+    for(const [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0]]){
+     const nx=cx+dx,ny=cy+dy,k=anahtar(nx,ny);
+     if(w.tiles[ny]?.[nx]===1&&!gorulen.has(k)){gorulen.add(k);grup.add(k);kuyruk.push([nx,ny]);}}}
+   parcalar.push(grup);
+  }
+  parcalar.sort((a,b)=>b.size-a.size);
+  const ana=parcalar[0]??new Set();
+  for(const e of w.entities.filter(e=>!['decor','fire','trap'].includes(e.type)))
+   assert.ok(ana.has(anahtar(Math.floor(e.x/16),Math.floor(e.y/16))),
+    `${zone}: ${e.id} ana alanda degil`);
+ }});
+test('Harita dışı yürünemez',()=>{
+ assert.equal(W.walkable(W.makeWorld('haven'),-10,-10),false);
+});
+
+/* ============ MOTOR ============
+   Tarayici yok: rAF, localStorage, Image ve tuval sahte. Engine yalnizca
+   update() ile surulur - loop() cagirilmaz, yani donma (hit-stop) bu
+   testleri etkilemez. */
+globalThis.requestAnimationFrame=()=>1;
+globalThis.cancelAnimationFrame=()=>{};
+globalThis.localStorage={setItem(){},getItem(){return null;}};
+globalThis.Image=class{naturalWidth=128;width=128;height=32;set src(v){queueMicrotask(()=>this.onload?.());}};
+const {Engine}=await import(pathToFileURL(join(dir,'engine.mjs')));
+const ses={play(){},setZone(){},start(){},setFire(){},setVolumes(){}};
+const kur=()=>{const g=new Engine({getContext:()=>({})},D.newState(),ses,()=>{},()=>{});
+ g.ready=true;g.paused=false;return g;};
+
+grup('Motor');
+test('Sandık ganimeti bir kez verir',()=>{
+ const g=kur();const sandik=g.world.entities.find(e=>e.type==='chest');
+ g.state.x=sandik.x;g.state.y=sandik.y;
+ g.interact();const ilk=JSON.stringify(g.state.inventory);
+ g.interact();assert.equal(JSON.stringify(g.state.inventory),ilk);
+ g.destroy();
+});
+test('Canı doluyken iksir harcanmaz',()=>{
+ const g=kur();
+ assert.equal(g.useItem('potion'),false);
+ g.state.hp=30;
+ assert.equal(g.useItem('potion'),true);
+ g.destroy();
+});
+test('Duvar hasarı engelliyor',()=>{
+ const g=kur();g.state.zone='cistern';g.world=W.makeWorld('cistern');g.resetMobs();
+ g.state.x=15*16;g.state.y=15*16;
+ const m=g.mobs[0];m.x=g.state.x+20;m.y=g.state.y;const can=m.hp;
+ g.attack();
+ assert.equal(m.hp,can,'duvarin ardindaki dusman hasar almamali');
+ g.destroy();
+});
+test('Yay ok harcar, ok bitince uyarır',()=>{
+ const g=kur();g.state.inventory.bow=1;g.state.inventory.arrow=3;
+ g.state.equipment.weapon='bow';
+ g.attack();assert.equal(g.state.inventory.arrow,2);
+ g.state.inventory.arrow=1;g.update(1);g.attack();
+ assert.equal(g.state.inventory.arrow,undefined);
+ g.update(1);g.attack();
+ assert.equal(g.state.inventory.arrow,undefined,'ok yokken atis olmamali');
+ g.destroy();
+});
+test('Düşmanlar yalnız yürünür zeminde doğuyor',()=>{
+ for(const zone of ['disari','cistern','tunel','test100']){
+  const g=kur();g.state.zone=zone;g.world=W.makeWorld(zone);g.resetMobs();
+  for(const m of [...g.mobs,...g.gomulu])
+   assert.ok(W.walkable(g.world,m.x,m.y),zone+':'+m.id+' engelde dogdu');
+  g.destroy();
+ }});
+test('Hit-stop kilitlenmiyor: donma sayacı update dışında iniyor',()=>{
+ const g=kur();
+ /* update() icinden dusen sayac listesine donma EKLENIRSE oyun kalici
+    kilitlenir (bkz. v15.6). Bu test tam olarak onu yakalar. */
+ assert.ok(!('donma' in g)||g.donma===0);
+ g.donma=1;
+ for(let i=0;i<10;i++)g.update(.02);
+ assert.equal(g.donma,1,'update() donmayi azaltmamali - o is loop()`in');
+ g.destroy();
+});
+
+console.log(`\n${gecti} test geçti, ${kaldi} kaldı.`);
+if(kaldi)process.exit(1);

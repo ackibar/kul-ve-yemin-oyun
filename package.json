@@ -10,7 +10,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "oxlint",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "test": "node scripts/test/regression.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

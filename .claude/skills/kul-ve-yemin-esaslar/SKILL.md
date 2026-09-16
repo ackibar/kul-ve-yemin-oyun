@@ -2457,4 +2457,35 @@ delici 26, çengelli 0 - yani türler gerçekten ayrışıyor.
 
 ---
 
-*Son güncelleme: 2026-09-17, v17.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v17.1: Regresyon takımı sıfırdan yazıldı (32 test) + `npm test`
+Eski `scripts/test/regression.mjs` **v4.3'ten (12 Eylül) beri kırıktı** ve 13
+sürüm boyunca kimse çalıştırmamıştı. Üç ayrı şekilde bozuktu: import yolu
+yanlıştı (`../lib` → `scripts/lib`, yok), düzeltilse bile ilk hikâye iddiası
+patlıyordu (senaryo değişmiş), ve artık olmayan `forge` bölgesine bakıyordu.
+
+Yeniden yazıldı; **32 test, hepsi geçiyor**. Kapsam: veri bütünlüğü (tarif/
+ganimet/satıcı kimlikleri, üretilebilir ↔ "sadece satın" çakışması), açılış
+(silahsız başlangıç, Alf'in kılıcı bir kez), üretim (boş envanterle 0 tarif,
+malzeme harcama, ikinci kopya engeli), gün+erzak (tüketim, kayıp, depoya
+bırakma, olayın bir kez çalışması ve ertelenmesi), kral cinayeti (altı ifade,
+"kendi eliyle"nin Mirna'ya bağlı olması, tek karar, suçlamanın sonuçları),
+üç final (kapı, tek seçim, metinlerin kayıpları anması), kayıt (tur, bozuk veri
+reddi, eski kayıtta `gun`/`erzak` doldurma), dünya ve motor.
+
+**İki test bilerek "hata avcısı" olarak yazıldı:**
+* *Hit-stop kilitlenmiyor* - donma sayacı `update()` içindeki sayaç listesine
+  eklenirse oyun kalıcı kilitlenir (v15.6'da bu tuzaktan dönülmüştü). Test
+  `update()`'in donmayı azaltmadığını doğruluyor.
+* *Düşmanlar yalnız yürünür zeminde doğuyor* - v15.2 kuralı, dört bölgede.
+
+**Bulunan gerçek kusur:** `yikik` bölgesinin `world.spawn` alanı **yürünmez bir
+karoyu** gösteriyor (7,7 → tiles=0). Oyuncu oraya kapıdan girdiği için canlı
+bir hata değil, ama testi yanlış yerde patlatıyordu. Test daha doğru bir
+değişmeze çevrildi: *bütün hedefler AYNI bağlı alanda olmalı* - spawn'dan
+erişim değil, kimsenin ayrı cepte mahsur kalmaması.
+
+`package.json`'a `npm test` eklendi.
+
+---
+
+*Son güncelleme: 2026-09-17, v17.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

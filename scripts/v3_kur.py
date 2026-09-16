@@ -62,7 +62,9 @@ ID_DOSYA = {'kilic': '_arsiv/uretim/pixellab/gezgin/id_kilic.txt',
             'muhafiz': '_arsiv/uretim/pixellab/id_muhafiz.txt',
             'iskelet': '_arsiv/uretim/pixellab/id_iskelet.txt',
             'mesale': '_arsiv/uretim/pixellab/gezgin/id.txt',
-            'kilicmesale': '_arsiv/uretim/pixellab/gezgin/id_kilic.txt'}
+            'kilicmesale': '_arsiv/uretim/pixellab/gezgin/id_kilic.txt',
+            'yumruk2': '_arsiv/uretim/pixellab/gezgin/id.txt',
+            'kilic2': '_arsiv/uretim/pixellab/gezgin/id_kilic.txt'}
 
 SETLER = {
     # Kilicli sette ana yonlerin Idle/Hurt/Death'i zaten var ve calisiyor;
@@ -94,6 +96,10 @@ SETLER = {
               {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),
     'yay':   ('characters/1bow',   'characters/1sword', OYUNCU_EN,
               {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),
+    # Ikinci vurus setleri mevcut klasore YALNIZ Attack2 dosyalarini ekler;
+    # durus isleri BOS, yoksa Idle/Hurt/Death yeniden uretilip ustune yazilir.
+    'yumruk2': ('characters/1',      'characters/1',      OYUNCU_EN, {}, None),
+    'kilic2':  ('characters/1sword', 'characters/1sword', OYUNCU_EN, {}, None),
 }
 
 
