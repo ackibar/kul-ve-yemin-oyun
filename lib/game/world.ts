@@ -209,7 +209,9 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      gecen herkes onunden geciyor. Karga ve Cakal onu ARADA tutacak sekilde
      duruyor. */
   at({id:'obruk',type:'npc',x:6,y:13,name:'Obruk',portrait:10,s:1.25,sabit:true});
-  at({id:'karga',type:'npc',x:5,y:10,name:'Karga',portrait:11,sabit:true});
+  /* Karga surgun edildiyse (kral cinayetinde suclandiysa) artik burada degil.
+     Hicbir gorev ona bagli olmadigi icin dunyadan cikarilmasi guvenli. */
+  if(!flags?.kargaSurgun)at({id:'karga',type:'npc',x:5,y:10,name:'Karga',portrait:11,sabit:true});
   at({id:'cakal',type:'npc',x:5,y:16,name:'Çakal',portrait:12,sabit:true});
   // Uslu buraya da ugrayabilir - bkz. haven'daki ayni flag kontrolu.
   if(flags?.usluYer==='magara')at({id:'uslu',type:'npc',x:14,y:10,name:'Uslu',portrait:14});

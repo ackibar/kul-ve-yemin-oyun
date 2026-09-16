@@ -2315,4 +2315,38 @@ durumda. Cinayet olayı bu içeriği canlandıracak. Mevcut repliklerin bir kıs
 
 ---
 
-*Son güncelleme: 2026-09-17, v16.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v16.6: Kral cinayeti - ilk gün olayı
+Kullanıcı faili **"kimse — kendi eliyle"**, günü **5** seçti. En karanlık
+seçenek ve yapısı da en iyisi: ortada katil yok ama sığınak bir isim arıyor.
+
+**Kurgu:** Kral kendi eliyle gitti (`kralSon='kendi'`); tacını cesedi ilk bulan
+aldı (`kralTac='karga'`) ve Obruk'a sattı. Yani **kanıt zinciri gerçek ama
+yanlış soruyu cevaplıyor** - taç "kim aldı"yı çözüyor, oyuncu onu "kim
+öldürdü"nün cevabı sanıyor. Altı ifadenin hepsi DOĞRU söylüyor; yanıltan şey
+yalan değil, eksiklik.
+
+* İfadeler: Mirna (cesedi yıkadı - ölümü bilen tek kişi), Alf (kapıdaydı ama
+  kendini suçluyor), Obruk (tacı aldığını kabul ediyor), Karga ("aldım, bir şey
+  yapmadım"), Çakal (Karga geç döndü), Lin (Kral akşam ona baktı, tacını
+  dizine koydu).
+* Karar Mirna'ya veriliyor - ölenleri yazan o. **"Kendi eliyle" seçeneği
+  YALNIZCA Mirna'nın ifadesi alındıysa açılıyor**, çünkü bunu bilen tek kişi o.
+* Sonuçlar: Karga → sürgün (dünyadan çıkar; hiçbir görev ona bağlı değil, güvenli).
+  Obruk → kileri kapanır. Alf → **dünyadan ÇIKARILMAZ** (defter görevi onunla
+  kapanıyor, çıkarsaydı oyun kilitlenirdi), bedel ilişkide: artık satmıyor.
+  Sessiz kalmak da bir karar ve kapanışı o da sağlıyor.
+
+**Eski repliklerin düzeltilmesi:** Kral öldürülemez yapıldığı için
+`flags.kral==='oldu'` içeriği ulaşılamazdı ve metinleri "SEN öldürdün"
+varsayıyordu (Mirna "Seni de yazdım", Alf "Emri veren adamı öldürdün", Lin
+"Kral amcayı… sen mi?", Undur "Tacı ne yaptın"). Dördü de faili varsaymayan
+hallerine çevrildi.
+
+**Doğrulandı:** olay kral görülmeden ertelenir (7. günde bile tetiklenmiyor),
+görülünce ilk uyanışta çalışır; altı ifade de açılıyor; "kendi eliyle" Mirna
+ifadesi olmadan görünmüyor; suçlanan tüccar satmıyor; Karga dünyadan çıkıyor;
+Alf dünyada kalıyor; ikinci karar engelleniyor.
+
+---
+
+*Son güncelleme: 2026-09-17, v16.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

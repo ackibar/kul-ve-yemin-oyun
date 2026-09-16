@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='16.5';
+export const SURUM='16.6';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -218,7 +218,18 @@ export function tarifUygula(s:State,t:Tarif){
  *  `kosul` tutmazsa olay o gun ATLANMAZ, ERTELENIR: sart saglandiginda ilk
  *  uyanista calisir. Boylece oyuncu hikayeyi kacirmaz. */
 export type GunOlay={id:string;baslik:string;metin:string;kosul?:(s:State)=>boolean;uygula:(s:State)=>void};
-export const GUN_OLAYLARI:Record<number,GunOlay>={};
+export const GUN_OLAYLARI:Record<number,GunOlay>={
+ /* 5. GUN - "Kosedeki adam". Ortada KATIL YOK: kral kendi eliyle gitti,
+    tacini sonradan biri aldi. Ama sigginak bir fail ariyor ve oyuncunun
+    sucladigi kisi gercekten bedel oduyor - asil trajedi bu.
+    Kosul: oyuncu krali gormus olmali. Gormemisse olay ERTELENIR (bkz. gunGec). */
+ 5:{id:'kralOldu',baslik:'Köşedeki adam ölmüş.',
+  metin:'Sabah köşede kimse kıpırdamıyordu. Kral ölmüş; başındaki paslı taç yok. Sığınak bir isim arıyor.',
+  kosul:s=>!!s.flags.kralGoruldu,
+  uygula:s=>{s.flags.kral='oldu';
+   /* GERCEK: kendi eli. Tac ayri bir mesele - cesedi ilk bulan aldi. */
+   s.flags.kralSon='kendi';s.flags.kralTac='karga';s.flags.kralCinayet='acik';}},
+};
 /** Bir gun ilerletir ve sirasi gelmis olayi calistirir. Donen olay varsa
  *  motor onu oyuncuya gosterir. */
 export function gunGec(s:State):GunOlay|null{
@@ -278,7 +289,10 @@ export const SATICILAR:Record<string,{liste:ItemId[];zam:number}>={
 /** Obruk'a "bey" diyen oyunciya daha az zam yapar: kibri satin alinabilir. */
 export function zamOrani(s:State,satici:string){const z=SATICILAR[satici]?.zam??1;return satici==='obruk'&&s.flags.obrukSaygi==='bey'?z-.35:z;}
 export const fiyat=(s:State,id:ItemId,satici:string)=>Math.round(ITEMS[id].price*zamOrani(s,satici));
-export function buy(s:State,id:ItemId,satici='boran'){const item=ITEMS[id];const v=SATICILAR[satici];if(!v||!v.liste.includes(id))return false;const p=fiyat(s,id,satici);if(s.gold<p)return false;if(item.kind!=='consumable'&&s.inventory[id])return false;s.gold-=p;addItem(s,id,id==='arrow'?10:ITEMS[id].kind==='ammo'?6:1);return true;}
+export function buy(s:State,id:ItemId,satici='boran'){const item=ITEMS[id];const v=SATICILAR[satici];if(!v||!v.liste.includes(id))return false;
+ /* Kral cinayetinde suclanan tuccar bir daha satmaz (bkz. karar_* eylemleri). */
+ if(satici==='boran'&&s.flags.alfKirildi)return false;
+ if(satici==='obruk'&&s.flags.obrukKapali)return false;const p=fiyat(s,id,satici);if(s.gold<p)return false;if(item.kind!=='consumable'&&s.inventory[id])return false;s.gold-=p;addItem(s,id,id==='arrow'?10:ITEMS[id].kind==='ammo'?6:1);return true;}
 export function questList(s:State){return [
  {id:'medicine',title:'Bir doz umut',done:!!s.flags.medicineDone,active:!!s.flags.medicineStarted,step:s.flags.medicineDone?(s.flags.medicine==='rauf'?'Rauf’u kurtardın. Mirna kararını öğrendi.':'İlaç sığınağın hastalarına ulaştı.'):s.flags.medicine==='rauf'?'Kararını Mirna’ya anlat.':s.inventory.medicine?'İlacı Mirna’ya götür veya yaralı Rauf’u ver.':'Sarnıcın kuzeydoğu odasındaki ilacı bul.'},
  {id:'ledger',title:'Defterdeki isim',done:!!s.flags.ledgerDone,active:!!s.flags.ledgerStarted,step:s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Rauf’u sırrını korudun.':'Rauf’u muhafızlara teslim ettin.'):s.inventory.ledger?'Defteri Alf’e götür.': 'Sarnıcın doğusunda Rauf’u bul. Hikâyesini dinle ve ne yapacağına karar ver.'},
@@ -755,12 +769,12 @@ export function dialogue(s:State,id:string):Dialogue{
  if(id==='nil'){
   return {who:'Lin',role:'Ateşi söndürmeyen',portrait:7,
    text:s.flags.nilSondu?'…Söndü. Bakma bana. Odun taşımak kolaydı; zor olan neden taşıdığını bilmekti. Sen onu aldın.'
-    :s.flags.kral==='oldu'?'Kral amcayı… sen mi? …Köz götürecek kimsem kalmadı. Ateşi yine söndürmem. Ama sana bakmam.'
+    :s.flags.kral==='oldu'?'Kral amca gitti. Köz götürecek kimsem kalmadı. Ateşi yine söndürmem ama… kime götüreceğim onu?'
     :s.flags.ayaz==='indi'?'Ağabeyim geldi! Koşarak geldi, külden bembeyazdı. Ateşin yandığını gördü. …Mirna onu yazdı. Yaşayanlara.'
     :s.flags.ayazHaber==='soylendi'?'Söyledin mi ona? Ateşin yandığını? …Tamam. O zaman biliyor. Bilmesi yeter, gelmese de.'
     :s.flags.ayaz==='kaldi'?'Onu gördün, değil mi? Yüzünden belli. Bekliyor. …Sara teyze ona “bekle” dedi, bana “söndürme”. İkimiz de tutuyoruz.'
     :(s.flags.rauf==='takip'?'Yanındaki adam ateşe değil bileğine bakıyor. …Şşş. ':'Şşş. ')+'Ateşe odun atıyorum. Ağabeyim “söndürme, dönerim” dedi. Ben de söndürmüyorum. Sen kimsin?',
-   choices:[...(s.flags.nilSondu?[]:[{label:'Ağabeyin nerede?',action:'story:nil:1'}]),
+   choices:[...(s.flags.kralCinayet==='acik'&&!s.flags.ifadeLin?[{label:'Kral amcayı en son ne zaman gördün?',action:'ifade_lin',note:'Soruşturma · Lin'}]:[]),...(s.flags.nilSondu?[]:[{label:'Ağabeyin nerede?',action:'story:nil:1'}]),
     ...(s.inventory.wood&&!s.flags.nilOdun&&!s.flags.nilSondu?[{label:'Sana odun getirdim.',action:'nil_odun',note:'1 odun ver'}]:[]),
     close]};}
  // Elvi: yetmis birinci. Ust kapinin dibinde durur.
@@ -828,7 +842,7 @@ export function dialogue(s:State,id:string):Dialogue{
     :s.flags.obrukSir==='sakladin'?'Yine sen. Sormadığın bir şey vardı, sormadan gittin. Öyle adamları severim; ucuza gelmezler ama uyutmazlar da.'
     :s.flags.talkObruk?'Yine sen. Bir şey alacak mısın, yoksa hava mı alıyorsun? Burada hava da bedava değil; kokusu etten geliyor.'
     :'Kapıda dikilme. …Konuşacaksan konuş, alacaksan al. İkisi aynı fiyat değil.',
-   choices:[{label:'Konuşalım.',action:'story:obruk:1'},
+   choices:[...(s.flags.kralCinayet==='acik'&&!s.flags.ifadeObruk?[{label:'Ocağın üstündeki taç nereden geldi?',action:'ifade_obruk',note:'Soruşturma · Obruk'}]:[]),{label:'Konuşalım.',action:'story:obruk:1'},
     ...(s.flags.obrukDepo==='biliyorum'&&!s.flags.obrukSir?[{label:'Adamın kileri sayıyor.',action:'story:obruk:ihbar',note:'Karar · Karga’nın sırrı'}]:[]),
     ...(s.inventory.tac?[{label:'Sende bir taç var. Ne verirsin?',action:'obruk_tac',note:'Ongun’un tacı · 150 altın'}]:[]),
     {label:'Malına bakayım.',action:'shop:obruk',note:bey?'Beye yakışır fiyat':'Fiyatlar iki buçuk kat'},close]};}
@@ -836,21 +850,34 @@ export function dialogue(s:State,id:string):Dialogue{
   text:s.flags.obrukSir==='soylendi'?'Bey bu hafta kilere iki kez indi. İki kez. …Sen bir şey söyledin, değil mi? Söyleme, bilmek istemiyorum. Bilirsem bir şey yapmam gerekir.'
    :s.flags.obrukDepo==='biliyorum'?'Sayıyı biliyorsun. Ağzını da benim gibi kapalı tut, ikimiz de kışı görelim.'
    :'Yaklaşma demedim. Ama durdurmadım da. Aradaki farkı bilen adam uzun yaşar.',
-  choices:[{label:'Konuşalım.',action:'story:karga:1'},close]};
+  choices:[...(s.flags.kralCinayet==='acik'&&!s.flags.ifadeKarga?[{label:'O gece dışarıdaymışsın.',action:'ifade_karga',note:'Soruşturma · Karga'}]:[]),{label:'Konuşalım.',action:'story:karga:1'},close]};
  if(id==='cakal')return {who:'Çakal',role:'Obruk’un adamı',portrait:12,
   text:s.flags.obrukDepo==='biliyorum'?'…Karga çok konuşuyor.':'Ben konuşmam. Karga konuşur. İkimize bir ağız yeter.',
-  choices:[close]};
- if(id==='mira')return {who:'Mirna',role:'Sığınağın şifacısı',portrait:3,text:(s.flags.kral==='oldu'?'On sekiz. Yazdım. Seni de yazdım; başka bir sayfaya. ':'')+(s.flags.medicineDone?(s.flags.medicine==='rauf'?'Bir hayat kurtardın. Buradakiler için başka bir yol bulacağız. Yaralarını sarayım.':'İlaç işe yaradı. Bu gece kimseyi kaybetmedik. Dinlen; yaralarını sarayım.'):s.flags.medicine==='rauf'?'Ellerin boş… ama yüzünde söylemek istediğin bir şey var.':s.inventory.medicine?'Buldun! Bir şişenin bu kadar ağır bir umut taşıyacağını düşünmezdim.':'Aşağıdaki sarnıçta bir doz ilaç kaldı. Burada ateşler içinde yatanlar var. Onu bana getirir misin?'),choices:[{label:'Bana hikâyeni anlat.',action:'story:mira:1'},...(!s.flags.medicineStarted?[{label:'İlacı bulacağım.',action:'mira_start',note:'Görev · Bir doz umut'}]:[]),...(s.inventory.medicine?[{label:'İlaç senin. Hastaları iyileştir.',action:'mira_deliver',note:'+35 altın · Mirna’nın güveni'}]:[]),...(s.flags.medicine==='rauf'&&!s.flags.medicineDone?[{label:'İlacı yaralı birine verdim. Onu bırakamadım.',action:'mira_confess',note:'Kararını Mirna’ya anlat'}]:[]),{label:'Dinlen ve yaralarını sar.',action:'rest',note:'Canın tamamen yenilenir'},close]};
- if(id==='boran')return {who:'Alf',role:s.flags.alfSir==='soylendi'?'Eski kapı muhafızı':'Kapı muhafızı',portrait:2,text:(s.flags.kral==='oldu'?'Emri veren adamı öldürdün. Hafifledin mi? Ben hafiflemedim; aynı kapıyı şimdi tek başıma taşıyorum. ':'')+(s.flags.alfSir==='soylendi'?'Yeminim bir yalanın üstüne kuruluymuş. Demek ki artık bu kapıdan geçebilirim. Nereye gideceğimi bilmiyorum ama gidebilirim.':s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Defter geri döndü, adam dönmedi. Onu gördüğünü biliyorum. Bir gün bana bunu neden yaptığını anlatırsın.':'Rauf’u getirdin. Gerisi benimle onun arasında. Sana borçluyum — ama teşekkür edemem.'):s.inventory.ledger?'Defteri tanıdım. Peki adam? Rauf nerede?':'Birliğimden bir adam kaçtı. Rauf. Aşağıda, sarnıcın doğusunda bir yerde. Nöbet defterimi de aldı — birliğin yeminleri onda yazılı; onun adı da, üstü çizili. Çizen bendim. Onu bul ve bana getir. Defteri de. Ben gidemem; sebebini sorarsan anlatırım.'),choices:[{label:'Bana hikâyeni anlat.',action:'story:boran:1'},
+  choices:[...(s.flags.kralCinayet==='acik'&&!s.flags.ifadeCakal?[{label:'O gece Karga neredeydi?',action:'ifade_cakal',note:'Soruşturma · Çakal'}]:[]),close]};
+ if(id==='mira')return {who:'Mirna',role:'Sığınağın şifacısı',portrait:3,text:(s.flags.kral==='oldu'?(s.flags.kralKarar==='kendi'?'On dokuz. Yazdım. Yanına da senin cümleni yazdım. ':s.flags.kralKarar?'On dokuz. Yazdım. Bir isim daha yazdım; onu yazarken elim titredi. ':'On dokuz. Yazdım. Adının yanı boş duruyor. ') : '')+(s.flags.medicineDone?(s.flags.medicine==='rauf'?'Bir hayat kurtardın. Buradakiler için başka bir yol bulacağız. Yaralarını sarayım.':'İlaç işe yaradı. Bu gece kimseyi kaybetmedik. Dinlen; yaralarını sarayım.'):s.flags.medicine==='rauf'?'Ellerin boş… ama yüzünde söylemek istediğin bir şey var.':s.inventory.medicine?'Buldun! Bir şişenin bu kadar ağır bir umut taşıyacağını düşünmezdim.':'Aşağıdaki sarnıçta bir doz ilaç kaldı. Burada ateşler içinde yatanlar var. Onu bana getirir misin?'),choices:[
+  /* Kral cinayeti: ifade + KARAR. Karar Mirna'ya veriliyor cunku olen herkesi
+     o yaziyor - "kim" sorusunun muhatabi o. Karar icin en az bir ifade sart;
+     'kendi eliyle' secenegi ise YALNIZCA Mirna'nin ifadesi alindiysa acilir,
+     cunku bunu bilen tek kisi cesedi yikayan kisidir. */
+  ...(s.flags.kralCinayet==='acik'&&!s.flags.ifadeMirna?[{label:'Cesedi sen yıkadın. Ne gördün?',action:'ifade_mirna',note:'Soruşturma · Mirna'}]:[]),
+  ...(s.flags.kralCinayet==='acik'&&['ifadeMirna','ifadeAlf','ifadeObruk','ifadeKarga','ifadeCakal','ifadeLin'].some(k=>s.flags[k])?[
+   ...(s.flags.ifadeMirna?[{label:'Kimse öldürmedi. Kendi eliyle gitti.',action:'karar_kendi',note:'Karar · Köşedeki adam'}]:[]),
+   {label:'Karga aldı tacı. O öldürdü.',action:'karar_karga',note:'Karar · Suçlama'},
+   {label:'Taç Obruk’ta. Onu o öldürttü.',action:'karar_obruk',note:'Karar · Suçlama'},
+   {label:'Alf. On bir yıllık hesabını gördü.',action:'karar_alf',note:'Karar · Suçlama'},
+   {label:'Bilmiyorum. Söylemeyeceğim.',action:'karar_sessiz',note:'Karar · Sessiz kal'}]:[]),
+  {label:'Bana hikâyeni anlat.',action:'story:mira:1'},...(!s.flags.medicineStarted?[{label:'İlacı bulacağım.',action:'mira_start',note:'Görev · Bir doz umut'}]:[]),...(s.inventory.medicine?[{label:'İlaç senin. Hastaları iyileştir.',action:'mira_deliver',note:'+35 altın · Mirna’nın güveni'}]:[]),...(s.flags.medicine==='rauf'&&!s.flags.medicineDone?[{label:'İlacı yaralı birine verdim. Onu bırakamadım.',action:'mira_confess',note:'Kararını Mirna’ya anlat'}]:[]),{label:'Dinlen ve yaralarını sar.',action:'rest',note:'Canın tamamen yenilenir'},close]};
+ if(id==='boran')return {who:'Alf',role:s.flags.alfSir==='soylendi'?'Eski kapı muhafızı':'Kapı muhafızı',portrait:2,text:(s.flags.alfKirildi?'…': s.flags.kral==='oldu'?'Emri veren adam gitti. Hafifledim mi? Hayır. Aynı kapıyı şimdi tek başıma taşıyorum. ':'')+(s.flags.alfSir==='soylendi'?'Yeminim bir yalanın üstüne kuruluymuş. Demek ki artık bu kapıdan geçebilirim. Nereye gideceğimi bilmiyorum ama gidebilirim.':s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Defter geri döndü, adam dönmedi. Onu gördüğünü biliyorum. Bir gün bana bunu neden yaptığını anlatırsın.':'Rauf’u getirdin. Gerisi benimle onun arasında. Sana borçluyum — ama teşekkür edemem.'):s.inventory.ledger?'Defteri tanıdım. Peki adam? Rauf nerede?':'Birliğimden bir adam kaçtı. Rauf. Aşağıda, sarnıcın doğusunda bir yerde. Nöbet defterimi de aldı — birliğin yeminleri onda yazılı; onun adı da, üstü çizili. Çizen bendim. Onu bul ve bana getir. Defteri de. Ben gidemem; sebebini sorarsan anlatırım.'),choices:[{label:'Bana hikâyeni anlat.',action:'story:boran:1'},
   /* Ilk silah: oyun SILAHSIZ basliyor, kilic Alf'ten geliyor. Sart sadece
      "bayrak yok" degil, "elinde kesici bir sey yok" - oyuncu sandiktan yay
      bulmus olabilir, o zaman da kilic teklifi durmali. */
+  ...(s.flags.kralCinayet==='acik'&&!s.flags.ifadeAlf?[{label:'Köşedeki adam. Sen neredeydin?',action:'ifade_alf',note:'Soruşturma · Alf'}]:[]),
   ...(!s.flags.alfKilic?[{label:'Elim boş. Aşağıda dolaşacaksam bir şey lazım.',action:'alf_kilic',note:'İlk silahını al'}]:[]),
   ...(s.inventory.kurdele?[{label:'Rauf’un bileğindeki kurdele. Kızınınmış.',action:'alf_kurdele',note:'Kurdeleyi Alf’e ver'}]:[]),
   ...(s.flags.alfSir==='biliyorum'?[{label:'Undur’un sana söylemediği bir şey var.',action:'story:boran:sir',note:'Karar · Onbir yılın sahibi'}]:[]),
   ...((s.flags.rauf==='korundu'||s.flags.rauf==='serbest')&&!s.flags.alfKarsi
     ?[{label:'Bana bir şey soracaktın.',action:'story:boran:karsi',note:'Yüzleşme · Rauf'}]:[]),...(!s.flags.ledgerStarted?[{label:'Rauf’u bulup getireceğim.',action:'boran_start',note:'Görev · Defterdeki isim'}]:[]),...(s.inventory.ledger?[{label:s.flags.fugitive==='protected'?'Defter terk edilmişti. Rauf’u görmedim.':'Rauf teslim olmayı kabul etti.',action:'boran_deliver',note:s.flags.fugitive==='protected'?'Rauf’u koru · Yaşam halkası':'Rauf’u teslim et · Muhafız kılıcı'}]:[]),{label:'Malzemelerine bakabilir miyim?',action:'shop'},close]};
- if(id==='ekin')return {who:'Undur',role:'Yeminlerin arşivcisi',portrait:4,text:(s.flags.kral==='oldu'?'Ongun. Bereket. Altına çizgi çektim. Tacı ne yaptın, sorma; yazacağım. ':'')+(s.ending?(s.flags.alfSir==='soylendi'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf’inki yalanmış; sen söyledin, o da bıraktı. Bunu yazdım.':s.flags.alfSir==='sakladin'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf hâlâ kendi yükünü taşıyor — sayende. Bunu da yazdım.':'Bir yemin, onu tutan insanlar kadar güçlüdür. Seninkinin izini bu taşlar uzun süre taşıyacak.'):'Sarsıntılar artıyor. Aşağıda, sarnıcın da altında bir yer var — eski kalp orada atıyor. Yolunu henüz bulamadım. Bulduğumda sana ilk ben söylerim.'),choices:[{label:'Bana hikâyeni anlat.',action:'story:ekin:1'},close]};
+ if(id==='ekin')return {who:'Undur',role:'Yeminlerin arşivcisi',portrait:4,text:(s.flags.kral==='oldu'?'Ongun. Bereket. Altına çizgi çektim. Tacın nerede olduğunu biliyorum; onu da yazdım. ':'')+(s.ending?(s.flags.alfSir==='soylendi'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf’inki yalanmış; sen söyledin, o da bıraktı. Bunu yazdım.':s.flags.alfSir==='sakladin'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf hâlâ kendi yükünü taşıyor — sayende. Bunu da yazdım.':'Bir yemin, onu tutan insanlar kadar güçlüdür. Seninkinin izini bu taşlar uzun süre taşıyacak.'):'Sarsıntılar artıyor. Aşağıda, sarnıcın da altında bir yer var — eski kalp orada atıyor. Yolunu henüz bulamadım. Bulduğumda sana ilk ben söylerim.'),choices:[{label:'Bana hikâyeni anlat.',action:'story:ekin:1'},close]};
  if(id==='rauf')return {who:'Rauf',role:'Yaralı kaçak',portrait:5,text:s.flags.fugitive==='reported'?'Teslim olacağım. Defteri de götür; adımın altına ne yazdıysa bir de yüzüme okusun.':s.flags.medicine==='rauf'?'Nefes almak artık acıtmıyor. Bunu unutmayacağım. Batıdaki kol, ocağa giden kapıyı açar.': 'Alf’in nöbet defteri bende. Adım içinde, üstü çizili — ben çizmedim, o çizdi. Ocak kapısını açık bulunca içeri girdim; bacağım burada bitti. Alf beni dinlemez. Bana yardım eder misin?',choices:[{label:'Bana hikâyeni anlat.',action:'story:rauf:1'},...(s.inventory.medicine&&s.flags.fugitive!=='reported'?[{label:'Bu ilacı al. Yaşaman gerek.',action:'rauf_heal',note:'Son ilacı harca · Mirna’ya götüremeyeceksin'}]:[]),close]};
  return {who:'Eski mühür',role:'Kül Ocağı',portrait:1,text:'Kalp hâlâ atıyor. Onu Undur’a götürmelisin.',choices:[close]};
 }
@@ -1004,6 +1031,38 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
  case 'nil_odun':if(s.flags.nilOdun||!removeItem(s,'wood'))return {message:''};s.flags.nilOdun=true;xp=20;message='Lin odunu aldı: “Bu gece de yanar.”';break;
  case 'ayaz_haber':if(s.flags.ayazHaber||!s.flags.sozNil)return {message:''};s.flags.ayazHaber='soylendi';xp=30;message=s.flags.sozNil==='verildi'?'Lin’e verdiğin sözü tuttun. Tiga: “…Yanıyor demek.”':'Tiga: “…Yanıyor demek.”';break;
  case 'ceset_kurdele':if(s.flags.kurdeleAlindi)return {message:''};s.flags.kurdeleAlindi=true;addItem(s,'kurdele');message='Kurdeleyi Rauf’un bileğinden çözdün.';break;
+ /* ---- KRAL CINAYETI: IFADELER ----
+    Hepsi DOGRU sey soyluyor. Yaniltan sey yalan degil, eksiklik: tac gercekten
+    Obruk'ta, Karga gercekten o gece disaridaydi, Alf gercekten kendini sucluyor.
+    Yalnizca Mirna'nin ifadesi "olum" sorusunu cevapliyor; digerleri "tac"
+    sorusunu cevapliyor ve oyuncu ikisini ayni sey saniyor. */
+ case 'ifade_mirna':if(s.flags.ifadeMirna)return {message:''};s.flags.ifadeMirna='alindi';xp=25;
+  message='Mirna: “Onu ben yıkadım. Tek bir yara vardı. Yeri… elinin rahatça uzanabileceği bir yerdi. Bunu sana söyledim; kime söyleyeceğini sen bil.”';break;
+ case 'ifade_alf':if(s.flags.ifadeAlf)return {message:''};s.flags.ifadeAlf='alindi';xp=15;
+  message='Alf: “Kapıdaydım. Hep kapıdayım. …Ama sorun o değil. On bir yıl önce açma emrini o verdi, kolu ben çektim. Hesabı bu sabah ödedi. İstersen adımı yaz.”';break;
+ case 'ifade_obruk':if(s.flags.ifadeObruk)return {message:''};s.flags.ifadeObruk='alindi';s.flags.tac='satildi';xp=20;
+  message='Obruk: “Aldım, evet. Ocağın üstünde duruyor. Parasını da saydım. Kimden aldığımı sormuyorsun, akıllısın; ben de söylemem. Mal maldır, ölü ölüdür, ikisi ayrı hesap.”';break;
+ case 'ifade_karga':if(s.flags.ifadeKarga)return {message:''};s.flags.ifadeKarga='alindi';xp=20;
+  message='Karga: “…Dışarıdaydım. Konuşuyorum ya, çok konuşuyorum. Bir şey gördüm, aldım. Almasaydım başkası alırdı. Ben bir şey YAPMADIM. …Aldım, o kadar.”';break;
+ case 'ifade_cakal':if(s.flags.ifadeCakal)return {message:''};s.flags.ifadeCakal='alindi';xp=15;
+  message='Çakal: “Geç döndü. Ceketinin altında bir şey vardı ve elleri titriyordu. Ben konuşmam demiştim; bunu da konuşmadım sayılır.”';break;
+ case 'ifade_lin':if(s.flags.ifadeLin)return {message:''};s.flags.ifadeLin='alindi';xp=15;
+  message='Lin: “Akşam bana baktı. Hiç bakmazdı. Sonra tacını çıkardı, dizine koydu. Ben köz götürüyordum, geri dönmedim. …Dönseydim?”';break;
+ /* ---- KRAL CINAYETI: KARAR ----
+    Tek DOGRU cevap 'kendi', ama oyun onu odullendirip digerlerini cezalandirmiyor;
+    her karar birinin hayatini degistiriyor ve oyuncu bununla kaliyor. */
+ case 'karar_kendi':if(s.flags.kralKarar)return {message:''};s.flags.kralKarar='kendi';s.flags.kralCinayet='kapandi';xp=90;
+  message='Mirna uzun uzun baktı: “…Yazdım. ‘Kendi eliyle’ diye yazdım. Sığınak bir isim istiyordu, sen bir cümle verdin. Cümle daha ağır.” Kimse cezalandırılmadı. Kimse rahatlamadı da.';break;
+ case 'karar_karga':if(s.flags.kralKarar)return {message:''};s.flags.kralKarar='karga';s.flags.kralCinayet='kapandi';s.flags.kargaSurgun='evet';xp=40;
+  message='Karga’yı kapıya çıkardılar. Bağırmadı; “Ben bir şey yapmadım, aldım” dedi, kimse dinlemedi. Doğruydu: almıştı. Öldürmemişti.';break;
+ case 'karar_obruk':if(s.flags.kralKarar)return {message:''};s.flags.kralKarar='obruk';s.flags.kralCinayet='kapandi';s.flags.obrukKapali='evet';xp=30;
+  message='Obruk kilerinin kapısını yüzüne kapattı: “Bir daha benden bir çöp alamazsın.” Adamları hâlâ yanında. Taç hâlâ ocağın üstünde.';break;
+ case 'karar_alf':if(s.flags.kralKarar)return {message:''};s.flags.kralKarar='alf';s.flags.kralCinayet='kapandi';s.flags.alfKirildi='evet';xp=30;
+  /* Alf DUNYADAN CIKARILMIYOR: "defter" gorevi onunla kapaniyor, cikarsaydi
+     oyun kilitlenirdi. Bedel iliskide: ticaret kapaniyor, sesi soguyor. */
+  message='Alf itiraz etmedi. Kılıcını kapıya dayadı: “Zaten benim değildi.” Bir daha yüzüne bakmadı. Malını da artık sana satmıyor.';break;
+ case 'karar_sessiz':if(s.flags.kralKarar)return {message:''};s.flags.kralKarar='sessiz';s.flags.kralCinayet='kapandi';xp=25;
+  message='“Bilmiyorum” dedin. Mirna defteri kapattı: “Bilmiyorum da bir cevaptır. Ama sığınak bilmemekle uyuyamıyor.” Kimse bir şey demedi; herkes birbirine baktı.';break;
  case 'alf_kilic':if(s.flags.alfKilic)return {message:''};s.flags.alfKilic='verildi';addItem(s,'rusty');s.equipment.weapon='rusty';xp=10;message='Alf duvardan yıpranmış bir kılıç indirdi: “Bu benim değildi, ondan önceki adamın da değildi. Şimdi senin. Geri getirmene gerek yok; taşıyabilirsen yeter.”';break;
  case 'alf_kurdele':if(!removeItem(s,'kurdele'))return {message:''};s.flags.alfKurdele='verildi';xp=40;message='Alf kurdeleyi avucunda tuttu: “…Yedi yaşında mıydı? Bana söylememişti.”';break;
  default:return {message:''};
