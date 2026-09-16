@@ -2207,4 +2207,40 @@ yol `engine.current!.state` üzerinden gitmeli; `snapshot.state` salt okunurdur.
 
 ---
 
-*Son güncelleme: 2026-09-16, v16.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v16.1: Denge geçişi - "oyun şu an fazla kolay"
+Kullanıcı: "insanları oynamaya motive edecek bir zorluk olmalı… yaratık kesip
+görev yapmaları gerekmeli."
+
+**Teşhis (ölçüldü, tahmin değil):** oyuncu düşmanlardan çok daha hızlı
+güçleniyordu. Seviye 5 + Köz kılıcı ile fare ve yarasa **tek vuruşta**
+ölüyordu, oyuncunun ölmesi 17 vuruş sürüyordu. Sebep: silah 10→23 zaten 2.3
+kat, üstüne seviye (+2/sv) ve güç yeteneği (+4/puan) ekleniyor, düşman canı ise
+SABİT. Oyun ilerledikçe eriyordu.
+
+| | SV1 fare | SV5 fare | SV5 yarasa | SV5'te beni öldüren vuruş (fare) |
+|---|---|---|---|---|
+| önce | 4 vuruş | **1** | **1** | 17 |
+| sonra | 5 vuruş | 2 | 1 | 20 |
+
+**Değişenler:**
+* Oyuncu eğrisi yatırıldı: seviye katkısı 2→1.5, güç 4→3, can 12→8, dayanıklılık
+  18→14. İlerleme hissediliyor ama düşmanı geçersiz kılmıyor.
+* `CAN`: fare 34→46, örümcek 42→58, küllenmiş 80→100, yarasa 24→32,
+  boğulmuş 64→84, Kül Bekçisi 190→320, Son Muhafız 230→380.
+  **İskelet 1'de KALDI** (tek vuruşta ölmesi tasarım), **Rauf'a dokunulmadı**
+  (düşman değil).
+* `HASAR` artık AÇIK yazılıyor. Eski varsayılan `10+kind*3` tür numarasına
+  bağlıydı ve saçmalıyordu: **yarasa 25 hasar vururken fare 13** vuruyordu.
+  Yeni: fare 10, örümcek 14, küllenmiş 22, yarasa 11, boğulmuş 18, Bekçi 32,
+  Muhafız 28, iskelet 6 (değişmedi).
+* XP eşikleri `[0,100,260,490,790]` → `[0,140,380,760,1300]`.
+* Satın alınabilir eşyalar pahalandı (ilerleme artık üretimden geliyor, altın
+  "atlama yapan şey" olmalı): Muhafız kılıcı 65→90, Köz 110→160, Gece dişi
+  95→140, yaylar 70-115→95-170, yüzükler ve zırhlar benzer.
+
+**Regresyon:** iskelet kalabalığının ölçümü korundu - çemberin ortasında
+5 saniyede 48 can (v14.2'de ayarlanmıştı, aynı çıktı).
+
+---
+
+*Son güncelleme: 2026-09-16, v16.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

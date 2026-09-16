@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='16.0';
+export const SURUM='16.1';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -55,39 +55,39 @@ export const ITEMS:Record<ItemId,Item>={
  elmesale:{id:'elmesale',name:'Elde meşale',kind:'weapon',description:'Yanan meşale. Zayıf vurur ama tutuşturur; karanlıkta yolunu açar.',rarity:'Sıradan',icon:'flame',attack:5,price:0,sprite:'mesale',yakar:2},
  yumruk:{id:'yumruk',name:'Çıplak eller',kind:'weapon',description:'Silah yok. Zayıf ama hızlı. +2 saldırı.',rarity:'Sıradan',icon:'hand',attack:2,price:0},
  rusty:{id:'rusty',name:'Yıpranmış kılıç',kind:'weapon',description:'Sığınaktan kalan son hatıra. +10 saldırı.',rarity:'Sıradan',icon:'sword',attack:10,price:0},
- guard:{id:'guard',name:'Muhafız kılıcı',kind:'weapon',description:'Alf’in sözü kadar sağlam. +17 saldırı.',rarity:'Nadir',icon:'sword',attack:17,price:65,sadece:'satin'},
- ember:{id:'ember',name:'Köz kılıcı',kind:'weapon',description:'+23 saldırı. Vuruşlar 3 saniye boyunca yakar.',rarity:'Eşsiz',icon:'flame',attack:23,price:110,sadece:'satin'},
- blood:{id:'blood',name:'Gece dişi',kind:'weapon',description:'+19 saldırı. Her vuruşta 3 can yeniler.',rarity:'Eşsiz',icon:'sword',attack:19,price:95,sadece:'satin'},
- bow:{id:'bow',name:'Avcı yayı',kind:'weapon',description:'+18 saldırı. Menzilli ok fırlatır.',rarity:'Nadir',icon:'bow',attack:18,price:75,menzilli:true,sadece:'satin'},
- tatar:{id:'tatar',name:'Tatar yayı',kind:'weapon',description:'+14 saldırı. Avcı yayından çok daha hızlı atar.',rarity:'Nadir',icon:'bow',attack:14,price:70,menzilli:true,hiz:.6,sadece:'satin'},
+ guard:{id:'guard',name:'Muhafız kılıcı',kind:'weapon',description:'Alf’in sözü kadar sağlam. +17 saldırı.',rarity:'Nadir',icon:'sword',attack:17,price:90,sadece:'satin'},
+ ember:{id:'ember',name:'Köz kılıcı',kind:'weapon',description:'+23 saldırı. Vuruşlar 3 saniye boyunca yakar.',rarity:'Eşsiz',icon:'flame',attack:23,price:160,sadece:'satin'},
+ blood:{id:'blood',name:'Gece dişi',kind:'weapon',description:'+19 saldırı. Her vuruşta 3 can yeniler.',rarity:'Eşsiz',icon:'sword',attack:19,price:140,sadece:'satin'},
+ bow:{id:'bow',name:'Avcı yayı',kind:'weapon',description:'+18 saldırı. Menzilli ok fırlatır.',rarity:'Nadir',icon:'bow',attack:18,price:95,menzilli:true,sadece:'satin'},
+ tatar:{id:'tatar',name:'Tatar yayı',kind:'weapon',description:'+14 saldırı. Avcı yayından çok daha hızlı atar.',rarity:'Nadir',icon:'bow',attack:14,price:95,menzilli:true,hiz:.6,sadece:'satin'},
  arrow:{id:'arrow',name:'Ok',kind:'consumable',description:'Avcı yayı ile menzilli atış yapmak için kullanılır.',rarity:'Sıradan',icon:'sword',price:2},
  mizrak:{id:'mizrak',name:'Kül mızrağı',kind:'weapon',description:'+15 saldırı. Erişimi %45 daha uzun; güvenli mesafeden vurursun.',rarity:'Nadir',icon:'sword',attack:15,price:68,menzil:1.45},
  balta:{id:'balta',name:'Yarma baltası',kind:'weapon',description:'+26 saldırı. Tek savuruşta 3 düşmanı birden yarar. Ağır: vuruşlar %35 daha yavaş.',rarity:'Nadir',icon:'sword',attack:26,price:88,hiz:1.35,alan:3,sprite:'balta'},
  hancer:{id:'hancer',name:'Sessiz hançer',kind:'weapon',description:'+12 saldırı, iki kat hızlı. Arkadan vuruşta çift hasar.',rarity:'Nadir',icon:'sword',attack:12,price:72,hiz:.5,arkadan:2},
  topuz:{id:'topuz',name:'Kül topuzu',kind:'weapon',description:'+20 saldırı. Her vuruş düşmanı kısa süre sersemletir.',rarity:'Eşsiz',icon:'sword',attack:20,price:105,sersemlet:.6},
  yemin:{id:'yemin',name:'Yemin kılıcı',kind:'weapon',description:'+21 saldırı. Rauf yaşıyorsa 6 saldırı daha; yemin iki kişiyi de taşır.',rarity:'Eşsiz',icon:'sword',attack:21,price:120,sadece:'hikaye'},
- uzunyay:{id:'uzunyay',name:'Uzun yay',kind:'weapon',description:'+22 saldırı. Ok daha hızlı ve uzağa gider; çekişi yavaştır.',rarity:'Eşsiz',icon:'bow',attack:22,price:115,menzilli:true,hiz:1.3,okHiz:1.5,sadece:'satin'},
+ uzunyay:{id:'uzunyay',name:'Uzun yay',kind:'weapon',description:'+22 saldırı. Ok daha hızlı ve uzağa gider; çekişi yavaştır.',rarity:'Eşsiz',icon:'bow',attack:22,price:170,menzilli:true,hiz:1.3,okHiz:1.5,sadece:'satin'},
  okates:{id:'okates',name:'Ateş oku',kind:'ammo',description:'İsabet ettiğini 3 saniye yakar.',rarity:'Nadir',icon:'flame',price:5,yakar:3},
  okzehir:{id:'okzehir',name:'Zehirli ok',kind:'ammo',description:'İsabet ettiğini 8 saniye zehirler: yavaş ama uzun hasar, hedef ağırlaşır.',rarity:'Nadir',icon:'flame',price:7,zehir:8},
- okdelici:{id:'okdelici',name:'Delici ok',kind:'ammo',description:'İlk düşmanda durmaz, arkasındakine de geçer.',rarity:'Nadir',icon:'bow',price:6,delici:true,sadece:'satin'},
- okcengel:{id:'okcengel',name:'Çengelli ok',kind:'ammo',description:'İsabet ettiğini sana doğru çeker.',rarity:'Nadir',icon:'bow',price:6,ceker:true,sadece:'satin'},
+ okdelici:{id:'okdelici',name:'Delici ok',kind:'ammo',description:'İlk düşmanda durmaz, arkasındakine de geçer.',rarity:'Nadir',icon:'bow',price:12,delici:true,sadece:'satin'},
+ okcengel:{id:'okcengel',name:'Çengelli ok',kind:'ammo',description:'İsabet ettiğini sana doğru çeker.',rarity:'Nadir',icon:'bow',price:14,ceker:true,sadece:'satin'},
  leather:{id:'leather',name:'Gezgin ceketi',kind:'armor',description:'Her darbeyi 2 puan hafifletir.',rarity:'Sıradan',icon:'shirt',defense:2,price:0,sadece:'satin'},
  chain:{id:'chain',name:'Halka zırh',kind:'armor',description:'+5 savunma. Pasın altında hâlâ sağlam.',rarity:'Nadir',icon:'shield',defense:5,price:50},
- pelerin:{id:'pelerin',name:'Kül pelerini',kind:'armor',description:'+4 savunma. Kül Ovası’nda canın yarı hızda erir.',rarity:'Nadir',icon:'shirt',defense:4,price:64,kulKalkan:.5,sadece:'satin'},
+ pelerin:{id:'pelerin',name:'Kül pelerini',kind:'armor',description:'+4 savunma. Kül Ovası’nda canın yarı hızda erir.',rarity:'Nadir',icon:'shirt',defense:4,price:70,kulKalkan:.5,sadece:'satin'},
  ocakz:{id:'ocakz',name:'Ocak zırhı',kind:'armor',description:'+11 savunma, +15 azami can. Ağırlığı seni %15 yavaşlatır.',rarity:'Eşsiz',icon:'shield',defense:11,hp:15,price:130,yavaslik:.85},
  kemik:{id:'kemik',name:'Kemik göğüslük',kind:'armor',description:'+6 savunma, +10 azami can. Ateş seni yakmaz.',rarity:'Nadir',icon:'shield',defense:6,hp:10,price:70,atesBagisik:true},
  yelek:{id:'yelek',name:'Avcı yeleği',kind:'armor',description:'+3 savunma. Attığın her ok 4 fazla hasar verir.',rarity:'Nadir',icon:'shirt',defense:3,price:58,okHasar:4},
- ash:{id:'ash',name:'Kül zırhı',kind:'armor',description:'+8 savunma, +20 azami can.',rarity:'Eşsiz',icon:'shield',defense:8,hp:20,price:100,sadece:'satin'},
- copper:{id:'copper',name:'Bakır yüzük',kind:'ring',description:'+3 saldırı. İçinde küçük bir yemin saklı.',rarity:'Sıradan',icon:'ring',attack:3,price:25,sadece:'satin'},
- life:{id:'life',name:'Yaşam halkası',kind:'ring',description:'+25 azami can.',rarity:'Nadir',icon:'heart',hp:25,price:55,sadece:'satin'},
- wind:{id:'wind',name:'Rüzgâr mührü',kind:'ring',description:'Kaçınma 0,6 saniye daha hızlı dolar.',rarity:'Nadir',icon:'wind',price:60,sadece:'satin'},
+ ash:{id:'ash',name:'Kül zırhı',kind:'armor',description:'+8 savunma, +20 azami can.',rarity:'Eşsiz',icon:'shield',defense:8,hp:20,price:150,sadece:'satin'},
+ copper:{id:'copper',name:'Bakır yüzük',kind:'ring',description:'+3 saldırı. İçinde küçük bir yemin saklı.',rarity:'Sıradan',icon:'ring',attack:3,price:45,sadece:'satin'},
+ life:{id:'life',name:'Yaşam halkası',kind:'ring',description:'+25 azami can.',rarity:'Nadir',icon:'heart',hp:25,price:120,sadece:'satin'},
+ wind:{id:'wind',name:'Rüzgâr mührü',kind:'ring',description:'Kaçınma 0,6 saniye daha hızlı dolar.',rarity:'Nadir',icon:'wind',price:95,sadece:'satin'},
  kanm:{id:'kanm',name:'Kan mührü',kind:'ring',description:'Öldürdüğün her düşman sana 8 can verir.',rarity:'Eşsiz',icon:'heart',price:90,oldurunceCan:8,sadece:'hikaye'},
  yeminh:{id:'yeminh',name:'Yemin halkası',kind:'ring',description:'Canın üçte birin altına düşerse bir kez 40 can dolar. Her bölgede yenilenir.',rarity:'Eşsiz',icon:'ring',price:100,kurtarma:40,sadece:'hikaye'},
- gozu:{id:'gozu',name:'Kül gözü',kind:'ring',description:'Düşmanların canını görürsün. Bulduğun altın %10 artar.',rarity:'Nadir',icon:'gem',price:48,altinKat:1.1,canGoster:true,sadece:'satin'},
+ gozu:{id:'gozu',name:'Kül gözü',kind:'ring',description:'Düşmanların canını görürsün. Bulduğun altın %10 artar.',rarity:'Nadir',icon:'gem',price:85,altinKat:1.1,canGoster:true,sadece:'satin'},
  merhem:{id:'merhem',name:'Sargı merhemi',kind:'consumable',description:'12 saniye boyunca her saniye 6 can. Kaçarken iyileşirsin.',rarity:'Nadir',icon:'potion',price:22},
  kavanoz:{id:'kavanoz',name:'Köz kavanozu',kind:'consumable',description:'Baktığın yöne fırlatılır; düştüğü yerde patlar ve yakar.',rarity:'Nadir',icon:'flame',price:26},
  toz:{id:'toz',name:'Kül tozu',kind:'consumable',description:'8 saniye boyunca düşmanlar seni göremez.',rarity:'Nadir',icon:'wind',price:24},
- bileme:{id:'bileme',name:'Bileme taşı',kind:'consumable',description:'30 saniye boyunca %25 daha hızlı vurursun.',rarity:'Nadir',icon:'sword',price:18,sadece:'satin'},
+ bileme:{id:'bileme',name:'Bileme taşı',kind:'consumable',description:'30 saniye boyunca %25 daha hızlı vurursun.',rarity:'Nadir',icon:'sword',price:30,sadece:'satin'},
  /* Obruk'un kileri: kul yagmadan onceki GERCEK yiyecek. Baska hicbir
   *  saticida yok, bu yuzden fiyatlari da baska bir dunyadan. */
  tuzet:{id:'tuzet',name:'Tuzlu et',kind:'consumable',description:'Gerçek et. 60 can yeniler. Tadı kül yağmadan önceki dünyadan kalma.',rarity:'Nadir',icon:'heart',price:26},
@@ -125,7 +125,7 @@ export interface State {version:1;started:boolean;zone:Zone;x:number;y:number;hp
  sandiklar?:Record<string,Partial<Record<ItemId,number>>>;
  /** Sandiktaki altin; alininca sifirlanir. */
  sandikAltin?:Record<string,number>;}
-export const XP=[0,100,260,490,790];
+export const XP=[0,140,380,760,1300];
 export const newState=():State=>({version:1,sandiklar:{},sandikAltin:{},started:true,zone:'haven',x:15*16,y:14*16,hp:100,xp:0,level:1,gold:18,points:0,skills:{power:0,vigor:0,agility:0},inventory:{yumruk:1,rusty:1,leather:1,potion:3},equipment:{weapon:'rusty',armor:'leather',ring:null,ok:'arrow'},flags:{},opened:[],killed:[],journal:['Son Sığınak’a vardın. Önce şifacı Mirna ile konuş.'],playtime:0,ending:null});
 /** HAMMADDE DUSURME TABLOSU - dusman turu -> {esya, olasilik, en az, en cok}.
  *  Tasarim kurallari:
@@ -207,7 +207,14 @@ export function tarifUygula(s:State,t:Tarif){
  return true;
 }
 
-export function stats(s:State){const weapon=ITEMS[s.equipment.weapon],armor=ITEMS[s.equipment.armor],ring=s.equipment.ring?ITEMS[s.equipment.ring]:null;return {maxHp:100+(s.level-1)*12+s.skills.vigor*18+(armor.hp||0)+(ring?.hp||0),attack:(weapon.attack||0)+(s.equipment.weapon==='yemin'&&Number(s.flags.raufCan||0)>0?6:0)+(ring?.attack||0)+(s.level-1)*2+s.skills.power*4,defense:armor.defense||0,dodge:Math.max(.65,2.2-s.skills.agility*.25-(s.equipment.ring==='wind'?.6:0))}}
+export function stats(s:State){const weapon=ITEMS[s.equipment.weapon],armor=ITEMS[s.equipment.armor],ring=s.equipment.ring?ITEMS[s.equipment.ring]:null;/* DENGE (v16.1). Olculdu: oyuncu dusmanlardan cok daha hizli gucleniyordu -
+   seviye 5 + Koz kilici ile fare ve yarasa TEK vurusta oluyor, oyuncunun
+   olmesi 17 vurus suruyordu. Silah 10->23 zaten 2.3 kat; ustune seviye ve
+   yetenek de eklenince dusman cani sabit kaldigi icin oyun erimeye
+   basliyordu. Seviye katkisi 2->1.5, guc yetenegi 4->3, can katkilari
+   12->8 ve 18->14: ilerleme hala hissediliyor ama dusmani gecersiz
+   kilmiyor. Dusman canlari da ayrica yukseltildi (bkz. engine.ts CAN). */
+return {maxHp:100+(s.level-1)*8+s.skills.vigor*14+(armor.hp||0)+(ring?.hp||0),attack:(weapon.attack||0)+(s.equipment.weapon==='yemin'&&Number(s.flags.raufCan||0)>0?6:0)+(ring?.attack||0)+Math.round((s.level-1)*1.5)+s.skills.power*3,defense:armor.defense||0,dodge:Math.max(.65,2.2-s.skills.agility*.25-(s.equipment.ring==='wind'?.6:0))}}
 export function addItem(s:State,id:ItemId,count=1){s.inventory[id]=(s.inventory[id]||0)+count;}
 export function removeItem(s:State,id:ItemId){if(!s.inventory[id])return false;s.inventory[id]!--;if(!s.inventory[id])delete s.inventory[id];return true;}
 /** Sandiktan oyuncuya ya da tersi: tek yonlu, adet bazli tasima.

@@ -720,13 +720,22 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   *  kopyasini tutuyordu; trol eklenince biri guncellendi digeri kaldi ve
   *  can NaN olup mob ilk karede `hp>0` filtresine takilip yok oldu. */
  /* 11 (iskelet) = 1: TEK vurusta olur, kalabalik olmasinin bedeli bu. */
- static readonly CAN:Record<number,number>={1:34,2:42,4:80,5:24,6:72,7:190,8:64,9:1,10:230,11:1};
+/* DENGE (v16.1). Canlar yukseltildi: oyuncunun gucu seviye+silahla 2-4 kat
+   artarken dusman cani SABIT kaliyordu ve oyun ilerledikce eriyordu
+   (olculdu: sv5 + Koz kilici ile fare ve yarasa tek vurusta oluyordu).
+   Iskelet (11) 1'de KALIYOR - tek vurusta olmesi tasarim geregi, tehdidi
+   sayidan geliyor. Rauf (6) dusman degil, hikaye karakteri: dokunulmadi. */
+ static readonly CAN:Record<number,number>={1:46,2:58,4:100,5:32,6:72,7:320,8:84,9:1,10:380,11:1};
  /** Yakin vurus hasari; tabloda yoksa 10+kind*3. */
  /* 11 (iskelet) tabloda OLMASAYDI varsayilan 10+11*3=43 olurdu - tek vurusta
     olen ve onlarca olan bir dusman icin bu olumcul cok yuksekti (14 kisilik
     cember oyuncuyu iki vurusta bitiriyordu). Kalabalik tehdidi sayidan
     gelsin diye tek tek vuruslari zayif. */
- static readonly HASAR:Record<number,number>={8:14,9:0,10:26,11:6};
+/* Hasarlar ARTIK ACIK yaziliyor. Eski varsayilan (10+kind*3) tur numarasina
+   bagliydi ve sacma sonuclar veriyordu: yarasa 25 hasar vururken fare 13
+   vuruyordu. Yarasa suru halinde geliyor, tek tek vurusu hafif olmali;
+   kullenmis ve bogulmus agir ve yavas, vurusu sert. */
+ static readonly HASAR:Record<number,number>={1:10,2:14,4:22,5:11,6:16,7:32,8:18,9:0,10:28,11:6};
  /** Takip hizi; tabloda yoksa 27. Bogulmus su icinde yurur gibi yavas. */
  static readonly HIZ:Record<number,number>={4:21,8:15,10:24,11:Engine.ISKELET_HIZ};
  /** Kralin tac hareketi: her KRAL_DONGU saniyede bir oynar (Tac sayfasinin
