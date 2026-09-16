@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='13.2';
+export const SURUM='13.3';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -9,9 +9,10 @@ export const ASAMA = 'alpha';
 // 'forge' (Kul Ocagi) kaldirildi: eski zindan assetleriyle yapilmis tek
 // mekandi. Bekci, Kul kalbi ve iki son da onunla birlikte cikti; oyunun
 // sonu yeni bir mekanla bastan kurulacak.
-/** 'test100': 100x100 karo olcegini denemek icin GECICI test mekani, gercek
- *  sanat degil (haven'dan kirpilmis parcalarla dolduruldu). Karar verilince
- *  Zone'dan da, ZONES'tan da, world.ts/engine.ts'ten de tamamen silinecek. */
+/** 'test100': ADI yaniltici - eskiden 100x100 olcek denemesiydi, artik gercek
+ *  bir mekan: terk edilmis tas koridor (86x48, tek parca boyali sahne).
+ *  Id BILEREK degistirilmedi: mevcut kayitlarda state.zone='test100' olabilir,
+ *  yeniden adlandirmak onlari kirardi. */
 export type Zone = 'haven' | 'disari' | 'yikik' | 'magara' | 'cistern' | 'tunel' | 'test100';
 export type ItemId = 'elmesale'|'tac'|'migfer'|'cakil'|'tuzet'|'durusu'|'petek'|'muhur'|'okzehir'|'mizrak'|'balta'|'hancer'|'topuz'|'yemin'|'uzunyay'|'okates'|'okdelici'|'okcengel'|'pelerin'|'ocakz'|'kanm'|'yeminh'|'merhem'|'kavanoz'|'toz'|'tatar'|'kemik'|'yelek'|'gozu'|'bileme'|'yumruk'|'rusty'|'guard'|'ember'|'blood'|'bow'|'leather'|'chain'|'ash'|'copper'|'life'|'wind'|'potion'|'tonic'|'medicine'|'ledger'|'wood'|'torch'|'arrow'|'kurdele';
 /** Item alanlari. attack/defense/hp dogrudan stats()'e girer; asagidakiler
@@ -101,7 +102,7 @@ export const ITEMS:Record<ItemId,Item>={
  ledger:{id:'ledger',name:'Nöbet defteri',kind:'quest',description:'Ocak muhafızlarının yemin defteri. Rauf’un adı çizili. Alf bunu bekliyor.',rarity:'Görev',icon:'book',price:0},
  kurdele:{id:'kurdele',name:'Kırmızı kurdele',kind:'quest',description:'Rauf’un bileğinden. Kızınındı. Alf bunu hiç görmedi.',rarity:'Görev',icon:'ring',price:0},
 };
-export const ZONES:Record<Zone,{name:string;subtitle:string;danger:string}>={haven:{name:'Son Sığınak',subtitle:'Ateşin hâlâ yandığı yer',danger:'Güvenli bölge'},disari:{name:'Kül Ovası',subtitle:'Fırtınanın altında kalan dünya',danger:'Fırtına · nefes alınmaz'},yikik:{name:'Yıkık Ev',subtitle:'Külün giremediği tek oda',danger:'Kapalı · güvenli'},magara:{name:'Sarnıç Ağzı',subtitle:'Sığınağın altındaki ilk karanlık',danger:'Tenha'},cistern:{name:'Unutulmuş Sarnıç',subtitle:'Taşların hatırladığı sırlar',danger:'Seviye 1–3'},tunel:{name:'Dar Geçit',subtitle:'Sarnıcın altına inen yarık',danger:'Zifiri karanlık · meşale şart'},test100:{name:'Test Alanı',subtitle:'100×100 ölçek denemesi — gerçek sanat değil',danger:'TEST'}};
+export const ZONES:Record<Zone,{name:string;subtitle:string;danger:string}>={haven:{name:'Son Sığınak',subtitle:'Ateşin hâlâ yandığı yer',danger:'Güvenli bölge'},disari:{name:'Kül Ovası',subtitle:'Fırtınanın altında kalan dünya',danger:'Fırtına · nefes alınmaz'},yikik:{name:'Yıkık Ev',subtitle:'Külün giremediği tek oda',danger:'Kapalı · güvenli'},magara:{name:'Sarnıç Ağzı',subtitle:'Sığınağın altındaki ilk karanlık',danger:'Tenha'},cistern:{name:'Unutulmuş Sarnıç',subtitle:'Taşların hatırladığı sırlar',danger:'Seviye 1–3'},tunel:{name:'Dar Geçit',subtitle:'Sarnıcın altına inen yarık',danger:'Zifiri karanlık · meşale şart'},test100:{name:'Terk Edilmiş Koridor',subtitle:'Sütunları çökmüş, molozla dolmuş geçit',danger:'Tenha'}};
 export interface State {version:1;started:boolean;zone:Zone;x:number;y:number;hp:number;xp:number;level:number;gold:number;points:number;skills:{power:number;vigor:number;agility:number};inventory:Partial<Record<ItemId,number>>;equipment:{weapon:ItemId;armor:ItemId;ring:ItemId|null;ok?:ItemId};flags:Record<string,boolean|string>;opened:string[];killed:string[];journal:string[];playtime:number;ending:string|null;
  /** Sandiklarin ICINDEKILER. Sandik artik "acilinca hepsini al" degil, iki
   *  yonlu bir kap: oyuncu alabilir ve koyabilir. Anahtar sandik id'si.

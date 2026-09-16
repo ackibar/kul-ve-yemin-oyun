@@ -1441,4 +1441,36 @@ Doğrulama: Playwright ile `getComputedStyle` (::before `content:none`, Vazgeç
 
 ---
 
-*Son güncelleme: 2026-09-16, v13.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v13.3: Test alanı → "Terk Edilmiş Koridor" (yeni tek parça sahne)
+Kullanıcı Masaüstü'nden bir 2K sahne verip "bunu test alanının yerine koy" dedi.
+`scripts/koridor_kur.py` eklendi; eski `test100_kur.py` SİLİNDİ (aynı dosyaya
+3200×3200 cistern tekrarı yazıyordu, çalıştırılsa yeni sahneyi ezerdi).
+
+**Ölçek - işin can alıcı kısmı.** Görsel 2752×1536; 32'ye tam bölündüğü için
+"86×48 karo" diye kurdum ve oyunda taşlar devasa, karakter minicik çıktı.
+Bölünebilirlik ölçek KANITI DEĞİL. Doğru dayanak karakterin kendisi: oyuncu
+sprite'ı sahneye bindirilip (fıçı/sütunla kıyaslanarak) **43×24** olduğu
+görüldü. Ama 43×24'te ham görsel 64 px/karo olurdu; not defterindeki "sprite
+yoğunluğu arka planla aynı olmalı" kuralı gereği görsel tam 2× küçültülüp
+(1376×768) 32 px/karo'ya çekildi. Yani: önce karakterle ölçeği bul, sonra
+yoğunluğu 32 px/karo'ya getir.
+
+**ZEMİN yalnızca odanın SİLUETİ** (siyah çerçeve dışı = dışarısı, flood fill ile
+merkezden). Duvar/sütun/moloz çarpışması ÇIKARILMADI - iki yöntem denendi ve
+ikisi de ayrışmadı: parlaklıkta taş duvar zeminle aynı bantta, R-B sıcaklığında
+meşale sütunları da zemin kadar sıcak. Zaten kuralı biliyorduk: boyalı sahnede
+çarpışma ELLE, Engeller aracıyla. Editöre `test100` preset'i eklendi.
+**Sonuç: sütunların/molozun üstünde yürünüyor, kullanıcıya söylendi.**
+
+**Sessiz no-op tuzağı:** ZEMİN'i regex'le değiştirirken kalıp tutmadı ve
+`re.sub` hiçbir şey yapmadan geçti; dosyada 86×48'lik eski maske kaldı. h=24
+olduğu için motor eski maskenin sol-üst çeyreğini kullanırdı - hata vermeden
+yanlış oda. Yakalandı çünkü değişiklikten SONRA dizinin boyutu ölçüldü.
+Üretilen kodu regex'le yamarken sonucu daima doğrula.
+
+Zone id'si bilerek `test100` kaldı (kayıtlardaki `state.zone` kırılmasın);
+görünen ad `ZONES`'ta güncellendi.
+
+---
+
+*Son güncelleme: 2026-09-16, v13.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
