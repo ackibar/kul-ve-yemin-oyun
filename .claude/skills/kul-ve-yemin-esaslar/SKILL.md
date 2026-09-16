@@ -1908,4 +1908,30 @@ Yerine kayıtlı bir darbe istenirse `ORNEKLER`e yeni bir ad eklemek yeterli.
 
 ---
 
-*Son güncelleme: 2026-09-16, v15.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v15.1: Yan vuruşun "geç tepki" hissi + harita editöründe eksik preset
+**1) Yan vuruş.** Kullanıcı: "a ve d pozisyonunda kılıçla vuruşumuz biraz geç
+reaksiyon veriyor gibi." Mekanik gecikme YOK - hasar tuşa basıldığı an işliyor,
+animasyon süresi her yönde aynı (0.43 sn, 16 fps, 7 kare). Fark GÖRSELDE:
+kılıcın gövdeden öne uzanımı kare kare ölçüldü (80px hücre, gövde kenarı 52):
+* `1sword` **S**: `[6, -3, 1, 14, 16, 11, 11]` → ilk iki karede bıçak gövdenin
+  **ARKASINA** gidiyor, tepe 4. karede (0.25 sn).
+* `1sword` D: `[6, 9, 10, 4, 23, 22, 19]` → tepe yine 4 ama bıçak hazırlık
+  boyunca ÖNDE duruyor, geri çekilme yok. Bu yüzden önde "geç" hissi yok.
+* Silahsiz `1` S: `[-4,-4,-2,7,8,16,17]` → tepe 6. karede, daha da kötü.
+* balta/meşale/kılıç+meşale tepe 2, yay `ATIS_BASA` ile zaten düzeltilmişti.
+Çözüm `VURUS_ATLA={characters1swordS:2, characters1S:4}`: bu setlerde animasyon
+baş karelerini atlayarak başlıyor, tepe 0.125 sn'ye iniyor. **Son karede
+duruyor** (başa sarmıyor) - yoksa kısalan animasyon "ikinci kez hazırlanıyor"
+gibi görünür.
+**Ders:** "geç tepki" şikayetini önce kodda arama; hasar anıyla animasyonun
+OKUNAN vuruş anı ayrı şeyler, ikincisi sprite'ın içinde ve ölçülebilir.
+
+**2) Harita editörü.** `test100` (koridor) `<select>`e eklenmiş ama `PRESETS`
+sözlüğüne eklenmemişti → `PRESETS[v].src` "Cannot read properties of undefined".
+Eklendi (43×24, 32px). Ayrıca eksik preset için açık hata mesajı kondu.
+**Yeni mekân eklerken editörde İKİ yer güncellenmeli: seçenek listesi ve
+PRESETS.**
+
+---
+
+*Son güncelleme: 2026-09-16, v15.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

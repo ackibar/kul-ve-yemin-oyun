@@ -210,6 +210,10 @@ const PRESETS = {
   yikik:{w:30,h:30,px:32,src:'/assets/arkaplan/yikik.png'},
   cistern:{w:54,h:30,px:32,src:'/assets/arkaplan/cistern.png'},
   tunel:{w:13,h:63,px:32,src:'/assets/arkaplan/tunel.png'},
+  // test100 (koridor) acilirken UNUTULMUSTU: <select>'e secenek eklendi ama
+  // PRESETS'e girdi eklenmedi, "Cannot read properties of undefined
+  // (reading 'src')" hatasi buydu. Yeni mekan eklerken IKI yer de guncellenmeli.
+  test100:{w:43,h:24,px:32,src:'/assets/arkaplan/test100.png'},
 };
 
 let img=null, gridW=30, gridH=30, pxKaro=32, scale=1;
@@ -344,6 +348,7 @@ $('loadBtn').addEventListener('click', async ()=>{
       if(!f){alert('Bir dosya seç.');return;}
       img=await loadImageSrc(URL.createObjectURL(f));
     }else if(v){
+      if(!PRESETS[v])throw new Error(`"${v}" icin PRESETS girdisi yok (harita-editor.html). Secenek listesine eklenmis ama olculeri tanimlanmamis.`);
       img=await loadImageSrc(PRESETS[v].src+'?t='+Date.now());
     }else{
       alert('Bir kaynak seç.');return;

@@ -620,6 +620,26 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  private dusmanPoz(kind:number,dir:string,action:string){const k=`enemies${kind}${dir}${action}`;
   if(this.images[k]?.naturalWidth)return k;
   return `enemies${kind}${dir==='DS'?'D':dir==='US'?'U':dir}${action}`;}
+ /** Vurus animasyonunun atlanacak BAS KARELERI (set+yon -> kare sayisi).
+  *  OLCULDU - kilicin govdeden ONE uzanimi, kare kare (80px hucre, govde
+  *  kenari 52): yan vurusta 1sword [6,-3,1,14,16,11,11]. Yani ilk iki karede
+  *  bicak govdenin ARKASINA gidiyor; hasar tusa basildigi an isledigi halde
+  *  ekranda "hala hazirlaniyor" goruntusu var - kullanicinin "a ve d
+  *  pozisyonunda vurus gec tepki veriyor" dedigi sey bu. Silahsiz sette daha
+  *  kotu: tepe 6. karede ([-4,-4,-2,7,8,16,17]). Bu kareler atlanarak tepe
+  *  0.125 sn'ye cekiliyor; on ve capraz vuruslarda tepe zaten 1-2. karede
+  *  (D 4 ama bicak tum hazirlik boyunca ONDE duruyor, geri cekilme yok).
+  *  Diger setler (balta/mesale/kilicmesale tepe 2, yay ATIS_BASA ile zaten
+  *  duzeltilmis) dokunulmadan kaliyor. */
+ static readonly VURUS_ATLA:Record<string,number>={characters1swordS:2,characters1S:4};
+ /** Vurus karesi. Son karede DURUR (basa sarmaz): atlama yuzunden animasyon
+  *  suresi kisaliyor, sarsa "ikinci kez hazirlaniyor" gibi gorunurdu. */
+ private vurusKare(){
+  const atla=Engine.VURUS_ATLA[this.kit()+this.direction]??0;
+  const im=this.images[this.poz('Attack')];
+  const n=im?.naturalWidth?Math.floor(im.width/(Engine.OYUNCU_EN*R)):7;
+  return Math.min(n-1,Math.floor((this.vurusSure-this.vurusPoz)*16)+atla);
+ }
  private poz(action:string){const k=this.kit();
    if(this.images[k+this.direction+action]?.naturalWidth)return k+this.direction+action;
    const temel=this.direction==='DS'?'D':this.direction==='US'?'U':this.direction;
@@ -1484,7 +1504,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     c.restore();
    }
   } else {
-  this.sprite(this.poz(action),s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?Math.floor((this.vurusSure-this.vurusPoz)*16):Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const v=this.yonVektor(),angle=Math.atan2(v.y,v.x);c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-1.1,angle+1.1);c.stroke();}}}});
+  this.sprite(this.poz(action),s.x,s.y,action==='Walk'?Math.floor(this.yol/Engine.ADIM):action==='Attack'?this.vurusKare():Math.floor(time*5),Engine.OYUNCU_EN,Engine.OYUNCU_BOY,this.flip,OYUNCU_OLCEK,this.invulnerable>0&&Math.floor(time*18)%2===0?.45:1);/* Kesme yayi yalnizca kesici silahla: yumrukta kocaman bir yay cizmek yanlis. */if(this.slash>0&&s.equipment.weapon!=='yumruk'){c.strokeStyle='#f5db9ac9';c.lineWidth=1.5;const v=this.yonVektor(),angle=Math.atan2(v.y,v.x);c.beginPath();c.arc(s.x,s.y-5*OYUNCU_OLCEK,23*OYUNCU_OLCEK*(ITEMS[s.equipment.weapon].menzil??1),angle-1.1,angle+1.1);c.stroke();}}}});
   actors.sort((a,b)=>(a.layer-b.layer)||(a.y-b.y)).forEach(a=>a.draw());
   c.fillStyle=this.state.zone==='haven'?'#060e1924':'#070b1c42';c.fillRect(cx,cy,this.gorus.en,this.gorus.boy);
   this.karanlik(cx,cy,time);
