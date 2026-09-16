@@ -321,7 +321,30 @@ mark(false);const result=await Promise.allSettled(jobs);
    }
   });
  }
- private resetMobs(){const diri=this.world.enemies.filter(e=>!this.state.killed.includes(e.id));
+ /** Bir dogum noktasini EN YAKIN YURUNUR noktaya cekiyor. Dusmanlar elle
+  *  yerlestirildigi icin bir kismi duvarin/molozun icinde kaliyordu -
+  *  OLCULDU: 135 dusmanin 46'si (test100 42'de 17, cistern 50'de 18,
+  *  disari 21'de 11). Engelde dogan dusman ya hic kimildayamiyor ya da
+  *  oyuncuya hic ulasamiyor; kullanici "sadece yesil zemin bolgelerinde
+  *  dogsunlar" dedi (editordeki yesil = walkable maskesi).
+  *  Konumlari world.ts'te tek tek duzeltmek yerine burada cekiliyor: engel
+  *  haritasi degisince kendiliginden dogru kalir. Spiral arama, her halkada
+  *  12 aci; halkalar arasi aci kaydirmasi hepsinin ayni yone yigilmasini
+  *  onluyor. Hicbir yurunur nokta bulunamazsa dusman DOGMAZ. */
+ private yurunurDogum(x:number,y:number){
+  if(walkable(this.world,x,y))return {x,y};
+  for(let r=Engine.DOGUM_ADIM;r<=Engine.DOGUM_ARAMA;r+=Engine.DOGUM_ADIM)
+   for(let i=0;i<12;i++){
+    const a=i*Math.PI/6+r*.37;
+    const nx=x+Math.cos(a)*r,ny=y+Math.sin(a)*r;
+    if(walkable(this.world,nx,ny))return {x:nx,y:ny};
+   }
+  return null;
+ }
+ private resetMobs(){const diri=this.world.enemies.filter(e=>!this.state.killed.includes(e.id))
+   /* Once YURUNUR noktaya cekilir; cekilemeyen (etrafi tamamen kapali) dusen. */
+   .map(e=>{const n=this.yurunurDogum(e.x,e.y);return n?{...e,x:n.x,y:n.y}:null;})
+   .filter((e):e is EnemySpec=>e!==null);
   this.gomulu=diri.filter(e=>e.kind===11);
   this.mobs=diri.filter(e=>e.kind!==11).map(e=>{const max=e.boss?300:(Engine.CAN[e.kind]??40);return {...e,hp:max,max,cool:1+Math.random(),windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y}});this.shots=[];this.particles=[];this.drops=[];this.activeTraps.clear();}
  setState(s:State){this.bekleyen={};this.state=s;this.world=makeWorld(s.zone,s.flags as Record<string,string|boolean|undefined>);
@@ -724,6 +747,14 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly ATES_YARICAP=14;
  static readonly ATES_HASAR=10;
  /** Bolgeden cikarken bu menzildeki dusmanlar "pesimizde" sayilir. */
+ /** Dogum noktasi engeldeyse bu adimlarla, bu yaricapa kadar aranir.
+  *  96 OLCULEREK secildi: 48'de 15 dusman hic dogamiyordu (test100 8, disari 5,
+  *  cistern 2), 96'da hicbiri kaybolmuyor ve daha genis aramanin faydasi yok -
+  *  en uzak cekme zaten 84 birimde doyuyor. Spiral yakindan uzaga tarandigi
+  *  icin bulunan nokta EN YAKIN zemin; duvara gomulu bir dusman duvarin oteki
+  *  yuzune ancak yakin yuz daha uzaksa gecer. */
+ static readonly DOGUM_ADIM=4;
+ static readonly DOGUM_ARAMA=96;
  static readonly BEKLEME_MENZIL=170;
  /** Geri donunce kapinin onunde bu uzaklikta dizilirler (~2 karo). */
  static readonly BEKLEME_UZAK=46;

@@ -1934,4 +1934,38 @@ PRESETS.**
 
 ---
 
-*Son güncelleme: 2026-09-16, v15.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v15.2: Düşmanlar yalnızca yürünür zeminde doğuyor
+Kullanıcı: "düşmanlar engel olan bloklarda doğamasın, sadece yeşil zemin
+bölgelerinde doğabilsinler" (editördeki yeşil = walkable maskesi).
+
+**Ölçüm önce:** 135 düşmanın **46'sı** engelin içinde doğuyordu -
+test100 42'de 17, cistern 50'de 18, disari 21'de 11. `world.ts`'te elle
+yerleştirilmiş koordinatlar; duvara gömülü düşman ya hiç kımıldayamıyor ya da
+oyuncuya hiç ulaşamıyor.
+
+**Çözüm koordinatları düzeltmek DEĞİL,** `resetMobs()` içinde
+`yurunurDogum()` ile en yakın yürünür noktaya çekmek: engel haritası
+değiştiğinde kendiliğinden doğru kalır, üstelik tek yerde. Spiral arama
+(4 birim halkalar, halkada 12 açı, halkalar arası açı kaydırması ki hepsi aynı
+yöne yığılmasın), yakından uzağa tarandığı için bulunan nokta **en yakın**
+zemin. Hiç bulunamazsa düşman doğmaz.
+
+**Yarıçap ölçülerek seçildi:** 48'de 15 düşman hiç doğamıyordu (test100 8,
+disari 5, cistern 2); **96**'da hiçbiri kaybolmuyor ve daha genişi bir şey
+katmıyor - en uzak çekme 84 birimde (5.3 karo) doyuyor. Sonuç: 4 bölgede de
+engelde doğan düşman **0**, sayılar tam (21/50/22/42).
+
+**Uyarı:** derine gömülü bir düşman 5 karoya kadar taşınabiliyor; mağara gibi
+gerçek duvarı olan yerlerde teorik olarak duvarın öteki yüzüne düşebilir.
+"En yakın" kuralı bunu sınırlıyor ama tam olarak engellemiyor - bir bölgede
+kesin konum gerekiyorsa `world.ts`'te elle düzeltilmeli.
+
+**Test notu:** bağlantı (erişilebilirlik) ölçmek için yazdığım karo bazlı taşma
+doldurma GÜVENİLMEZ çıktı - karo merkezinden `walkable` varsayılan yarıçapıyla
+bakınca dar geçitler kapalı görünüyor ve harita yapay olarak parçalanıyor
+(disari'de oyuncunun doğduğu karo bile "yürünmez" çıktı, erişilebilir alan 1
+karo). Erişilebilirlik iddiası için bu yöntem kullanılmamalı.
+
+---
+
+*Son güncelleme: 2026-09-16, v15.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
