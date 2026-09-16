@@ -272,18 +272,16 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 
 
 /* ============ "İlk ışık" gorev kutusu ============ */
-/* Rozet yukselince kutu onun altina biniyordu; asagi alindi. Ayrica arka plani
-   saydamlasti - cerceve AYRI bir katmana (::before) tasindi, cunku elementin
-   kendisine opacity verseydik yazi da solacakti. */
+/* Rozet yukselince kutu onun altina biniyordu; asagi alindi.
+   ESKIDEN burada bir ::before katmani vardi: kutu yari saydam olsun ama yazi
+   solmasin diye cerceve+zemin ayri bir katmana alinmisti. Ama dosyanin
+   ILERISINDE (parsomen blogu) elementin KENDISINE de `fill`li bir frame_in
+   verildi; ikisi ust uste binince ic ice IKI cerceve goruntusu olusuyordu
+   (kullanici: "icerdeki gereksiz cerceveyi kaldir"). ::before kaldirildi -
+   zemin zaten frame_in'in `fill`inden geliyor. */
 .quest-hint{
-  top:136px!important;position:absolute;isolation:isolate;
-  background:none!important;border:0!important;padding:13px 16px!important;
-}
-.quest-hint::before{
-  content:'';position:absolute;inset:0;z-index:-1;box-sizing:border-box;
-  border:8px solid transparent;
-  border-image:url(/assets/ui/frame_hud.png) 8 fill repeat;
-  opacity:.62;
+  top:136px!important;position:absolute;
+  padding:13px 16px!important;
 }
 @container(max-width:850px){.quest-hint{top:124px!important}}
 
@@ -687,17 +685,21 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 
 /* ---- "Vazgeç" düğmesi --------------------------------------------------
    Hiçbir çerçeve listesinde yoktu: shadcn'in koyu zemini kalıyor, üstüne de
-   parşömen mürekkebi (koyu) yazılıyordu - metin hiç okunmuyordu. Pastel bir
-   kırmızıya alındı. `fill` BİLEREK yok: fill merkezi de resimden boyuyor ve
-   arka plan rengi görünmüyor; fill'siz kullanınca çerçeve piksel resminden,
-   merkez ise renkten geliyor. */
+   parşömen mürekkebi (koyu) yazılıyordu - metin hiç okunmuyordu. Bir süre
+   pastel kırmızı zeminle çözüldü ama o pembe parşömen paletinde yamalı
+   duruyordu (kullanıcı: "vazgeç üzerindeki pembe rengi kaldır"). Artık diğer
+   nötr düğmelerle AYNI reçete: `fill`li frame_in, yani merkez de piksel
+   resminden geliyor, ayrı bir arka plan rengine gerek kalmıyor. */
 .confirm-actions [data-slot=alert-dialog-cancel]{
-  background:#c4837c!important;
+  background:none!important;
   border:8px solid transparent!important;border-radius:0!important;
-  border-image:url(/assets/ui/frame_in.png) 8 repeat!important;
-  color:#2b1512!important;font-weight:700;
+  border-image:url(/assets/ui/frame_in.png) 8 fill repeat!important;
+  color:var(--pr-murekkep)!important;font-weight:700;
 }
-.confirm-actions [data-slot=alert-dialog-cancel]:hover{background:#d1928b!important}
+/* Geri bildirim renkle değil çerçeve değiştirerek: seçili hücrelerdeki kalın çerçeve. */
+.confirm-actions [data-slot=alert-dialog-cancel]:hover{
+  border-image:url(/assets/ui/frame.png) 8 fill repeat!important;
+}
 
 /* ---- Görev ipucu -------------------------------------------------------
    "İlk ışık / Sığınaktakilerle konuş" kutusu yarı saydamdı ve altındaki

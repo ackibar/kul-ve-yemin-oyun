@@ -1419,4 +1419,26 @@ engeller (y≈92-148) yerinde, yani muafiyet orada gerileme yaratmadı.
 
 ---
 
-*Son güncelleme: 2026-09-16, v13.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v13.2: "Vazgeç"in pembesi + görev kutusundaki iç içe çerçeve
+İki arayüz düzeltmesi, ikisi de parşömen blogunda:
+* **Vazgeç**: zemini `#c4837c` (pastel kırmızı) idi - parşömen paletinde yamalı
+  duruyordu. Artık diğer nötr düğmelerle AYNI reçete: `frame_in.png 8 **fill**`.
+  Buradaki incelik: eski kural `fill`i BİLEREK atlamıştı (merkez arka plan
+  renginden gelsin diye); `fill` eklenince ayrı bir zemin rengine gerek kalmıyor.
+  Hover artık renkle değil çerçeve değiştirerek (`frame.png`).
+* **Görev kutusu ("İlk ışık")**: iç içe İKİ çerçeve görünüyordu. Sebep: dosyanın
+  ~278. satırındaki blok kutuyu yarı saydam yapmak için çerçeveyi bir `::before`
+  katmanına taşımıştı (opacity yazıyı da soldurmasın diye); ama İLERİDEKİ
+  parşömen bloğu elementin KENDİSİNE de `fill`li `frame_in` verdi. İkisi üst
+  üste binince biri dış, biri iç çerçeve oluyordu. `::before` (ve yalnızca onun
+  için duran `isolation:isolate`) kaldırıldı; zemin zaten `fill`den geliyor.
+  **Ders:** bu dosyada aynı seçiciye iki ayrı yerde stil verilmiş olabiliyor -
+  bir görünüm sorununda `grep -n "<seçici>" app/globals.css` ile TÜM kuralları
+  listelemeden düzeltmeye başlama.
+
+Doğrulama: Playwright ile `getComputedStyle` (::before `content:none`, Vazgeç
+`background: rgba(0,0,0,0)`) + iki element ekran görüntüsü.
+
+---
+
+*Son güncelleme: 2026-09-16, v13.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
