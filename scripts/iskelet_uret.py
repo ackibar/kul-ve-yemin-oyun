@@ -23,6 +23,12 @@ TARIF = ('a bare skeleton warrior clawing its way up out of the ground, bleached
          'a short rusted iron sword in one bony hand, hunched forward, '
          'muted ash-grey palette, soot-stained, single dark outline, '
          'NO backpack, NO satchel, NO modern clothing')
+# NOT: model ayaklarin altina bir TOPRAK/CIM yamasi ciziyor. Tarife
+# "NO ground, NO soil, NO grass, NO base..." eklemek DENENDI (2 uretim) ve
+# ISE YARAMADI: zemin yine geldi, ustune bir de tarifte ACIKCA yasaklanmis
+# olan SIRT CANTASI eklendi. Yani bu modelde olumsuz talimatlar guvenilir
+# degil. Zemin artik uretimden sonra scripts/iskelet_zemin_sil.py ile
+# kesiliyor. Iyi karakterin id'si: 778b71aa (ikinci/cantali: 3feda690).
 
 if __name__ == '__main__':
     b0 = pxl.balance()[0]

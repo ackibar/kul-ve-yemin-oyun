@@ -32,6 +32,11 @@ import {bekleyen} from './data';
 type Yon='U'|'D'|'S'|'DS'|'US';
 type Mob=EnemySpec&{hp:number;max:number;cool:number;windup:number;burn:number;hurt:number;homeX:number;homeY:number;gezX?:number;gezY?:number;gezBekle?:number;aci?:number;sersem?:number;zehir?:number;zehirTik?:number;/** Yerden cikma animasyonu: kalan sure (sn). >0 iken yurumez/vurmaz. */cikis?:number};
 type Particle={x:number;y:number;vx:number;vy:number;life:number;color:string;size:number;g?:number};
+/** Olen iskeletin sprite'indan kopan parca: kaynak sheet'in bir dilimi, kendi
+ *  hizi/donusuyle savrulur. Parcacik degil GORSEL parca - "dagilma" hissi
+ *  tek tek piksellerden degil, govdenin kopan kemik kutlelerinden geliyor. */
+type Parca={anahtar:string;sx:number;sy:number;sw:number;sh:number;x:number;y:number;
+ vx:number;vy:number;aci:number;donus:number;life:number;omur:number;olcek:number};
 type Floating={x:number;y:number;text:string;life:number;color:string};
 type Shot={x:number;y:number;vx:number;vy:number;life:number;damage:number;isHero?:boolean;yakar?:number;zehir?:number;delici?:boolean;ceker?:boolean;gecti?:string[]};
 export type Drop={id:string;x:number;y:number;kind:'wood'|'xp'|'gold'|'bow';amount:number;vx:number;vy:number;life:number};
@@ -48,7 +53,7 @@ export class Engine{
   *  ana tuvale dogrudan destination-out ile cizersek arka plan/diger her seyi
   *  de delerdi, bu yuzden golge ONCE burada izole cizilip sonra yapistiriliyor. */
  private golgeBuf?:HTMLCanvasElement;
- private images:Record<string,HTMLImageElement>={};private raf=0;private last=0;private tick=0;private notifyAt=0;private savedAt=0;private stepAt=0;private direction:Yon='D';private flip=false;private moving=false;private attackTimer=0;private dodgeTimer=0;private dash=0;private dashVector={x:0,y:1};private invulnerable=0;private tonic=0;private particles:Particle[]=[];
+ private images:Record<string,HTMLImageElement>={};private raf=0;private last=0;private tick=0;private notifyAt=0;private savedAt=0;private stepAt=0;private direction:Yon='D';private flip=false;private moving=false;private attackTimer=0;private dodgeTimer=0;private dash=0;private dashVector={x:0,y:1};private invulnerable=0;private tonic=0;private particles:Particle[]=[];private parcalar:Parca[]=[];
  /** Yurunen toplam yol. Yurume karesi zamana degil buna baglanir; boylece
   *  hiz degisse de ayaklar yere basar (once 58 birim/sn hizda 7fps animasyon
   *  kullaniliyordu, 2.1 kat uyumsuzdu ve kayiyor gibi duruyordu). */
@@ -459,7 +464,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);
    const u=Math.hypot(m.x-this.state.x,m.y-this.state.y);
    this.audio.play('dusmanOlum',Math.max(.3,1-u/300));
-   this.kemikPatlat(m.x,m.y);this.spawnDrop(m.x,m.y,'xp',6);return;
+   this.iskeletDagit(m,this.dusmanYon(m));this.spawnDrop(m.x,m.y,'xp',6);return;
   }
   if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);
   if(m.id==='muhafiz'){this.state.flags.muhafiz='oldu';addItem(this.state,'migfer',1);this.state.journal.unshift('Kralın son muhafızını yendin. Miğferi kül doluydu; boşaltmadın.');this.notify('Son muhafız düştü. Miğferi heybende.');}/* Menzil 190'di: yayla uzaktan oldurunce ses neredeyse duyulmuyordu. */
@@ -658,12 +663,42 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   }
   this.gomulu=kalan;
  }
- /** Iskelet olunce parcalanir: kemik kiymigi + toz, yer cekimiyle savrulur. */
- private kemikPatlat(x:number,y:number){
-  for(let i=0;i<16;i++)this.particles.push({x,y:y-8-Math.random()*10,
+ /** Iskelet olunce DAGILIR: sprite'i 2x3'luk dilimlere bolup her dilimi kendi
+  *  hizi ve donusuyle savurur, ustune kemik kiymigi + toz atar. Dilimler
+  *  kaynak sheet'ten okunuyor (kopyalanan piksel yok), bu yuzden bedava.
+  *  Yon: 'D' sabit degil, oldugu andaki bakis yonu verilir ki on/arka
+  *  gorunumu tutsun. */
+ /** Bir mob'un oyuncuya gore bakis yonu (yalniz D/U/S - enemies sheet'leri
+  *  bu uc yonde; render de capraz yonleri bunlara dusuruyor). */
+ private dusmanYon(m:Mob){const dx=this.state.x-m.x,dy=this.state.y-m.y;
+  return Math.abs(dy)>Math.abs(dx)?(dy<0?'U':'D'):'S';}
+ private iskeletDagit(m:Mob,yon:string){
+  const anahtar=this.dusmanPoz(m.kind,yon,'Walk');
+  const im=this.images[anahtar];
+  const ol=(Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;
+  if(im?.naturalWidth){
+   const KARE=32*R;                    // hucrenin kaynak piksel genisligi
+   const SUT=2,SAT=3;                  // 2 sutun x 3 satir dilim
+   const dw=KARE/SUT,dh=KARE/SAT;
+   for(let sy=0;sy<SAT;sy++)for(let sx=0;sx<SUT;sx++){
+    /* Dilimin hucre icindeki yeri: ust dilimler daha yukari/hizli firlar,
+       alt dilimler (bacaklar) yere daha yakin kalir. */
+    /* Dilimin GERCEK ekran yeri: sprite ayak noktasindan (m.y) capa kadar
+       YUKARI cizilir (bkz. sprite(): top=-anchor*scale), yani hucrenin ust
+       kenari m.y-capa*ol. Bu hesaba katilmazsa parcalar ayak hizasinda,
+       govdenin altinda doguyordu. */
+    const merkezX=(sx+.5)/SUT-.5,merkezY=(sy+.5)/SAT-.5;
+    const capa=Engine.DUSMAN_CAPA[m.kind]??21;
+    this.parcalar.push({anahtar,sx:sx*dw,sy:sy*dh,sw:dw,sh:dh,
+     x:m.x+merkezX*32*ol,y:m.y-capa*ol+(sy+.5)*(32*ol/SAT),
+     vx:merkezX*150+(Math.random()-.5)*70,vy:-70-Math.random()*85+merkezY*40,
+     aci:0,donus:(Math.random()-.5)*11,life:.75+Math.random()*.4,omur:.75,olcek:ol});
+   }
+  }
+  for(let i=0;i<14;i++)this.particles.push({x:m.x,y:m.y-8-Math.random()*10,
    vx:(Math.random()-.5)*95,vy:-30-Math.random()*70,life:.5+Math.random()*.45,
    color:['#e9e2cf','#cfc6ad','#a99e86'][Math.floor(Math.random()*3)],size:1+Math.random()*1.6,g:190});
-  for(let i=0;i<7;i++)this.particles.push({x,y:y-4,
+  for(let i=0;i<7;i++)this.particles.push({x:m.x,y:m.y-4,
    vx:(Math.random()-.5)*45,vy:-8-Math.random()*22,life:.4+Math.random()*.3,
    color:'#6b5f4d',size:1+Math.random(),g:90});
  }
@@ -777,7 +812,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
         okunmuyordu - yani Ates, Delici ve Cengelli ok sade ok gibi davraniyordu. */if(shot.gecti){if(shot.gecti.includes(m.id))continue;shot.gecti.push(m.id);}else shot.life=0;m.hp-=shot.damage;m.hurt=.17;if(shot.yakar)m.burn=Math.max(m.burn,shot.yakar);if(shot.zehir){m.zehir=Math.max(m.zehir??0,shot.zehir);this.float(m.x,m.y-24,'ZEHİR','#9fd47a');}this.float(m.x,m.y-12,String(shot.damage),'#95e086');this.burst(m.x,m.y,'#c76b5d',6);this.audio.play('hit');const d=Math.hypot(m.x-this.state.x,m.y-this.state.y)||1;/* Cengelli ok geri itmek yerine CEKER: itme yonu tersine cevrilir. */const it=shot.ceker?-22:(m.boss?5:18);this.move(m,(m.x-this.state.x)/d*it,(m.y-this.state.y)/d*it);if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);if(!shot.gecti)break;}}}else if(Math.hypot(shot.x-this.state.x,shot.y-this.state.y)<9){shot.life=0;this.hurt(shot.damage);}}this.shots=this.shots.filter(s=>s.life>0);
    for(const e of this.world.entities){if(e.type==='trap'){const active=this.trapActive(e);const wasActive=this.activeTraps.has(e.id);if(active&&!wasActive){this.activeTraps.add(e.id);const dist=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(dist<100)this.audio.play('trap',1-dist/100);}else if(!active&&wasActive){this.activeTraps.delete(e.id);}if(this.trapCooldown<=0&&active&&Math.hypot(e.x-this.state.x,e.y-this.state.y)<10){this.hurt(15);this.trapCooldown=1;break;}}}
    for(const d of this.drops){d.life-=dt;d.vx*=.84;d.vy*=.84;d.x+=d.vx*dt;d.y+=d.vy*dt;const dist=Math.hypot(this.state.x-d.x,this.state.y-4-d.y);if(dist<65){const speed=160*(1-dist/65)+50;d.x+=(this.state.x-d.x)/dist*speed*dt;d.y+=(this.state.y-4-d.y)/dist*speed*dt;}if(dist<10){d.life=0;if(d.kind==='wood'){addItem(this.state,'wood',d.amount);this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} Odun`,'#dca574');}else if(d.kind==='xp'){if(gainXp(this.state,d.amount)){this.audio.play('level');this.notify(`Seviye ${this.state.level}! Yetenek puanını karakter ekranında kullan.`);this.burst(this.state.x,this.state.y,'#e7cb76',25);}else this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} XP`,'#b9dca5');}else if(d.kind==='gold'){const r=this.state.equipment.ring;d.amount=Math.round(d.amount*(r?ITEMS[r].altinKat||1:1));this.state.gold+=d.amount;this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} Altın`,'#f2d480');}else if(d.kind==='bow'){addItem(this.state,'bow',1);addItem(this.state,'arrow',30);this.audio.play('level');this.notify('Avcı yayı ve 30 ok aldın! Q veya R ile yaya geçebilirsin.');this.float(d.x,d.y-8,'+1 YAY & +30 OK','#f2d480');}this.save();this.emit();}}this.drops=this.drops.filter(d=>d.life>0);
-   for(const p of this.particles){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.g??40)*dt;}this.particles=this.particles.filter(p=>p.life>0);for(const f of this.floating){f.life-=dt;f.y-=12*dt;}this.floating=this.floating.filter(f=>f.life>0);
+   for(const p of this.particles){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.g??40)*dt;}this.particles=this.particles.filter(p=>p.life>0);for(const f of this.parcalar){f.life-=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=260*dt;f.aci+=f.donus*dt;f.vx*=1-.9*dt;}this.parcalar=this.parcalar.filter(f=>f.life>0);for(const f of this.floating){f.life-=dt;f.y-=12*dt;}this.floating=this.floating.filter(f=>f.life>0);
    // Ocaklardan yukari suzulen koz kivilcimlari: negatif yercekimi ile yukselir,
    // solerken sonerler. Kare basina olasilikla saliniyor ki yogunluk sabit kalsin.
    // Ates ortam sesi: her alevden ayri ses CALMAZ. Alevlerin uzakliga gore
@@ -1243,6 +1278,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      degmiyordu. Yukseklik yalnizca cizime verilir. */c.translate(s.x,s.y-Engine.OK_YUKSEK);c.rotate(Math.atan2(s.vy,s.vx));// Ikinci kucultme: 8 -> 5.6 birim. Uc de koyulastirildi - #aab2b8 magara
     // zemininde sahnenin en parlak pikseliydi, ok fosforlu gibi duruyordu.
     c.strokeStyle='#54402a';c.lineWidth=.8;c.beginPath();c.moveTo(-2.8,0);c.lineTo(1.8,0);c.stroke();c.fillStyle='#79818a';c.beginPath();c.moveTo(2.8,0);c.lineTo(1,-1);c.lineTo(1,1);c.closePath();c.fill();c.strokeStyle='#63403a';c.lineWidth=.6;c.beginPath();c.moveTo(-1.8,0);c.lineTo(-3.2,-1);c.moveTo(-1.8,0);c.lineTo(-3.2,1);c.stroke();c.restore();}else{c.fillStyle='#f2bd76';c.fillRect(s.x-2,s.y-2,4,4);c.fillStyle='#fff0bd';c.fillRect(s.x-1,s.y-1,2,2);}}
+  /* Kopan sprite parcalari: kendi etrafinda donerek savrulur, sonuna dogru
+     solar. Parcaciklardan ONCE cizilir ki kemik tozu ustlerinde kalsin. */
+  for(const f of this.parcalar){const im=this.images[f.anahtar];if(!im?.naturalWidth)continue;
+   c.save();c.globalAlpha=Math.min(1,f.life/f.omur*2.2);c.translate(f.x,f.y);c.rotate(f.aci);
+   const w=f.sw/R*f.olcek,h=f.sh/R*f.olcek;
+   c.drawImage(im,f.sx,f.sy,f.sw,f.sh,-w/2,-h/2,w,h);c.restore();}
+  c.globalAlpha=1;
   for(const p of this.particles){c.globalAlpha=Math.min(1,p.life*3);c.fillStyle=p.color;c.fillRect(p.x,p.y,p.size,p.size);}c.globalAlpha=1;
   for(const f of this.floating){c.globalAlpha=Math.min(1,f.life*3);c.font='bold 7px Arial';c.textAlign='center';c.lineWidth=2;c.strokeStyle='#111';c.strokeText(f.text,f.x,f.y);c.fillStyle=f.color;c.fillText(f.text,f.x,f.y);}c.globalAlpha=1;
   

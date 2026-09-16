@@ -1521,4 +1521,39 @@ iskeletler uyanıp sayıyı artırıyor, doğru ölçüt `state.killed`.
 
 ---
 
-*Son güncelleme: 2026-09-16, v13.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v13.6: İskeletin altındaki zemin yaması + ölünce DAĞILMA
+İki istek: "altında bir şey var, o olmaz" ve "animasyona dağılsınlar".
+
+**1) Zemin yaması.** `create-character-v3` figürün ayaklarının altına toprak/
+çim/çakıl tümseği çizmişti. **Tarifte yasaklamak İŞE YARAMADI** (2 üretim
+harcandı): "NO ground, NO soil, NO grass, NO base…" eklenince zemin yine geldi,
+üstelik tarifte ZATEN yasaklı olan **sırt çantası** eklendi. Bu modelde olumsuz
+talimat güvenilmez - "sişman NPC" dersinin tersi yönü. Temizlik artık üretimden
+sonra `scripts/iskelet_zemin_sil.py` ile:
+* Palette **yeşil YOK** - "çim" sanılan şeritler zeytuni kahve. Ölçmeden kural
+  yazmak boşa gitti.
+* Kemik (L 111-207), paslı kılıç (L=121) ve toprak (L 28-50) aynı SICAK tonda;
+  tek güvenilir ayırıcı **parlaklık**: `L<=58 && r-b>=4`.
+* Ayrı bir "çakıl" kuralı (soğuk gri) denendi ve **KILICI YEDİ** - bıçak da
+  soğuk gri ve dipten bağlı. Kaldırıldı.
+* Alt kenardan taşma-doldurma; **siyah kontur bariyer** olduğu için dolgu
+  bacakların içine geçemiyor. Sonra öksüz kalan kontur ve en büyük parça
+  dışındaki adacıklar siliniyor.
+Sonuç oyun ölçeğinde temiz; dipte birkaç piksel moloz kalıyor, platform hissi
+gitti.
+
+**2) Dağılma.** Ölüm artık parçacık değil: `iskeletDagit()` sprite'ı 2x3
+dilime bölüp her dilimi kendi hızı + dönüşüyle savuruyor (`Parca` tipi,
+yerçekimi + solma), üstüne kemik kıymığı. Dilimler kaynak sheet'ten okunuyor,
+kopyalanan piksel yok - **üretim harcamıyor**. Parçanın doğduğu yer sprite'ın
+ÇAPASINA göre hesaplanmalı (`m.y - capa*ol + ...`); ilk halinde ayak hizasında,
+gövdenin altında doğuyorlardı.
+
+**Kaybolan id uyarısı:** ikinci üretim `id_iskelet.txt`'yi EZDİ ve `_arsiv/`
+gitignore'da olduğu için geri alınamadı - ama `GET /characters` tüm karakterleri
+prompt'uyla listeliyor, iyi olan oradan bulundu (`778b71aa`, çantalı olan
+`3feda690`). Yeniden üretim yapmadan önce id dosyasını yedekle.
+
+---
+
+*Son güncelleme: 2026-09-16, v13.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
