@@ -1830,4 +1830,32 @@ Ham WAV `_arsiv/uretim/` altında.
 
 ---
 
-*Son güncelleme: 2026-09-16, v14.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v14.7: İskelet ölüm sesine taş koridor yankısı + perde saçılması
+Kullanıcı: "ses biraz yüksek, çok temiz geliyor, biraz reverb; bir de az artı-eksi
+pitch'leyip alternatiflerini koyalım, her vuruşta aynı ses çıkmasın."
+
+**`scripts/ses_oda.py`** - elimizde IR yok, `aecho` de gerçek yankı değil (tek
+slapback). IR'yi sentezliyoruz: erken yansımalar (11-49 ms) + üstel sönümlü,
+tek kutuplu alçak geçirenle koyulaştırılmış gürültü kuyruğu; `afir` ile
+konvolüsyon. **Üç tuzak, üçü de ölçümle bulundu:**
+* `afir` çıktıyı girdinin BOYUNDA kesiyor - kuyruk tamamen uçuyordu (çıktı
+  girdiyle aynı 0.612 sn). Önce `apad=pad_dur=RT60`.
+* `irnorm` (varsayılan 1) IR'yi kendi normalize ediyor ve yaş dal ~54 dB
+  düşüyor (ölçüldü: irnorm=1 → −61.9 dB, irnorm=−1 → −7.9 dB). `gtype`'ı
+  değiştirmek HİÇBİR ŞEY yapmıyor, sorun irnorm. Kapatılıp seviye kendi
+  telafi çarpanımızla veriliyor (IR enerjisinin tersi) - böylece `yas`
+  gerçek bir kuru/yaş oranı.
+* `afir`in kendi `dry/wet`i de aynı normalizasyona tabi; kuru/yaş açık
+  `amix` ile karıştırılıyor.
+* RT60 0.55 kısa kaldı (kuru ses 0.61 sn'de bitiyor, 0.7'de kuyruk −68 dB);
+  **0.85** ile kuyruk sesin bitiminden sonra ~0.4 sn yaşıyor.
+
+**Seviye:** −4 dB → tepe −3.8 / ortalama −29.4 dB (öncesi −1.2 / −23.8).
+
+**Perde saçılması:** ayrı dosyalar ÜRETİLMEDİ. `ORNEK_PERDE` tablosu +
+`playbackRate` ile her çalışta ±%7 (~±1.2 yarım ton) kayıyor: sınırsız
+varyasyon, depoya tek dosya. Ölçüldü, 12 çalışta hepsi farklı (0.934-1.058).
+
+---
+
+*Son güncelleme: 2026-09-16, v14.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
