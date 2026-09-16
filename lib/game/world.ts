@@ -115,7 +115,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      ayni yer tekrar kullanildi - "bos gorunuyor ama izole" hatasi
      tekrarlanmasin diye. */
   for(let j=15;j<17;j++)for(let i=1;i<3;i++)tiles[j][i]=1;
-  gecis(1,15,3,17,'test100',[7,14]);    // tas koridora gecis (sol kemerin ic tarafi)
+  gecis(1,15,3,17,'test100',[36,14]);   // tas koridora gecis (bati kapisi -> koridorun DOGU ucu)
   // Ocaklarda boyali ALEV yok, sadece kor ve odun var; animasyonlu alevi motor
   // buraya koyuyor. Konum ocak halkasinin prop bileseninden olculdu.
   // Capa: Fire1 sprite'i 32 birimlik hucrenin TAMAMINI dolduruyor ve sprite()
@@ -281,10 +281,12 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      mevcut kayitlardaki state.zone'u ve Zone tipini kirardi. */
     const ZEMIN=['0000000000000000000000000000000000000000000','0000000000000000000000000000000000000000000','0000001111110000111111111000001111110000000','0000011111111111111111111111111111111100000','0000111111111111111111111111111111111110000','0011111111111111111111111111111111111111100','0011111111111111111111111111111111111111110','0111111111111111111111111111111111111111110','0111111111111111111111111111111111111111110','0111111111111111111111111111111111111111110','0111111111111111111111111111111111111111110','0111111111111111111111111111111111111111110','0111111111111111111111111111111111111111110','1111111111111111111111111111111111111111111','1111111111111111111111111111111111111111111','1111111111111111111111111111111111111111111','1111111111111111111111111111111111111111110','0011111111111111111111111111111111111111100','0001111111111111111111111111111111111111000','0000011111111111111111111111111111111100000','0000011111111111111111111111111111111100000','0000001111100000011110100000010001111000000','0000000000000000000000000000000000000000000','0000000000000000000000000000000000000000000'];
   for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
-  /* Donus kutusu SOL kemerin oldugu uc (x 1..3, y 12..16). Dogma noktasi
-     (7,14) kutunun DISINDA - bkz. disari'nin ust kapisindaki ayni not:
-     ust uste binerse oyuncuyu varir varmaz geri gonderir. */
-  gecis(1,12,4,17,'haven',[3,16]);
+  /* Siginaktan BATIYA cikiliyor, demek ki koridorun DOGU ucunda belirilir ve
+     geri donmek icin yine DOGUYA yurunur - ilk halde iki kapi da sol uctaydi,
+     yani cikis girdigin ucta duruyordu (kullanici: "kapi giris cikisi ters
+     olmus"). Donus kutusu sag kemerin oldugu uc (x 39..42, y 12..16); dogma
+     noktasi (36,14) kutunun DISINDA, yoksa varir varmaz geri gonderir. */
+  gecis(39,12,43,17,'haven',[3,16]);
  }
  return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:zone==='tunel'?[6*16+8,6*16+8]:zone==='test100'?[21*16+8,12*16+8]:[7*16,7*16]};
 }

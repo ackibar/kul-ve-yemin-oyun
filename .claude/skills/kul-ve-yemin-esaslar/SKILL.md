@@ -1473,4 +1473,14 @@ görünen ad `ZONES`'ta güncellendi.
 
 ---
 
-*Son güncelleme: 2026-09-16, v13.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v13.4: Koridorun kapı yönü düzeltildi
+İlk kurulumda hem sığınağın çıkışı hem koridorun dönüş kutusu SOL uçtaydı:
+batıya çıkıp koridorun yine batı ucunda beliriyordun, yani çıkış girdiğin
+uçta duruyordu (kullanıcı: "kapı giriş çıkışı ters olmuş"). Coğrafya artık
+tutarlı: sığınaktan BATIYA çık → koridorun DOĞU ucunda belir (36,14) →
+geri dönmek için DOĞUYA yürü (kutu x 39..42, y 12..16). Yeni bir mekân
+bağlarken kural: çıkış yönü ile varış ucu BİRBİRİNİN TERSİ olmalı.
+
+---
+
+*Son güncelleme: 2026-09-16, v13.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
