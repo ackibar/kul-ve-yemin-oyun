@@ -1780,4 +1780,33 @@ orada yalnızca başlangıç fazı kayıyor.
 
 ---
 
-*Son güncelleme: 2026-09-16, v14.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v14.5: Yan odaya geçip dönünce düşmanlar kapıda bekliyor
+Kullanıcı: "düşmanla savaşırken diğer odaya geçip dönünce düşmanlar kayboluyor,
+bu bug olur - kapıda bizi beklemeliler."
+
+Sebep: `resetMobs()` bölgeye her girişte HERKESİ ev konumuna ve DOLU canla
+kuruyordu; iskeletler ayrıca yeniden `gomulu` listesine düşüyordu, yani toprağın
+altına giriyorlardı. Oyuncu açısından düşmanlar yok olmuş gibi görünüyordu.
+
+Çözüm: `bekleyenleriYaz()` bölgeden çıkarken peşimizdekileri (yara almış YA DA
+`BEKLEME_MENZIL=170` içindekiler) id+can olarak not eder; `bekleyenleriKur()`
+dönüşte onları oyuncunun çevresine `BEKLEME_UZAK=46` birime dizer ve canlarını
+geri yazar. İskelet kaydı varsa `gomulu`dan çıkarılıp `cikis:0` ile doğrudan
+ayakta listeye alınır - bizi bekleyen biri yeniden toprağa girmemeli.
+Patron kendi arenasında kalır; Rauf ve fener (kind 9) kapsam dışı.
+
+**Kapsam kararı:** hafıza oturum içinde, kayda YAZILMIYOR. Ölünce ve kayıt
+yüklenince temizleniyor - ölüm zaten bir sıfırlama.
+
+**İki test tuzağı, ikisi de aynı hata:**
+* `changeZone('tunel', g.world.spawn/16)` yazdım ama o an `g.world` hâlâ
+  HAVEN'dı; oyuncu tünelde saçma bir noktaya düştü, yerleştirme `walkable`
+  bulamadı ve "çalışmıyor" sandım. Yedek davranış doğru çalışmış (mob evinde
+  kalmış). **changeZone'a verilecek kare hedef bölgenin dünyasından alınmalı.**
+* Canın taşındığını İSKELETLE ölçmeye çalıştım: `CAN[11]=1` olduğu için
+  `Math.min(m.max,k.hp)` her zaman 1 veriyor. Çok canlı bir düşmanla (kind 5,
+  24 can) doğrulandı: 9 can ve 77 → 39 birim.
+
+---
+
+*Son güncelleme: 2026-09-16, v14.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

@@ -274,10 +274,54 @@ mark(false);const result=await Promise.allSettled(jobs);
   *  "gomulu mu" kontrolu eklemek gerekmesin diye ayri tutuluyorlar. Oyuncu
   *  yaklasinca (bkz. update icindeki iskeletKontrol) mob'a donusurler. */
  private gomulu:EnemySpec[]=[];
+ /** Bolgeden CIKARKEN pesimizde olan dusmanlar (bolge -> kayit). Geri
+  *  donunce kapinin basinda bizi bekliyorlar. Eskiden resetMobs() herkesi
+  *  dolu canla ev konumuna koyuyor, iskeletleri de yeniden gomuyordu: yan
+  *  odaya gecip donunce dusmanlar YOK OLMUS gibi goruntu veriyordu. */
+ private bekleyen:Record<string,{id:string;hp:number}[]>={};
+ /** Bolgeden ayrilirken pesimizdekileri not eder. "Pesimizde" = ya yara
+  *  almis ya da takip menzilinde. Patron kendi arenasinda kalir, Rauf'un ve
+  *  fenerin (kind 9) burada isi yok. */
+ private bekleyenleriYaz(){
+  const kayit=this.mobs.filter(m=>m.hp>0&&!m.boss&&m.kind!==9&&m.id!=='rauf'
+   &&(m.hp<m.max||Math.hypot(m.x-this.state.x,m.y-this.state.y)<Engine.BEKLEME_MENZIL))
+   .map(m=>({id:m.id,hp:m.hp}));
+  if(kayit.length)this.bekleyen[this.state.zone]=kayit;else delete this.bekleyen[this.state.zone];
+ }
+ /** Geri donunce: not edilenleri kapinin basina, oyuncunun cevresine dizer.
+  *  resetMobs()'tan SONRA cagrilir - o herkesi ev konumuna kurmus olur, biz
+  *  yalniz bekleyenleri tasiyip canlarini geri yaziyoruz. */
+ private bekleyenleriKur(){
+  const kayit=this.bekleyen[this.state.zone];if(!kayit?.length)return;
+  delete this.bekleyen[this.state.zone];
+  const px=this.state.x,py=this.state.y;
+  kayit.forEach((k,i)=>{
+   let m=this.mobs.find(x=>x.id===k.id);
+   if(!m){
+    /* Iskeletler resetMobs'ta yeniden GOMULUYE dusuyor; bizi bekleyen biri
+       yeniden toprak altina girmemeli - cikmis halde listeye alinir. */
+    const g=this.gomulu.find(x=>x.id===k.id);if(!g)return;
+    this.gomulu=this.gomulu.filter(x=>x!==g);
+    const max=Engine.CAN[g.kind]??40;
+    m={...g,hp:max,max,cool:.4+Math.random()*.6,windup:0,burn:0,hurt:0,homeX:g.x,homeY:g.y,cikis:0};
+    this.mobs.push(m);
+   }
+   m.hp=Math.min(m.max,k.hp);m.cikis=0;m.windup=0;m.cool=.4+Math.random()*.7;
+   /* Kapinin onunde bir yay: oyuncunun tam ustune degil, iki karo kadar
+      oteye. Yuruyulemeyen nokta atlanir, hicbiri tutmazsa ev konumunda kalir. */
+   const a0=Math.random()*Math.PI*2;
+   for(let d=0;d<Engine.BEKLEME_DENEME;d++){
+    const a=a0+(i*1.3+d*.7),r=Engine.BEKLEME_UZAK+(d%3)*9;
+    const x=px+Math.cos(a)*r,y=py+Math.sin(a)*r;
+    if(!walkable(this.world,x,y))continue;
+    m.x=x;m.y=y;m.homeX=x;m.homeY=y;break;
+   }
+  });
+ }
  private resetMobs(){const diri=this.world.enemies.filter(e=>!this.state.killed.includes(e.id));
   this.gomulu=diri.filter(e=>e.kind===11);
   this.mobs=diri.filter(e=>e.kind!==11).map(e=>{const max=e.boss?300:(Engine.CAN[e.kind]??40);return {...e,hp:max,max,cool:1+Math.random(),windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y}});this.shots=[];this.particles=[];this.drops=[];this.activeTraps.clear();}
- setState(s:State){this.state=s;this.world=makeWorld(s.zone,s.flags as Record<string,string|boolean|undefined>);
+ setState(s:State){this.bekleyen={};this.state=s;this.world=makeWorld(s.zone,s.flags as Record<string,string|boolean|undefined>);
   // Takipteyse Rauf yeni bolgede oyuncunun yaninda belirir; makeWorld onu
   // kendi ev konumuna koyuyor ve geride kaliyordu.
   if(s.flags.rauf==='takip'){let r=this.world.entities.find(x=>x.id==='rauf');
@@ -349,7 +393,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     }
     if(ilk&&e.items?.some(([id])=>id==='medicine'))this.state.flags.medicineStarted=true;
     this.save();this.onEvent({type:'sandik',id:e.id});this.emit();return;}if(e.type==='lever'){if(this.state.flags.gateOpen){this.notify('Ocak kapısı zaten açık.');return;}this.state.flags.gateOpen=true;this.audio.play('door');this.notify('Kül Ocağı’nın kapısı açıldı.');this.save();this.emit();return;}if(e.type==='portal'&&e.to){this.changeZone(e.to,e.spawn!);}}
- private changeZone(zone:Zone,spawn:[number,number]){this.halka=false;this.dusus=0;this.dustu=false;/* respawn() buradan geciyor: dususten sonra yeniden dogan karakter gorunur olmali. */this.state.zone=zone;this.state.x=spawn[0]*16+8;this.state.y=spawn[1]*16+8;
+ private changeZone(zone:Zone,spawn:[number,number]){this.bekleyenleriYaz();this.halka=false;this.dusus=0;this.dustu=false;/* respawn() buradan geciyor: dususten sonra yeniden dogan karakter gorunur olmali. */this.state.zone=zone;this.state.x=spawn[0]*16+8;this.state.y=spawn[1]*16+8;
   /* Uslu'nun Son Siginak <-> Sarnic Agzi arasi yer degistirmesi ARTIK burada
      ANLIK bir zar atisiyla olmuyor (bkz. eski not: oyuncu kapidan gecerken
      %50 ihtimalle "ısınlanmıs" gibi yer degistiriyordu - gorunmedigi icin
@@ -358,7 +402,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      'uslu' icin 'giden' hedefi) - oyuncu o an ayni odadaysa gercekten
      yururken goruyor, degilse zaten sessizce diger tarafa varmis olur (tipki
      baska bir NPC'nin nerede oldugunu her an bilmedigin gibi). */
-  this.world=makeWorld(zone,this.state.flags as Record<string,string|boolean|undefined>);this.resetMobs();this.overlayNesneleriYukle();this.camera={x:this.state.x-this.gorus.en/2,y:this.state.y-this.gorus.boy/2};this.invulnerable=1.5;this.audio.setZone(zone);this.audio.play('door');this.onEvent({type:'zone',id:zone});this.save();this.emit()}
+  this.world=makeWorld(zone,this.state.flags as Record<string,string|boolean|undefined>);this.resetMobs();this.bekleyenleriKur();this.overlayNesneleriYukle();this.camera={x:this.state.x-this.gorus.en/2,y:this.state.y-this.gorus.boy/2};this.invulnerable=1.5;this.audio.setZone(zone);this.audio.play('door');this.onEvent({type:'zone',id:zone});this.save();this.emit()}
  useItem(id:ItemId){if(this.paused&&!['potion','tonic','bileme','merhem','toz','tuzet','durusu','petek','torch'].includes(id))return false;if(id==='potion'){if(this.state.hp>=stats(this.state).maxHp){this.notify('Canın zaten dolu.');return false;}if(!removeItem(this.state,id)){this.notify('Can iksirin kalmadı. Alf’ten alabilirsin.');return false;}this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+45);this.float(this.state.x,this.state.y-10,'+45','#8cdda5');}else if(id==='tonic'){if(!removeItem(this.state,id))return false;this.tonic=20;this.notify('Köz toniği: 20 saniye +8 saldırı.');}else if(id==='bileme'){if(!removeItem(this.state,id))return false;this.bileme=30;this.notify('Bileme taşı: 30 saniye %25 daha hızlı vuruş.');}else if(id==='merhem'){if(!removeItem(this.state,id))return false;this.merhem=12;this.notify('Sargı merhemi: 12 saniye boyunca yavaşça iyileşiyorsun.');}else if(id==='toz'){if(!removeItem(this.state,id))return false;this.gizli=8;this.notify('Kül tozu: 8 saniye görünmezsin.');}
    /* Obruk'un kileri. Tuzlu et oyunun en guclu tek seferlik iyilesmesi;
       bedeli de ona gore (26 altin, ustune iki bucuk kat zam). */
@@ -552,7 +596,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  }
  /** dokunulmazlik: vurustan sonraki i-frame suresi. OLCULDU - kalabalik bir iskelet cemberi 5 saniyede 23 kez vuruyor ama oyuncu yalnizca 20 can kaybediyordu: .72 sn'lik sabit i-frame yuzunden 23 vurusun 19'u yutuluyordu. Yani kalabaligin tehdidi tek bir dusmanla AYNIYDI; 'oldurmesi cok kolay' hissinin asil sebebi hiz ya da can degil buydu. Zayif ve kalabalik dusmanlar (iskelet) daha kisa i-frame ile vurur - tek tek hala zararsizlar ama surunun arasinda durmak artik bedel odetir. */
  private hurt(damage:number,iframe=.72){if(this.invulnerable>0||this.state.hp<=0)return;const n=Math.max(2,damage-stats(this.state).defense);this.state.hp=Math.max(0,this.state.hp-n);this.invulnerable=iframe;this.audio.play('hurt');this.float(this.state.x,this.state.y-14,'−'+n,'#ff8b89');this.burst(this.state.x,this.state.y,'#dc7777',7);if(this.state.hp<=0){this.paused=true;this.audio.play('death');this.onEvent({type:'death'});}this.emit();}
-  respawn(){this.state.hp=stats(this.state).maxHp;this.state.gold=Math.floor(this.state.gold*.9);this.state.journal.unshift('Sığınağa döndün. Altınının %10’unu yolda kaybettin.');this.changeZone('haven',[15,14]);this.paused=false;this.save();this.emit();}
+  respawn(){/* Olum bir sifirlama: kapida bekleyenler de unutulur. */this.bekleyen={};this.state.hp=stats(this.state).maxHp;this.state.gold=Math.floor(this.state.gold*.9);this.state.journal.unshift('Sığınağa döndün. Altınının %10’unu yolda kaybettin.');this.changeZone('haven',[15,14]);this.paused=false;this.save();this.emit();}
   /** 8 dilim: her yon 45 derece. tan(67.5)=2.414 sinirlari veriyor.
    *  Dikey yonlerde flip kapatilir, yatay ve caprazlarda dx isaretini izler. */
   private face(dx:number,dy:number){const ax=Math.abs(dx),ay=Math.abs(dy);if(ax<.01&&ay<.01)return;
@@ -652,6 +696,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly ZEHIR_YAVAS=.7;
  static readonly ATES_YARICAP=14;
  static readonly ATES_HASAR=10;
+ /** Bolgeden cikarken bu menzildeki dusmanlar "pesimizde" sayilir. */
+ static readonly BEKLEME_MENZIL=170;
+ /** Geri donunce kapinin onunde bu uzaklikta dizilirler (~2 karo). */
+ static readonly BEKLEME_UZAK=46;
+ static readonly BEKLEME_DENEME=12;
  static readonly CARP_MOB=14;
  /** KUSATMA AYARI (tum dusmanlar). Eskiden hedefe duz cizgide yuruyup
   *  move()'un mob carpismasina takiliyorlardi: on saf oyuncuya yapisiyor,
