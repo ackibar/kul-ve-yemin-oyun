@@ -1397,4 +1397,26 @@ hızlandırıp zamanlamayı bozuyor (bkz. v12.5/v12.7 notları). Bunun yerine
 
 ---
 
-*Son güncelleme: 2026-09-16, v13.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v13.1: Overlay decor'un GÖRÜNMEZ 10 birimlik çarpışma dairesi kaldırıldı
+Kullanıcı perdenin önünde takılan karakterin ekran görüntüsünü gönderdi:
+"karakter burada neden takılıyor". `walkable()` sonundaki
+`if(e.type==='decor')return hypot(...)<10` **görselden bağımsız** sabit bir
+daire - küçük bir perde de, koca bir tezgah da aynı 10 birimlik görünmez kayayı
+taşıyor. Harita editörünün "Nesneler" modu SALT GÖRSEL katman koyuyor (çarpışma
+için ayrı "Engeller" aracı var), dolayısıyla `overlay:true` decor artık bu
+daireden muaf: `return !e.overlay&&hypot(...)<10`. Elle yazılan `decor()`
+mobilyaları (table2 vb.) eski davranışı korur.
+
+**Teşhis yöntemi (bu tür "görünmez engel" sorularında doğrudan buna git):**
+`npx vite-node` ile `makeWorld`+`walkable` izole çağrılıp bölge ASCII harita
+olarak basıldı; decor'ları çıkarılmış bir kopyayla karşılaştırınca hangi
+noktanın ÇİZİLMİŞ engelden, hangisinin decor dairesinden kapandığı ayrıştı
+(`.` serbest / `B` blocker / `D` decor). Perdede iki ayrı şey vardı: (1) karo
+y 13.8 boyunca kullanıcının kendi çizdiği duvar çubuğu `[3.65,13.6,9.05,13.88]`
+- KALDI, tasarım kararı; (2) perdenin çapasında ~10 birim taşan görünmez daire
+- işte "takılma" hissi buydu, kaldırıldı. Tezgah ayrıca kontrol edildi: çizilmiş
+engeller (y≈92-148) yerinde, yani muafiyet orada gerileme yaratmadı.
+
+---
+
+*Son güncelleme: 2026-09-16, v13.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

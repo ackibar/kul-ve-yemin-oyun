@@ -336,7 +336,13 @@ export function walkable(world:World,x:number,y:number,r=5,ignoreId?:string,ry=r
  }
  return !world.entities.some(e=>{
   if(e.id===ignoreId)return false;
-  if(e.type==='decor')return Math.hypot(e.x-x,e.y-y)<10;
+  /* overlay decor = harita editorunun "Nesneler" moduyla konan SALT GORSEL
+     katman; carpismasi varsa Engeller araciyla ACIKCA cizilir. Sabit 10
+     birimlik daire gorselden BAGIMSIZ oldugu icin (kucuk bir perde de, koca
+     bir tezgah da ayni) ortada gorunmeyen bir kaya birakiyordu - kullanici
+     "karakter burada neden takiliyor" diye sordu, sebebi buydu. Elle yazilan
+     decor() mobilyalari (table2 vb.) eski davranisi korur. */
+  if(e.type==='decor')return !e.overlay&&Math.hypot(e.x-x,e.y-y)<10;
   if(e.type==='chest')return Math.hypot(e.x-x,e.y-y)<6;
   return false;
  });
