@@ -1893,4 +1893,19 @@ Ham kayıtlar `_arsiv/uretim/ses_ham/` (gitignore).
 
 ---
 
-*Son güncelleme: 2026-09-16, v14.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v15.0: Düşmana vuruş sesi (8bit blip) kaldırıldı
+Kullanıcı: "düşmana vurunca 8bit bir ses efekti çıkıyor, onu kaldıralım."
+
+`'hit'` sentezi kare dalga (`notes([110,65],.03,.55,'square')`) - kayıtlı
+savurma ve ölüm sesleri geldikten sonra oyunun geri kalanından kopuk duruyordu.
+**Ses adı silinmedi, yalnızca DÜŞMANA VURUŞ çağrıları kaldırıldı** (4 yer):
+yakın dövüş, dash sıyırması, ok isabeti, Rauf'un vuruşu. Hâlâ kullanıldığı
+yerler: tahta eşya/sandık kırma (2 yer, ok ve yakın dövüş) ve koz kavanozu
+patlaması - bunlar farklı olaylar, kullanıcı onlardan şikâyet etmedi.
+
+Ölçüm: saldırıda çalan sesler artık `swing` + (ölürse) `iskeletOlum`.
+Yerine kayıtlı bir darbe istenirse `ORNEKLER`e yeni bir ad eklemek yeterli.
+
+---
+
+*Son güncelleme: 2026-09-16, v15.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
