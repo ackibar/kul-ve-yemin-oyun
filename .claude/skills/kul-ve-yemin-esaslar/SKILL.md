@@ -1687,4 +1687,39 @@ Hasar bilerek KÜÇÜK: kaçış bir saldırı hilesine dönüşmemeli.
 
 ---
 
-*Son güncelleme: 2026-09-16, v14.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v14.2: İskeletler agresif - asıl darboğaz SALDIRI MENZİLİ'ymiş
+Kullanıcı önce "öldürmek çok kolay, daha agresif ve hızlı olsunlar", sonra tam
+teşhisi verdi: **"etrafımı sarıyor ama sadece bir iki tanesi bana vurabiliyor."**
+
+Hız/can ayarı bu işi ÇÖZMEDİ - ölçüm zinciri şöyle gitti:
+
+| deneme | 5 sn durarak | saldırı |
+|---|---|---|
+| hız 27→38, windup .4→.26, cool 1.15→.8, görüş 135→200 | 20 can | 23 |
+| + windup sırasında HAMLE (hız 64) | 20 can | 23 |
+| + i-frame .72 → .34 (iskelet vuruşu için) | 36 can | 23 |
+| + **saldırı başlatma menzili 20 → 26** | **48 can** | **43** |
+
+**Ders - iki ayrı menzil var ve karıştırılıyor:** `range` (windup'ı BAŞLATMA
+eşiği, genel 20) ve vuruş anındaki `d<25` DEĞME eşiği. Çemberin ön safı 13
+birimde duruyor, arka saf 22-28'de takılıyordu; 20'lik eşiğe giremedikleri için
+windup'a bile başlamıyorlardı. Kullanıcının tarifi birebir buydu. İskelette
+`ISKELET_SALDIRI_MENZIL=26`, `ISKELET_VURUS_MENZIL=29`.
+
+**İkinci ders - i-frame kalabalığı nötrler.** Sabit `.72` sn dokunulmazlık
+yüzünden 23 vuruşun 19'u yutuluyordu: 9 kişilik çember tek düşmanla AYNI
+tehdidi veriyordu. `hurt()` artık i-frame süresini parametre alıyor; iskelet
+`.34` ile vuruyor. Zayıf-ama-kalabalık düşman tasarımı bu parametre olmadan
+çalışmıyor.
+
+**Test tuzağı (kendi hatam):** `hurt`'ü sayaçla sarmalarken `(n)=>h(n)` yazdım,
+ikinci argüman (iframe) yutuldu ve i-frame değişikliği ölçümde HİÇ görünmedi -
+"değişiklik işe yaramadı" sanıp yanlış yola sapıyordum. Sarmalayıcı daima
+`(...a)=>h(...a)`.
+
+Sonuç: çemberin ortasında durmak 5 saniyede ~48 can, koridoru yürüyerek geçmek
+~40 can. Tek vuruşta ölmeleri ve dash'in onları dağıtması korunuyor.
+
+---
+
+*Son güncelleme: 2026-09-16, v14.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

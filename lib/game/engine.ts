@@ -143,9 +143,32 @@ export class Engine{
   *  bitiyordu). 1.1sn animasyonun okunmasina yetiyor ama oyunun tempo
   *  hissini bozacak kadar uzun degil. */
  static readonly DUSUS=1.1;
- /** Iskeletin yerden cikmasi: bu uzakliga girilince uyanir, bu kadar sn surer. */
- static readonly ISKELET_UYANMA=118;
- static readonly ISKELET_CIKIS=.75;
+ /** Iskeletin yerden cikmasi: bu uzakliga girilince uyanir, bu kadar sn surer.
+  *  Uyanma 118 -> 150: surunun onu kapanmadan icine dalinabiliyordu.
+  *  Cikis .75 -> .55: yarim saniye yerin altinda beklemek kalabaligin
+  *  baskisini kiriyordu. */
+ static readonly ISKELET_UYANMA=150;
+ static readonly ISKELET_CIKIS=.55;
+ /** ISKELET DOVUS AYARI. Tek vurusta oldugu icin tehdidi candan degil HIZ ve
+  *  SIKLIK'tan gelmeli. Olculdu: eski degerlerle (hiz 27, windup .4, cool
+  *  1.15, gorus 135) oyuncu 44 hiziyla yuruyerek surunun icinden hic
+  *  vurulmadan gecebiliyordu - "oldurmesi cok kolay" sikayeti buydu, can
+  *  meselesi degildi. Hiz 38: oyuncudan (44) hala yavas, yani kacis MUMKUN
+  *  ama bedava degil; kacmak icin dash gerekiyor. */
+ static readonly ISKELET_HIZ=38;
+ static readonly ISKELET_WINDUP=.26;
+ static readonly ISKELET_COOL=.8;
+ static readonly ISKELET_GORUS=200;
+ /** Vurus hazirligi sirasindaki atilma hizi (bkz. windup dali). */
+ static readonly ISKELET_HAMLE=64;
+ /** Iskelet vurusundan sonraki dokunulmazlik - genel .72 yerine (bkz. hurt()). */
+ static readonly ISKELET_IFRAME=.34;
+ /** Vurusun DEGME menzili (genel 25). Cemberin ON safi 13 birimde duruyor ama
+  *  arkadakiler 22-28'de kaliyor ve vurusları bosa gidiyordu: kullanici
+  *  "etrafimi sariyor ama sadece bir iki tanesi vurabiliyor" dedi, olcumde de
+  *  5 saniyedeki 23 vurusun yarisi menzil disinda kaliyordu. */
+ static readonly ISKELET_VURUS_MENZIL=29;
+ static readonly ISKELET_SALDIRI_MENZIL=26;
  private sonImza='';
  private sahneSayac=0;
  private dizSayac=0;private dizX=0;private dizY=0;
@@ -509,7 +532,8 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   this.notify('Rauf kılıcını düşürdü ve diz çöktü. Seni takip edecek.');
   this.save();this.emit();
  }
- private hurt(damage:number){if(this.invulnerable>0||this.state.hp<=0)return;const n=Math.max(2,damage-stats(this.state).defense);this.state.hp=Math.max(0,this.state.hp-n);this.invulnerable=.72;this.audio.play('hurt');this.float(this.state.x,this.state.y-14,'−'+n,'#ff8b89');this.burst(this.state.x,this.state.y,'#dc7777',7);if(this.state.hp<=0){this.paused=true;this.audio.play('death');this.onEvent({type:'death'});}this.emit();}
+ /** dokunulmazlik: vurustan sonraki i-frame suresi. OLCULDU - kalabalik bir iskelet cemberi 5 saniyede 23 kez vuruyor ama oyuncu yalnizca 20 can kaybediyordu: .72 sn'lik sabit i-frame yuzunden 23 vurusun 19'u yutuluyordu. Yani kalabaligin tehdidi tek bir dusmanla AYNIYDI; 'oldurmesi cok kolay' hissinin asil sebebi hiz ya da can degil buydu. Zayif ve kalabalik dusmanlar (iskelet) daha kisa i-frame ile vurur - tek tek hala zararsizlar ama surunun arasinda durmak artik bedel odetir. */
+ private hurt(damage:number,iframe=.72){if(this.invulnerable>0||this.state.hp<=0)return;const n=Math.max(2,damage-stats(this.state).defense);this.state.hp=Math.max(0,this.state.hp-n);this.invulnerable=iframe;this.audio.play('hurt');this.float(this.state.x,this.state.y-14,'−'+n,'#ff8b89');this.burst(this.state.x,this.state.y,'#dc7777',7);if(this.state.hp<=0){this.paused=true;this.audio.play('death');this.onEvent({type:'death'});}this.emit();}
   respawn(){this.state.hp=stats(this.state).maxHp;this.state.gold=Math.floor(this.state.gold*.9);this.state.journal.unshift('Sığınağa döndün. Altınının %10’unu yolda kaybettin.');this.changeZone('haven',[15,14]);this.paused=false;this.save();this.emit();}
   /** 8 dilim: her yon 45 derece. tan(67.5)=2.414 sinirlari veriyor.
    *  Dikey yonlerde flip kapatilir, yatay ve caprazlarda dx isaretini izler. */
@@ -551,7 +575,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     gelsin diye tek tek vuruslari zayif. */
  static readonly HASAR:Record<number,number>={8:14,9:0,10:26,11:6};
  /** Takip hizi; tabloda yoksa 27. Bogulmus su icinde yurur gibi yavas. */
- static readonly HIZ:Record<number,number>={4:21,8:15,10:24};
+ static readonly HIZ:Record<number,number>={4:21,8:15,10:24,11:Engine.ISKELET_HIZ};
  /** Kralin tac hareketi: her KRAL_DONGU saniyede bir oynar (Tac sayfasinin
   *  suresi kadar), aradaki zaman bas sallama (Idle). */
  static readonly KRAL_DONGU=26;
@@ -845,8 +869,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     m.zehirTik=(m.zehirTik??0)+dt;
     if(m.zehirTik>=1){m.zehirTik=0;this.float(m.x,m.y-12,String(Engine.ZEHIR_HASAR),'#9fd47a');}
     if(m.hp<=0){if(m.id==='rauf')this.raufDizCok();else this.kill(m);continue;}}
-   if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.kind===9){this.fener(m,d,dx,dy,dt);continue;}if(m.windup>0){m.windup-=dt;if(m.windup<=0){/* Ses uzakliga gore kisiliyor: ekranin obur ucundaki bir yaratik yanindaki
-     kadar yuksek vurmamali. */this.audio.play('dusmanVur',Math.max(0,1-d/190));if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:m.kind===10?30:25)){this.hurt(m.boss?30:Engine.HASAR[m.kind]??10+m.kind*3);/* Bogulmus sarilinca kul cigere doluyor: oyuncu 3 sn agirlasir. */if(m.kind===8&&this.state.hp>0){this.yavas=3;this.float(this.state.x,this.state.y-18,'AĞIRLAŞTIN','#b9b2a6');}}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:1.15;}continue;}if(d<135&&visible){m.aci=Math.atan2(dy,dx);const range=m.kind===2?95:m.boss?34:m.kind===10?26:20;if(d>range){const v=(Engine.HIZ[m.kind]??27)*(m.zehir&&m.zehir>0?Engine.ZEHIR_YAVAS:1);this.move(m,dx/d*v*dt,dy/d*v*dt,m.id,true);}if(d<=range&&m.cool<=0)m.windup=m.boss?.8:m.kind===2?.55:m.kind===10?.7:.4;}else if(!m.boss){// Oyuncu uzaktayken yaratiklar cakili duruyordu; magara olu gorunuyordu.
+   if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.kind===9){this.fener(m,d,dx,dy,dt);continue;}if(m.windup>0){m.windup-=dt;/* Iskelet HAMLE yapar: digerleri vurus hazirliginda cakili dururken iskelet oyuncuya dogru atilir. Olculdu: hamlesiz surumde skelet (38) oyuncudan (44) yavas oldugu icin windup biterken oyuncu menzilden cikiyordu ve 8 saniyelik bir gecis yalnizca 24 cana mal oluyordu - 'oldurmesi cok kolay' hissinin asil sebebi buydu. Hamle hizi oyuncunun ustunde ama yalnizca .26 sn surer. */if(m.kind===11)this.move(m,dx/d*Engine.ISKELET_HAMLE*dt,dy/d*Engine.ISKELET_HAMLE*dt,m.id,true);if(m.windup<=0){/* Ses uzakliga gore kisiliyor: ekranin obur ucundaki bir yaratik yanindaki
+     kadar yuksek vurmamali. */this.audio.play('dusmanVur',Math.max(0,1-d/190));if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:m.kind===10?30:m.kind===11?Engine.ISKELET_VURUS_MENZIL:25)){this.hurt(m.boss?30:Engine.HASAR[m.kind]??10+m.kind*3,m.kind===11?Engine.ISKELET_IFRAME:.72);/* Bogulmus sarilinca kul cigere doluyor: oyuncu 3 sn agirlasir. */if(m.kind===8&&this.state.hp>0){this.yavas=3;this.float(this.state.x,this.state.y-18,'AĞIRLAŞTIN','#b9b2a6');}}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:m.kind===11?Engine.ISKELET_COOL:1.15;}continue;}if(d<(m.kind===11?Engine.ISKELET_GORUS:135)&&visible){m.aci=Math.atan2(dy,dx);/* SALDIRIYI BASLATMA menzili. Iskelette ayri: asil darbogaz burasiydi -
+     cemberin arka safi 22-28 birimde takilip kaliyor ve 20'lik esige hic
+     giremedigi icin windup'a bile baslamiyordu (olculdu: 9 dusman yanibasindayken
+     5 saniyede yalniz 23 vurus). */
+    const range=m.kind===2?95:m.boss?34:m.kind===10?26:m.kind===11?Engine.ISKELET_SALDIRI_MENZIL:20;if(d>range){const v=(Engine.HIZ[m.kind]??27)*(m.zehir&&m.zehir>0?Engine.ZEHIR_YAVAS:1);this.move(m,dx/d*v*dt,dy/d*v*dt,m.id,true);}if(d<=range&&m.cool<=0)m.windup=m.boss?.8:m.kind===2?.55:m.kind===10?.7:m.kind===11?Engine.ISKELET_WINDUP:.4;}else if(!m.boss){// Oyuncu uzaktayken yaratiklar cakili duruyordu; magara olu gorunuyordu.
     // Doguş yerinin cevresinde yavasca dolasirlar - takip hizinin yarisi.
     m.gezBekle=(m.gezBekle??0)-dt;
     if(m.gezBekle<=0||m.gezX===undefined){const a=Math.random()*Math.PI*2,r=18+Math.random()*44;
