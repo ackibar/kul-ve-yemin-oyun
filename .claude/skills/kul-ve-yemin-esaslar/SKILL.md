@@ -1663,4 +1663,28 @@ doğru ayar aynı a/b + zeminin ~5 L üstü.
 
 ---
 
-*Son güncelleme: 2026-09-16, v14.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v14.1: İskelet yürüme/saldırı animasyonu + dash sıyırması
+**1) Animasyon (7 üretim, bakiye 1453).** `v3_anim.py` ve `v3_kur.py`'ye
+`iskelet` seti eklendi (`enemies/11`). Balta/yay setlerindeki BASLANGIC
+hilesine gerek olmadı: iskeletin dönüş karesinde kılıç ZATEN elde, v3 başlangıç
+karesini koruduğu için silah her karede duruyor. Yan ve arka yönlerde kılıcın
+kesme yönü dersleri aynen geçerli - `KILIC_VUR_YAN` / `KILIC_VUR_ARKA` yeniden
+kullanıldı. Üretimden sonra `iskelet_zemin_sil.py` yine çalıştırılmalı (yeni
+kareler ham yedeği tazeliyor). Arka görünümde kılıç neredeyse kayboluyor;
+o yön kısa süre göründüğü için üretim harcanmadı.
+
+**2) Dash sıyırması.** `dashSiyir()`: kaçış sırasında `DASH_YARICAP=13` içine
+giren düşman `DASH_HASAR=4` yiyor ve `DASH_ITME=30` geri savruluyor; iskelet
+(kind 11) ise temas anında **dağılıyor** - kalabalığın arasından kaçmak bir
+temizlik hamlesine dönüşüyor. `dashVuran` listesi her `dodge()`te sıfırlanıyor,
+böylece tek kaçışta aynı düşman bir kez vuruluyor. Henüz yerden çıkmamış
+(`cikis>0`) iskeletler vurulmuyor - yarım gövdeye çarpmak hile olurdu.
+Hasar bilerek KÜÇÜK: kaçış bir saldırı hilesine dönüşmemeli.
+
+**Test tuzağı:** iki dash'i arka arkaya denerken ikincisi hiç çalışmadı -
+`dodge()` `dodgeTimer>0` iken sessizce dönüyor. Testte kaçış bekleme süresi
+(~2 sn) beklenmeli, yoksa "dash hasar vermiyor" gibi yanlış sonuç çıkıyor.
+
+---
+
+*Son güncelleme: 2026-09-16, v14.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

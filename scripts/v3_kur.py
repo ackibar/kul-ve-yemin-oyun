@@ -60,6 +60,7 @@ ID_DOSYA = {'kilic': '_arsiv/uretim/pixellab/gezgin/id_kilic.txt',
             'rauf6': '_arsiv/uretim/pixellab/id_rauf.txt',
             'bogulmus': '_arsiv/uretim/pixellab/id_bogulmus.txt',
             'muhafiz': '_arsiv/uretim/pixellab/id_muhafiz.txt',
+            'iskelet': '_arsiv/uretim/pixellab/id_iskelet.txt',
             'mesale': '_arsiv/uretim/pixellab/gezgin/id.txt',
             'kilicmesale': '_arsiv/uretim/pixellab/gezgin/id_kilic.txt'}
 
@@ -85,6 +86,7 @@ SETLER = {
     'kullenmis': ('enemies/4', 'enemies/4', NPC_EN, {}, None),
     'bogulmus':  ('enemies/8', 'enemies/8', NPC_EN, {}, None),
     'muhafiz':   ('enemies/10','enemies/10',NPC_EN, {}, None),
+    'iskelet':   ('enemies/11','enemies/11',NPC_EN, {}, None),
     # Mesaleli set: referans kilicli setin Idle'i (mod gecisinde ziplamasin).
     'mesale': ('characters/1mesale', 'characters/1sword', OYUNCU_EN,
               {'Idle': 4, 'Hurt': 2, 'Death': 8}, None),

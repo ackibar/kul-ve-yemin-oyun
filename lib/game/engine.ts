@@ -57,7 +57,7 @@ export class Engine{
   *  ana tuvale dogrudan destination-out ile cizersek arka plan/diger her seyi
   *  de delerdi, bu yuzden golge ONCE burada izole cizilip sonra yapistiriliyor. */
  private golgeBuf?:HTMLCanvasElement;
- private images:Record<string,HTMLImageElement>={};private raf=0;private last=0;private tick=0;private notifyAt=0;private savedAt=0;private stepAt=0;private direction:Yon='D';private flip=false;private moving=false;private attackTimer=0;private dodgeTimer=0;private dash=0;private dashVector={x:0,y:1};private invulnerable=0;private tonic=0;private particles:Particle[]=[];private parcalar:Parca[]=[];
+ private images:Record<string,HTMLImageElement>={};private raf=0;private last=0;private tick=0;private notifyAt=0;private savedAt=0;private stepAt=0;private direction:Yon='D';private flip=false;private moving=false;private attackTimer=0;private dodgeTimer=0;private dash=0;private dashVector={x:0,y:1};/** Bu dash'te zaten siyirilan dusmanlar - her dusman bir kacista yalniz bir kez vurulur. */private dashVuran:string[]=[];private invulnerable=0;private tonic=0;private particles:Particle[]=[];private parcalar:Parca[]=[];
  /** Yurunen toplam yol. Yurume karesi zamana degil buna baglanir; boylece
   *  hiz degisse de ayaklar yere basar (once 58 birim/sn hizda 7fps animasyon
   *  kullaniliyordu, 2.1 kat uyumsuzdu ve kayiyor gibi duruyordu). */
@@ -372,7 +372,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    s.equipment.weapon=geri;this.notify(`Meşaleyi kemerine astın. ${ITEMS[geri].name} elinde.`);
   }else{this.mesaleOnce=s.equipment.weapon;s.equipment.weapon='elmesale';this.notify('Meşale elinde.');}
   s.hp=Math.min(s.hp,stats(s).maxHp);this.audio.play('select');this.save();this.emit();}
- dodge(){if(this.paused||this.dodgeTimer>0)return;this.dodgeTimer=stats(this.state).dodge;this.dash=.2;this.invulnerable=.36;this.audio.play('dodge');/* Kalkis tozu: ayagin bastigi yerden geriye savrulan kul. Yon dash yonunun
+ dodge(){if(this.paused||this.dodgeTimer>0)return;this.dodgeTimer=stats(this.state).dodge;this.dash=.2;this.dashVuran=[];this.invulnerable=.36;this.audio.play('dodge');/* Kalkis tozu: ayagin bastigi yerden geriye savrulan kul. Yon dash yonunun
      TERSI, yani oyuncu ileri firlarken toz arkada kaliyor. */
   {const v=this.yonVektor();for(let i=0;i<9;i++)this.particles.push({x:this.state.x+(Math.random()-.5)*6,y:this.state.y+(Math.random()-.5)*4,
    vx:-v.x*(18+Math.random()*26)+(Math.random()-.5)*14,vy:-v.y*(18+Math.random()*26)+(Math.random()-.5)*10-6,
@@ -462,7 +462,29 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   private wangIstendi=false;
   private wangYukle(){if(this.wangIstendi)return;this.wangIstendi=true;
    for(const z of ['haven','cistern'])for(let i=0;i<16;i++)this.img(`wang_${z}_${i}`,`/assets/dungeon/wang/${z}/wang_${i}.png`).catch(()=>{});}
-  private kill(m:Mob){
+  /** Dash SIYIRMASI: kacarken uzerinden gectigimiz dusmanlar geri savrulur ve
+  *  ufak hasar alir. Iskelet curuk oldugu icin temas ettigi anda DAGILIR -
+  *  kalabaligin arasindan kacis bir temizlik hamlesine donusuyor.
+  *  Henuz yerden cikmamis olan (cikis>0) vurulmaz: gorunurde yarim govde var,
+  *  ona carpmak hile gibi olurdu. */
+ private dashSiyir(){
+  const s=this.state;
+  for(const m of this.mobs){
+   if(m.hp<=0||(m.cikis&&m.cikis>0)||m.kind===9)continue;      // 9: fener, dovusmuyor
+   if(this.dashVuran.includes(m.id))continue;
+   const dx=m.x-s.x,dy=m.y-s.y,d=Math.hypot(dx,dy)||1;
+   if(d>Engine.DASH_YARICAP+(m.boss?12:0))continue;
+   this.dashVuran.push(m.id);
+   if(m.kind===11){m.hp=0;this.kill(m);continue;}
+   m.hp-=Engine.DASH_HASAR;m.hurt=.17;
+   const it=m.boss?6:Engine.DASH_ITME;
+   this.move(m,dx/d*it,dy/d*it);
+   this.float(m.x,m.y-12,String(Engine.DASH_HASAR),'#ffdaa3');
+   this.burst(m.x,m.y,'#c9b7a3',6);this.audio.play('hit',.55);
+   if(m.id==='rauf'&&m.hp<=m.max*.18)this.raufDizCok();else if(m.hp<=0)this.kill(m);
+  }
+ }
+ private kill(m:Mob){
   if(m.id==='rauf'){this.raufDizCok();return;}
   /* Iskelet: tek vurusta olur ve PARCALANIR. Ayri dal cunku (a) altin
      dusurmemeli - 40 kisilik kalabalik servet olurdu, (b) her olumde save()
@@ -557,6 +579,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Buyuk dusmanlarin capasi. Varsayilan 21 sprite'i 42 satira siniriyor. */
  static readonly DUSMAN_CAPA:Record<number,number>={7:31};
  /** Ciz olcegi. Trol bir mini-patron: oyuncudan belirgin buyuk gorunmeli. */
+ /** Dash siyirmasi: temas yaricapi, hasari ve geri itmesi. Hasar KUCUK -
+  *  kacis bir saldiri hilesine donusmemeli, yalnizca "carptim" hissi versin. */
+ static readonly DASH_YARICAP=13;
+ static readonly DASH_HASAR=4;
+ static readonly DASH_ITME=30;
  /** Yerden cikis toprağinin paleti. OLCULDU: koridor zemininin iskelet
   *  ayaklarinin bastigi yerlerdeki rengi L 25-30 / a +8.5 / b +7 - yani
   *  KIRMIZIMSI. Onceki elle secilen tonlar zeytuni-sari (a +4.5 / b +10..18)
@@ -759,7 +786,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      kare:Math.floor(this.yol/Engine.ADIM),flip:this.flip,life:.26});}}
    for(const iz of this.izler)iz.life-=dt;this.izler=this.izler.filter(i=>i.life>0);
    const movement=this.dash>0?this.dashVector:activeInput;const length=Math.hypot(movement.x,movement.y);this.moving=length>.08;/* Ocak zirhinin agirligi (yavaslik) da tanimliydi ama kullanilmiyordu. */
-   const speed=(this.dash>0?205:44)*(ITEMS[this.state.equipment.armor].yavaslik??1)*(this.yavas>0?.6:1);if(this.moving){const dx=movement.x/Math.max(1,length),dy=movement.y/Math.max(1,length);this.face(dx,dy);this.move(this.state,dx*speed*dt,dy*speed*dt,null,false,Engine.OYUNCU_DIKEY_YARICAP,Engine.OYUNCU_YATAY_YARICAP);this.bolgeKontrol();this.yol+=speed*dt;if(this.tick-this.stepAt>.29){this.audio.play('step');this.stepAt=this.tick;}}if(this.input.attack)this.attack();
+   const speed=(this.dash>0?205:44)*(ITEMS[this.state.equipment.armor].yavaslik??1)*(this.yavas>0?.6:1);if(this.moving){const dx=movement.x/Math.max(1,length),dy=movement.y/Math.max(1,length);this.face(dx,dy);this.move(this.state,dx*speed*dt,dy*speed*dt,null,false,Engine.OYUNCU_DIKEY_YARICAP,Engine.OYUNCU_YATAY_YARICAP);this.bolgeKontrol();if(this.dash>0)this.dashSiyir();this.yol+=speed*dt;if(this.tick-this.stepAt>.29){this.audio.play('step');this.stepAt=this.tick;}}if(this.input.attack)this.attack();
    // --- Kul Ovasi: can erimesi + ruzgarda savrulan kul ---
    if(this.state.zone==='disari'&&this.state.hp>0&&!this.paused){
     /* Kul pelerininin kulKalkan'i ve Duru su'yun korumasi BURADA isliyor;

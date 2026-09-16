@@ -154,6 +154,17 @@ KILICMES_YUR = ('walks forward with a steady stride, legs alternating clearly, t
 MESALE_VUR_ARKA = ('seen from behind, swings the burning wooden torch forward and away from '
                    'the camera in an arc in front of the body, never back toward the viewer; '
                    'the torch stays gripped and its orange flame is visible in every frame')
+# Iskelet (enemies/11). Kalabalik ve tek vurusta olen dusman; yuruyusu
+# "tokus tokus" olmali ki kullenmisten ayrissin. Donus karesinde kilic ZATEN
+# elde oldugu icin (v3 baslangic karesini koruyor) silahi ayrica kurmak
+# gerekmiyor - baltadaki BASLANGIC hilesine ihtiyac yok.
+ISK_YUR = ('shambles forward with a stiff jerky stride, the bare bone legs alternating '
+           'clearly, the short rusted sword held down at the side in one bony hand the '
+           'whole time; the body stays a bare skeleton with no flesh on it')
+ISK_VUR = ('swings the short rusted sword down and across in a diagonal cut in front of '
+           'the body, then pulls it back to a ready guard; the sword is a solid rusted '
+           'steel blade and stays gripped in the bony hand in every frame; the body '
+           'stays a bare skeleton with no flesh on it')
 KUL_VUR = ('lunges forward and swings both clawed arms down and across at the target, '
            'then pulls them back; the body leans into the blow')
 
@@ -224,6 +235,9 @@ OZEL = {('kilic', 'Attack', 'east'): KILIC_VUR_YAN,
         ('kilicmesale', 'Attack', 'north'): ('seen from behind, holding a short burning wooden torch up in the left hand, its small orange flame visible above the shoulder, ' + KILIC_VUR_ARKA + MES_EK),
         ('kilicmesale', 'Attack', 'north-east'): KILIC_VUR_ARKA + MES_EK,
         ('mesale', 'Attack', 'north'): MESALE_VUR_ARKA,
+        # Iskelet de kilicli: yan/arka yonlerde ayni kesme yonu dersleri gecerli.
+        ('iskelet', 'Attack', 'east'): KILIC_VUR_YAN,
+        ('iskelet', 'Attack', 'north'): KILIC_VUR_ARKA,
         ('mesale', 'Attack', 'north-east'): MESALE_VUR_ARKA}
 
 SETLER = {
@@ -233,6 +247,7 @@ SETLER = {
     'kullenmis': ('_arsiv/uretim/pixellab/id_kullenmis.txt', [('Walk', 8, KUL_YUR), ('Attack', 6, KUL_VUR)]),
     'bogulmus': ('_arsiv/uretim/pixellab/id_bogulmus.txt', [('Walk', 8, BOG_YUR), ('Attack', 6, BOG_VUR)]),
     'muhafiz':  ('_arsiv/uretim/pixellab/id_muhafiz.txt',  [('Walk', 8, MUH_YUR), ('Attack', 6, MUH_VUR)]),
+    'iskelet':  ('_arsiv/uretim/pixellab/id_iskelet.txt',  [('Walk', 8, ISK_YUR), ('Attack', 6, ISK_VUR)]),
     # Silahsiz set: kilic varyantinin degil TABAN karakterin kendisi.
     'yumruk': ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Walk', 8, YUMRUK_YUR), ('Attack', 6, YUMRUK_VUR)]),
     'balta':  ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Attack', 6, BALTA_VUR), ('Walk', 8, BALTA_YUR)]),
