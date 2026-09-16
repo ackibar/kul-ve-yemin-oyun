@@ -2014,4 +2014,47 @@ karşılığında normalizasyon seviyeyi düşürüyor. **1.3 doyum noktası.**
 
 ---
 
-*Son güncelleme: 2026-09-16, v15.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v15.5: Vuruş hissi 1/3 - isabet artık ıskadan ayrı bir OLAY
+Kullanıcı: "vuruş hissi hâlâ doyurucu gelmiyor, ne yapabiliriz". İki keşif
+ajanıyla vuruş hattının tamamı çıkarıldı.
+
+**Teşhis - eksik tek bir şey değildi ama en büyüğü şuydu: oyunda "isabet" diye
+bir olay yoktu.** `attack()` içinde `slash=.2` ve `audio.play('swing')` hedef
+bulunmadan ÖNCE çalışıyor (`engine.ts:521`); ıska ile isabet arasındaki tek
+fark düşmanın üstünde, oyuncunun bakmadığı yerde olan üç küçük şeydi: 7px bir
+sayı, 8 parçacık, 2 karelik sheet değişimi. Yani geri bildirim "isabet
+ettim"i değil "tuşa bastım"ı bildiriyordu.
+
+**Bu sürümde:**
+* `swing` ıskada KALIYOR (savurma, savuruşun sesidir; ıskada susması "silah
+  bozuldu" hissi verir). İsabette üstüne `vurus` biniyor.
+* **Ses savurma başına TEK kez**, hedef döngüsünün DIŞINDA. Yarma baltası
+  (`alan:3`) üç hedefe birden vuruyor; ses üç kez çalarsa master kompresörü
+  (threshold −12, ratio 4) müziği de birlikte eziyor. Ölçüldü: 3 hedef
+  vurulurken ses tam 1 kez.
+* Kesme yayı eskiden 0.2 sn boyunca SABİT bir çizgiydi - efekt değil artefakt
+  gibi duruyordu. Artık zamana bağlı: dar başlayıp açılan, solan bir süpürme
+  (`alpha=1-p²`, açı `.55→1.17 rad`). İsabette `slashIsabet` ile daha kalın
+  (2.6) ve daha parlak (`#fff3d2`).
+
+**Ses:** kullanıcı `props/hit-...` klasöründe beş gerçek darbe kaydı verdi
+(türetmeye gerek kalmadı). Alçak uçlu, tok kayıtlar (ölçüldü: <300 Hz −18.5 dB,
+>4 kHz −33.3 dB). Baştaki 0.3-0.8 sn sessizlik `silenceremove` ile atıldı,
+0.55 sn'ye kırpıldı, `ses_oda.py` yankısı (yaş 0.45), `ses_varyant.py` ile
+hepsi **−26.5 dB**'e oturtuldu - savurmadan (−30.5) **4 dB yüksek** ki darbe
+savurmanın üstüne çıksın. Beş varyant, torbadan çekiliyor (40 çekimde 0
+ardarda tekrar).
+
+**Tuzak:** `Sound` tipine yeni ad eklerken `play()` yedek sentezine
+`case 'vurus'` yazarken `hit`'in yanına koymak CAZİP ama YANLIŞ - `hit` tam
+olarak kullanıcının v15.0'da kaldırttığı 8bit kare dalga. Dosya yüklenemediği
+an o ton geri gelirdi. Yedek ayrı ve `triangle`.
+
+**Not:** `scripts/test/regression.mjs` v4.3'ten kalma ve artık çalışmıyor -
+(a) yolu yanlış (`../lib` → `../../lib`), (b) düzeltilse bile ilk hikâye
+testinde kırılıyor (senaryo o günden beri değişti), (c) artık var olmayan
+`forge` bölgesine bakıyor. Ayrı bir iş olarak duruyor.
+
+---
+
+*Son güncelleme: 2026-09-16, v15.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
