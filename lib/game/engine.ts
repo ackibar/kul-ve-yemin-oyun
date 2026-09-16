@@ -30,7 +30,7 @@ import {bekleyen} from './data';
 /** Oyuncunun bakis yonu. 'S' yan, 'DS' asagi-capraz, 'US' yukari-capraz;
  *  bati tarafi bunlarin aynasi (flip). NPC/dusmanlar 3 yonde kaliyor. */
 type Yon='U'|'D'|'S'|'DS'|'US';
-type Mob=EnemySpec&{hp:number;max:number;cool:number;windup:number;burn:number;hurt:number;homeX:number;homeY:number;gezX?:number;gezY?:number;gezBekle?:number;aci?:number;sersem?:number;zehir?:number;zehirTik?:number};
+type Mob=EnemySpec&{hp:number;max:number;cool:number;windup:number;burn:number;hurt:number;homeX:number;homeY:number;gezX?:number;gezY?:number;gezBekle?:number;aci?:number;sersem?:number;zehir?:number;zehirTik?:number;/** Yerden cikma animasyonu: kalan sure (sn). >0 iken yurumez/vurmaz. */cikis?:number};
 type Particle={x:number;y:number;vx:number;vy:number;life:number;color:string;size:number;g?:number};
 type Floating={x:number;y:number;text:string;life:number;color:string};
 type Shot={x:number;y:number;vx:number;vy:number;life:number;damage:number;isHero?:boolean;yakar?:number;zehir?:number;delici?:boolean;ceker?:boolean;gecti?:string[]};
@@ -134,6 +134,9 @@ export class Engine{
   *  bitiyordu). 1.1sn animasyonun okunmasina yetiyor ama oyunun tempo
   *  hissini bozacak kadar uzun degil. */
  static readonly DUSUS=1.1;
+ /** Iskeletin yerden cikmasi: bu uzakliga girilince uyanir, bu kadar sn surer. */
+ static readonly ISKELET_UYANMA=118;
+ static readonly ISKELET_CIKIS=.75;
  private sonImza='';
  private sahneSayac=0;
  private dizSayac=0;private dizX=0;private dizY=0;
@@ -187,7 +190,7 @@ export class Engine{
    Hurt olabiliyor (Idle/Death hic cizilmiyor). Once hepsi yukleniyordu: 180
    gereksiz istek. Yeni bir cizim yolu eklenirse bu listeler genisletilir. */
 const EYLEM={npc:['Idle','Walk'],dusman:['Walk','Attack','Hurt']};
-for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?15:10);n++){if(kind==='enemies'&&n===3)continue;/* solucan kaldirildi */const iste=(kind==='characters'&&n>=5)||(kind==='enemies'&&(n===6||n>=8));for(const dir of ['D','U','S'])for(const action of (kind==='characters'?EYLEM.npc:EYLEM.dusman)){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}/* Insansi dusmanlar (4 kullenmis, 6 Rauf) caprazlarda da ciziliyor; tepeden
+for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?15:11);n++){if(kind==='enemies'&&n===3)continue;/* solucan kaldirildi */const iste=(kind==='characters'&&n>=5)||(kind==='enemies'&&(n===6||n>=8));for(const dir of ['D','U','S'])for(const action of (kind==='characters'?EYLEM.npc:EYLEM.dusman)){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}/* Insansi dusmanlar (4 kullenmis, 6 Rauf) caprazlarda da ciziliyor; tepeden
    gorulen yaratiklar dondurulerek cizildigi icin ek sheet istemiyor. */for(const n of [4,6,8,10])for(const dir of ['DS','US'])for(const action of ['Walk','Attack']){jobs.push(this.img(`enemies${n}${dir}${action}`,`/assets/enemies/${n}/${dir}_${action}.png`));optional.push(true);}/* Oyuncu 8 yonde cizilir (DS/US caprazlar, bati tarafi aynalanir); NPC ve
    dusmanlar 3 yonde kalir. Capraz sheet'ler istege bagli isaretlenir ki
    eksik olsalar yukleme hatasi vermesin - poz() en yakin ana yone duser. */
@@ -213,7 +216,14 @@ mark(false);const result=await Promise.allSettled(jobs);
   // Rauf seti (characters/5, enemies/6) sonradan eklenecek; eksikligi oyunu kirmaz.
   const zorunlu=result.filter((_,i)=>!optional[i]);
   this.ready=zorunlu.every(r=>r.status==='fulfilled');if(!this.ready)this.onEvent({type:'message',text:'Bazı görseller yüklenemedi. Bağlantını kontrol edip sayfayı yenile.'});this.emit();}
- private resetMobs(){this.mobs=this.world.enemies.filter(e=>!this.state.killed.includes(e.id)).map(e=>{const max=e.boss?300:(Engine.CAN[e.kind]??40);return {...e,hp:max,max,cool:1+Math.random(),windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y}});this.shots=[];this.particles=[];this.drops=[];this.activeTraps.clear();}
+ /** Henuz yerden CIKMAMIS iskeletler. Mob listesinde DEGILLER: gomuluyken
+  *  gorunmezler, vurulamazlar, carpismazlar - dovus kodunun hicbir yerine
+  *  "gomulu mu" kontrolu eklemek gerekmesin diye ayri tutuluyorlar. Oyuncu
+  *  yaklasinca (bkz. update icindeki iskeletKontrol) mob'a donusurler. */
+ private gomulu:EnemySpec[]=[];
+ private resetMobs(){const diri=this.world.enemies.filter(e=>!this.state.killed.includes(e.id));
+  this.gomulu=diri.filter(e=>e.kind===11);
+  this.mobs=diri.filter(e=>e.kind!==11).map(e=>{const max=e.boss?300:(Engine.CAN[e.kind]??40);return {...e,hp:max,max,cool:1+Math.random(),windup:0,burn:0,hurt:0,homeX:e.x,homeY:e.y}});this.shots=[];this.particles=[];this.drops=[];this.activeTraps.clear();}
  setState(s:State){this.state=s;this.world=makeWorld(s.zone,s.flags as Record<string,string|boolean|undefined>);
   // Takipteyse Rauf yeni bolgede oyuncunun yaninda belirir; makeWorld onu
   // kendi ev konumuna koyuyor ve geride kaliyordu.
@@ -442,6 +452,15 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    for(const z of ['haven','cistern'])for(let i=0;i<16;i++)this.img(`wang_${z}_${i}`,`/assets/dungeon/wang/${z}/wang_${i}.png`).catch(()=>{});}
   private kill(m:Mob){
   if(m.id==='rauf'){this.raufDizCok();return;}
+  /* Iskelet: tek vurusta olur ve PARCALANIR. Ayri dal cunku (a) altin
+     dusurmemeli - 40 kisilik kalabalik servet olurdu, (b) her olumde save()
+     cagirmak onlarca yazma demek, periyodik otomatik kayit zaten yetiyor. */
+  if(m.kind===11){
+   if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);
+   const u=Math.hypot(m.x-this.state.x,m.y-this.state.y);
+   this.audio.play('dusmanOlum',Math.max(.3,1-u/300));
+   this.kemikPatlat(m.x,m.y);this.spawnDrop(m.x,m.y,'xp',6);return;
+  }
   if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);
   if(m.id==='muhafiz'){this.state.flags.muhafiz='oldu';addItem(this.state,'migfer',1);this.state.journal.unshift('Kralın son muhafızını yendin. Miğferi kül doluydu; boşaltmadın.');this.notify('Son muhafız düştü. Miğferi heybende.');}/* Menzil 190'di: yayla uzaktan oldurunce ses neredeyse duyulmuyordu. */
   {const u=Math.hypot(m.x-this.state.x,m.y-this.state.y);this.audio.play('dusmanOlum',Math.max(.35,1-u/300));}/* Kan muhrunun oldurunceCan'i da tanitiliyor ama hic uygulanmiyordu. */{const y=this.state.equipment.ring;const can=y?ITEMS[y].oldurunceCan:0;if(can&&this.state.hp>0&&this.state.hp<stats(this.state).maxHp){this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+can);this.float(this.state.x,this.state.y-10,'+'+can,'#d9838b');}}this.burst(m.x,m.y,m.boss?'#eeb559':'#a56a70',18);const xp=m.boss?210:([0,20,25,30,40,24,60,150,48,0,280][m.kind]??30);const gold=m.boss?60:m.kind===9?0:5+m.kind*2;this.spawnDrop(m.x,m.y,'xp',xp);this.spawnDrop(m.x+(Math.random()-.5)*12,m.y+(Math.random()-.5)*12,'gold',gold);if(m.boss){this.notify('Kül Bekçisi yenildi. Kanı hâlâ sıcak bir mühür bıraktı.');addItem(this.state,'potion',2);addItem(this.state,'kanm',1);}this.save();}
@@ -489,9 +508,14 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Dusman canlari. TEK yerde: once hem resetMobs hem dalga dogusu kendi
   *  kopyasini tutuyordu; trol eklenince biri guncellendi digeri kaldi ve
   *  can NaN olup mob ilk karede `hp>0` filtresine takilip yok oldu. */
- static readonly CAN:Record<number,number>={1:34,2:42,4:80,5:24,6:72,7:190,8:64,9:1,10:230};
+ /* 11 (iskelet) = 1: TEK vurusta olur, kalabalik olmasinin bedeli bu. */
+ static readonly CAN:Record<number,number>={1:34,2:42,4:80,5:24,6:72,7:190,8:64,9:1,10:230,11:1};
  /** Yakin vurus hasari; tabloda yoksa 10+kind*3. */
- static readonly HASAR:Record<number,number>={8:14,9:0,10:26};
+ /* 11 (iskelet) tabloda OLMASAYDI varsayilan 10+11*3=43 olurdu - tek vurusta
+    olen ve onlarca olan bir dusman icin bu olumcul cok yuksekti (14 kisilik
+    cember oyuncuyu iki vurusta bitiriyordu). Kalabalik tehdidi sayidan
+    gelsin diye tek tek vuruslari zayif. */
+ static readonly HASAR:Record<number,number>={8:14,9:0,10:26,11:6};
  /** Takip hizi; tabloda yoksa 27. Bogulmus su icinde yurur gibi yavas. */
  static readonly HIZ:Record<number,number>={4:21,8:15,10:24};
  /** Kralin tac hareketi: her KRAL_DONGU saniyede bir oynar (Tac sayfasinin
@@ -515,7 +539,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly ISIK={mesale:104,cip:26,ates:64,fener:40,yanan:26,ok:18};
  /** Fener tasiyan bu mesafede soner ve etrafa Bogulmus birakir. */
  static readonly FENER_MENZIL=46;
- static readonly GOLGE:Record<number,number>={1:9,2:8,4:8,5:11,6:8,7:18,8:9,9:5,10:10};
+ static readonly GOLGE:Record<number,number>={1:9,2:8,4:8,5:11,6:8,7:18,8:9,9:5,10:10,11:8};
  /** Hucre eni (dunya birimi). Trol sopasiyla 64'e sigmiyordu, 112 px kullaniyor. */
  static readonly DUSMAN_EN:Record<number,number>={7:56};
  /** Buyuk dusmanlarin capasi. Varsayilan 21 sprite'i 42 satira siniriyor. */
@@ -616,6 +640,33 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   if(e.y-y>ustPay)return false;
   return Math.hypot(e.x-x,e.y-y)<r;
  }
+ /** Oyuncu yaklasinca gomulu iskeletleri yerden cikarir. Cikis suresince
+  *  (cikis>0) yurumez ve vurmazlar; render onlari yerden yukselirken cizer. */
+ private iskeletKontrol(){
+  if(!this.gomulu.length)return;
+  const kalan:EnemySpec[]=[];
+  for(const e of this.gomulu){
+   if(Math.hypot(e.x-this.state.x,e.y-this.state.y)>Engine.ISKELET_UYANMA){kalan.push(e);continue;}
+   const max=Engine.CAN[11]??1;
+   this.mobs.push({...e,hp:max,max,cool:.6+Math.random()*.6,windup:0,burn:0,hurt:0,
+    homeX:e.x,homeY:e.y,cikis:Engine.ISKELET_CIKIS});
+   /* Toprak fiskirmasi: cikis ANINDA, ayak hizasinda. */
+   for(let i=0;i<10;i++)this.particles.push({x:e.x+(Math.random()-.5)*14,y:e.y+(Math.random()-.5)*4,
+    vx:(Math.random()-.5)*40,vy:-20-Math.random()*45,life:.35+Math.random()*.3,
+    color:['#6b5843','#57473a','#8a7358'][Math.floor(Math.random()*3)],size:1+Math.random(),g:150});
+   this.audio.play('trap',Math.max(.25,1-Math.hypot(e.x-this.state.x,e.y-this.state.y)/260));
+  }
+  this.gomulu=kalan;
+ }
+ /** Iskelet olunce parcalanir: kemik kiymigi + toz, yer cekimiyle savrulur. */
+ private kemikPatlat(x:number,y:number){
+  for(let i=0;i<16;i++)this.particles.push({x,y:y-8-Math.random()*10,
+   vx:(Math.random()-.5)*95,vy:-30-Math.random()*70,life:.5+Math.random()*.45,
+   color:['#e9e2cf','#cfc6ad','#a99e86'][Math.floor(Math.random()*3)],size:1+Math.random()*1.6,g:190});
+  for(let i=0;i<7;i++)this.particles.push({x,y:y-4,
+   vx:(Math.random()-.5)*45,vy:-8-Math.random()*22,life:.4+Math.random()*.3,
+   color:'#6b5f4d',size:1+Math.random(),g:90});
+ }
  private burst(x:number,y:number,color:string,n:number){for(let i=0;i<n;i++)this.particles.push({x,y,vx:(Math.random()-.5)*55,vy:(Math.random()-.6)*55,life:.4+Math.random()*.4,color,size:1+Math.random()})}
   private float(x:number,y:number,text:string,color:string){let targetY=y;for(const f of this.floating){if(Math.abs(f.x-x)<24&&Math.abs(f.y-targetY)<10){targetY-=11;}}this.floating.push({x,y:targetY,text,life:1.1,color})}
   private update(dt:number){
@@ -698,7 +749,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     }
     if(yandi)this.fireBurnCooldown=.8;
    }
-   for(const m of this.mobs){if(m.hp<=0)continue;m.cool-=dt;m.hurt=Math.max(0,m.hurt-dt);if(m.zehir&&m.zehir>0){m.zehir-=dt;m.hp-=Engine.ZEHIR_HASAR*dt;
+   for(const m of this.mobs){if(m.hp<=0)continue;/* Yerden cikarken sadece animasyon oynar: yurumez, vurmaz, sayaclari islemez. */if(m.cikis&&m.cikis>0){m.cikis-=dt;continue;}m.cool-=dt;m.hurt=Math.max(0,m.hurt-dt);if(m.zehir&&m.zehir>0){m.zehir-=dt;m.hp-=Engine.ZEHIR_HASAR*dt;
     // Sayilar her karede degil saniyede bir yaziliyor; yoksa ekran doluyor.
     m.zehirTik=(m.zehirTik??0)+dt;
     if(m.zehirTik>=1){m.zehirTik=0;this.float(m.x,m.y-12,String(Engine.ZEHIR_HASAR),'#9fd47a');}
@@ -764,6 +815,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      if(this.tuhnYarasa<=0){this.audio.play('door');
       this.notify('Karanlıktan kanat sesleri yükseliyor.');
       this.yarasaSurusu(24,13,7);this.emit();}}}
+   this.iskeletKontrol();
    // --- Tuhn: ikna edilemediyse ucuruma yurur ve atlar ---
    if(this.state.flags.tuhn==='atladi'&&this.state.zone==='magara'){
     const bd=this.world.entities.find(x=>x.id==='tuhn');
@@ -1131,7 +1183,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     const sy=this.sahneYuru.get(e.id);const g=this.gez.get(e.id);const yur=!!sy||(!!g&&g.bekle<=0&&Math.hypot(g.tx-e.x,g.ty-e.y)>1.5);const yd=sy?sy.dir:g?.dir??'D';const yf=sy?sy.flip:g?.flip??false;const yy=sy?sy.yol:(g?.yol||0);this.sprite(`characters${e.portrait}${yur?yd:'D'}${yur?'Walk':'Idle'}`,e.x,e.y,yur?Math.floor(yy/Engine.ADIM):Math.floor(time*5),32,32,yur&&yd==='S'&&yf,OL,1,0,e.capa);const pending=bekleyen(this.state,e.id);/* Unlem isimle AYNI yukseklikte olmali: isim olcekle (e.s) yukseliyordu,
    unlem sabit -30'daydi, kucuk karakterlerde (Lin s=0.8) kayik duruyordu. */const etiketY=e.y-30*(e.s||1);const nw=this.label(e.name||'',e.x,etiketY);if(pending)this.label('!',e.x-nw/2-5,etiketY,'#e0453a');}
   }}));
-  for(const m of this.mobs)actors.push({y:m.y,layer:0,draw:()=>{if(m.kind===9){/* Fenerin isigi: ovadaki tek sicak renk. */const g=c.createRadialGradient(m.x,m.y-14,2,m.x,m.y-14,42);g.addColorStop(0,'#ffb35a70');g.addColorStop(1,'#ffb35a00');c.fillStyle=g;c.fillRect(m.x-42,m.y-56,84,84);}c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=Math.floor(time*Engine.DUSMAN_FPS(eylem));if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0));}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim);}else{this.sprite(anahtar,m.x,m.y,kare,Engine.DUSMAN_EN[m.kind]??32,32,yar.mod==='aynali'&&Math.cos(bak)<0,ol,1,0,Engine.DUSMAN_CAPA[m.kind]);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}const yuzuk=this.state.equipment.ring;if(m.kind!==9&&(m.hp<m.max||m.boss||(yuzuk&&ITEMS[yuzuk].canGoster))){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');if(m.kind===10)this.label('SON MUHAFIZ',m.x,m.y-40,'#c9b7d6');}}});
+  for(const m of this.mobs)actors.push({y:m.y,layer:0,draw:()=>{if(m.cikis&&m.cikis>0){/* Yerden cikis: sprite asagi itilir ve AYAK CIZGISININ ALTI kirpilir,    yani figur topraktan yukseliyormus gibi acilir. p 0->1 ilerler. */const p=1-m.cikis/Engine.ISKELET_CIKIS,ol=(Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const boy=32*ol,gizli=(1-p)*boy;c.save();c.beginPath();c.rect(m.x-boy,m.y-boy*2,boy*2,boy*2);c.clip();c.fillStyle='#04091255';c.beginPath();c.ellipse(m.x,m.y+1,7*OYUNCU_OLCEK*p,2.4*OYUNCU_OLCEK*p,0,0,7);c.fill();this.sprite(this.dusmanPoz(m.kind,'D','Walk'),m.x,m.y+gizli,0,32,32,false,ol);c.restore();return;}if(m.kind===9){/* Fenerin isigi: ovadaki tek sicak renk. */const g=c.createRadialGradient(m.x,m.y-14,2,m.x,m.y-14,42);g.addColorStop(0,'#ffb35a70');g.addColorStop(1,'#ffb35a00');c.fillStyle=g;c.fillRect(m.x-42,m.y-56,84,84);}c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';const ol=(m.boss?1.7:Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const yar=Engine.YARATIK[m.kind];if(yar){/* Yaratiklarda yon ayri sheet degil; nasil gosterildigi YARATIK'ta yazili. */const bak=m.aci??Math.atan2(dy,dx);const anahtar=`enemies${m.kind}D${eylem}`;const kare=Math.floor(time*Engine.DUSMAN_FPS(eylem));if(yar.mod==='tam'){this.sprite(anahtar,m.x,m.y,kare,32,32,false,ol,1,bak-(yar.aci||0));}else if(yar.mod==='yan'){const sol=Math.cos(bak)<0;const egim=Math.max(-Engine.EGIM,Math.min(Engine.EGIM,Math.atan2(Math.sin(bak),Math.abs(Math.cos(bak)))));/* Aynalama dondurmeden SONRA uygulandigi icin egimin isareti ters cevrilir. */this.sprite(anahtar,m.x,m.y,kare,32,32,sol,ol,1,sol?-egim:egim);}else{this.sprite(anahtar,m.x,m.y,kare,Engine.DUSMAN_EN[m.kind]??32,32,yar.mod==='aynali'&&Math.cos(bak)<0,ol,1,0,Engine.DUSMAN_CAPA[m.kind]);}}else{const yatay=Math.abs(dx),dikey=Math.abs(dy);const dir=dikey>yatay*2.414?(dy<0?'U':'D'):yatay>dikey*2.414?'S':(dy<0?'US':'DS');this.sprite(this.dusmanPoz(m.kind,dir,eylem),m.x,m.y,Math.floor(time*Engine.DUSMAN_FPS(eylem)),32,32,dir!=='U'&&dir!=='D'&&dx<0,ol);}const yuzuk=this.state.equipment.ring;if(m.kind!==9&&(m.hp<m.max||m.boss||(yuzuk&&ITEMS[yuzuk].canGoster))){const w=m.boss?34:16;c.fillStyle='#190e18';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w,2);c.fillStyle='#ce7778';c.fillRect(m.x-w/2,m.y-(m.boss?38:23),w*m.hp/m.max,2);if(m.boss)this.label('KÜL BEKÇİSİ',m.x,m.y-43,'#efac8a');if(m.kind===10)this.label('SON MUHAFIZ',m.x,m.y-40,'#c9b7d6');}}});
    actors.push({y:this.state.y,layer:0,draw:()=>{const s=this.state;const action=this.vurusPoz>0?'Attack':this.moving&&!this.paused?'Walk':'Idle';
   const dusuyor=this.dusus>0||this.dustu;
   if(!dusuyor)this.golgeCiz(s.x,s.y);/* Boslukta golge yok - basacak zemin kalmadi. */

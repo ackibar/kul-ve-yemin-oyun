@@ -19,7 +19,7 @@ export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|
   *  donder parametresi olarak geciyor). Yalniz overlay decor icin anlamli. */aci?:number};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
-export type EnemySpec={id:string;kind:1|2|4|5|6|7|8|9|10;x:number;y:number;boss?:boolean};
+export type EnemySpec={id:string;kind:1|2|4|5|6|7|8|9|10|11;x:number;y:number;boss?:boolean};
 export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[];enemies:EnemySpec[];spawn:[number,number];
  /** Karo biriminde carpisma sekli - UZUNLUGA gore ayirt edilir (harita-editor.html
   *  "Engeller" modu ile uretilir):
@@ -69,7 +69,7 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
  const fire=(x:number,y:number)=>at({id:`fire${x}_${y}`,type:'fire',x,y});
  const decor=(id:string,x:number,y:number,asset:string,name?:string)=>at({id,type:'decor',x,y,asset,name:name||(asset.includes('Table')?'Zanaat Masası':undefined)});
  const chest=(id:string,x:number,y:number,items:[ItemId,number][],gold=0)=>at({id,type:'chest',x,y,items,gold,name:'Sandık'});
- const enemy=(id:string,kind:1|2|4|5|6|7|8|9|10,x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
+ const enemy=(id:string,kind:EnemySpec['kind'],x:number,y:number,boss=false)=>enemies.push({id,kind,x:x*16+8,y:y*16+8,boss});
  if(zone==='haven'){
   /* @harita-editor:nesneler */
   at({id:'ed1789494393188_1',type:'decor',x:5.8122,y:13.286,asset:'nesne/ed_props',s:0.135,overlay:true});
@@ -286,6 +286,12 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      yani cikis girdigin ucta duruyordu (kullanici: "kapi giris cikisi ters
      olmus"). Donus kutusu sag kemerin oldugu uc (x 39..42, y 12..16); dogma
      noktasi (36,14) kutunun DISINDA, yoksa varir varmaz geri gonderir. */
+  /* Yerden cikan iskelet kalabaligi (kind 11). Bunlar GOMULU baslar: motor
+     onlari resetMobs()'ta ayri bir listede tutar, oyuncu yaklasinca yerden
+     cikip mob olurlar (bkz. engine.ts gomulu/cikis). Tek vurusta olur,
+     parcalanirlar. Konumlar acik zemine, oyuncunun geldigi DOGU ucu bos
+     kalacak sekilde dagitildi (varir varmaz ustune cikmasinlar). */
+  [[5,7],[5,15],[6,7],[6,8],[6,14],[7,4],[8,6],[9,10],[9,16],[10,9],[10,16],[10,18],[12,7],[13,17],[14,15],[15,9],[15,19],[16,5],[16,6],[16,15],[17,17],[18,6],[18,11],[18,12],[19,4],[19,16],[20,14],[22,17],[24,10],[24,17],[24,18],[25,15],[28,11],[29,6],[29,9],[30,4],[31,16],[32,13],[32,17],[34,6],[35,19],[38,6]].forEach(([x,y],i)=>enemy(`isk${i}`,11,x,y));
   gecis(39,12,43,17,'haven',[3,16]);
  }
  return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:zone==='tunel'?[6*16+8,6*16+8]:zone==='test100'?[21*16+8,12*16+8]:[7*16,7*16]};

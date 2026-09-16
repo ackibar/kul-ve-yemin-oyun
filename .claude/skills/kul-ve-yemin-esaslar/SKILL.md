@@ -1483,4 +1483,42 @@ bağlarken kural: çıkış yönü ile varış ucu BİRBİRİNİN TERSİ olmalı
 
 ---
 
-*Son güncelleme: 2026-09-16, v13.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v13.5: Koridorda yerden çıkan iskelet kalabalığı (kind 11)
+"Yerden çıkan iskeletler olsun, vurunca parçalansınlar, tekte ölsünler ama çok
+kalabalık olsunlar." Koridora **42 gömülü iskelet** kondu.
+
+**Gömülü olanlar mob DEĞİL.** `resetMobs()` kind 11'i ayrı bir `gomulu:EnemySpec[]`
+listesine koyuyor; oyuncu `ISKELET_UYANMA`(118) mesafesine girince mob'a dönüşüp
+`cikis=0.75sn` ile yerden çıkıyorlar. Böylece dövüş kodunun HİÇBİR yerine
+"gömülü mü" kontrolü eklemek gerekmedi - görünmez/vurulamaz/çarpışmaz olmaları
+kendiliğinden geliyor. Çıkış süresince mob döngüsünde `continue` (yürümez,
+vurmaz); render sprite'ı aşağı itip ayak çizgisinin altını `clip()` ile kırpıyor,
+yani figür topraktan yükseliyormuş gibi açılıyor + toprak fışkırması.
+
+**Ölüm:** `kill()` içinde kind 11'e ÖZEL dal - `kemikPatlat()` (kemik kıymığı +
+toz, yer çekimli), küçük xp (6), **altın YOK** (40 kişilik kalabalık servet
+olurdu) ve **`save()` YOK** (her ölümde localStorage yazmak onlarca yazma demek;
+periyodik otomatik kayıt zaten `killed`i kalıcılaştırıyor).
+
+**İki sessiz tuzak yakalandı:**
+1. `loadAssets` düşman setlerini `n<=10` diye dönüyordu → `enemies/11` hiç
+   yüklenmedi, iskeletler GÖRÜNMEDEN saldırıyordu (ekranda sadece windup
+   halkaları). Yeni bir düşman türü eklerken bu döngüyü büyütmeyi unutma.
+2. `HASAR` tablosunda olmayan tür `10+kind*3` alıyor → iskelet **43** hasar
+   verecekti (14 kişilik çember oyuncuyu 2 vuruşta bitirir). `HASAR[11]=6`.
+
+**Sanat:** `create-character-v3` ile iskelet karakteri (2 üretim, seed 111,
+`id_iskelet.txt`). Tarifte "human" YAZILMADI - mannequin gövdesi zaten insan
+silueti, "human" deyince model et/deri ekliyor. Sheet'ler şimdilik
+`npc_sheet_kur.py` ile dönüş karelerinden kuruldu: **yürüme animasyonu YOK**
+(kayarak ilerliyorlar). Walk+Attack 3'er yön = 6 üretim, kullanıcı onayı
+bekliyor.
+
+**Test notu:** `page.keyboard.press('KeyJ')` headless'ta güvenilmez (odak);
+vuruş `g.attack()` doğrudan çağrılarak doğrulandı - hp 1 → tek vuruşta ölüm,
+31 parçacık. Ayrıca mob SAYISI ölçüt olarak yanıltıcı: oyuncuyu taşıyınca yeni
+iskeletler uyanıp sayıyı artırıyor, doğru ölçüt `state.killed`.
+
+---
+
+*Son güncelleme: 2026-09-16, v13.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
