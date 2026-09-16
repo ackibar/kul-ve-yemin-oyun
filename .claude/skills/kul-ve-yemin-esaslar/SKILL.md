@@ -1756,4 +1756,28 @@ commit'teki kodda da aynı sonuç çıktı - ışınlamalı testte hedef noktan�
 
 ---
 
-*Son güncelleme: 2026-09-16, v14.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v14.4: Düşman animasyonlarının fazı ayrıştı
+Kullanıcı: "iskeletler aynı ritimde hareket ediyor, biri sağ adım atarken öbürü
+sol adım atabilsin - diğer düşmanlara da uygulayalım."
+
+Sebep: kare numarası GLOBAL saatten geliyordu
+(`Math.floor(time*DUSMAN_FPS(eylem))`), yani aynı türden herkes tek gövde gibi
+aynı kareyi çiziyordu.
+
+**Çözüm durum tutmadan:** faz ve animasyon hızı mob'un **kimliğinden**
+türetiliyor (FNV-1a karması → 0..1). Alan eklemek 7 ayrı mob doğum noktasını
+(`resetMobs`, `iskeletKontrol`, yarasa sürüsü, muhafız, Rauf…) tek tek
+düzenlemek demekti; kimlikten türetince her doğum yerinde kendiliğinden çalışıyor
+ve her karede aynı sonucu veriyor.
+
+**Hız saçılması şart:** yalnız faz kaydırılırsa iki mob bir süre sonra yine aynı
+kareye denk geliyor. `FAZ_HIZ_MIN/MAK` 0.86-1.16 ile cycle uzunlukları da farklı.
+Saldırıda hıza dokunulmuyor - savurmanın süresi vuruş zamanlamasıyla okunuyor,
+orada yalnızca başlangıç fazı kayıyor.
+
+Ölçüm: yan yana dizilen 8 iskeletin aynı andaki kare numaraları
+5,3,6,1,4,2,6,8 (9 karelik döngüde).
+
+---
+
+*Son güncelleme: 2026-09-16, v14.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
