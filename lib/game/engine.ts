@@ -451,7 +451,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     }
     if(ilk&&e.items?.some(([id])=>id==='medicine'))this.state.flags.medicineStarted=true;
     this.save();this.onEvent({type:'sandik',id:e.id});this.emit();return;}if(e.type==='lever'){if(this.state.flags.gateOpen){this.notify('Ocak kapısı zaten açık.');return;}this.state.flags.gateOpen=true;this.audio.play('door');this.notify('Kül Ocağı’nın kapısı açıldı.');this.save();this.emit();return;}if(e.type==='portal'&&e.to){this.changeZone(e.to,e.spawn!);}}
- private changeZone(zone:Zone,spawn:[number,number]){this.bekleyenleriYaz();this.halka=false;this.dusus=0;this.dustu=false;/* respawn() buradan geciyor: dususten sonra yeniden dogan karakter gorunur olmali. */this.state.zone=zone;this.state.x=spawn[0]*16+8;this.state.y=spawn[1]*16+8;
+ private changeZone(zone:Zone,spawn:[number,number]){this.bekleyenleriYaz();/* Gorulen mekanlar final adimlarinda kullaniliyor (bkz. data.ts FINALLER). */this.state.flags['gordu_'+zone]=true;this.halka=false;this.dusus=0;this.dustu=false;/* respawn() buradan geciyor: dususten sonra yeniden dogan karakter gorunur olmali. */this.state.zone=zone;this.state.x=spawn[0]*16+8;this.state.y=spawn[1]*16+8;
   /* Uslu'nun Son Siginak <-> Sarnic Agzi arasi yer degistirmesi ARTIK burada
      ANLIK bir zar atisiyla olmuyor (bkz. eski not: oyuncu kapidan gecerken
      %50 ihtimalle "ısınlanmıs" gibi yer degistiriyordu - gorunmedigi icin

@@ -2374,4 +2374,34 @@ avlanma temposu sığınağın ömrüyle doğrudan orantılı.
 
 ---
 
-*Son güncelleme: 2026-09-17, v16.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v16.8: Üç final iskeleti (Göç · Gerçek · Av)
+Kullanıcı üç fikri de "alternatif final" olarak istemişti. Yapı kuruldu.
+
+`FINALLER` tablosu: her finalin **görünür dört adımı** var. Oyuncu neye doğru
+çalıştığını bilmeli, yoksa "hikâyeyi öğrenmek için oynamaya devam etme" isteği
+karşılanmaz. Adımların çoğu **zaten var olan bayraklara** bağlandı - yeni
+sistem değil, dağılmış parçaların toplanması:
+
+* **Göç** - kimseyi kaybetme (`kayip===0`), yol için erzak (depo 8/8),
+  koridorun öbür ucunu gör, Mirna+Alf'in işini bitir.
+* **Gerçek** - Kral'ın hikâyesini beş kişiden topla (`kralMirna/Alf/Undur/Lin/
+  Obruk` - bu bayraklar oyunda VARDI ama hiçbir şeye bağlı değildi), Alf'in
+  sırrı, aşağıya in, deftere yazdır.
+* **Av** - Kül Bekçisi, Son Muhafız, çelikten kendi silahını üret, ağır zırh
+  kuşan.
+
+`finalDurum(s)` ilerlemeyi veriyor; günlüğe **"Yollar"** sekmesi eklendi:
+tamamlanan adım ✓ ve sönük, tamamlanmayan ipucuyla birlikte. Undur yalnızca
+**adımları biten** finali teklif ediyor; hazır olmayan seçilirse "Henüz değil,
+eksiklerini günlükten görebilirsin" diyor.
+
+Mekân görme bayrakları (`gordu_<zone>`) `changeZone`'da yazılıyor.
+Eski `seal`/`claim` finalleri kayıt uyumu için duruyor.
+
+Ölçüldü: başlangıçta 0/4-0/4-0/4 ve Undur hiçbir şey teklif etmiyor; Av'ın dört
+adımı tamamlanınca teklif çıkıyor, seçilince `ending='av'` ve metin geliyor,
+ikinci seçim engelleniyor.
+
+---
+
+*Son güncelleme: 2026-09-17, v16.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

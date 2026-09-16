@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='16.7';
+export const SURUM='16.8';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -361,6 +361,45 @@ export function yeminler(s:State):{kime:string;soz:string;durum:YeminDurum}[]{
  return out;
 }
 /** Son ekraninin duz yazisi: sona ve verilen yemine gore. */
+/** UC FINAL. Kullanici uc fikri de "alternatif final" olarak istedi:
+ *  gocmek, felaketin sebebini bulmak, disaridaki seyi avlamak.
+ *  Her finalin GORUNUR adimlari var - oyuncu neye dogru calistigini bilmeli,
+ *  yoksa "hikayeyi ogrenmek icin oynamaya devam etme" istegi karsilanmaz.
+ *  Adimlarin cogu ZATEN VAR OLAN bayraklara baglandi; yeni sistem degil,
+ *  dagilmis parcalarin toplanmasi. */
+export type FinalAdim={id:string;baslik:string;ipucu:string;tamam:(s:State)=>boolean};
+export type Final={id:'goc'|'gercek'|'av';ad:string;ozet:string;adimlar:FinalAdim[]};
+export const FINALLER:Final[]=[
+ {id:'goc',ad:'Göç',ozet:'Buradakileri toplayıp başka bir yere götürmek. Kimseyi geride bırakmadan.',
+  adimlar:[
+   {id:'goc_yasat',baslik:'Kimseyi kaybetme',ipucu:'Depo hiç boşalmasın; açlıktan kimse ölmesin.',tamam:s=>s.kayip===0&&s.gun>=4},
+   {id:'goc_stok',baslik:'Yol için erzak',ipucu:'Depoda en az 8 gün yiyecek ve 8 gün su biriktir.',tamam:s=>s.erzak.yiyecek>=8&&s.erzak.su>=8},
+   {id:'goc_yol',baslik:'Bir yol bul',ipucu:'Terk Edilmiş Koridor’un öbür ucunu gör.',tamam:s=>!!s.flags.gordu_test100},
+   {id:'goc_soz',baslik:'İkna et',ipucu:'Mirna ve Alf sana güvensin; ikisinin de işini bitir.',tamam:s=>!!s.flags.medicineDone&&!!s.flags.ledgerDone},
+  ]},
+ {id:'gercek',ad:'Gerçek',ozet:'Külün nereden geldiğini öğrenmek. Öğrenmek kimseyi kurtarmaz, ama yalanı bitirir.',
+  adimlar:[
+   {id:'ger_kral',baslik:'Kralın hikâyesini topla',ipucu:'Beş kişiden de Kral’ı dinle.',tamam:s=>['kralMirna','kralAlf','kralUndur','kralLin','kralObruk'].every(k=>s.flags[k])},
+   {id:'ger_kapi',baslik:'Kapının sırrı',ipucu:'Alf’in yemininin neye dayandığını öğren.',tamam:s=>s.flags.alfSir==='soylendi'},
+   {id:'ger_asagi',baslik:'Aşağıya in',ipucu:'Dar Geçit’i ve Unutulmuş Sarnıç’ı gör.',tamam:s=>!!s.flags.gordu_tunel&&!!s.flags.gordu_cistern},
+   {id:'ger_defter',baslik:'Deftere yazdır',ipucu:'Undur’a defteri ulaştır.',tamam:s=>!!s.flags.ledgerDone},
+  ]},
+ {id:'av',ad:'Av',ozet:'Dışarıyı tutan şeyi öldürmek. Kapı açılsın diye değil; bir daha kimse o sesi duymasın diye.',
+  adimlar:[
+   {id:'av_bekci',baslik:'Kül Bekçisi’ni devir',ipucu:'Sarnıcın dibindeki şeyi öldür.',tamam:s=>s.killed.includes('warden')},
+   {id:'av_muhafiz',baslik:'Son Muhafız’ı geç',ipucu:'Ovadaki muhafızla işini bitir.',tamam:s=>!!s.flags.muhafiz},
+   {id:'av_celik',baslik:'Kendi silahını yap',ipucu:'Çelik hurdasından bir silah üret.',tamam:s=>['hancer','mizrak','balta','topuz'].some(k=>!!s.inventory[k as ItemId])},
+   {id:'av_zirh',baslik:'Ağır zırh kuşan',ipucu:'Zincir ya da ocak zırhını üret ve kuşan.',tamam:s=>['chain','ocakz','kemik'].includes(s.equipment.armor)},
+  ]},
+];
+/** Her finalin ilerlemesi - gunluk panelinde gosterilir. */
+export function finalDurum(s:State){
+ return FINALLER.map(f=>{
+  const adimlar=f.adimlar.map(a=>({...a,bitti:a.tamam(s)}));
+  return {...f,adimlar,tamam:adimlar.filter(a=>a.bitti).length,toplam:adimlar.length,hazir:adimlar.every(a=>a.bitti)};
+ });
+}
+
 export function sonMetni(s:State):string{
  /* Aclıktan kaybedilenler finalin sonuna ekleniyor: sigginak "kurtuldu" bile
     olsa kimin kurtulmadigi yazili kalmali. Ayrica kral cinayetinde verilen
@@ -369,6 +408,9 @@ export function sonMetni(s:State):string{
   +(s.flags.kralKarar==='kendi'?' Köşedeki adamın yanına “kendi eliyle” yazdılar; kimse itiraz etmedi.'
    :s.flags.kralKarar&&s.flags.kralKarar!=='sessiz'?' Köşedeki adam için suçladığın kişinin adı hâlâ defterde; yanlıştı.'
    :s.flags.kralKarar==='sessiz'?' Köşedeki adamın yanı boş kaldı. Kimse doldurmadı.':'');
+ if(s.ending==='goc')return 'Kapıyı arkanızdan kapatmadınız; kapanacak bir şey kalmamıştı. Koridorun öbür ucunda hava hâlâ ağırdı ama nefes alınıyordu. Mirna önde yürüdü, Alf en arkada. Sığınak boşaldı ve ilk kez birinin evi olmadı — bir yol oldu.'+ek;
+ if(s.ending==='gercek')return 'Undur son sayfayı yazdı ve defteri kapatmadı. Külün nereden geldiğini artık biliyorsun; kimseyi kurtarmıyor, kimseyi diriltmiyor. Ama sığınakta bir daha kimse “bilmiyoruz” demeyecek. Bazen bir yalanın bitmesi de bir sondur.'+ek;
+ if(s.ending==='av')return 'Sesi kesildiğinde kimse sevinmedi; herkes kulak kabarttı, bir daha gelir mi diye. Gelmedi. Kapıyı açtılar, dışarısı yine küldü ama artık yalnızca küldü. Alf kılıcını duvara astı ve ilk kez uyudu.'+ek;
  if(s.ending==='seal')return (s.flags.yemin==='nobet'
   ?'Yarık kapandı. Taşların altındaki uğultu sustu. Kapının önünde artık sen duruyorsun; Alf ilk kez arkasını dönüp uyudu. Sığınak eskisi kadar karanlık, ama ilk kez güvenli.'+ek
   :'Yarık kapandı. Taşların altındaki uğultu sustu. Yukarıda kalanların isimleri Undur’un defterinde; sen onları aramaya söz verdin. Sığınak eskisi kadar karanlık, ama ilk kez güvenli.'+ek);
@@ -918,7 +960,11 @@ export function dialogue(s:State,id:string):Dialogue{
   ...(s.flags.alfSir==='biliyorum'?[{label:'Undur’un sana söylemediği bir şey var.',action:'story:boran:sir',note:'Karar · Onbir yılın sahibi'}]:[]),
   ...((s.flags.rauf==='korundu'||s.flags.rauf==='serbest')&&!s.flags.alfKarsi
     ?[{label:'Bana bir şey soracaktın.',action:'story:boran:karsi',note:'Yüzleşme · Rauf'}]:[]),...(!s.flags.ledgerStarted?[{label:'Rauf’u bulup getireceğim.',action:'boran_start',note:'Görev · Defterdeki isim'}]:[]),...(s.inventory.ledger?[{label:s.flags.fugitive==='protected'?'Defter terk edilmişti. Rauf’u görmedim.':'Rauf teslim olmayı kabul etti.',action:'boran_deliver',note:s.flags.fugitive==='protected'?'Rauf’u koru · Yaşam halkası':'Rauf’u teslim et · Muhafız kılıcı'}]:[]),{label:'Malzemelerine bakabilir miyim?',action:'shop'},close]};
- if(id==='ekin')return {who:'Undur',role:'Yeminlerin arşivcisi',portrait:4,text:(s.flags.kral==='oldu'?'Ongun. Bereket. Altına çizgi çektim. Tacın nerede olduğunu biliyorum; onu da yazdım. ':'')+(s.ending?(s.flags.alfSir==='soylendi'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf’inki yalanmış; sen söyledin, o da bıraktı. Bunu yazdım.':s.flags.alfSir==='sakladin'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf hâlâ kendi yükünü taşıyor — sayende. Bunu da yazdım.':'Bir yemin, onu tutan insanlar kadar güçlüdür. Seninkinin izini bu taşlar uzun süre taşıyacak.'):'Sarsıntılar artıyor. Aşağıda, sarnıcın da altında bir yer var — eski kalp orada atıyor. Yolunu henüz bulamadım. Bulduğumda sana ilk ben söylerim.'),choices:[{label:'Bana hikâyeni anlat.',action:'story:ekin:1'},close]};
+ if(id==='ekin')return {who:'Undur',role:'Yeminlerin arşivcisi',portrait:4,text:(s.flags.kral==='oldu'?'Ongun. Bereket. Altına çizgi çektim. Tacın nerede olduğunu biliyorum; onu da yazdım. ':'')+(s.ending?(s.flags.alfSir==='soylendi'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf’inki yalanmış; sen söyledin, o da bıraktı. Bunu yazdım.':s.flags.alfSir==='sakladin'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf hâlâ kendi yükünü taşıyor — sayende. Bunu da yazdım.':'Bir yemin, onu tutan insanlar kadar güçlüdür. Seninkinin izini bu taşlar uzun süre taşıyacak.'):'Sarsıntılar artıyor. Aşağıda, sarnıcın da altında bir yer var — eski kalp orada atıyor. Yolunu henüz bulamadım. Bulduğumda sana ilk ben söylerim.'),choices:[
+  /* UC FINAL. Yalnizca ADIMLARI TAMAMLANMIS olanlar gorunur - oyuncu hazir
+     olmadigi bir sonu secemez, ama hangi sonlara yaklastigini gunlukten gorur. */
+  ...(!s.ending?finalDurum(s).filter(f=>f.hazir).map(f=>({label:`${f.ad}: ${f.ozet}`,action:'final_'+f.id,note:'SON · geri dönüşü yok'})):[]),
+{label:'Bana hikâyeni anlat.',action:'story:ekin:1'},close]};
  if(id==='rauf')return {who:'Rauf',role:'Yaralı kaçak',portrait:5,text:s.flags.fugitive==='reported'?'Teslim olacağım. Defteri de götür; adımın altına ne yazdıysa bir de yüzüme okusun.':s.flags.medicine==='rauf'?'Nefes almak artık acıtmıyor. Bunu unutmayacağım. Batıdaki kol, ocağa giden kapıyı açar.': 'Alf’in nöbet defteri bende. Adım içinde, üstü çizili — ben çizmedim, o çizdi. Ocak kapısını açık bulunca içeri girdim; bacağım burada bitti. Alf beni dinlemez. Bana yardım eder misin?',choices:[{label:'Bana hikâyeni anlat.',action:'story:rauf:1'},...(s.inventory.medicine&&s.flags.fugitive!=='reported'?[{label:'Bu ilacı al. Yaşaman gerek.',action:'rauf_heal',note:'Son ilacı harca · Mirna’ya götüremeyeceksin'}]:[]),close]};
  return {who:'Eski mühür',role:'Kül Ocağı',portrait:1,text:'Kalp hâlâ atıyor. Onu Undur’a götürmelisin.',choices:[close]};
 }
@@ -1072,6 +1118,16 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
  case 'nil_odun':if(s.flags.nilOdun||!removeItem(s,'wood'))return {message:''};s.flags.nilOdun=true;xp=20;message='Lin odunu aldı: “Bu gece de yanar.”';break;
  case 'ayaz_haber':if(s.flags.ayazHaber||!s.flags.sozNil)return {message:''};s.flags.ayazHaber='soylendi';xp=30;message=s.flags.sozNil==='verildi'?'Lin’e verdiğin sözü tuttun. Tiga: “…Yanıyor demek.”':'Tiga: “…Yanıyor demek.”';break;
  case 'ceset_kurdele':if(s.flags.kurdeleAlindi)return {message:''};s.flags.kurdeleAlindi=true;addItem(s,'kurdele');message='Kurdeleyi Rauf’un bileğinden çözdün.';break;
+ /* Final secimi. Geri donusu yok; adimlar zaten tamamlanmis olmali. */
+ case 'final_goc':case 'final_gercek':case 'final_av':{
+  if(s.ending)return {message:''};
+  const f=action.slice(6) as 'goc'|'gercek'|'av';
+  const d=finalDurum(s).find(x=>x.id===f);
+  if(!d?.hazir)return {message:'Henüz değil. Eksiklerini günlükten görebilirsin.'};
+  s.ending=f;gainXp(s,200);
+  s.journal.unshift(`Kararını verdin: ${d.ad}.`);
+  return {message:`Undur defteri açtı ve son sayfaya “${d.ad}” yazdı.`,special:'ending'};
+ }
  case 'depo_et':if(!depoBirak(s,'tuzet'))return {message:''};xp=12;
   message=`Mirna eti aldı, tartmadı bile: “İki gün. Az mı? Az. Ama iki gün, iki gün.” (Depo: ${s.erzak.yiyecek} gün yiyecek)`;break;
  case 'depo_su':if(!depoBirak(s,'durusu'))return {message:''};xp=12;
@@ -1115,7 +1171,7 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
  if(message)s.journal.unshift(message);return {message,leveled:xp?gainXp(s,xp):false};
 }
 // Only accept bounded, known save fields. A broken or older save never replaces a valid run.
-export function parseSave(raw:string):State|null{try{const s=JSON.parse(raw) as State;/* Sandik kaplari sonradan eklendi; eski kayitta yoksa bos baslar. */if(!s.sandiklar||typeof s.sandiklar!=='object')s.sandiklar={};if(!s.sandikAltin||typeof s.sandikAltin!=='object')s.sandikAltin={};/* Gun sayaci sonradan eklendi; eski kayit birinci gunden devam eder. */if(!Number.isInteger(s.gun)||s.gun<1)s.gun=1;if(!s.erzak||typeof s.erzak!=='object'||!Number.isFinite(s.erzak.yiyecek)||!Number.isFinite(s.erzak.su))s.erzak={yiyecek:5,su:5};if(!Number.isInteger(s.kayip)||s.kayip<0)s.kayip=0;if(s.version!==1||!s.started||!ZONES[s.zone]||!Number.isFinite(s.x)||!Number.isFinite(s.y)||s.x<0||s.y<0||s.x>1200||s.y>1200||!Number.isFinite(s.hp)||s.hp<=0||!Number.isFinite(s.gold)||s.gold<0||!Number.isFinite(s.xp)||s.xp<0||!Number.isInteger(s.level)||s.level<1||s.level>5||!Number.isInteger(s.points)||s.points<0||!s.inventory||typeof s.inventory!=='object'||!s.equipment||!s.skills||!s.flags||typeof s.flags!=='object'||Array.isArray(s.flags)||!Array.isArray(s.opened)||!Array.isArray(s.killed)||!Array.isArray(s.journal)||![s.opened,s.killed,s.journal].every(a=>a.every(v=>typeof v==='string'))||!['power','vigor','agility'].every(k=>Number.isInteger(s.skills[k as keyof State['skills']])&&s.skills[k as keyof State['skills']]>=0)||!Number.isFinite(s.playtime)||!Object.entries(s.inventory).every(([k,v])=>k in ITEMS&&Number.isInteger(v)&&Number(v)>0)||ITEMS[s.equipment.weapon]?.kind!=='weapon'||ITEMS[s.equipment.armor]?.kind!=='armor'||(s.equipment.ring!==null&&ITEMS[s.equipment.ring]?.kind!=='ring')||![s.equipment.weapon,s.equipment.armor,s.equipment.ring].every(id=>id===null||s.inventory[id])||![null,'seal','claim'].includes(s.ending))return null;// Eski kayitlarda silahsiz mod yok; eklenmezse oyuncu ona gecemez.
+export function parseSave(raw:string):State|null{try{const s=JSON.parse(raw) as State;/* Sandik kaplari sonradan eklendi; eski kayitta yoksa bos baslar. */if(!s.sandiklar||typeof s.sandiklar!=='object')s.sandiklar={};if(!s.sandikAltin||typeof s.sandikAltin!=='object')s.sandikAltin={};/* Gun sayaci sonradan eklendi; eski kayit birinci gunden devam eder. */if(!Number.isInteger(s.gun)||s.gun<1)s.gun=1;if(!s.erzak||typeof s.erzak!=='object'||!Number.isFinite(s.erzak.yiyecek)||!Number.isFinite(s.erzak.su))s.erzak={yiyecek:5,su:5};if(!Number.isInteger(s.kayip)||s.kayip<0)s.kayip=0;if(s.version!==1||!s.started||!ZONES[s.zone]||!Number.isFinite(s.x)||!Number.isFinite(s.y)||s.x<0||s.y<0||s.x>1200||s.y>1200||!Number.isFinite(s.hp)||s.hp<=0||!Number.isFinite(s.gold)||s.gold<0||!Number.isFinite(s.xp)||s.xp<0||!Number.isInteger(s.level)||s.level<1||s.level>5||!Number.isInteger(s.points)||s.points<0||!s.inventory||typeof s.inventory!=='object'||!s.equipment||!s.skills||!s.flags||typeof s.flags!=='object'||Array.isArray(s.flags)||!Array.isArray(s.opened)||!Array.isArray(s.killed)||!Array.isArray(s.journal)||![s.opened,s.killed,s.journal].every(a=>a.every(v=>typeof v==='string'))||!['power','vigor','agility'].every(k=>Number.isInteger(s.skills[k as keyof State['skills']])&&s.skills[k as keyof State['skills']]>=0)||!Number.isFinite(s.playtime)||!Object.entries(s.inventory).every(([k,v])=>k in ITEMS&&Number.isInteger(v)&&Number(v)>0)||ITEMS[s.equipment.weapon]?.kind!=='weapon'||ITEMS[s.equipment.armor]?.kind!=='armor'||(s.equipment.ring!==null&&ITEMS[s.equipment.ring]?.kind!=='ring')||![s.equipment.weapon,s.equipment.armor,s.equipment.ring].every(id=>id===null||s.inventory[id])||![null,'seal','claim','goc','gercek','av'].includes(s.ending))return null;// Eski kayitlarda silahsiz mod yok; eklenmezse oyuncu ona gecemez.
  s.inventory.yumruk=s.inventory.yumruk||1;
  // Ok yuvasi sonradan eklendi; eski kayitta yok.
  s.equipment.ok=s.equipment.ok||'arrow';
