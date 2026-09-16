@@ -1809,4 +1809,25 @@ yüklenince temizleniyor - ölüm zaten bir sıfırlama.
 
 ---
 
-*Son güncelleme: 2026-09-16, v14.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v14.6: İskelet ölüm sesi (kullanıcının verdiği kayıt)
+Masaüstündeki `skeleton-kill-hit-...zip` içindeki 0.61 sn stereo WAV.
+
+* **Ayrı ad:** `dusmanOlum` TÜM düşmanlarda çalıyor; kemik çatırtısı yalnız
+  iskelete ait olmalı. Yeni `Sound` adı `iskeletOlum`, `ORNEKLER`e eklendi.
+  Bu mimari zaten hazırdı: `ORNEKLER`e dosya yolu yazmak sentezi eziyor,
+  dosya yüklenemezse sentez çalmaya devam ediyor (fallback için
+  `case 'iskeletOlum'` `dusmanOlum`'un yanına eklendi).
+* **Dönüşüm:** baştaki sessizlik kırpıldı, mono 44.1k mp3,
+  `loudnorm I=-16 TP=-1.5` + `volume=-1dB`. Hedef `death.mp3` ile aynı hizada
+  olmak: ölçüldü, sonuç tepe −1.2 / ortalama −23.8 dB (death: −1.8 / −20.8).
+  **EBU R128 integrated bu kısalıkta İŞE YARAMIYOR** (death.mp3 −70 LUFS
+  okuyor, kapı 3 sn'nin altını atıyor) - kısa efektlerde `volumedetect`.
+* **Üst üste binme koruması:** dash bir sürünün içinden geçerken aynı karede
+  birkaç iskelet ölüyor; aynı örnek tam fazda üst üste binince tek bir patlama
+  gibi duyuluyordu. `ISKELET_SES_ARA=.07` sn'lik aralık yetiyor.
+
+Ham WAV `_arsiv/uretim/` altında.
+
+---
+
+*Son güncelleme: 2026-09-16, v14.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

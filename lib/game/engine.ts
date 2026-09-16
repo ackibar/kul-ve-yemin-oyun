@@ -179,6 +179,7 @@ export class Engine{
  static readonly ISKELET_GORUS=200;
  /** Vurus hazirligi sirasindaki atilma hizi (bkz. windup dali). */
  static readonly ISKELET_HAMLE=64;
+ static readonly ISKELET_SES_ARA=.07;
  /** Iskelet vurusundan sonraki dokunulmazlik - genel .72 yerine (bkz. hurt()). */
  static readonly ISKELET_IFRAME=.34;
  /** Vurusun DEGME menzili (genel 25). Cemberin ON safi 13 birimde duruyor ama
@@ -279,6 +280,8 @@ mark(false);const result=await Promise.allSettled(jobs);
   *  dolu canla ev konumuna koyuyor, iskeletleri de yeniden gomuyordu: yan
   *  odaya gecip donunce dusmanlar YOK OLMUS gibi goruntu veriyordu. */
  private bekleyen:Record<string,{id:string;hp:number}[]>={};
+ /** Son iskelet olum sesinin zamani - ust uste binmeyi engeller. */
+ private iskeletSesAt=-1;
  /** Bolgeden ayrilirken pesimizdekileri not eder. "Pesimizde" = ya yara
   *  almis ya da takip menzilinde. Patron kendi arenasinda kalir, Rauf'un ve
   *  fenerin (kind 9) burada isi yok. */
@@ -577,7 +580,11 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   if(m.kind===11){
    if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);
    const u=Math.hypot(m.x-this.state.x,m.y-this.state.y);
-   this.audio.play('dusmanOlum',Math.max(.3,1-u/300));
+   /* Dash bir surunun icinden gecerken AYNI KAREDE birkac iskelet oluyor;
+      ayni ornek tam fazda ust uste binince tek bir patlama gibi duyuluyor.
+      Kisa bir aralik yeterli - ikinci olum sesi yutulur, tempo bozulmaz. */
+   if(this.tick-this.iskeletSesAt>Engine.ISKELET_SES_ARA){this.iskeletSesAt=this.tick;
+    this.audio.play('iskeletOlum',Math.max(.3,1-u/300));}
    this.iskeletDagit(m,this.dusmanYon(m));this.spawnDrop(m.x,m.y,'xp',6);return;
   }
   if(this.state.killed.includes(m.id))return;this.state.killed.push(m.id);
