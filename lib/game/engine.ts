@@ -226,6 +226,10 @@ export class Engine{
  /** Oyuncunun vurus ATILIMI: yalnizca CIZIME uygulanan ileri kayma (0..1).
   *  Gercek konum degismez - carpisma ve yurume mantigina hic dokunmaz. */
  private vurusIleri=0;private vurusIleriYon={x:0,y:0};
+ /** Hasar alinca GERI TEPME: yalnizca cizime uygulanan, kaynaktan uzaga kayma. */
+ private hasarGeri=0;private hasarGeriYon={x:0,y:0};
+ /** Hasar alinca ekran kenarinda kisa kirmizi vinyet (kalan sure). */
+ private kirmiziFlas=0;
  private slash=0;/** Bu savurus isabet etti mi - kesme yayi isabette daha kalin/parlak cizilir. */private slashIsabet=false;/* slash yalnizca kesme YAYINI cizer; vurus POZU ayri tutulur, cunku yay atisinda yay yok ama animasyon olmali. vurusSure kareyi bastan baslatir: genel saatten turetilince animasyon rastgele bir kareden basliyordu. */private vurusPoz=0;private vurusSure=0;/** Bileme tasi: kalan sure (sn). Saldiri suresini kisaltir. */private bileme=0;/** Sargi merhemi: kalan sure. */private merhem=0;/** Bal petegi: kalan sure (sn), saniyede 4 can. */private petek=0;/** Duru su: kalan sure boyunca Kul Ovasi cani eritemez. */private kulKoru=0;/** Bogulmus sarildi: kalan sure boyunca %40 yavas. */private yavas=0;/** Mesale: kalan sure (sn). */private mesale=0;/** Mesale yakilmadan onceki silah; sonunce ona donulur. */private mesaleOnce:ItemId='yumruk';/** Kacis izi: dash sirasinda birakilan soluk kopyalar (sprite anahtari + kare). */private izler:{x:number;y:number;anahtar:string;kare:number;flip:boolean;life:number}[]=[];/** Iz birakma sayaci - her karede degil, sabit arayla. */private izSayac=0;/** Isik haritasi icin ekran disi tuval (gorus/2 cozunurlukte; gradient zaten yumusak). */private isikTuval:HTMLCanvasElement|null=null;/** Kul tozu: dusmanlar goremez. */private gizli=0;/** Yemin halkasi bu bolgede kullanildi mi. */private halka=false;/** Tuhn dustukten sonra sesin ve yarasalarin gecikmesi (sn). */private tuhnSayac=0;/** Sesten SONRA yarasalarin gecikmesi (sn). */private tuhnYarasa=0;/** Tuhn'un ucurumdan dusus animasyonu (kalan sn) - bitince entity silinir. */private tuhnDusus=0;/** Dusus animasyonu bir kez baslatildi mi (bitince silme dalina gecsin diye). */private tuhnDususBitti=false;private ready=false;private saveStatus='';private trapCooldown=0;private fireBurnCooldown=0;
  private keys={up:false,down:false,left:false,right:false};
  /** Gamepad: bir onceki karede basili olan tuslar (kenar yakalamak icin).
@@ -650,7 +654,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   this.save();this.emit();
  }
  /** dokunulmazlik: vurustan sonraki i-frame suresi. OLCULDU - kalabalik bir iskelet cemberi 5 saniyede 23 kez vuruyor ama oyuncu yalnizca 20 can kaybediyordu: .72 sn'lik sabit i-frame yuzunden 23 vurusun 19'u yutuluyordu. Yani kalabaligin tehdidi tek bir dusmanla AYNIYDI; 'oldurmesi cok kolay' hissinin asil sebebi hiz ya da can degil buydu. Zayif ve kalabalik dusmanlar (iskelet) daha kisa i-frame ile vurur - tek tek hala zararsizlar ama surunun arasinda durmak artik bedel odetir. */
- private hurt(damage:number,iframe=.72){if(this.invulnerable>0||this.state.hp<=0)return;const n=Math.max(2,damage-stats(this.state).defense);this.state.hp=Math.max(0,this.state.hp-n);this.invulnerable=iframe;this.audio.play('hurt');this.float(this.state.x,this.state.y-14,'−'+n,'#ff8b89');this.burst(this.state.x,this.state.y,'#dc7777',7);if(this.state.hp<=0){this.paused=true;this.audio.play('death');this.onEvent({type:'death'});}this.emit();}
+ private hurt(damage:number,iframe=.72,kx?:number,ky?:number){if(this.invulnerable>0||this.state.hp<=0)return;/* Geri tepme ve sarsinti KAYNAKTAN UZAGA. Kaynak verilmediyse (tuzak, ates) bakis yonunun tersi kullanilir - yonsuz sarsinti 'nereden yedim' bilgisini kaybettiriyor. */{let ux=0,uy=0;if(kx!==undefined&&ky!==undefined){const dx=this.state.x-kx,dy=this.state.y-ky,d=Math.hypot(dx,dy)||1;ux=dx/d;uy=dy/d;}else{const v=this.yonVektor();ux=-v.x;uy=-v.y;}this.hasarGeri=Engine.HASAR_GERI_SURE;this.hasarGeriYon={x:ux,y:uy};this.sarsinti=Engine.SARSINTI_SURE;this.sarsintiYon={x:-ux,y:-uy};this.kirmiziFlas=Engine.KIRMIZI_SURE;}const n=Math.max(2,damage-stats(this.state).defense);this.state.hp=Math.max(0,this.state.hp-n);this.invulnerable=iframe;this.audio.play('hurt');this.float(this.state.x,this.state.y-14,'−'+n,'#ff8b89');this.burst(this.state.x,this.state.y,'#dc7777',7);if(this.state.hp<=0){this.paused=true;this.audio.play('death');this.onEvent({type:'death'});}this.emit();}
   respawn(){/* Olum bir sifirlama: kapida bekleyenler de unutulur. */this.bekleyen={};this.state.hp=stats(this.state).maxHp;this.state.gold=Math.floor(this.state.gold*.9);this.state.journal.unshift('Sığınağa döndün. Altınının %10’unu yolda kaybettin.');this.changeZone('haven',[15,14]);this.paused=false;this.save();this.emit();}
   /** 8 dilim: her yon 45 derece. tan(67.5)=2.414 sinirlari veriyor.
    *  Dikey yonlerde flip kapatilir, yatay ve caprazlarda dx isaretini izler. */
@@ -754,6 +758,14 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  /** Oyuncunun ileri atilmasi: cizim ofseti (dunya birimi) ve suresi. Kullanici
   *  "vurunca karakter cok stabil duruyor" dedi - butun geri bildirim dusmanda
   *  ve ekrandaydi, govdenin kendisi hic tepki vermiyordu. */
+ /** HASAR ALMA geri bildirimi. Kullanici: "karakter hasar alinca da reaksiyon
+  *  vermiyor". Oncesinde yalniz ses + sayi + parcacik + yanip sonme vardi;
+  *  govde ve ekran hic tepki vermiyordu. Donma EKLENMEDI: 8 iskeletlik cember
+  *  saniyede birkac kez vuruyor, her birinde donmak oyunu kekeletirdi. */
+ static readonly HASAR_GERI=3.4;
+ static readonly HASAR_GERI_SURE=.16;
+ static readonly HASAR_SARSINTI=2.1;
+ static readonly KIRMIZI_SURE=.3;
  static readonly VURUS_ILERI=2.4;
  static readonly VURUS_ILERI_SURE=.13;
  /** Kesme yayinin suresi (slash sayacinin baslangici). */
@@ -1065,7 +1077,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      if(e.type!=='fire')continue;
      if(this.atesTemas(e,this.state.x,this.state.y)){
       if(!ITEMS[this.state.equipment.armor].atesBagisik){
-       this.hurt(8);this.float(this.state.x,this.state.y-14,'Ateş yaktı!','#ff6b4a');}
+       this.hurt(8,.72,e.x,e.y);this.float(this.state.x,this.state.y-14,'Ateş yaktı!','#ff6b4a');}
       yandi=true;}
      for(const m of this.mobs){
       if(m.hp<=0||!this.atesTemas(e,m.x,m.y))continue;
@@ -1095,7 +1107,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     if(m.zehirTik>=1){m.zehirTik=0;this.float(m.x,m.y-12,String(Engine.ZEHIR_HASAR),'#9fd47a');}
     if(m.hp<=0){if(m.id==='rauf')this.raufDizCok();else this.kill(m);continue;}}
    if(m.burn>0){m.burn-=dt;m.hp-=3*dt;if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0){this.kill(m);continue;}}const dx=this.state.x-m.x,dy=this.state.y-m.y,d=Math.hypot(dx,dy)||1,visible=lineOfSight(this.world,m.x,m.y,this.state.x,this.state.y);if(m.kind===9){this.fener(m,d,dx,dy,dt);continue;}if(m.windup>0){m.windup-=dt;/* Iskelet HAMLE yapar: digerleri vurus hazirliginda cakili dururken iskelet oyuncuya dogru atilir. Olculdu: hamlesiz surumde skelet (38) oyuncudan (44) yavas oldugu icin windup biterken oyuncu menzilden cikiyordu ve 8 saniyelik bir gecis yalnizca 24 cana mal oluyordu - 'oldurmesi cok kolay' hissinin asil sebebi buydu. Hamle hizi oyuncunun ustunde ama yalnizca .26 sn surer. */if(m.kind===11)this.dusmanYurut(m,this.state.x,this.state.y,Engine.ISKELET_HAMLE,dt);if(m.windup<=0){/* Ses uzakliga gore kisiliyor: ekranin obur ucundaki bir yaratik yanindaki
-     kadar yuksek vurmamali. */if(m.kind===11)this.iskeletSes('iskeletVur',Math.max(0,1-d/190));else this.audio.play('dusmanVur',Math.max(0,1-d/190));if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:m.kind===10?30:m.kind===11?Engine.ISKELET_VURUS_MENZIL:25)){this.hurt(m.boss?30:Engine.HASAR[m.kind]??10+m.kind*3,m.kind===11?Engine.ISKELET_IFRAME:.72);/* Bogulmus sarilinca kul cigere doluyor: oyuncu 3 sn agirlasir. */if(m.kind===8&&this.state.hp>0){this.yavas=3;this.float(this.state.x,this.state.y-18,'AĞIRLAŞTIN','#b9b2a6');}}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:m.kind===11?Engine.ISKELET_COOL:1.15;}continue;}if(d<(m.kind===11?Engine.ISKELET_GORUS:135)&&visible){m.aci=Math.atan2(dy,dx);/* SALDIRIYI BASLATMA menzili. Iskelette ayri: asil darbogaz burasiydi -
+     kadar yuksek vurmamali. */if(m.kind===11)this.iskeletSes('iskeletVur',Math.max(0,1-d/190));else this.audio.play('dusmanVur',Math.max(0,1-d/190));if(m.kind===2){const v=75;this.shots.push({x:m.x,y:m.y,vx:dx/d*v,vy:dy/d*v,life:2.5,damage:15});}else if(d<(m.boss?40:m.kind===10?30:m.kind===11?Engine.ISKELET_VURUS_MENZIL:25)){this.hurt(m.boss?30:Engine.HASAR[m.kind]??10+m.kind*3,m.kind===11?Engine.ISKELET_IFRAME:.72,m.x,m.y);/* Bogulmus sarilinca kul cigere doluyor: oyuncu 3 sn agirlasir. */if(m.kind===8&&this.state.hp>0){this.yavas=3;this.float(this.state.x,this.state.y-18,'AĞIRLAŞTIN','#b9b2a6');}}if(m.boss){for(let i=0;i<8;i++){const a=i*Math.PI/4;this.shots.push({x:m.x,y:m.y,vx:Math.cos(a)*58,vy:Math.sin(a)*58,life:2.1,damage:20});}}m.cool=m.boss?1.6:m.kind===2?1.7:m.kind===11?Engine.ISKELET_COOL:1.15;}continue;}if(d<(m.kind===11?Engine.ISKELET_GORUS:135)&&visible){m.aci=Math.atan2(dy,dx);/* SALDIRIYI BASLATMA menzili. Iskelette ayri: asil darbogaz burasiydi -
      cemberin arka safi 22-28 birimde takilip kaliyor ve 20'lik esige hic
      giremedigi icin windup'a bile baslamiyordu (olculdu: 9 dusman yanibasindayken
      5 saniyede yalniz 23 vurus). */
@@ -1118,8 +1130,8 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    this.mobs=this.mobs.filter(m=>m.hp>0);
    for(const shot of this.shots){shot.life-=dt;shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;const kavanoz=shot.gecti?.[0]==='*kavanoz';if(!walkable(this.world,shot.x,shot.y,2))shot.life=0;if(kavanoz){if(shot.life<=0)this.kavanozPatla(shot.x,shot.y);continue;}if(shot.isHero){for(const d of this.world.entities.filter(e=>(e.type==='decor'&&!e.asset?.includes('Table'))||(e.type==='chest'&&this.state.opened.includes(e.id)))){if(Math.hypot(shot.x-d.x,shot.y-d.y)<16){shot.life=0;const currentHp=(this.decorHp[d.id]??3)-1;this.decorHp[d.id]=currentHp;if(currentHp<=0){delete this.decorHp[d.id];this.world.entities=this.world.entities.filter(e=>e.id!==d.id);this.burst(d.x,d.y,d.type==='chest'?'#b88a52':'#8b5a2b',16);this.audio.play('hit');this.spawnDrop(d.x,d.y,'wood',1);this.notify(d.type==='chest'?'Boş sandığı kırdın: +1 Odun':'Ahşap eşyayı kırdın: +1 Odun');}else{this.burst(d.x,d.y,d.type==='chest'?'#b88a52':'#8b5a2b',5);this.audio.play('hit');}break;}}for(const m of this.mobs){if(m.hp>0&&Math.hypot(shot.x-m.x,shot.y-m.y)<14){/* Ok TURLERI burada isliyor. Bu blok eskiden sadeydi: ok turu bayraklari
         (yakar/zehir/delici/ceker) atista mermiye yaziliyordu ama isabette hic
-        okunmuyordu - yani Ates, Delici ve Cengelli ok sade ok gibi davraniyordu. */if(shot.gecti){if(shot.gecti.includes(m.id))continue;shot.gecti.push(m.id);}else shot.life=0;m.hp-=shot.damage;m.hurt=.17;if(shot.yakar)m.burn=Math.max(m.burn,shot.yakar);if(shot.zehir){m.zehir=Math.max(m.zehir??0,shot.zehir);this.float(m.x,m.y-24,'ZEHİR','#9fd47a');}this.float(m.x,m.y-12,String(shot.damage),'#95e086');this.burst(m.x,m.y,'#c76b5d',6);const d=Math.hypot(m.x-this.state.x,m.y-this.state.y)||1;/* Cengelli ok geri itmek yerine CEKER: itme yonu tersine cevrilir. */const it=shot.ceker?-22:(m.boss?5:18);this.move(m,(m.x-this.state.x)/d*it,(m.y-this.state.y)/d*it);if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);if(!shot.gecti)break;}}}else if(Math.hypot(shot.x-this.state.x,shot.y-this.state.y)<9){shot.life=0;this.hurt(shot.damage);}}this.shots=this.shots.filter(s=>s.life>0);
-   for(const e of this.world.entities){if(e.type==='trap'){const active=this.trapActive(e);const wasActive=this.activeTraps.has(e.id);if(active&&!wasActive){this.activeTraps.add(e.id);const dist=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(dist<100)this.audio.play('trap',1-dist/100);}else if(!active&&wasActive){this.activeTraps.delete(e.id);}if(this.trapCooldown<=0&&active&&Math.hypot(e.x-this.state.x,e.y-this.state.y)<10){this.hurt(15);this.trapCooldown=1;break;}}}
+        okunmuyordu - yani Ates, Delici ve Cengelli ok sade ok gibi davraniyordu. */if(shot.gecti){if(shot.gecti.includes(m.id))continue;shot.gecti.push(m.id);}else shot.life=0;m.hp-=shot.damage;m.hurt=.17;if(shot.yakar)m.burn=Math.max(m.burn,shot.yakar);if(shot.zehir){m.zehir=Math.max(m.zehir??0,shot.zehir);this.float(m.x,m.y-24,'ZEHİR','#9fd47a');}this.float(m.x,m.y-12,String(shot.damage),'#95e086');this.burst(m.x,m.y,'#c76b5d',6);const d=Math.hypot(m.x-this.state.x,m.y-this.state.y)||1;/* Cengelli ok geri itmek yerine CEKER: itme yonu tersine cevrilir. */const it=shot.ceker?-22:(m.boss?5:18);this.move(m,(m.x-this.state.x)/d*it,(m.y-this.state.y)/d*it);if(m.id==='rauf'&&m.hp<=m.max*.18){this.raufDizCok();}else if(m.hp<=0)this.kill(m);if(!shot.gecti)break;}}}else if(Math.hypot(shot.x-this.state.x,shot.y-this.state.y)<9){shot.life=0;this.hurt(shot.damage,.72,shot.x,shot.y);}}this.shots=this.shots.filter(s=>s.life>0);
+   for(const e of this.world.entities){if(e.type==='trap'){const active=this.trapActive(e);const wasActive=this.activeTraps.has(e.id);if(active&&!wasActive){this.activeTraps.add(e.id);const dist=Math.hypot(e.x-this.state.x,e.y-this.state.y);if(dist<100)this.audio.play('trap',1-dist/100);}else if(!active&&wasActive){this.activeTraps.delete(e.id);}if(this.trapCooldown<=0&&active&&Math.hypot(e.x-this.state.x,e.y-this.state.y)<10){this.hurt(15,.72,e.x,e.y);this.trapCooldown=1;break;}}}
    for(const d of this.drops){d.life-=dt;d.vx*=.84;d.vy*=.84;d.x+=d.vx*dt;d.y+=d.vy*dt;const dist=Math.hypot(this.state.x-d.x,this.state.y-4-d.y);if(dist<65){const speed=160*(1-dist/65)+50;d.x+=(this.state.x-d.x)/dist*speed*dt;d.y+=(this.state.y-4-d.y)/dist*speed*dt;}if(dist<10){d.life=0;if(d.kind==='wood'){addItem(this.state,'wood',d.amount);this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} Odun`,'#dca574');}else if(d.kind==='xp'){if(gainXp(this.state,d.amount)){this.audio.play('level');this.notify(`Seviye ${this.state.level}! Yetenek puanını karakter ekranında kullan.`);this.burst(this.state.x,this.state.y,'#e7cb76',25);}else this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} XP`,'#b9dca5');}else if(d.kind==='gold'){const r=this.state.equipment.ring;d.amount=Math.round(d.amount*(r?ITEMS[r].altinKat||1:1));this.state.gold+=d.amount;this.audio.play('coin');this.float(d.x,d.y-8,`+${d.amount} Altın`,'#f2d480');}else if(d.kind==='bow'){addItem(this.state,'bow',1);addItem(this.state,'arrow',30);this.audio.play('level');this.notify('Avcı yayı ve 30 ok aldın! Q veya R ile yaya geçebilirsin.');this.float(d.x,d.y-8,'+1 YAY & +30 OK','#f2d480');}this.save();this.emit();}}this.drops=this.drops.filter(d=>d.life>0);
    for(const p of this.particles){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=(p.g??40)*dt;}this.particles=this.particles.filter(p=>p.life>0);for(const f of this.parcalar){f.life-=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=260*dt;f.aci+=f.donus*dt;f.vx*=1-.9*dt;
    /* Zemine degince: once kucuk bir sekme, sonra surtunme kemigi yatiriyor.
@@ -1434,7 +1446,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      kilitlenirdi. Buradaki dt duvar saatinden gelir, update'ten bagimsizdir. */
   /* Gorsel sayaclar donma sirasinda da ISLER - donmus kare titriyorsa "vurus"
      okunur, donmus kare de donuksa "takildi" okunur. */
-  for(const k of ['sarsinti','vurusIleri']as const)this[k]=Math.max(0,this[k]-dt);
+  for(const k of ['sarsinti','vurusIleri','hasarGeri','kirmiziFlas']as const)this[k]=Math.max(0,this[k]-dt);
   /* Donmada once KONTROL, sonra azaltma. Tersi sirada 30 ms'lik donma 60 Hz'de
      tek kareye (17 ms) dusuyordu: ilk karede sayac zaten 0.013'e inip ikinci
      kare calisiyordu. Olculdu. */
@@ -1491,7 +1503,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      translate'e ayrica eklersek o katmanlar kaymaz ve kenarda tintlenmemis
      serit acilir. */
   let sx=0,sy=0;
-  if(this.sarsinti>0){const k=this.sarsinti/Engine.SARSINTI_SURE,g=Engine.SARSINTI_GUC*k*k;
+  if(this.sarsinti>0){const k=this.sarsinti/Engine.SARSINTI_SURE,g=(this.kirmiziFlas>0?Engine.HASAR_SARSINTI:Engine.SARSINTI_GUC)*k*k;
    const isaret=Math.floor(this.sarsinti*60)%2?1:-1;
    sx=-this.sarsintiYon.x*g*isaret;sy=-this.sarsintiYon.y*g*isaret;}
   const cx=Math.round(this.camera.x+sx),cy=Math.round(this.camera.y+sy);c.translate(-cx,-cy);
@@ -1576,7 +1588,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      havada suzuluyormus gibi gorunuyordu (olculdu, ekran goruntusuyle). */
   const ik=this.vurusIleri>0?this.vurusIleri/Engine.VURUS_ILERI_SURE:0;
   const ig=ik*(2-ik)*Engine.VURUS_ILERI;
-  const px=s.x+this.vurusIleriYon.x*ig,py=s.y+this.vurusIleriYon.y*ig;
+  /* Hasar geri tepmesi ayni ofsete katilir: ikisi ayni anda olabilir
+     (vururken vurulmak) ve tek bir kayma olarak okunmali. */
+  const hk=this.hasarGeri>0?this.hasarGeri/Engine.HASAR_GERI_SURE:0;
+  const hg=hk*(2-hk)*Engine.HASAR_GERI;
+  const px=s.x+this.vurusIleriYon.x*ig+this.hasarGeriYon.x*hg,
+        py=s.y+this.vurusIleriYon.y*ig+this.hasarGeriYon.y*hg;
   if(!dusuyor)this.golgeCiz(px,py);/* Boslukta golge yok - basacak zemin kalmadi. */
   /* Izler oyuncunun ALTINA cizilir ve solar; en eskisi en sonuk. */
   for(const iz of this.izler)this.sprite(iz.anahtar,iz.x,iz.y,iz.kare,Engine.OYUNCU_EN,Engine.OYUNCU_BOY,iz.flip,OYUNCU_OLCEK,Math.min(.42,iz.life*1.6));
@@ -1649,6 +1666,14 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   for(const f of this.floating){c.globalAlpha=Math.min(1,f.life*3);c.font='bold 7px Arial';c.textAlign='center';c.lineWidth=2;c.strokeStyle='#111';c.strokeText(f.text,f.x,f.y);c.fillStyle=f.color;c.fillText(f.text,f.x,f.y);}c.globalAlpha=1;
   
   c.setTransform(1,0,0,1,0,0);
+  /* Hasar vinyeti: ekran KENARINDAN ice solan kirmizi. Tam ekran dolgu
+     denenmedi bile - her vurusta ekranin komple kizarmasi bu oyunun tonuna
+     aykiri ve isik haritasini yikar; kenar vinyeti ayni bilgiyi verip
+     sahneyi kapatmiyor. 'uyku' blogu ile ayni uzayda (cihaz pikseli). */
+  if(this.kirmiziFlas>0){const a=this.kirmiziFlas/Engine.KIRMIZI_SURE,W=this.canvas.width,H=this.canvas.height;
+   const g=c.createRadialGradient(W/2,H/2,Math.min(W,H)*.28,W/2,H/2,Math.max(W,H)*.62);
+   g.addColorStop(0,'rgba(150,20,24,0)');g.addColorStop(1,`rgba(150,20,24,${(a*.5).toFixed(3)})`);
+   c.fillStyle=g;c.fillRect(0,0,W,H);}
   if(this.uyku>0){
    const gecen=Engine.UYKU-this.uyku;
    // karart (0.9sn) -> tam karanlik (0.6sn) -> ac (0.9sn)

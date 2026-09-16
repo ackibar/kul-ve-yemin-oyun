@@ -2098,4 +2098,28 @@ içine kaçarsa anında kırılır.
 
 ---
 
-*Son güncelleme: 2026-09-16, v15.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v15.7: Hasar ALMA da tepki veriyor
+Kullanıcı: "bizim karakter hasar alınca da reaksiyon vermiyor". Önceden yalnız
+ses + hasar sayısı + parçacık + yanıp sönme vardı; gövde ve ekran hiç tepki
+vermiyordu.
+
+* **Geri tepme** `HASAR_GERI=3.4`, `.16 sn` - kaynaktan UZAĞA. Vuruş atılımıyla
+  aynı ofsete katılıyor, çünkü ikisi aynı anda olabilir (vururken vurulmak) ve
+  tek bir kayma olarak okunmalı. Yine yalnız çizime uygulanıyor.
+* **Sarsıntı** hasarda daha güçlü (`HASAR_SARSINTI=2.1` vs vuruşta 1.3), yönü
+  darbenin geldiği taraf.
+* **Kırmızı vinyet** `.3 sn`, ekran KENARINDAN içe solan radyal gradyan.
+  Tam ekran kızarma denenmedi bile: her vuruşta ekranın komple kızarması bu
+  oyunun tonuna aykırı ve ışık haritasını yıkar; kenar vinyeti aynı bilgiyi
+  verip sahneyi kapatmıyor. Ölçüldü: köşelerde R−B farkı +6.7.
+* **Donma EKLENMEDİ.** 8 iskeletlik çember saniyede birkaç kez vuruyor; her
+  birinde donmak oyunu kekeletirdi. Vuruşta donma var, hasarda yok - kasıtlı.
+
+`hurt()` artık kaynak konumunu (`kx,ky`) opsiyonel alıyor; dört çağrı yeri de
+(mob vuruşu, ok, tuzak, ateş) kaynağı geçiyor. Kaynak verilmezse bakış yönünün
+tersi kullanılıyor - yönsüz sarsıntı "nereden yedim" bilgisini kaybettiriyor.
+Ölçüldü: sağdan vurulunca geri tepme yönü x=−1, tüm sayaçlar 0.7 sn'de sönüyor.
+
+---
+
+*Son güncelleme: 2026-09-16, v15.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
