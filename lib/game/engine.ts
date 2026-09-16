@@ -786,7 +786,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly HASAR_GERI=3.4;
  static readonly HASAR_GERI_SURE=.16;
  static readonly HASAR_SARSINTI=2.1;
- static readonly KIRMIZI_SURE=.3;
+ static readonly KIRMIZI_SURE=.24;
  static readonly VURUS_ILERI=2.4;
  static readonly VURUS_ILERI_SURE=.13;
  /** Kesme yayinin suresi (slash sayacinin baslangici). */
@@ -1700,8 +1700,12 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      aykiri ve isik haritasini yikar; kenar vinyeti ayni bilgiyi verip
      sahneyi kapatmiyor. 'uyku' blogu ile ayni uzayda (cihaz pikseli). */
   if(this.kirmiziFlas>0){const a=this.kirmiziFlas/Engine.KIRMIZI_SURE,W=this.canvas.width,H=this.canvas.height;
-   const g=c.createRadialGradient(W/2,H/2,Math.min(W,H)*.28,W/2,H/2,Math.max(W,H)*.62);
-   g.addColorStop(0,'rgba(150,20,24,0)');g.addColorStop(1,`rgba(150,20,24,${(a*.5).toFixed(3)})`);
+   /* Kullanici "biraz asiri, daha az ya da daha az alan kaplasin" dedi.
+      IKI eksende birden kisildi: seffaf merkez .28 -> .52 (yani kirmizi
+      yalnizca dis kusakta kaliyor, sahnenin ortasina hic girmiyor) ve tepe
+      alfa .5 -> .26. Sure de .3 -> .24. */
+   const g=c.createRadialGradient(W/2,H/2,Math.min(W,H)*.52,W/2,H/2,Math.max(W,H)*.68);
+   g.addColorStop(0,'rgba(150,20,24,0)');g.addColorStop(1,`rgba(150,20,24,${(a*.26).toFixed(3)})`);
    c.fillStyle=g;c.fillRect(0,0,W,H);}
   if(this.uyku>0){
    const gecen=Engine.UYKU-this.uyku;

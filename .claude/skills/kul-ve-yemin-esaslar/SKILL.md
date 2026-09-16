@@ -2243,4 +2243,18 @@ SABİT. Oyun ilerledikçe eriyordu.
 
 ---
 
-*Son güncelleme: 2026-09-16, v16.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v16.2: Hasar vinyeti kısıldı
+Kullanıcı: "hasar alınca gelen kırmızılık biraz aşırı olmuş, daha az gelsin ya
+da daha az alan kaplayarak." **İkisi birden** yapıldı, çünkü tek başına alfayı
+kısmak vinyeti bulanık bir pembeye çeviriyor, tek başına daraltmak ise kalan
+kuşağı daha da göze sokuyor:
+* Şeffaf merkez `.28 → .52` - kırmızı artık yalnızca dış kuşakta, sahnenin
+  ortasına hiç girmiyor.
+* Tepe alfa `.5 → .26`, süre `.3 → .24 sn`.
+
+Ölçüm (köşelerde R−B farkı): **+6.7 → +2.1**. Merkezde fark yok (−1.8, sahne
+örnekleme gürültüsü).
+
+---
+
+*Son güncelleme: 2026-09-16, v16.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
