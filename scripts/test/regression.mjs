@@ -279,6 +279,16 @@ test('Sandık ganimeti bir kez verir',()=>{
  g.interact();assert.equal(JSON.stringify(g.state.inventory),ilk);
  g.destroy();
 });
+test('Kamera harita sınırında duruyor, dar haritada ortalanıyor',()=>{
+ /* Kullanici "sinira gelince kamera pan yapmayi biraksin, siyah alanlari
+    gormeyelim" dedi. render() sahte tuvalle calismadigi icin sinirlama
+    matematigi dogrudan sinaniyor. */
+ const k=Engine.kis;
+ assert.equal(k(-40,544),0,'sol/ust kenarda 0da durmali');
+ assert.equal(k(700,544),544,'sag/alt kenarda sinirda durmali');
+ assert.equal(k(272,544),272,'ic bolgede kamera serbest');
+ assert.equal(k(9,-112),-56,'harita pencereden darsa ortalanir');
+});
 test('Canı doluyken iksir harcanmaz',()=>{
  const g=kur();
  assert.equal(g.useItem('potion'),false);

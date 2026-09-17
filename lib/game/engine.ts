@@ -1695,6 +1695,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   c.fillStyle='#140d07';for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]])c.fillText(text,x+dx,y+dy);
   c.fillStyle=color;c.fillText(text,x,y);
   return c.measureText(text).width;}
+  /** Kamerayi harita dikdortgeninin ICINDE tutar. Kullanici: "haritanin
+   *  sinirina gelince kamera pan yapmayi biraksin, boylece siyah alanlari cok
+   *  gormeyiz." Harita goruntu penceresinden DARSA (tunel 208 birim, pencere
+   *  320) sikistirilacak alan yok - o eksende harita ortalanir, iki yanda esit
+   *  siyah kalir; tek yana yapistirmak haritayi kenara itip daha kotu duruyor. */
+  private static kis(v:number,enb:number){return enb<=0?enb/2:Math.min(enb,Math.max(0,v));}
+
   /* Harita disi DAIMA duz siyah. Kullanici "once siyah bir kisim, sonra lacivert
      bir kisim var" dedi: siyah, arka plan gorselinin kendi koyu kenari (harita
      dikdortgeninin ICINDE); lacivert ise dikdortgenin DISI - tuvalin silme rengi
@@ -1714,7 +1721,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(x0<0)c.fillRect(x0,ty0,Math.min(x1,0)-x0,ty1-ty0);
    if(x1>W)c.fillRect(Math.max(x0,W),ty0,x1-Math.max(x0,W),ty1-ty0);}
 
-  private render(time:number){const c=this.ctx;const canvas=this.canvas;const cw=canvas.clientWidth||1280,ch=canvas.clientHeight||720,oran=cw/ch;let en=320,boy=180;if(oran>16/9)en=Math.min(560,Math.round(180*oran));else boy=Math.min(340,Math.round(320/oran));this.gorus={en,boy};const bw=en*4,bh=boy*4;if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;}c.setTransform(4,0,0,4,0,0);c.imageSmoothingEnabled=false;c.fillStyle='#000';c.fillRect(0,0,en,boy);const targetX=this.state.x-en/2,targetY=this.state.y-boy/2;this.camera.x+=(targetX-this.camera.x)*.12;this.camera.y+=(targetY-this.camera.y)*.12;/* Sarsinti ofseti kameranin KENDISINE degil, yalniz bu kareye eklenir:
+  private render(time:number){const c=this.ctx;const canvas=this.canvas;const cw=canvas.clientWidth||1280,ch=canvas.clientHeight||720,oran=cw/ch;let en=320,boy=180;if(oran>16/9)en=Math.min(560,Math.round(180*oran));else boy=Math.min(340,Math.round(320/oran));this.gorus={en,boy};const bw=en*4,bh=boy*4;if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;}c.setTransform(4,0,0,4,0,0);c.imageSmoothingEnabled=false;c.fillStyle='#000';c.fillRect(0,0,en,boy);const enbX=this.world.w*16-en,enbY=this.world.h*16-boy;const targetX=Engine.kis(this.state.x-en/2,enbX),targetY=Engine.kis(this.state.y-boy/2,enbY);this.camera.x+=(targetX-this.camera.x)*.12;this.camera.y+=(targetY-this.camera.y)*.12;/* Bolge degisiminde kamera dogrudan atandigi icin sinir disinda baslayabilir; lerp'ten SONRA da kisilir ki kayarak degil hemen iceri otursun. */this.camera.x=Engine.kis(this.camera.x,enbX);this.camera.y=Engine.kis(this.camera.y,enbY);/* Sarsinti ofseti kameranin KENDISINE degil, yalniz bu kareye eklenir:
      camera.x'e yazilsaydi lerp hedefi bozulur ve sarsinti sonumlenmezdi.
      Yuvarlamanin ICINDE, cunku cx/cy yalniz sahne degil bolge tinti ve
      isik haritasi icin de goruntu penceresinin dunya koordinati - ofseti
@@ -1724,7 +1731,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   if(this.sarsinti>0){const k=this.sarsinti/Engine.SARSINTI_SURE,g=(this.kirmiziFlas>0?Engine.HASAR_SARSINTI:Engine.SARSINTI_GUC)*k*k;
    const isaret=Math.floor(this.sarsinti*60)%2?1:-1;
    sx=-this.sarsintiYon.x*g*isaret;sy=-this.sarsintiYon.y*g*isaret;}
-  const cx=Math.round(this.camera.x+sx),cy=Math.round(this.camera.y+sy);c.translate(-cx,-cy);
+  /* Sarsinti da kisilir: kenarda 2-3 piksellik siyah serit acmasindansa sarsinti duvara dayanip sonsun. */const cx=Math.round(Engine.kis(this.camera.x+sx,enbX)),cy=Math.round(Engine.kis(this.camera.y+sy,enbY));c.translate(-cx,-cy);
   const bg=this.images['bg_'+this.state.zone];
   // Tek parca arka plan: karo tekrarini ve desen olcegi sorununu ortadan kaldirir.
   // Gorsel carpisma haritasiyla maskelenerek uretilir (bkz. scripts/arkaplan_maske.py),

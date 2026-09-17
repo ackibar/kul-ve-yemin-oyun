@@ -2760,6 +2760,35 @@ sarsıntıda band da sahneyle birlikte kayar.
 geliyor (`radial-gradient(... #050a11c9)`); o katman tüm ekranı eşit kapladığı
 için harita kenarında band yapmıyor, olduğu gibi bırakıldı.
 
+### v18.3: Kamera harita sınırında duruyor
+
+v18.2'den hemen sonra kullanıcı kararını değiştirdi: "haritanın sınırına
+gelince kamera pan yapmayı bıraksın, böylece siyah alanları çok görmeyiz."
+Yani siyahı düzeltmek yerine **hiç göstermemek**.
+
+`Engine.kis(v,enb)` kamerayı `[0, harita - pencere]` aralığında tutuyor ve üç
+yerde uygulanıyor:
+1. lerp **hedefi** - kamera geçerli bir noktaya yaklaşsın,
+2. lerp **sonrası** - bölge değişiminde kamera doğrudan atandığı için sınır
+   dışında başlayabiliyor; kayarak değil hemen içeri otursun,
+3. **sarsıntı ofseti** - kenarda 2-3 piksellik siyah şerit açmaktansa sarsıntı
+   duvara dayanıp sönsün.
+
+**Harita pencereden darsa** (Dar Geçit 208 birim, pencere 320) sıkıştırılacak
+alan yok; o eksende harita **ortalanır** (`enb/2`, yani -56), iki yanda eşit
+siyah kalır. Tek yana yapıştırmak haritayı kenara itiyor ve daha kötü duruyor.
+
+Ölçüldü (Dışarı, 864x480, pencere 320x213, sınır 544x267):
+
+| oyuncu | serbest kamera | gerçek |
+|---|---|---|
+| sol-üst | (-143,-97) | **(0,0)** |
+| orta | (272,134) | (272,133) |
+| sağ-alt | (687,364) | **(544,267)** |
+
+v18.2'nin siyah dolgusu **duruyor**: dar haritalarda ve sarsıntıda hâlâ
+devrede, ayrıca yedek olarak doğru.
+
 ---
 
-*Son güncelleme: 2026-09-17, v18.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-17, v18.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
