@@ -2666,4 +2666,32 @@ dörtte birde ortalama 5.4/22, aralık 1-13.
 
 ---
 
-*Son güncelleme: 2026-09-17, v17.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v18.0: Kılıç kalkık yürüyüş gerçekten kalkık duruyor
+Kullanıcı önce "göremedim" dedi. Ölçüm Walk2'nin **çizildiğini** gösterdi
+(6 saniyede 2133 çizim çağrısı, üç yönde de) - yani kod çalışıyordu. Sonra
+gördü ve asıl sorunu söyledi: **"çok kısa süre kaldırıyorlar."**
+
+Sebep sıklık değil, animasyonun kendisiydi. Kılıcın konumu kare kare ölçüldü
+(sıcak piksellerin y merkezi; küçük = yukarıda):
+
+| kare | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|---|
+| `S_Walk`  | 36.9 | 37.2 | 35.8 | 37.0 | 39.0 | 42.4 | 42.4 | 43.2 | 41.4 |
+| `S_Walk2` | 36.9 | 36.4 | 33.2 | **28.8** | **22.2** | **20.7** | **19.8** | **23.4** | **26.1** |
+
+Walk2'nin **ilk üç karesinde kılıç hâlâ aşağıda** ve normal yürüyüşten ayırt
+edilemiyor; kalkık olduğu an 9 karenin ancak 6'sı. Üstüne bu döngü saniyede
+bir tekrarladığı için kılıç sürekli inip kalkıyordu.
+
+**Çözüm:** Walk2 yalnız **3-8 arası kareler** arasında dönüyor, yani kılıç
+pencerenin tamamı boyunca (4.5 sn) yukarıda kalıyor, bacaklar yürümeye devam
+ediyor. Hız da orantılı düşürüldü (`×6/9`): 9 yerine 6 kare döndürmek adım
+tempolarını %50 hızlandırırdı ve iki yürüyüş yan yana görününce sırıtırdı.
+Ölçüldü: ikisi de saniyede 1 tam tur.
+
+**Ders:** "göremiyorum" şikayetinde önce çizilip çizilmediğini ölç. Çiziliyorsa
+sorun sıklıkta değil, animasyonun İÇİNDE olabilir - kareyi kare ölçmek gerekir.
+
+---
+
+*Son güncelleme: 2026-09-17, v18.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

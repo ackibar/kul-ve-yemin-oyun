@@ -134,6 +134,13 @@ export class Engine{
   /* Saldiri hizina dokunulmuyor: savurusun suresi vurus zamanlamasiyla
      okunuyor, yalnizca baslangic fazi kayiyor. */
   const fps=Engine.DUSMAN_FPS(eylem)*(eylem==='Attack'?1:Engine.FAZ_HIZ_MIN+h*(Engine.FAZ_HIZ_MAK-Engine.FAZ_HIZ_MIN));
+  /* Kilic kalkik yuruyus yalniz kalkik kareler arasinda doner. Hiz da
+     ORANTILI dusuruluyor: 9 kare yerine 6 kare donmek adim tempolarini
+     %50 hizlandirirdi ve iki yuruyus yan yana gorundugunde sirir. */
+  if(eylem==='Walk2'){
+   const h2=Math.floor((time+f*Engine.FAZ_ARALIK)*fps*(Engine.WALK2_ADET/9));
+   return Engine.WALK2_BAS+(h2%Engine.WALK2_ADET);
+  }
   return Math.floor((time+f*Engine.FAZ_ARALIK)*fps);
  }
  /** Yaratiklarin yon gosterme YONTEMI. Hepsini dondurmek yanlisti: sprite'lar
@@ -197,6 +204,16 @@ export class Engine{
   *  kalkik bazilari inik oluyor (kullanici "arada yaptiklari alternatif bir
   *  hareket" istedi, hepsi ayni anda degil). */
  static readonly ISK_KALDIR_DONGU=4.5;
+ /** Walk2'de yalnizca KILICIN KALKIK oldugu kareler donduruluyor.
+  *  OLCULDU (sicak piksel merkezinin y'si, kucuk = yukarida):
+  *    S_Walk  : 36.9 37.2 35.8 37.0 39.0 42.4 42.4 43.2 41.4  (hep asagida)
+  *    S_Walk2 : 36.9 36.4 33.2 28.8 22.2 20.7 19.8 23.4 26.1
+  *  Yani Walk2'nin ILK UC KARESINDE kilic hala asagida ve normal yuruyusten
+  *  ayirt edilemiyor - kullanici "cok kisa sure kaldiriyorlar" derken bunu
+  *  goruyordu. 3..8 araligi dondurulunce bacaklar yine yuruyor ama kilic
+  *  yukarida kaliyor. */
+ static readonly WALK2_BAS=3;
+ static readonly WALK2_ADET=6;
  static readonly ISKELET_SES_ARA=.07;
  /** Iskelet vurusundan sonraki dokunulmazlik - genel .72 yerine (bkz. hurt()). */
  static readonly ISKELET_IFRAME=.34;
