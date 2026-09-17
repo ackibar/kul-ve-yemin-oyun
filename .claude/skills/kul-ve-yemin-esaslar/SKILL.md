@@ -2692,6 +2692,50 @@ tempolarını %50 hızlandırırdı ve iki yürüyüş yan yana görününce sı
 **Ders:** "göremiyorum" şikayetinde önce çizilip çizilmediğini ölç. Çiziliyorsa
 sorun sıklıkta değil, animasyonun İÇİNDE olabilir - kareyi kare ölçmek gerekir.
 
+### v18.1: Durağan NPC'lere nefes animasyonu — şablon değil v3
+
+Kullanıcı "obruk, çakal, karga ve tuhn'da idle yok" dedi. Ölçüldü: 14 NPC'nin
+**11'inin** `D_Idle.png` dosyasındaki 4 kare birbirinin aynısıydı (kare farkı
+0 piksel). Yalnız Mirna (3), Undur (4) ve Kral (13) animasyonluydu. Motor
+tarafında sorun yok - NPC zaten `Math.floor(time*5)` ile dönüyor (engine:1766);
+eksik olan **sanat**tı.
+
+**Şablon tuzağı tekrar doğrulandı.** Önce `npc_uret.py`'deki yol denendi:
+`mode:'template'`, `breathing-idle`. Karga'nın elindeki **mızrak kayboldu**
+(sırttaki kaldı, eldeki gitti) - `v3_anim.py`'nin başındaki not tam olarak bunu
+anlatıyor. Bu 1 üretim boşa gitti.
+
+**Doğru yol, aynı fiyata:** `mode:'v3'` + `keep_first_frame:True`. v3
+karakterin dönüş karesinden başladığı için 0. kare birebir kurulu sprite'ın
+kendisi, nesne de her karede elde kalıyor. Dört NPC'de de mızrak/balta/şişe
+korundu.
+
+**İki ders daha çıktı:**
+
+1. **Kareleri kendi bbox'ına göre ortalama.** `otur()`/`fit()` her kareyi kendi
+   bbox'ına göre ortalıyor; kol ya da nesne kıpırdayınca gövde yatayda kayıyor
+   ve nefes yerine *titreme* okunuyor. Doğrusu: yalnız 0. kare `otur()`
+   kuralıyla yerleştirilir, kalan kareler **aynı ötelemeyle** basılır. Ölçüldü:
+   dört NPC'de de 0. karenin bbox'ı eskisiyle birebir aynı, yani kimse
+   yerinden oynamadı.
+2. **v3'ün son kareleri nefes değil sapma.** 0. kareye uzaklık indisle tekdüze
+   büyüyor (obruk2: 324 / 1295 / 1415 / 1936 piksel); 3-4. karelerde ceket
+   açılıyor, göbek eriyordu. Döngü `0,1,2,1` sırasıyla kuruldu - hem nefes alıp
+   verme oluyor hem sapma karelerine hiç girilmiyor.
+
+**Slot tuzağı:** `id_obruk.txt` ile `id_obruk2.txt` ikisi de duruyor, kurulu
+olan **obruk2**. Yanlışından üretildi, 1 üretim daha gitti. Kurulumdan önce
+üretilen karenin bbox'ını kurulu sprite'ınkiyle karşılaştır: karga/çakal/tuhn
+birebir tuttu, obruk 48x60'a karşı 60x60 çıktı - uyuşmazlık yanlış karakter
+demek.
+
+Toplam 6 üretim (1 şablon + 4 v3 + 1 obruk2). Ton `aktor_uyum.klasor()` ile
+ham yedekten yeniden üretildi; `git status` yalnız dört `D_Idle.png` gösterdi,
+yani derece üst üste binmedi.
+
+**Kalan:** Alf (2), Rauf (5), Lin (7), Tiga (8), Elvi (9), Uslu (14), Son
+Muhafız (15) hâlâ donuk; her biri 1 üretim.
+
 ---
 
-*Son güncelleme: 2026-09-17, v18.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-17, v18.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
