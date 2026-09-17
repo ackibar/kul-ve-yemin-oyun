@@ -838,8 +838,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
  static readonly HURT_SURE=.18;
  static readonly FLAS_SURE=.07;
  static readonly FLAS_GUC=.85;
- /** Yakin dovus geri itmesi. 5'ti; ok 18, dash 30 iken en zayif halka oydu. */
- static readonly KILIC_ITME=13;
+ /** Yakin dovus geri itmesi. Once 5'ti (ok 18, dash 30 iken en zayif halka),
+  *  v16.9'da 13 yapildi ve FAZLA kacti - kullanici: "cok geri ucmalarina
+  *  gerek yok, bir geri bildirim vermeleri yeterli". 7: eski halin biraz
+  *  ustunde, darbe hissediliyor ama dusman sahnenin disina firlamıyor.
+  *  Ok (18) ve dash (30) DEGISMEDI: ikisi de bilerek daha sert, dash'i
+  *  kullanici zaten "biraz geri itilsin" diye istemisti. */
+ static readonly KILIC_ITME=7;
  static readonly KAN_ADET=8;
  static readonly KAN_RENK=['#8e2b2b','#6d1f22','#a63a34'];
  static readonly VURUS_ILERI=2.4;

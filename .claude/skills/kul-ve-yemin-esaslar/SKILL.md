@@ -2532,4 +2532,20 @@ hali iyiydi" dedi, `.03`'e dönüldü. *Ölçüm kullanıcının hissini doğrul
 
 ---
 
-*Son güncelleme: 2026-09-17, v17.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v17.3: Yakın dövüş geri itmesi geri çekildi (13 → 7)
+Kullanıcı: "düşmanlara vurduğumuzdaki geri savrulmalar çok fazla, çok geri
+uçmalarına gerek yok, bir geri bildirim vermeleri yeterli."
+
+v16.9'da 5 → 13 yapmıştım (ok 18, dash 30 iken en zayıf halka oydu) ama fazla
+kaçmış. **7**: eski halin biraz üstünde, darbe hissediliyor, düşman sahnenin
+dışına fırlamıyor. Ölçüldü: yer değiştirme 13 birim (0.81 karo) → **7 birim
+(0.44 karo)**.
+
+**Ok (18) ve dash (30) DEĞİŞMEDİ** - ikisi de bilerek daha sert ve kullanıcı
+dash'i zaten "biraz geri itilsin" diye kendisi istemişti (v14.1). Şikâyet
+yalnız yakın dövüş içindi; ölçülmemiş bir şeyi "benzer" diye birlikte
+değiştirmek yanlış olurdu.
+
+---
+
+*Son güncelleme: 2026-09-17, v17.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
