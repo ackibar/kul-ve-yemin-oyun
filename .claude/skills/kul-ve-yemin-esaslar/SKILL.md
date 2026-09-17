@@ -2588,4 +2588,25 @@ kenarına dayandığı için ortada temiz bir oluk kalıyor.
 
 ---
 
-*Son güncelleme: 2026-09-17, v17.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v17.7: HUD parşömen rengine döndü (yapı aynı kaldı)
+Kullanıcı: "şu anki tarzı koruyalım ama rengi önceki parşömen rengine
+döndürelim." Yani v17.5'in **yapısı** (yuvarlatılmış, yarım saydam, büyük
+portre, değeri içinde olan kalın can barı, dikey kontrol listesi) korundu;
+yalnız **palet** koyu maviden parşömene çevrildi:
+* Panel `#0d141ccc` → `#e6d7b0f0`, kenar `#ffffff1f` → `--pr-kenar`.
+* Yazı `#f2e7d3` → `--pr-murekkep`; seviye ve altın → `--pr-altin`.
+* Can/XP oluğu `#241016`/`#ffffff14` → `#6b4a30` (parşömen üstünde okunan koyu
+  kahve). Barın kendisi kırmızı-turuncu kaldı - referansın ana fikri oydu.
+* Kontrol listesi sahnenin üstünde durduğu için AÇIK kaldı ama parşömen
+  tonlarına çevrildi (`--pr-hud-metin` + amber tuşlar).
+
+**Saldırı butonu:** parşömende bütün butonlar aynı kreme döndüğü için birincil
+eylem kayboldu. `frame_gold.png` 9-dilim çerçevesi yuvarlatılmış yeni tarzla
+uyuşmuyordu; dolu **amber zemin** verildi.
+*Not: bu kural v17.4'te eklenmişti ama v17.5'te CSS bloğu yeniden yazılırken
+`s[:i]` ile birlikte silinmişti - blok sonuna eklenen kurallar, o bloğu
+kırpan bir düzenlemede sessizce gider.*
+
+---
+
+*Son güncelleme: 2026-09-17, v17.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
