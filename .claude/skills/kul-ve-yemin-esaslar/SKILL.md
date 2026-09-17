@@ -2609,4 +2609,35 @@ kırpan bir düzenlemede sessizce gider.*
 
 ---
 
-*Son güncelleme: 2026-09-17, v17.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v17.8: Azman iskelet (kind 12) - üretim harcanmadan
+Kullanıcı: "iskeletlerin arasında arada boss iskeletler çıksın, büyük olsunlar
+ve diğerleri gibi tekte ölmesinler."
+
+**Yeni sprite ÜRETİLMEDİ.** `dusmanPoz()` kind 12'yi 11'e çeviriyor; fark
+yalnızca `DUSMAN_OLCEK[12]=1.5`'ten gelen boy. Aynı animasyonlar, aynı yürüyüş
+ve saldırı.
+
+* `CAN[12]=34` (yıpranmış kılıçla **4 vuruş**; sıradan iskelet 1),
+  `HASAR[12]=15`, `HIZ[12]=27` (iri ve ağır, sıradanı 38), `GOLGE[12]=12`.
+* `Engine.ISKELET(k)` yardımcısı: gömülü başlama, topraktan çıkma, kemiğe
+  dağılma, iskelet sesleri, saldırı ayarları - dokuz yerde `kind===11`
+  kontrolü buna çevrildi. **İstisna bilinçli:** dash teması yalnız SIRADAN
+  iskeleti dağıtır; azman çürük değil, normal dash hasarını alır.
+* Ödül farkı: sıradan 6 XP, altın yok, `save()` yok (40 kişilik kalabalıkta
+  servet ve onlarca yazma olurdu). Azman 55 XP + 14 altın + kayıt.
+* Düşürme: kemik garanti 2-3 + %30 çelik hurdası.
+* Koridorda `i%9===4` → 42 iskeletin **5'i** azman. Sabit aralık bilinçli:
+  rastgele olsa her yeni oyunda başka yerde çıkar, harita ezberi bozulurdu.
+
+**Bulunan hata:** `iskeletKontrol()` canı `Engine.CAN[11]` diye SABİT
+okuyordu; azman 1 canla çıkıyordu. Türden okunacak şekilde düzeltildi.
+*Ders: tek türe göre yazılmış bir fonksiyona ikinci tür eklenirken sabit
+indeksler aranmalı.*
+
+**Test tuzağı:** azmana vurmayı denerken hasar 0 çıktı, hata sandım - meğer
+`attack()` menzildeki EN YAKIN hedefi seçiyor ve daha yakında sıradan bir
+iskelet vardı. Doğru davranış; ölçüm için diğerleri uzaklaştırılmalı.
+
+---
+
+*Son güncelleme: 2026-09-17, v17.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

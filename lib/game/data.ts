@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='17.7';
+export const SURUM='17.8';
 /** Gelisim asamasi. Oyun oynanabilir ama icerik ve sistemler (item seti, dil
  *  secenegi, masaustu arayuzu) hala eksik - yani alfa. Beta'ya gecisi bu sabit
  *  tasir; surum numarasiyla ayri tutuldu ki 1.x sayimi bozulmasin. */
@@ -154,7 +154,8 @@ export const DUSURME:Record<number,{id:ItemId;sans:number;az:number;cok:number}[
  7:[{id:'celik',sans:1,az:2,cok:3},{id:'kurum',sans:1,az:3,cok:5}],                 // Kul Bekcisi
  8:[{id:'pacavra',sans:.6,az:1,cok:2},{id:'kurum',sans:.5,az:1,cok:2}],             // bogulmus
  10:[{id:'celik',sans:1,az:2,cok:4}],                                              // Son Muhafiz
- 11:[{id:'kemikp',sans:.35,az:1,cok:1}],                                           // iskelet
+ 11:[{id:'kemikp',sans:.35,az:1,cok:1}],                                          // iskelet
+ 12:[{id:'kemikp',sans:1,az:2,cok:3},{id:'celik',sans:.3,az:1,cok:1}],             // azman iskelet                                           // iskelet
 };
 
 /** URETIM TARIFLERI. Eskiden bu liste app/page.tsx'in icine gomuluydu ve her

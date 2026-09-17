@@ -19,7 +19,9 @@ export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|
   *  donder parametresi olarak geciyor). Yalniz overlay decor icin anlamli. */aci?:number};
 // kind 3 (solucan) kaldirildi: kullanici "cok kotu duruyordu" dedi, tepeden
 // cizilmis bir halka olarak okunmuyordu ve yon de tasimiyordu.
-export type EnemySpec={id:string;kind:1|2|4|5|6|7|8|9|10|11;x:number;y:number;boss?:boolean};
+/* kind 12 = AZMAN ISKELET: 11'in buyugu. Ayri sprite YOK - motor 11'in
+   sheet'lerini buyuk olcekle ciziyor (bkz. engine.ts dusmanPoz/DUSMAN_OLCEK). */
+export type EnemySpec={id:string;kind:1|2|4|5|6|7|8|9|10|11|12;x:number;y:number;boss?:boolean};
 export type World={zone:Zone;w:number;h:number;tiles:number[][];entities:Entity[];enemies:EnemySpec[];spawn:[number,number];
  /** Karo biriminde carpisma sekli - UZUNLUGA gore ayirt edilir (harita-editor.html
   *  "Engeller" modu ile uretilir):
@@ -297,7 +299,12 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      cikip mob olurlar (bkz. engine.ts gomulu/cikis). Tek vurusta olur,
      parcalanirlar. Konumlar acik zemine, oyuncunun geldigi DOGU ucu bos
      kalacak sekilde dagitildi (varir varmaz ustune cikmasinlar). */
-  [[5,7],[5,15],[6,7],[6,8],[6,14],[7,4],[8,6],[9,10],[9,16],[10,9],[10,16],[10,18],[12,7],[13,17],[14,15],[15,9],[15,19],[16,5],[16,6],[16,15],[17,17],[18,6],[18,11],[18,12],[19,4],[19,16],[20,14],[22,17],[24,10],[24,17],[24,18],[25,15],[28,11],[29,6],[29,9],[30,4],[31,16],[32,13],[32,17],[34,6],[35,19],[38,6]].forEach(([x,y],i)=>enemy(`isk${i}`,11,x,y));
+  [[5,7],[5,15],[6,7],[6,8],[6,14],[7,4],[8,6],[9,10],[9,16],[10,9],[10,16],[10,18],[12,7],[13,17],[14,15],[15,9],[15,19],[16,5],[16,6],[16,15],[17,17],[18,6],[18,11],[18,12],[19,4],[19,16],[20,14],[22,17],[24,10],[24,17],[24,18],[25,15],[28,11],[29,6],[29,9],[30,4],[31,16],[32,13],[32,17],[34,6],[35,19],[38,6]].forEach(([x,y],i)=>enemy(`isk${i}`,
+   /* Arada AZMAN iskelet (kind 12): buyuk, tek vurusta olmez, dogru durust
+      odul verir. Sabit araliki - rastgele olsaydi her yeni oyunda baska bir
+      yerde cikar, harita ezberi bozulurdu. 42 iskelette 5 azman: kalabaliga
+      ritim katiyor ama surunun kimligini bastirmiyor. */
+   i%9===4?12:11,x,y));
   gecis(39,12,43,17,'haven',[3,16]);
  }
  return {zone,w,h,tiles,entities,enemies,blockers,gecisler,ucurumlar,isiklar,spawn:zone==='haven'?[15*16,14*16]:zone==='tunel'?[6*16+8,6*16+8]:zone==='test100'?[21*16+8,12*16+8]:[7*16,7*16]};
