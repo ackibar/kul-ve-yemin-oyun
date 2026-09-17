@@ -1651,13 +1651,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   /* Render saatinden donma toplami dusuluyor: yoksa simulasyon dururken
      sprite kareleri, ates titremesi ve isik salinimi akmaya devam eder ve
      goz bunu 'vurus dondu' degil 'oyun takildi' diye okur. */
-  this.render(time/1000-this.donmaToplam);this.raf=requestAnimationFrame(this.loop)}
+  this.render(time/1000-this.donmaToplam,dt);this.raf=requestAnimationFrame(this.loop)}
   private sprite(key:string,x:number,y:number,frame=0,fw?:number,fh?:number,flip=false,scale=1,alpha=1,donder=0,capa?:number,flas=0){const im=this.images[key];if(!im?.naturalWidth)return;const w=fw||im.width/R,h=fh||im.height/R;const count=Math.floor(im.width/(w*R));const c=this.ctx;c.save();c.globalAlpha=alpha;const actor=key.startsWith('characters')||key.startsWith('enemies');/* Aktorler (oyuncu/mob) HAREKET ederken tam sayiya yuvarlama olmadan
    piksel titremesi/bulanikligi oluyordu, o yuzden onlar icin kaldi. Decor
    ise SABIT duruyor - yuvarlama onda sadece boyali arka plandaki bir ozellikle
    (ustune tam oturmasi gereken nesneler icin, bkz. harita-editor.html
    Nesneler modu) piksel-hassas hizalanmayi engelliyordu ("milimetrik kayma"
-   sikayeti buradan geliyordu). Decor'da artik YUVARLAMA YOK. */c.translate(actor?Math.round(x):x,actor?Math.round(y):y);/* Capa hucre icinde zemin cizgisinin satirini belirliyor (satir = 2*capa).
+   sikayeti buradan geliyordu). Decor'da artik YUVARLAMA YOK. *//* Yuvarlama TUVAL PIKSELI izgarasina: bkz. Engine.izgara(). */c.translate(actor?Engine.izgara(x):x,actor?Engine.izgara(y):y);/* Capa hucre icinde zemin cizgisinin satirini belirliyor (satir = 2*capa).
    Dusmanlarda 21 idi, yani sprite en fazla 42 satir yuksek olabiliyordu;
    62 satirlik trolun ust yarisi kirpiliyordu. Buyuk dusmanlar kendi
    capasini geciyor. *//* Oyuncu setleri (characters1, 1sword, 1mesale...; characters10+ DEGIL) 80 satirlik hucrede. */const oyuncuSet=/^characters1(?!\d)/.test(key);const anchor=capa??(actor?(oyuncuSet?Engine.OYUNCU_CAPA:key.startsWith('characters')?31:key.startsWith('enemies1')?22:21):h);/* Tepeden gorulen yaratiklar icin: yon ayri sheet degil DONDURME. Capa
@@ -1702,6 +1702,19 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    *  siyah kalir; tek yana yapistirmak haritayi kenara itip daha kotu duruyor. */
   private static kis(v:number,enb:number){return enb<=0?enb/2:Math.min(enb,Math.max(0,v));}
 
+  /** Tuval olcegi: 1 dunya birimi = PIKSEL tuval pikseli (setTransform ile ayni
+   *  olmali). Cizim konumlari bu izgaraya oturtuluyor. */
+  private static readonly PIKSEL=4;
+  /** Konumu TUVAL PIKSELI izgarasina oturtur.
+   *
+   *  Eskiden tam dunya birimine yuvarlaniyordu - yani dort tuval pikselinde
+   *  bir. Kamera harita kenarinda kilitlenip arka plan tamamen sabit kalinca
+   *  oyuncunun bu kaba adimlari titreme gibi okunuyordu (olculdu: ekran
+   *  adimlari 0111 0111 0110). Tuval pikseli izgarasi piksel-tamligi BOZMAZ:
+   *  oteleme tam sayida tuval pikseli oldugu icin sanat pikselleri yine
+   *  bozulmadan 2x2 blok halinde basiliyor, yalnizca hareket dort kat ince. */
+  private static izgara(v:number){return Math.round(v*Engine.PIKSEL)/Engine.PIKSEL;}
+
   /* Harita disi DAIMA duz siyah. Kullanici "once siyah bir kisim, sonra lacivert
      bir kisim var" dedi: siyah, arka plan gorselinin kendi koyu kenari (harita
      dikdortgeninin ICINDE); lacivert ise dikdortgenin DISI - tuvalin silme rengi
@@ -1721,7 +1734,14 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(x0<0)c.fillRect(x0,ty0,Math.min(x1,0)-x0,ty1-ty0);
    if(x1>W)c.fillRect(Math.max(x0,W),ty0,x1-Math.max(x0,W),ty1-ty0);}
 
-  private render(time:number){const c=this.ctx;const canvas=this.canvas;const cw=canvas.clientWidth||1280,ch=canvas.clientHeight||720,oran=cw/ch;let en=320,boy=180;if(oran>16/9)en=Math.min(560,Math.round(180*oran));else boy=Math.min(340,Math.round(320/oran));this.gorus={en,boy};const bw=en*4,bh=boy*4;if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;}c.setTransform(4,0,0,4,0,0);c.imageSmoothingEnabled=false;c.fillStyle='#000';c.fillRect(0,0,en,boy);const enbX=this.world.w*16-en,enbY=this.world.h*16-boy;const targetX=Engine.kis(this.state.x-en/2,enbX),targetY=Engine.kis(this.state.y-boy/2,enbY);this.camera.x+=(targetX-this.camera.x)*.12;this.camera.y+=(targetY-this.camera.y)*.12;/* Bolge degisiminde kamera dogrudan atandigi icin sinir disinda baslayabilir; lerp'ten SONRA da kisilir ki kayarak degil hemen iceri otursun. */this.camera.x=Engine.kis(this.camera.x,enbX);this.camera.y=Engine.kis(this.camera.y,enbY);/* Sarsinti ofseti kameranin KENDISINE degil, yalniz bu kareye eklenir:
+  private render(time:number,dt=1/60){const c=this.ctx;const canvas=this.canvas;const cw=canvas.clientWidth||1280,ch=canvas.clientHeight||720,oran=cw/ch;let en=320,boy=180;if(oran>16/9)en=Math.min(560,Math.round(180*oran));else boy=Math.min(340,Math.round(320/oran));this.gorus={en,boy};const bw=en*4,bh=boy*4;if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;}c.setTransform(4,0,0,4,0,0);c.imageSmoothingEnabled=false;c.fillStyle='#000';c.fillRect(0,0,en,boy);const enbX=this.world.w*16-en,enbY=this.world.h*16-boy;const targetX=Engine.kis(this.state.x-en/2,enbX),targetY=Engine.kis(this.state.y-boy/2,enbY);/* Yumusatma KARE basina degil ZAMANA bagli. Sabit .12 kare basina
+     demekti: kareler esit araliklarla gelmeyince kamera oyuncudan farkli
+     bir tempoda ilerliyor ve ikisi arasindaki fark her karede oynuyordu -
+     ekranda titreme olarak okunan seyin bir parcasi buydu. Us alma 60 Hz'de
+     birebir eski davranisi verir, 120 Hz'de ayni HIZI korur. */const kat=1-Math.pow(1-.12,dt*60);this.camera.x+=(targetX-this.camera.x)*kat;this.camera.y+=(targetY-this.camera.y)*kat;/* Us azalma asimptotik: oyuncu durduktan sonra kamera saniyelerce
+     surunmeye devam ediyor ve bu surunme izgaraya oturunca tek tek piksel
+     sicramasi olarak gorunuyor - 'dururken de smooth olmali'. Yarim tuval
+     pikselinden yakinsa hedefe oturtulur. */if(Math.abs(targetX-this.camera.x)<1/(Engine.PIKSEL*2))this.camera.x=targetX;if(Math.abs(targetY-this.camera.y)<1/(Engine.PIKSEL*2))this.camera.y=targetY;/* Bolge degisiminde kamera dogrudan atandigi icin sinir disinda baslayabilir; lerp'ten SONRA da kisilir ki kayarak degil hemen iceri otursun. */this.camera.x=Engine.kis(this.camera.x,enbX);this.camera.y=Engine.kis(this.camera.y,enbY);/* Sarsinti ofseti kameranin KENDISINE degil, yalniz bu kareye eklenir:
      camera.x'e yazilsaydi lerp hedefi bozulur ve sarsinti sonumlenmezdi.
      Yuvarlamanin ICINDE, cunku cx/cy yalniz sahne degil bolge tinti ve
      isik haritasi icin de goruntu penceresinin dunya koordinati - ofseti
@@ -1731,7 +1751,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   if(this.sarsinti>0){const k=this.sarsinti/Engine.SARSINTI_SURE,g=(this.kirmiziFlas>0?Engine.HASAR_SARSINTI:Engine.SARSINTI_GUC)*k*k;
    const isaret=Math.floor(this.sarsinti*60)%2?1:-1;
    sx=-this.sarsintiYon.x*g*isaret;sy=-this.sarsintiYon.y*g*isaret;}
-  /* Sarsinti da kisilir: kenarda 2-3 piksellik siyah serit acmasindansa sarsinti duvara dayanip sonsun. */const cx=Math.round(Engine.kis(this.camera.x+sx,enbX)),cy=Math.round(Engine.kis(this.camera.y+sy,enbY));c.translate(-cx,-cy);
+  /* Sarsinti da kisilir: kenarda 2-3 piksellik siyah serit acmasindansa sarsinti duvara dayanip sonsun. *//* Kamera da aktorlerle AYNI izgaraya oturur (bkz. Engine.izgara). */const cx=Engine.izgara(Engine.kis(this.camera.x+sx,enbX)),cy=Engine.izgara(Engine.kis(this.camera.y+sy,enbY));c.translate(-cx,-cy);
   const bg=this.images['bg_'+this.state.zone];
   // Tek parca arka plan: karo tekrarini ve desen olcegi sorununu ortadan kaldirir.
   // Gorsel carpisma haritasiyla maskelenerek uretilir (bkz. scripts/arkaplan_maske.py),

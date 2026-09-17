@@ -306,6 +306,16 @@ test('Çıplak elde kılıç sesi çalmıyor',()=>{
  assert.ok(!cald.includes('yumrukSavur'),'kilicla yumruk sesi calmamali');
  g.destroy();
 });
+test('Çizim konumu tam tuval pikseline oturuyor',()=>{
+ /* Piksel-tamligin sarti: oteleme TAM SAYIDA tuval pikseli olsun. Tam dunya
+    birimine yuvarlamak da bu sarti saglardi ama izgara dort kat kabaydi ve
+    kamera kenarda kilitlenince oyuncunun adimlari titreme gibi okunuyordu. */
+ for(const v of [0,.1,.49,.5,3.37,-2.6,123.456]){
+  const g=Engine.izgara(v);
+  assert.ok(Number.isInteger(g*Engine.PIKSEL),`${v} -> ${g} tuval pikseline oturmuyor`);
+  assert.ok(Math.abs(g-v)<=.5/Engine.PIKSEL,`${v} -> ${g} cok uzaga kaydi`);
+ }
+});
 test('Canı doluyken iksir harcanmaz',()=>{
  const g=kur();
  assert.equal(g.useItem('potion'),false);

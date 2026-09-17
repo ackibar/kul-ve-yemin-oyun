@@ -2825,6 +2825,44 @@ isabette `yumruk`. Ölçüldü - yumruk: ıska `[yumrukSavur]`, isabet
 `[yumrukSavur, yumruk]`; paslı kılıç: `[swing]` / `[swing, vurus]`. Torba 40
 çekimde 8/9/7/8/8, ardarda tekrar 0. Regresyona da girdi.
 
+### v18.5: Kamera titremesi — üç ayrı sebep
+
+v18.3'ten sonra kullanıcı "sınırlara gelince biraz titreşim hissediyorum",
+ardından "kamera smooth olmalı hareket ederken ve dururken" dedi. Ölçüldü:
+oyuncunun EKRANDAKİ konumu (`yuvarlanmış x − cx`) kare kare kaydedildi ve
+adım dağılımı çıkarıldı. Üç ayrı sebep çıktı, üçü de gerçek.
+
+**1. Yuvarlama ızgarası çok kabaydı.** `sprite()` aktörleri TAM DÜNYA BİRİMİNE
+yuvarlıyordu = 4 tuval pikseli. Kamera kenarda kilitlenince arka plan tamamen
+sabit kalıyor, gözün mükemmel bir referansı oluyor ve oyuncunun kaba adımları
+titreme gibi okunuyor. Piksel-tamlığın gerçek şartı "tam sanat pikseli" değil
+**tam TUVAL pikseli**: öteleme tam sayıda tuval pikseliyse rasterleme saf bir
+ötelemedir, sanat pikselleri yine bozulmadan 2×2 blok basılır. `Engine.izgara()`
+artık 1/4 dünya birimine oturtuyor - dört kat ince, aynı keskinlik.
+
+| kenar (kamera kilitli) | adım dağılımı |
+|---|---|
+| önce (1 birim) | `0`×26, `1`×70 — dizi `0111 0111 0110` |
+| sanat pikseli (1/2) | `0.5`×51, `1`×45 |
+| **tuval pikseli (1/4)** | **`0.75`×90, `0.5`×6** |
+
+Yani 96 karenin 90'ında adım birebir aynı: sabit hız.
+
+**2. Yumuşatma kare başınaydı, zamana bağlı değil.** `camera += (hedef−camera)*.12`
+kare başına demekti; kareler eşit aralıklarla gelmeyince kamera oyuncudan farklı
+tempoda ilerliyor ve aradaki fark her karede oynuyordu. `1-Math.pow(1-.12,dt*60)`
+60 Hz'de birebir eski davranışı verir, 120 Hz'de aynı HIZI korur. Ortada
+(kamera takipte) göreli adım ±1'den **96 karenin 85'inde 0**'a düştü.
+
+**3. Üssel azalma hiç bitmiyor.** Oyuncu durduktan sonra kamera saniyelerce
+sürünüyor ve bu sürünme ızgaraya oturunca tek tek piksel sıçraması oluyordu -
+"dururken de smooth olmalı" şikayeti buydu. Yarım tuval pikselinden yakınsa
+kamera hedefe oturtuluyor. Ölçüldü: tuş bırakıldıktan sonra değişimler
+1,2,…,10,12,13,16,20,27. karelerde, yani **0.45 sn'de yavaşlayarak duruyor** ve
+bir daha hiç oynamıyor.
+
+Regresyona giren şart: `izgara(v)*PIKSEL` daima tam sayı.
+
 ---
 
-*Son güncelleme: 2026-09-17, v18.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-17, v18.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
