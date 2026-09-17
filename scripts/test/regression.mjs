@@ -316,6 +316,23 @@ test('Çizim konumu tam tuval pikseline oturuyor',()=>{
   assert.ok(Math.abs(g-v)<=.5/Engine.PIKSEL,`${v} -> ${g} cok uzaga kaydi`);
  }
 });
+test('NPC nefesi yavaş ve her birinde farklı ritimde',()=>{
+ /* Kullanici: "cok hizli ve cok ayni ritimde". Once 5 kare/sn sabitti -
+    dort karelik dongu 0.8 sn, ve time GLOBAL oldugu icin ayni odadaki
+    herkesin gogsu ayni anda inip kalkiyordu. */
+ const g=kur();
+ const kimlik=['karga','cakal','obruk','tuhn'];
+ const dongu=id=>{const k=[];for(let t=0;t<12;t+=1/60)k.push(g.nefesKare(id,t)%4);
+  let don=0;for(let i=1;i<k.length;i++)if(k[i]===k[0]&&k[i-1]!==k[0])don++;
+  return 12/Math.max(1,don);};
+ for(const id of kimlik){const d=dongu(id);
+  assert.ok(d>1.8&&d<3.6,`${id} nefes dongusu ${d.toFixed(2)}sn - 1.8-3.6 araliginda olmali`);}
+ let esit=0,toplam=0;
+ for(let t=0;t<60;t+=1/60){const k=kimlik.map(i=>g.nefesKare(i,t)%4);
+  toplam++;if(k.every(v=>v===k[0]))esit++;}
+ assert.ok(esit/toplam<.15,`NPC'ler zamanin %${(esit/toplam*100).toFixed(0)}'inda ayni karede - ritim ayrismamis`);
+ g.destroy();
+});
 test('Canı doluyken iksir harcanmaz',()=>{
  const g=kur();
  assert.equal(g.useItem('potion'),false);

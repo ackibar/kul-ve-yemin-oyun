@@ -2863,6 +2863,25 @@ bir daha hiç oynamıyor.
 
 Regresyona giren şart: `izgara(v)*PIKSEL` daima tam sayı.
 
+### v18.6: NPC nefesi yavaşladı ve ritimler ayrıştı
+
+Kullanıcı v18.1'deki idle'lar için: "çok hızlı ve çok aynı ritimde hareket
+ediyorlar." İki ayrı sorun, ikisi de tek satırda:
+`sprite(..., Math.floor(time*5))`.
+
+- **Hız:** 5 kare/sn × 4 kare = **0.8 sn'lik döngü**, yani dakikada 75 nefes.
+  Dinlenmedeki bir insan 12-16. `NEFES_FPS=1.6` ile taban döngü 2.5 sn.
+- **Ritim:** `time` global, yani odadaki herkesin göğsü milimetrik aynı anda
+  inip kalkıyordu. İskeletlerdeki çözümün aynısı (bkz. `iskeletYuru`): hem FAZ
+  hem TEMPO `Engine.karma(id)`'den türetiliyor - her oyunda aynı ama NPC'ler
+  arasında farklı. Saçılma ±%28.
+
+Ölçüldü: karga 2.66 sn, çakal 2.32, obruk 2.28, tuhn 3.09, mira 2.17, alf 2.63.
+Dört NPC'nin aynı anda aynı karede olma oranı **%100 → %0.8**.
+
+Kral dokunulmadı: onun kendi bloğu var (`KRAL_FPS`, taç/el/baş döngüsü).
+Oyuncunun kendi idle'ı da `time*5`'te kaldı - tek aktör, kilitlenecek kimse yok.
+
 ---
 
-*Son güncelleme: 2026-09-17, v18.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-17, v18.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

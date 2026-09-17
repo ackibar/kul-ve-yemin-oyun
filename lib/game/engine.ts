@@ -1715,6 +1715,22 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    *  bozulmadan 2x2 blok halinde basiliyor, yalnizca hareket dort kat ince. */
   private static izgara(v:number){return Math.round(v*Engine.PIKSEL)/Engine.PIKSEL;}
 
+  /** NPC nefes temposu (kare/sn). 5 idi: dort kareli dongu 0.8 sn'de kapaniyor,
+   *  yani dakikada 75 nefes - kullanici "cok hizli" dedi. 1.6 ile dongu 2.5 sn,
+   *  dinlenmedeki bir insana yakin. */
+  static readonly NEFES_FPS=1.6;
+  /** Tempo sacilmasi (± oran). Kral'in tahtindaki dort NPC ayni global saatten
+   *  beslendigi icin gogusleri milimetrik ayni anda inip kalkiyordu; kullanici
+   *  "cok ayni ritimde" dedi. Iskeletlerdeki cozumun aynisi (bkz. iskeletYuru):
+   *  hem FAZ hem TEMPO id'nin karmasindan turetilir, yani her oyunda ayni ama
+   *  NPC'ler arasinda farkli. */
+  static readonly NEFES_SACILMA=.28;
+  /** NPC durus karesi: id'ye gore kaydirilmis ve hafifce hizi degistirilmis. */
+  private nefesKare(id:string,time:number){
+   const tempo=Engine.karma(id),faz=Engine.karma(id+'~nefes');
+   return Math.floor(time*Engine.NEFES_FPS*(1+(tempo*2-1)*Engine.NEFES_SACILMA)+faz*8);
+  }
+
   /* Harita disi DAIMA duz siyah. Kullanici "once siyah bir kisim, sonra lacivert
      bir kisim var" dedi: siyah, arka plan gorselinin kendi koyu kenari (harita
      dikdortgeninin ICINDE); lacivert ise dikdortgenin DISI - tuvalin silme rengi
@@ -1809,7 +1825,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
         AYNI yogunlukta cizilir (64*olcek/128 = 32*olcek/64) ama figur iki kat buyuk. */
      this.sprite(sayfa,e.x,e.y,kare,64,64,false,OL,1,0,e.capa);
      /* Etiket 128'lik hucreye gore: 64'luk yukseklik (-30) figurun gogsunde kaliyordu. */const nwK=this.label(e.name||'',e.x,e.y-58*(e.s||1));void nwK;return;}
-    const sy=this.sahneYuru.get(e.id);const g=this.gez.get(e.id);const yur=!!sy||(!!g&&g.bekle<=0&&Math.hypot(g.tx-e.x,g.ty-e.y)>1.5);const yd=sy?sy.dir:g?.dir??'D';const yf=sy?sy.flip:g?.flip??false;const yy=sy?sy.yol:(g?.yol||0);this.sprite(`characters${e.portrait}${yur?yd:'D'}${yur?'Walk':'Idle'}`,e.x,e.y,yur?Math.floor(yy/Engine.ADIM):Math.floor(time*5),32,32,yur&&yd==='S'&&yf,OL,1,0,e.capa);const pending=bekleyen(this.state,e.id);/* Unlem isimle AYNI yukseklikte olmali: isim olcekle (e.s) yukseliyordu,
+    const sy=this.sahneYuru.get(e.id);const g=this.gez.get(e.id);const yur=!!sy||(!!g&&g.bekle<=0&&Math.hypot(g.tx-e.x,g.ty-e.y)>1.5);const yd=sy?sy.dir:g?.dir??'D';const yf=sy?sy.flip:g?.flip??false;const yy=sy?sy.yol:(g?.yol||0);this.sprite(`characters${e.portrait}${yur?yd:'D'}${yur?'Walk':'Idle'}`,e.x,e.y,yur?Math.floor(yy/Engine.ADIM):this.nefesKare(e.id,time),32,32,yur&&yd==='S'&&yf,OL,1,0,e.capa);const pending=bekleyen(this.state,e.id);/* Unlem isimle AYNI yukseklikte olmali: isim olcekle (e.s) yukseliyordu,
    unlem sabit -30'daydi, kucuk karakterlerde (Lin s=0.8) kayik duruyordu. */const etiketY=e.y-30*(e.s||1);const nw=this.label(e.name||'',e.x,etiketY);if(pending)this.label('!',e.x-nw/2-5,etiketY,'#e0453a');}
   }}));
   for(const m of this.mobs)actors.push({y:m.y,layer:0,draw:()=>{if(m.cikis&&m.cikis>0){/* Yerden cikis: sprite asagi itilir ve AYAK CIZGISININ ALTI kirpilir,    yani figur topraktan yukseliyormus gibi acilir. p 0->1 ilerler. */const p=1-m.cikis/Engine.ISKELET_CIKIS,ol=(Engine.DUSMAN_OLCEK[m.kind]??1)*OYUNCU_OLCEK;const boy=32*ol,gizli=(1-p)*boy;c.save();c.beginPath();c.rect(m.x-boy,m.y-boy*2,boy*2,boy*2);c.clip();c.fillStyle='#04091255';c.beginPath();c.ellipse(m.x,m.y+1,7*OYUNCU_OLCEK*p,2.4*OYUNCU_OLCEK*p,0,0,7);c.fill();this.sprite(this.dusmanPoz(m.kind,'D','Walk'),m.x,m.y+gizli,0,32,32,false,ol);c.restore();
