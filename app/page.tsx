@@ -291,7 +291,7 @@ export default function Home(){
    {(mod==='gamepad'
     ?[['Sol çubuk','hareket'],['A','saldır'],['B','kaçın'],['X','etkileşim'],['Y','meşale'],['LB','iksir'],['RB','silah'],['Start','menü']]
     :[['WASD','hareket'],['Space','saldır'],['Shift','kaçın'],['E','etkileşim'],['Q','silah'],['F','meşale'],['I','heybe'],['Esc','menü'],['H','bu listeyi gizle']]
-   ).map(([t,a])=><span key={t}><b>{t}</b><i>{a}</i></span>)}
+   ).map(([t,a])=><span key={t}><i>{a}</i><b>{t}</b></span>)}
   </div>}
   {portrait&&yon==='yatay'&&mod==='dokunma'&&<div className="rotate-screen"><Smartphone size={48}/><h2>Telefonunu yatay çevir</h2><p>Kül ve Yemin iki elle, yatay oynanır.</p><span>Hikâyen seni bekliyor.</span><button className="text-button dikey-gec" onClick={()=>setYon('dikey')}>Dikey oynamak istiyorum</button></div>}
  </main>

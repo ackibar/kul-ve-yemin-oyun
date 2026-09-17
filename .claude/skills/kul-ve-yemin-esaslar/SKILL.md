@@ -2581,4 +2581,11 @@ metin değiştirirken parantez dengesi gözle doğrulanmalı.
 
 ---
 
-*Son güncelleme: 2026-09-17, v17.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v17.6: Kontrol listesi ters çevrildi
+Kullanıcı: "eylemin adı solda ve sağa dayalı olsun, tuşlar sağda sola dayalı."
+Göz önce ne yapacağını okuyor, sonra hangi tuşa basacağını. İki sütun da kendi
+kenarına dayandığı için ortada temiz bir oluk kalıyor.
+
+---
+
+*Son güncelleme: 2026-09-17, v17.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

@@ -808,12 +808,17 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
   display:flex;flex-direction:column;gap:3px;pointer-events:none;z-index:5;
 }
 .tus-liste span{display:flex;align-items:center;gap:8px;line-height:1.5}
-.tus-liste b{
-  min-width:52px;font:600 11px 'Pixelify Sans',monospace;color:#e6cf9f;
-  text-align:right;letter-spacing:.3px;text-shadow:0 1px 3px #000,0 0 6px #000a;
+/* Sira TERS (kullanici istegi): EYLEM solda ve saga dayali, TUS sagda ve
+   sola dayali - goz once ne yapacagini okuyor, sonra hangi tusa basacagini.
+   Iki sutun da kendi kenarina dayandigi icin ortada temiz bir oluk kaliyor. */
+.tus-liste i{
+  min-width:92px;text-align:right;font:400 11px 'Pixelify Sans',monospace;
+  font-style:normal;color:#aebac5;text-shadow:0 1px 3px #000,0 0 6px #000a;
 }
-.tus-liste i{font:400 11px 'Pixelify Sans',monospace;font-style:normal;color:#aebac5;
-  text-shadow:0 1px 3px #000,0 0 6px #000a;}
+.tus-liste b{
+  text-align:left;font:600 11px 'Pixelify Sans',monospace;color:#e6cf9f;
+  letter-spacing:.3px;text-shadow:0 1px 3px #000,0 0 6px #000a;
+}
 @container(max-width:850px){
   .hud .hero-badge .portrait{width:52px!important;height:52px!important;
     background-size:555px 139px!important;background-position:-43px 0!important}
