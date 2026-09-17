@@ -2789,6 +2789,42 @@ siyah kalır. Tek yana yapıştırmak haritayı kenara itiyor ve daha kötü dur
 v18.2'nin siyah dolgusu **duruyor**: dar haritalarda ve sarsıntıda hâlâ
 devrede, ayrıca yedek olarak doğru.
 
+### v18.4: Çıplak el sesleri
+
+Kullanıcı beş yumruk kaydı verdi: "yumrukla savaşırken bu sesler çıksın karışık
+olarak." Oyuncu artık silahsız başladığı için bu sesler oyunun ilk dakikalarını
+karşılıyor.
+
+**Kesim sessizliğe göre değil ONSET'e göre.** `ses_varyant.py`'nin
+`silenceremove`'u burada çalışmıyor: iki kayıtta darbeden önce de -3 dBFS'lik
+içerik var (combo), yani baş taraf sessiz değil. Zarf taranıp ilk darbenin
+tepe-10 dB eşiğini geçtiği an bulundu, 25 ms öncesinden kesildi. Aksi hâlde
+darbe Punch 01'de 110 ms, Punch 02'de 305 ms geç başlıyordu.
+
+**Punch 02'de iki darbe vardı** (85-170 ms ve 230-440 ms); ikincisi alındı.
+İkisi birlikte kalsaydı tek yumrukta çift gürültü duyuluyordu.
+
+Zincir: onset kesimi → `ses_oda.py` (aynı taş koridor, yaş 0.42) →
+`ses_varyant.py 0.5 -26.5`. Ölçüldü: beşi de -26.9/-27.0 dB, yani birbirine
+±0.1 dB; `vurus` -26.5'te. Tepe değerleri daha düşük (-13.7 / -8.2) - gövde
+darbesi kılıç saplamasından daha az kreste sahip, bu doğal.
+
+**Savurma sesi de ayrıldı.** Çıplak elde kılıcın metalik savurması yanlış
+duruyordu. Yeni kayıt üretilmedi: `savurma1-4` perde .89 ve iki kademe 1.5 kHz
+alçak geçirenden geçirildi. Ölçüldü, metalik tını gitti, hava hareketi kaldı:
+
+| | <300 Hz | ~1 kHz | >4 kHz |
+|---|---|---|---|
+| savurma1 | -32.0 | -40.6 | -44.9 |
+| yumruksavur1 | -33.5 | -43.7 | **-66.9** |
+
+Seviye -32.5 (kılıç savurması -30.5): çıplak el bıçaktan daha az ses yapar.
+
+Motorda tek koşul: `s.equipment.weapon==='yumruk'` ise savurmada `yumrukSavur`,
+isabette `yumruk`. Ölçüldü - yumruk: ıska `[yumrukSavur]`, isabet
+`[yumrukSavur, yumruk]`; paslı kılıç: `[swing]` / `[swing, vurus]`. Torba 40
+çekimde 8/9/7/8/8, ardarda tekrar 0. Regresyona da girdi.
+
 ---
 
-*Son güncelleme: 2026-09-17, v18.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-17, v18.4. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

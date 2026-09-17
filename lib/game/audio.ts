@@ -1,4 +1,4 @@
-export type Sound='step'|'hit'|'hurt'|'swing'|'dodge'|'chest'|'coin'|'level'|'talk'|'drink'|'door'|'death'|'select'|'trap'|'dusmanVur'|'dusmanOlum'|'iskeletOlum'|'iskeletCikis'|'iskeletVur'|'vurus';
+export type Sound='step'|'hit'|'hurt'|'swing'|'dodge'|'chest'|'coin'|'level'|'talk'|'drink'|'door'|'death'|'select'|'trap'|'dusmanVur'|'dusmanOlum'|'iskeletOlum'|'iskeletCikis'|'iskeletVur'|'vurus'|'yumruk'|'yumrukSavur';
 // Sabit guc (constant power) capraz gecis egrileri: in^2+out^2=1 oldugu icin
 // dongu dikisinde toplam enerji sabit kalir, klasik dogrusal fade'deki orta
 // nokta cukuru olusmaz.
@@ -44,14 +44,29 @@ const ORNEKLER:Record<string,string|string[]>={death:'/assets/audio/death.mp3',
     yuksek (olculdu: savurma -30.5, vurus -26.5) ki darbe savurmanin ustune
     ciksin. */
  vurus:['/assets/audio/vurus1.mp3','/assets/audio/vurus2.mp3','/assets/audio/vurus3.mp3',
-        '/assets/audio/vurus4.mp3','/assets/audio/vurus5.mp3']};
+        '/assets/audio/vurus4.mp3','/assets/audio/vurus5.mp3'],
+ /* CIPLAK EL. Kilicin metalik sesi yumrukta yanlis duruyordu, bu yuzden hem
+    savurma hem isabet ayri: silah 'yumruk' iken bunlar caliyor.
+    yumruk: kullanicinin verdigi bes govde darbesi kaydi. Kesim SESSIZLIGE gore
+    degil ONSET'e gore yapildi - iki kayitta darbeden once de yuksek icerik var
+    (combo), silenceremove orada calismiyor ve darbe 300 ms gec baslıyordu.
+    Punch 02'de iki darbe vardi, IKINCISI alindi; ilkiyle birlikte kalsaydi tek
+    yumrukta cift guruldu duyuluyordu. */
+ yumruk:['/assets/audio/yumruk1.mp3','/assets/audio/yumruk2.mp3','/assets/audio/yumruk3.mp3',
+         '/assets/audio/yumruk4.mp3','/assets/audio/yumruk5.mp3'],
+ /* yumrukSavur: yeni kayit DEGIL, kilic savurmasindan turetildi - perde .89 ve
+    iki kademe 1.5 kHz alcak geciren. Olculdu: >4 kHz -44.9 -> -66.9 dB, yani
+    metalik tini gidip yalniz hava hareketi kaliyor. Kilic savurmasindan da
+    sessiz (-32.5 / -30.5): ciplak el bicaktan daha az ses yapar. */
+ yumrukSavur:['/assets/audio/yumruksavur1.mp3','/assets/audio/yumruksavur2.mp3',
+              '/assets/audio/yumruksavur3.mp3','/assets/audio/yumruksavur4.mp3']};
 const ORNEK_KAT=1.35;   // ornekler sentez tonlarindan daha sakin masterlanmis
 /* Ornek basina PERDE SACILMASI (± oran). Ayni kaydin her seferinde birebir
    ayni calmasi - ozellikle iskelet surusunde saniyede birkac kez - kaydi
    "makine" gibi gosteriyor. playbackRate ile hem perde hem sure kayiyor;
    ayri dosyalar uretmek yerine boyle SINIRSIZ varyasyon cikiyor ve depoya
    tek dosya giriyor. .07 ~ +-1.2 yarim ton: fark ediliyor ama ses bozulmuyor. */
-const ORNEK_PERDE:Record<string,number>={iskeletOlum:.07,iskeletCikis:.09,iskeletVur:.1,vurus:.06};
+const ORNEK_PERDE:Record<string,number>={iskeletOlum:.07,iskeletCikis:.09,iskeletVur:.1,vurus:.06,yumruk:.07,yumrukSavur:.06};
 // Muzik yolu kazanci. Sentezlenmis muzik tek tek zayif tonlardan olustugu icin .2
 // yetiyordu; kayitli parca masterlanmis (ortalama -14 dBFS) oldugundan ayni katsayi
 // onu one cikarip adim/vurus efektlerini bastiriyor - ustelik master kompresoru de
@@ -164,7 +179,7 @@ export class GameAudio{
    const sac=ORNEK_PERDE[name];if(sac)src.playbackRate.value=1+(Math.random()*2-1)*sac;
    const g=this.ctx.createGain();g.gain.value=Math.min(1,Math.max(0,scale))*ORNEK_KAT;
    src.connect(g);g.connect(this.fxBus);src.start();
-   src.onended=()=>{src.disconnect();g.disconnect()};return;}const t=this.ctx.currentTime,b=this.fxBus,s=Math.min(1,Math.max(0,scale));const notes=(ns:number[],d=.1,v=.3,type:OscillatorType='triangle')=>ns.forEach((f,i)=>this.tone(f,t+i*d,d*2,v*s,type,b));switch(name){case 'step':this.tone(85+Math.random()*30,t,.04,.13*s,'triangle',b);break;case 'swing':notes([250,130,70],.025,.25,'sawtooth');break;case 'hit':notes([110,65],.03,.55,'square');break;/* 'vurus' yedegi AYRI ve kare dalga DEGIL: kullanicinin kaldirttigi 8bit blip 'hit'in kendisiydi, dosya yuklenemedi diye onu geri getirmek olmaz. */case 'vurus':notes([170,90],.03,.4,'triangle');break;case 'hurt':notes([180,100,70],.06,.35,'sawtooth');break;case 'dodge':notes([120,230,380],.025,.16,'sine');break;case 'chest':notes([330,440,554,660],.1,.25);break;case 'coin':notes([880,1320],.07,.2);break;case 'level':notes([293.66,369.99,440,587.33,739.99,880],.11,.3);break;case 'talk':notes([330,440],.055,.12);break;case 'drink':notes([220,330,550],.075,.2,'sine');break;case 'door':notes([146,220,293],.12,.22);break;case 'death':notes([293,261,220,146],.25,.25);break;case 'select':notes([480],.05,.15);break;case 'trap':case 'iskeletCikis':notes([180,240,120],.04,.3,'sawtooth');break;/* Dusman sesleri GECICI sentez. Hazir kayit gelince tek yapilacak sey
+   src.onended=()=>{src.disconnect();g.disconnect()};return;}const t=this.ctx.currentTime,b=this.fxBus,s=Math.min(1,Math.max(0,scale));const notes=(ns:number[],d=.1,v=.3,type:OscillatorType='triangle')=>ns.forEach((f,i)=>this.tone(f,t+i*d,d*2,v*s,type,b));switch(name){case 'step':this.tone(85+Math.random()*30,t,.04,.13*s,'triangle',b);break;case 'swing':notes([250,130,70],.025,.25,'sawtooth');break;case 'hit':notes([110,65],.03,.55,'square');break;/* 'vurus' yedegi AYRI ve kare dalga DEGIL: kullanicinin kaldirttigi 8bit blip 'hit'in kendisiydi, dosya yuklenemedi diye onu geri getirmek olmaz. */case 'vurus':notes([170,90],.03,.4,'triangle');break;/* Ciplak el yedegi: kayit yuklenemezse bile kilic sesi calmasin - yumruk daha bogugu, savurma daha soluk. */case 'yumruk':notes([120,70],.035,.38,'sine');break;case 'yumrukSavur':notes([190,110],.03,.14,'sine');break;case 'hurt':notes([180,100,70],.06,.35,'sawtooth');break;case 'dodge':notes([120,230,380],.025,.16,'sine');break;case 'chest':notes([330,440,554,660],.1,.25);break;case 'coin':notes([880,1320],.07,.2);break;case 'level':notes([293.66,369.99,440,587.33,739.99,880],.11,.3);break;case 'talk':notes([330,440],.055,.12);break;case 'drink':notes([220,330,550],.075,.2,'sine');break;case 'door':notes([146,220,293],.12,.22);break;case 'death':notes([293,261,220,146],.25,.25);break;case 'select':notes([480],.05,.15);break;case 'trap':case 'iskeletCikis':notes([180,240,120],.04,.3,'sawtooth');break;/* Dusman sesleri GECICI sentez. Hazir kayit gelince tek yapilacak sey
      ORNEKLER'e dosyayi eklemek: play() ornek varsa sentezi hic calistirmiyor.
      Perde her seferinde biraz kaydiriliyor, yoksa ust uste calinca makine
      gibi duyuluyor. */case 'dusmanVur':case 'iskeletVur':{const k=.92+Math.random()*.16;notes([96*k,58*k,40*k],.045,.34,'square');break;}case 'dusmanOlum':case 'iskeletOlum':{const k=.92+Math.random()*.16;/* Olculdu: ses calisiyordu ama duyulmuyordu. Oldurme aninda ayni 100 ms

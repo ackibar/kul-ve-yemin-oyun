@@ -289,6 +289,23 @@ test('Kamera harita sınırında duruyor, dar haritada ortalanıyor',()=>{
  assert.equal(k(272,544),272,'ic bolgede kamera serbest');
  assert.equal(k(9,-112),-56,'harita pencereden darsa ortalanir');
 });
+test('Çıplak elde kılıç sesi çalmıyor',()=>{
+ /* Kullanici yumruk kayitlarini verdi; ciplak elde kilicin metalik savurmasi
+    calmamali. Savurma sesi hedef bulunmadan tetiklendigi icin bu test
+    dusmana ihtiyac duymuyor. */
+ const cald=[];
+ const kayit={play(n){cald.push(n);},setZone(){},start(){},setFire(){},setVolumes(){}};
+ const g=new Engine({getContext:()=>({})},D.newState(),kayit,()=>{},()=>{});
+ g.ready=true;g.paused=false;
+ g.state.equipment.weapon='yumruk';g.attackTimer=0;g.attack();
+ assert.ok(cald.includes('yumrukSavur'),'ciplak elde yumruk savurmasi calmali');
+ assert.ok(!cald.includes('swing'),'ciplak elde kilic savurmasi calmamali');
+ cald.length=0;
+ g.state.equipment.weapon='rusty';g.attackTimer=0;g.attack();
+ assert.ok(cald.includes('swing'),'kilicla swing calmali');
+ assert.ok(!cald.includes('yumrukSavur'),'kilicla yumruk sesi calmamali');
+ g.destroy();
+});
 test('Canı doluyken iksir harcanmaz',()=>{
  const g=kur();
  assert.equal(g.useItem('potion'),false);
