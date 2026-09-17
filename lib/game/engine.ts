@@ -191,6 +191,12 @@ export class Engine{
  static readonly ISKELET_GORUS=200;
  /** Vurus hazirligi sirasindaki atilma hizi (bkz. windup dali). */
  static readonly ISKELET_HAMLE=64;
+ /** Kilic kalkik yuruyus (Walk2) dongusu: her iskelet bu periyodun ucte
+  *  birinde kilicini kaldirmis yuruyor. Faz mob'un KIMLIGINDEN geliyor -
+  *  durum tutulmuyor, her karede ayni sonuc cikiyor ve suru icinde bazilari
+  *  kalkik bazilari inik oluyor (kullanici "arada yaptiklari alternatif bir
+  *  hareket" istedi, hepsi ayni anda degil). */
+ static readonly ISK_KALDIR_DONGU=4.5;
  static readonly ISKELET_SES_ARA=.07;
  /** Iskelet vurusundan sonraki dokunulmazlik - genel .72 yerine (bkz. hurt()). */
  static readonly ISKELET_IFRAME=.34;
@@ -270,7 +276,10 @@ export class Engine{
    gereksiz istek. Yeni bir cizim yolu eklenirse bu listeler genisletilir. */
 const EYLEM={npc:['Idle','Walk'],dusman:['Walk','Attack','Hurt']};
 for(const kind of ['characters','enemies'])for(let n=1;n<=(kind==='characters'?15:11);n++){if(kind==='enemies'&&n===3)continue;/* solucan kaldirildi */const iste=(kind==='characters'&&n>=5)||(kind==='enemies'&&(n===6||n>=8));for(const dir of ['D','U','S'])for(const action of (kind==='characters'?EYLEM.npc:EYLEM.dusman)){jobs.push(this.img(`${kind}${n}${dir}${action}`,`/assets/${kind}/${n}/${dir}_${action}.png`));optional.push(iste);}}/* Insansi dusmanlar (4 kullenmis, 6 Rauf) caprazlarda da ciziliyor; tepeden
-   gorulen yaratiklar dondurulerek cizildigi icin ek sheet istemiyor. */for(const n of [4,6,8,10])for(const dir of ['DS','US'])for(const action of ['Walk','Attack']){jobs.push(this.img(`enemies${n}${dir}${action}`,`/assets/enemies/${n}/${dir}_${action}.png`));optional.push(true);}/* Oyuncu 8 yonde cizilir (DS/US caprazlar, bati tarafi aynalanir); NPC ve
+   gorulen yaratiklar dondurulerek cizildigi icin ek sheet istemiyor. *//* Iskeletin kilic kalkik yuruyusu (v17.9). Istege bagli: ucu birden
+   yuklenmezse iskeletYuru() normal 'Walk'a duser. */
+for(const dir of ['D','U','S']){jobs.push(this.img(`enemies11${dir}Walk2`,`/assets/enemies/11/${dir}_Walk2.png`));optional.push(true);}
+for(const n of [4,6,8,10])for(const dir of ['DS','US'])for(const action of ['Walk','Attack']){jobs.push(this.img(`enemies${n}${dir}${action}`,`/assets/enemies/${n}/${dir}_${action}.png`));optional.push(true);}/* Oyuncu 8 yonde cizilir (DS/US caprazlar, bati tarafi aynalanir); NPC ve
    dusmanlar 3 yonde kalir. Capraz sheet'ler istege bagli isaretlenir ki
    eksik olsalar yukleme hatasi vermesin - poz() en yakin ana yone duser. */
 /* '1' (silahsiz) de burada: caprazlari uretilmisti ama yalnizca ana yon
@@ -698,6 +707,27 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   /** Capraz sheet yoksa en yakin ana yone duser - eksik gorsel cizilmemesi yerine. */
   /** Dusman icin capraz sheet yoksa en yakin ana yon. Hurt/Death caprazda hic
   *  uretilmedi (0.17 sn goruntuleniyor, yon farki fark edilmiyor). */
+ /** Iskeletin o anki YURUYUS seti: 'Walk' ya da kilic kalkik 'Walk2'.
+  *  Sheet yoksa sessizce 'Walk'a duser, yani uretilmemis olsa da oyun aynen
+  *  calisir. */
+ private iskeletYuru(m:Mob){
+  if(!Engine.ISKELET(m.kind))return 'Walk';
+  const f=Engine.karma(m.id+'~kaldir');
+  /* Dortte bir: uctte bir denendi, olculdu - tepe anda 22 iskeletin 16'si
+     kilicini kaldirmis oluyordu, yani "arada" degil "cogu zaman". */
+  if(Math.floor(this.tick/Engine.ISK_KALDIR_DONGU+f*4)%4!==0)return 'Walk';
+  /* UC YONUN DE sheet'i olmali. Tek yon kontrol etmek yetmez: v3_anim'de
+     yon basina uretim BASARISIZ olabiliyor (kilic setinde 'east' boyle
+     dusmustu) ve eksik yonde sprite() sessizce hicbir sey cizmiyor, yani
+     iskelet o yone bakarken gorunmez oluyor. */
+  return Engine.YURU2_HAZIR(this.images)?'Walk2':'Walk';
+ }
+ /** Walk2 sheet'lerinin UCU de yuklendi mi. ONBELLEKLENMIYOR: uc sheet
+  *  PARALEL yukleniyor, biri once bitip digerleri gelmeden onbellek
+  *  hesaplansaydi kalici olarak 'false'a kilitlenir ve kilic kalkik yuruyus
+  *  hic oynamazdi. Uc sozluk aramasi zaten bedava. */
+ static readonly YURU2_HAZIR=(im:Record<string,HTMLImageElement>)=>
+  ['D','U','S'].every(d=>(im[`enemies11${d}Walk2`]?.naturalWidth??0)>0);
  private dusmanPoz(kind:number,dir:string,action:string){
   /* Azman iskeletin AYRI sprite'i yok - 11'in sheet'lerini kullanir, farki
      yalnizca DUSMAN_OLCEK'ten gelen boy. Yeni uretim harcanmadi. */
@@ -1731,7 +1761,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
     c.fillStyle=Engine.TOPRAK[2];
     for(let i=0;i<6;i++){const a=i*1.047+p*4.2,rr=(4.2+4.4*k)*ol;
      c.fillRect(m.x+Math.cos(a)*rr-1,m.y-1.2-Math.abs(Math.sin(a))*rr*.34-k*1.8*ol,2,2);}
-    return;}if(m.kind===9){/* Fenerin isigi: ovadaki tek sicak renk. */const g=c.createRadialGradient(m.x,m.y-14,2,m.x,m.y-14,42);g.addColorStop(0,'#ffb35a70');g.addColorStop(1,'#ffb35a00');c.fillStyle=g;c.fillRect(m.x-42,m.y-56,84,84);}c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':'Walk';/* Hurt kare indeksi GLOBAL saatten geliyordu, yani vurulma animasyonu
+    return;}if(m.kind===9){/* Fenerin isigi: ovadaki tek sicak renk. */const g=c.createRadialGradient(m.x,m.y-14,2,m.x,m.y-14,42);g.addColorStop(0,'#ffb35a70');g.addColorStop(1,'#ffb35a00');c.fillStyle=g;c.fillRect(m.x-42,m.y-56,84,84);}c.fillStyle='#04091270';c.beginPath();c.ellipse(m.x,m.y+1,(m.boss?13:Engine.GOLGE[m.kind]??8)*OYUNCU_OLCEK,2.6*OYUNCU_OLCEK,0,0,7);c.fill();if(m.windup>0){c.strokeStyle='#ef8766';c.lineWidth=1;c.beginPath();c.arc(m.x,m.y,m.boss?36:14,0,Math.PI*2);c.stroke();}const dx=this.state.x-m.x,dy=this.state.y-m.y;const eylem=m.windup>0?'Attack':m.hurt>0?'Hurt':this.iskeletYuru(m);/* Hurt kare indeksi GLOBAL saatten geliyordu, yani vurulma animasyonu
      yazi-tura hangi kareden basliyordu (sheet 2 kare; yari ihtimalle darbe
      aninda notr poz goruluyordu). Oyuncunun kendi vurusunda bu sorun
      vurusKare() ile bilerek cozulmustu, dusmanda cozulmemisti. */

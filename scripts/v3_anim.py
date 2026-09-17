@@ -184,6 +184,16 @@ KILIC_VUR2_ARKA = ('seen from behind, swings the sword in a wide flat horizontal
                    'waist height across the body, the blade sweeping away from the camera '
                    'and never rising above the shoulder; the sword is a solid steel blade '
                    'and stays gripped in the hand in every frame')
+# Iskeletin IKINCI yuruyusu (v17.9): kilic kalkik. Kullanici "yururken
+# kiliclarini kaldirarak ustumuze gelsinler, ama mevcut animasyonu bozma,
+# arada yaptiklari alternatif bir hareket olsun" dedi. Tarif BIREBIR ISK_YUR
+# ile ayni cumle yapisinda - yalnizca kilicin yeri degisiyor, yoksa iki
+# yuruyus arasinda govde duruşu da kayiyor ve gecis siritiyor.
+ISK_YUR2 = ('shambles forward with the same stiff jerky stride, the bare bone legs '
+            'alternating clearly, holding the short rusted sword RAISED high beside '
+            'the head with the blade pointing up, ready to bring it down; the arm '
+            'stays up in every single frame and the sword is never lowered; the body '
+            'stays a bare skeleton with no flesh on it')
 KUL_VUR = ('lunges forward and swings both clawed arms down and across at the target, '
            'then pulls them back; the body leans into the blow')
 
@@ -269,6 +279,8 @@ SETLER = {
     'bogulmus': ('_arsiv/uretim/pixellab/id_bogulmus.txt', [('Walk', 8, BOG_YUR), ('Attack', 6, BOG_VUR)]),
     'muhafiz':  ('_arsiv/uretim/pixellab/id_muhafiz.txt',  [('Walk', 8, MUH_YUR), ('Attack', 6, MUH_VUR)]),
     'iskelet':  ('_arsiv/uretim/pixellab/id_iskelet.txt',  [('Walk', 8, ISK_YUR), ('Attack', 6, ISK_VUR)]),
+    # Yalniz Walk2 uretir, enemies/11'e EK olur (mevcut Walk'a dokunmaz).
+    'iskelet2': ('_arsiv/uretim/pixellab/id_iskelet.txt',  [('Walk2', 8, ISK_YUR2)]),
     # Silahsiz set: kilic varyantinin degil TABAN karakterin kendisi.
     'yumruk': ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Walk', 8, YUMRUK_YUR), ('Attack', 6, YUMRUK_VUR)]),
     'balta':  ('_arsiv/uretim/pixellab/gezgin/id.txt',      [('Attack', 6, BALTA_VUR), ('Walk', 8, BALTA_YUR)]),

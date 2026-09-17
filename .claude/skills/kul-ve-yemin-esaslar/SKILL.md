@@ -2640,4 +2640,30 @@ iskelet vardı. Doğru davranış; ölçüm için diğerleri uzaklaştırılmal�
 
 ---
 
-*Son güncelleme: 2026-09-17, v17.8. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v17.9: İskeletin kılıç kalkık yürüyüşü (Walk2) - 4 üretim
+Kullanıcı: "yürürken kılıçlarını kaldırarak üstümüze gelsinler, şu anki
+animasyonu bozma, arada yaptıkları alternatif bir hareket olarak ekle" +
+"önceki hareketlerle tutarlı olsun".
+
+Tarif **birebir `ISK_YUR` ile aynı cümle yapısında** yazıldı (aynı "shambles
+forward with the same stiff jerky stride…"), yalnız kılıcın yeri değişti -
+yoksa iki yürüyüş arasında gövde duruşu da kayar ve geçiş sırıtır. Sonuç yan
+görünümde çok net: bıçak kademeli olarak kalkıp başın yanında dikleşiyor.
+
+**Seçim durumsuz:** `iskeletYuru()` mob'un kimliğinden gelen fazla, 4.5 sn'lik
+döngünün **dörtte birinde** Walk2 döndürüyor. Üçte bir denendi ve ölçüldü -
+tepe anda 22 iskeletin 16'sı kalkıktı, yani "arada" değil "çoğu zaman";
+dörtte birde ortalama 5.4/22, aralık 1-13.
+
+**İki tuzaktan dönüldü:**
+* Sheet varlığı **ÜÇ YÖN İÇİN BİRDEN** kontrol ediliyor. Tek yöne bakmak
+  yetmez: `v3_anim`'de yön başına üretim başarısız olabiliyor (kılıç setinde
+  `east` böyle düşmüştü) ve eksik yönde `sprite()` sessizce hiçbir şey
+  çizmiyor - iskelet o yöne bakarken görünmez olurdu.
+* Bu kontrol **önbelleklenmiyor**. Üç sheet paralel yükleniyor; biri bitip
+  diğerleri gelmeden önbellek hesaplansaydı kalıcı olarak `false`'a kilitlenir
+  ve kalkık yürüyüş hiç oynamazdı. Üç sözlük araması zaten bedava.
+
+---
+
+*Son güncelleme: 2026-09-17, v17.9. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
