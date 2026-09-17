@@ -2548,4 +2548,37 @@ değiştirmek yanlış olurdu.
 
 ---
 
-*Son güncelleme: 2026-09-17, v17.3. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+### v17.4-17.5: HUD yeniden tasarlandı (referans görselden)
+Kullanıcı bir HUD referansı verdi: koyu panel, portre kendi çerçevesinde,
+**kalın can barı ve değeri barın İÇİNDE**. Sonra da "çok köşeli ve gereksiz
+alan kullanıyor; fotoğraf daha büyük olabilir, altın yana geçebilir; alttaki
+controls kısmı kötü, alt alta transparan liste olsun, sade tuş adları ve
+listeyi kapatacak bir tuş" dedi.
+
+**Oyunda koyu çerçeve asset'i YOKTU** - dördü de (frame, frame_hud, frame_in,
+frame_gold) parşömen. `frame_koyu.png` üretilmedi/satın alınmadı:
+`frame_hud.png`'nin **geometrisi birebir kopyalanıp yalnız renkleri
+değiştirildi**, böylece border-image 8 dilimlemesi ve mevcut padding'ler aynen
+çalıştı. (v17.5'te 9-dilim çerçeve tamamen bırakıldığı için artık
+kullanılmıyor ama dosya duruyor.)
+
+**v17.5 son hal:**
+* Canlı HUD: yarım saydam, yuvarlatılmış (12px), `backdrop-filter:blur(2px)`.
+  Modal paneller **parşömen kaldı** - ayrım bilinçli: HUD sahnenin üzerinde
+  durup okunur olmalı, menüler oyunun kimliği.
+* Portre 46 → **62px**, altın **isim satırının sağına** taşındı ve ayrı
+  `hp-row` satırı tamamen kalktı (o satır yalnızca altın için duruyordu).
+* Can barı: 17px, değer içinde ortalanmış, kırmızıdan turuncuya.
+* Kontroller: yatay şerit → sol altta **dikey saydam liste**, panel yok.
+  Tuş adları sadeleşti (J → **Space**, K → **Shift**; motor ikisini de zaten
+  dinliyordu). **H** listeyi gizleyip geri getiriyor.
+* Saldırı butonu koyu katmanda diğerlerinden ayrışmıyordu → `frame_gold.png`
+  (zaten vardı) ile altın; birincil eylem olarak okunuyor.
+
+**Tuzak:** `{s.points>0&&<em>…</em>}` koşulunun kapanış `}`'ı düzenleme
+sırasında düştü ve JSX "tek ebeveyn" hatası verdi. Tek satırlık dev JSX'te
+metin değiştirirken parantez dengesi gözle doğrulanmalı.
+
+---
+
+*Son güncelleme: 2026-09-17, v17.5. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
