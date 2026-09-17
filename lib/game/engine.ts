@@ -1695,7 +1695,26 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   c.fillStyle='#140d07';for(const[dx,dy]of[[-1,0],[1,0],[0,-1],[0,1]])c.fillText(text,x+dx,y+dy);
   c.fillStyle=color;c.fillText(text,x,y);
   return c.measureText(text).width;}
-  private render(time:number){const c=this.ctx;const canvas=this.canvas;const cw=canvas.clientWidth||1280,ch=canvas.clientHeight||720,oran=cw/ch;let en=320,boy=180;if(oran>16/9)en=Math.min(560,Math.round(180*oran));else boy=Math.min(340,Math.round(320/oran));this.gorus={en,boy};const bw=en*4,bh=boy*4;if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;}c.setTransform(4,0,0,4,0,0);c.imageSmoothingEnabled=false;c.fillStyle='#0a111b';c.fillRect(0,0,en,boy);const targetX=this.state.x-en/2,targetY=this.state.y-boy/2;this.camera.x+=(targetX-this.camera.x)*.12;this.camera.y+=(targetY-this.camera.y)*.12;/* Sarsinti ofseti kameranin KENDISINE degil, yalniz bu kareye eklenir:
+  /* Harita disi DAIMA duz siyah. Kullanici "once siyah bir kisim, sonra lacivert
+     bir kisim var" dedi: siyah, arka plan gorselinin kendi koyu kenari (harita
+     dikdortgeninin ICINDE); lacivert ise dikdortgenin DISI - tuvalin silme rengi
+     (#0a111b) uzerine bolge tinti (#070b1c42) ve isik haritasi biniyordu.
+     Silme rengini siyaha cekmek tek basina yetmez, cunku tint ve isik tum
+     goruntu penceresini kapliyor; bu yuzden dolgu onlarin ARDINDAN basiliyor.
+     Dunya uzayinda cizilir - ctx -cx,-cy ile otelenmis durumda, boylece
+     sarsinti sirasinda band da sahneyle birlikte kayar. */
+  private haritaDisi(cx:number,cy:number){const c=this.ctx,en=this.gorus.en,boy=this.gorus.boy;
+   const W=this.world.w*16,H=this.world.h*16;
+   /* 1 birim pay: cx/cy yuvarlanmis, kenarda yarim piksellik serit kalmasin. */
+   const x0=cx-1,y0=cy-1,x1=cx+en+1,y1=cy+boy+1;
+   c.fillStyle='#000';
+   if(y0<0)c.fillRect(x0,y0,x1-x0,Math.min(y1,0)-y0);
+   if(y1>H)c.fillRect(x0,Math.max(y0,H),x1-x0,y1-Math.max(y0,H));
+   const ty0=Math.max(y0,0),ty1=Math.min(y1,H);if(ty1<=ty0)return;
+   if(x0<0)c.fillRect(x0,ty0,Math.min(x1,0)-x0,ty1-ty0);
+   if(x1>W)c.fillRect(Math.max(x0,W),ty0,x1-Math.max(x0,W),ty1-ty0);}
+
+  private render(time:number){const c=this.ctx;const canvas=this.canvas;const cw=canvas.clientWidth||1280,ch=canvas.clientHeight||720,oran=cw/ch;let en=320,boy=180;if(oran>16/9)en=Math.min(560,Math.round(180*oran));else boy=Math.min(340,Math.round(320/oran));this.gorus={en,boy};const bw=en*4,bh=boy*4;if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh;}c.setTransform(4,0,0,4,0,0);c.imageSmoothingEnabled=false;c.fillStyle='#000';c.fillRect(0,0,en,boy);const targetX=this.state.x-en/2,targetY=this.state.y-boy/2;this.camera.x+=(targetX-this.camera.x)*.12;this.camera.y+=(targetY-this.camera.y)*.12;/* Sarsinti ofseti kameranin KENDISINE degil, yalniz bu kareye eklenir:
      camera.x'e yazilsaydi lerp hedefi bozulur ve sarsinti sonumlenmezdi.
      Yuvarlamanin ICINDE, cunku cx/cy yalniz sahne degil bolge tinti ve
      isik haritasi icin de goruntu penceresinin dunya koordinati - ofseti
@@ -1891,7 +1910,7 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
   c.globalAlpha=1;
   for(const p of this.particles){c.globalAlpha=Math.min(1,p.life*3);c.fillStyle=p.color;c.fillRect(p.x,p.y,p.size,p.size);}c.globalAlpha=1;
   for(const f of this.floating){c.globalAlpha=Math.min(1,f.life*3);c.font='bold 7px Arial';c.textAlign='center';c.lineWidth=2;c.strokeStyle='#111';c.strokeText(f.text,f.x,f.y);c.fillStyle=f.color;c.fillText(f.text,f.x,f.y);}c.globalAlpha=1;
-  
+  this.haritaDisi(cx,cy);
   c.setTransform(1,0,0,1,0,0);
   /* Hasar vinyeti: ekran KENARINDAN ice solan kirmizi. Tam ekran dolgu
      denenmedi bile - her vurusta ekranin komple kizarmasi bu oyunun tonuna

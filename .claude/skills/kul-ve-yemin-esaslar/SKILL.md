@@ -2736,6 +2736,30 @@ yani derece üst üste binmedi.
 **Kalan:** Alf (2), Rauf (5), Lin (7), Tiga (8), Elvi (9), Uslu (14), Son
 Muhafız (15) hâlâ donuk; her biri 1 üretim.
 
+### v18.2: Harita dışı düz siyah
+
+Kullanıcı: "map dışında bir siyah kısım var sonra lacivert kısım var, her yer
+siyah olsun." İki band ölçüldü:
+
+| katman | nerede | renk |
+|---|---|---|
+| arka plan görselinin kendi koyu kenarı | harita dikdörtgeninin **içi** | ~(2,2,4) |
+| tuval silme rengi `#0a111b` + bölge tinti `#070b1c42` + ışık haritası | dikdörtgenin **dışı** | (8,14,23) |
+
+Yani "siyah" sanatın kenarı, "lacivert" ise haritanın dışıydı.
+
+**Çözüm iki parça, ikisi de gerekli:** silme rengi `#000` yapıldı; ayrıca
+`haritaDisi(cx,cy)` harita dikdörtgeninin dışındaki dört bandı düz siyahla
+kapatıyor. Silme rengini değiştirmek **tek başına yetmez** - bölge tinti ve
+ışık haritası tüm görüntü penceresini kaplıyor, o yüzden dolgu onlardan
+**sonra** basılıyor. Dünya uzayında çizilir (ctx zaten -cx,-cy ötelenmiş), yani
+sarsıntıda band da sahneyle birlikte kayar.
+
+Ölçüldü (Sığınak / Dar Geçit, harita dışı üç nokta):
+(8,14,23) → (1,2,4). Kalan tortu motordan değil **CSS `.vignette`**'inden
+geliyor (`radial-gradient(... #050a11c9)`); o katman tüm ekranı eşit kapladığı
+için harita kenarında band yapmıyor, olduğu gibi bırakıldı.
+
 ---
 
-*Son güncelleme: 2026-09-17, v18.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-17, v18.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
