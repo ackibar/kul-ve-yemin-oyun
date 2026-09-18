@@ -2882,6 +2882,49 @@ Dört NPC'nin aynı anda aynı karede olma oranı **%100 → %0.8**.
 Kral dokunulmadı: onun kendi bloğu var (`KRAL_FPS`, taç/el/baş döngüsü).
 Oyuncunun kendi idle'ı da `time*5`'te kaldı - tek aktör, kilitlenecek kimse yok.
 
+### v18.7: Hikâye denetimi — Uslu bilmeceden tanığa
+
+Kullanıcı: "hikâyeye hizmet etmeyen boşta diyalog kalmasın, karakterler daha
+aklı başında ve konuyla alakalı hissettirsin."
+
+**Önce ölçüldü, sonra kesildi.** Her düğüm için üç şey soruldu: `choose()`
+içinde bir etkisi var mı, başka bir düğüme çıkıyor mu, bir bilgi taşıyor mu.
+154 düğümün 28'i "etkisiz yaprak" çıktı — ama **15'i tek başına Uslu'da**
+(2209 harf). Geri kalanları tek tek okudum: hepsi ya bir ipe işaret ediyor
+(`mira:kral2` → Undur, `mira:obruk2` → Obruk'un kapısının açılma şartı) ya
+tamamlanmış bir ipin karşılığı (`mira:yirmi`, `ayaz:asagi`, `selvi:sirKonus`).
+**Etkisizlik ≠ işe yaramazlık**; ölçüm tek başına karar vermiyor.
+
+**Uslu yeniden yazıldı.** Sekiz tane sonucu olmayan bilmece soruyordu
+("cevabın sonucu yok, sadece cevabı var" diye yazılmıştı). Oysa elinde oyunun
+en değerli kartı var: **fırtınaya çıkıp dönen tek kişi.** Artık üç şey
+anlatıyor, üçü de açık bir uca bağlanıyor:
+
+| adım | anlattığı | neye bağlanıyor |
+|---|---|---|
+| d1 | kül yağmıyor, esiyor; hava bitti | Mirna'nın anlatısını doğrular |
+| d2 | ovada zırhlı adam; "kimin adamısın", üstünde aradığı şey yoktu | Son Muhafız karşılaşması + tacın tehlikesi |
+| d3 | yürüyen kadın, belinde boş testi, 11 gün önce | Sara · Tuhn'u çekmenin İKİNCİ yolu |
+| d4 | dışarıdan getirdiği küllenmemiş taş | eski "dünyanın son çakılı" şakasının yerine |
+
+`flags.usluSara` Tuhn'da yeni bir kol açıyor (`sareUslu` → `kaldiUslu`): Tiga
+hiç bulunmadan da adam uçurumdan çekilebiliyor. İki kanıt birden görünmüyor —
+Tiga varsa o kalıyor, daha kuvvetli. Uslu'ya `bekleyen()` ünlemi de verildi;
+öncesinde hiç yoktu, oyuncu onu atlıyordu.
+
+Karakteri bozulmadı: sesi gitmiş, günü ateşle sayıyor, sırayı karıştırıyor.
+Değişen şey sözünün **işe yaraması**.
+
+**Ders: ölü içerik aramadan önce motoru da tara.** `ayaz:asagi` düğümünün
+data.ts içinde hiçbir `to` hedefi yok - girişini **motor** kuruyor
+(`engine.ts`, `flags.ayazAsagi`). Yalnız data.ts'e bakan temizlik onu ölü sanıp
+sildi ve Tiga'nın sığınağa inişinin karşılığı sessizce kayboldu. Regresyona
+dört test girdi (kırık bağlantı, ulaşılamayan düğüm, Uslu zinciri, Tuhn'un
+ikinci yolu); ikinci test tam olarak bu hatayı yakalıyor ve motoru da tarıyor.
+
+Sonuç: 144 düğüm, 19 etkisiz yaprak (%18 → %13) ve kalanların hepsi bilgi
+taşıyor.
+
 ---
 
-*Son güncelleme: 2026-09-17, v18.6. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-09-18, v18.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*

@@ -146,6 +146,69 @@ test('Gün olayı bir kez çalışır ve koşulu tutmazsa ertelenir',()=>{
 });
 
 /* ============ KRAL CINAYETI ============ */
+grup('Hikâye bütünlüğü');
+/* Bu grup gercek bir hatayi yakaladigi icin var: 'ayaz:asagi' dugumunun
+   data.ts icinde hicbir 'to' hedefi yok - girisi MOTOR kuruyor
+   (engine.ts, flags.talk). Yalniz data.ts'e bakan bir temizlik onu olu sanip
+   sildi ve Tiga'nin sigginaga inisinin karsiligi sessizce kayboldu. */
+const storyKaynak=(await readFile(new URL('../../lib/game/data.ts',import.meta.url),'utf8'))
+ +(await readFile(new URL('../../lib/game/engine.ts',import.meta.url),'utf8'));
+/* choose() icinde dugum ARANMADAN yakalanan hedefler (dovuse dallananlar). */
+const KESILEN=new Set(['muhafiz:dovus','rauf:zorla','tuhn:atladi']);
+/* Sablonla kurulan girisler: `story:uslu:${SIRA[i]}` duz aramayla bulunmaz. */
+const SABLON=new Set(['uslu:d1','uslu:d2','uslu:d3','uslu:d4']);
+test('Her diyalog seçeneği var olan bir düğüme gidiyor',()=>{
+ const kirik=[];
+ for(const [npc,dugumler] of Object.entries(D.STORY))
+  for(const [ad,n] of Object.entries(dugumler))
+   for(const c of n.choices)
+    if(c.to&&!dugumler[c.to]&&!KESILEN.has(`${npc}:${c.to}`))kirik.push(`${npc}:${ad} -> ${c.to}`);
+ assert.deepEqual(kirik,[],'kırık bağlantı');
+});
+test('Her diyalog düğümüne bir giriş var',()=>{
+ const ulasilmaz=[];
+ for(const [npc,dugumler] of Object.entries(D.STORY)){
+  const hedef=new Set();
+  for(const n of Object.values(dugumler))for(const c of n.choices)if(c.to)hedef.add(c.to);
+  for(const ad of Object.keys(dugumler)){
+   const giris=storyKaynak.includes(`story:${npc}:${ad}`)||storyKaynak.includes(`'${npc}:${ad}'`)||SABLON.has(`${npc}:${ad}`);
+   if(!hedef.has(ad)&&!giris)ulasilmaz.push(`${npc}:${ad}`);
+  }
+ }
+ assert.deepEqual(ulasilmaz,[],'ulaşılamayan düğüm');
+});
+test('Uslu tanıklığı sırayla açılıyor ve üç bayrak bırakıyor',()=>{
+ /* Uslu eskiden sonucu olmayan sekiz bilmece sorardi (24 dugumun 15'i etkisiz
+    yaprak). Artik disariyi goren tek tanik: uc bilgi + getirdigi tas. */
+ const s=D.newState();
+ const alinan=[];
+ for(let i=0;i<5;i++){
+  const d=D.dialogue(s,'uslu');
+  const anlat=d.choices.find(c=>c.action.startsWith('story:uslu:'));
+  if(!anlat)break;
+  alinan.push(anlat.action.slice(11));
+  D.choose(s,anlat.action);D.choose(s,'story:bitir');
+ }
+ assert.deepEqual(alinan,['d1','d2','d3','d4'],'anlatım sırası');
+ for(const k of ['usluDisari','usluMuhafiz','usluSara'])assert.ok(s.flags[k],k+' kurulmadı');
+ assert.equal(D.bekleyen(s,'uslu'),false,'anlatacağı kalmayınca ünlem sönmeli');
+});
+test('Uslu’nun tanıklığı Tuhn’da ikinci bir yol açıyor',()=>{
+ /* Tiga hic bulunmadan da Tuhn ucurumdan cekilebilmeli; iki kanit birden
+    gorunmemeli (Tiga varsa o daha kuvvetli). */
+ const a=D.newState();a.flags.usluSara='anlatti';a.flags.talk='tuhn:3';
+ const kol=D.dialogue(a,'tuhn').choices.find(c=>c.action==='story:tuhn:sareUslu');
+ assert.ok(kol,'Uslu kolu görünmeli');
+ D.choose(a,kol.action);
+ const son=D.dialogue(a,'tuhn');
+ D.choose(a,son.choices[0].action);
+ assert.equal(a.flags.tuhn,'kaldi','Tuhn geri çekilmeli');
+ const b=D.newState();b.flags.usluSara='anlatti';b.flags.ayaz='kaldi';b.flags.talk='tuhn:3';
+ const bk=D.dialogue(b,'tuhn').choices.map(c=>c.action);
+ assert.ok(!bk.includes('story:tuhn:sareUslu'),'Tiga varken Uslu kolu gizlenmeli');
+ assert.ok(bk.includes('story:tuhn:sare'),'Tiga kolu görünmeli');
+});
+
 grup('Kral cinayeti');
 const cinayet=()=>{const s=D.newState();s.flags.kralGoruldu=true;
  for(let i=0;i<5;i++)D.gunGec(s);return s;};
