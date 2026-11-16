@@ -2960,6 +2960,46 @@ kullanıldı). Denetim: `_arsiv/yayin-oncesi-denetim.md`.
 - Krediye yalnız kaynağı bilinen şey lisansıyla yazılır; bilinmeyen ses/müzik
   için lisans uydurulmaz (doğrulanacaklar: `_arsiv/uygulama-asama1.md`).
 
+
+## 16 Kas 2026 kararları (v19.1, Aşama 2: "İki el, iki söz")
+
+- **İki el iki söz.** Oyuncu aynı anda en çok iki beden sözü taşır (`IKI_EL=2`).
+  Söz puan değil; kişinin cümlesiyle cevaplanır. Üçüncü teklifte o kişi kendi
+  ağzından reddeder ("Ellerin dolu…"). Veri `YEMINLER` tablosunda (`data.ts`):
+  `{id, kime, ikon, kural(olay)}`. Motor olay yayar (`gecis`, `ic`, `dash`,
+  `uyu`); tablo dinler (`yeminDinle`). Durum `flags.yemin_<id>`:
+  tasiniyor / bozuldu / tutuldu / kalkti / verildi / alindi / dustu / salindi /
+  serbest / eski.
+  - Alf'in kılıcı: muhafız kılıcı satılmaz, ödünç verilir. Kuşanılıyken
+    sığınak→ova geçişi = bozuldu. Geri getirilirse tutuldu. Alf'in sırrı
+    söylenince kural kalkar.
+  - Mirna'nın ilacı: heybede içilebilir (tam can). İçersen bozuldu.
+  - Rauf: takipteyken geride bırakıp mekân değiştirmek = bozuldu.
+- **Gece yazılır, sabah karşılanır.** Söz sahada bozulur/tutulur; o gece Undur
+  günlüğe yazar ("Undur gece yazdı: …"), ertesi sabah yalnız o gün kişinin ana
+  metnine kendi cümlesi önek olur (`sabahOnek`). Sığınakta görünen kül:
+  bozulan söz başına yerde kül lekesi + ateş ışığı bir kademe söner; tutulan
+  söz ışığı büyütür (en çok iki kademe).
+- **Altın kalktı (yalnız kaynak tarafı).** Düşmandan altın düşmez, tariflerde
+  altın yok, ölümde altın gitmez. Satıcı fiyatları düşük çarpanla duruyor.
+  Seviye sistemi aynen; seviye atlama yazısı bedensel cümle.
+- **Ölüm = bir gece.** Ölünce Mirna'nın ateşinin yanında uyanılır, bir gece
+  geçer (gün +1, depo eksilir, Undur'un gece satırları yazılır). Heybede teslim
+  edilmemiş ilaç varsa Mirna yatarken alır, hastaya verir (söz "alindi").
+- **Dövüş okunurluğu.** Saldırı öncesi kısa beyaz parlama + daralan kül halkası
+  (kırmızı yay yerine). Art arda üçüncü isabet ağır: 1.6 kat itme, iki kat
+  donma; ıska ya da ara vermek seriyi sıfırlar.
+- **Yollar sayısız.** Yol kartlarında "0/4" yok; başlık altında Undur'un cümlesi
+  ("Bu sayfa boş." / "İlk satırı yazdım." / "Sayfa doluyor.").
+- **Bölüm II kalıbı:** her yeni bölüm = bir kişi + bir beden yemini + bir mekân
+  + bir düşman + bir sayfa. Yeni yemin `YEMINLER`'e bir satır ve bir kural
+  olarak girer; motor kodu değişmez.
+- Ödül anları sahnede: ilaç gelince Mirna ateşin başına geçer, Elvi bir karo
+  içeri girer; defter dönünce Alf kapıya sırtını döner; Tiga inince Lin'in ateşi
+  büyür; depoya ilk et girince Lin/Mirna tek cümle.
+- Sığınağın batı kenarındaki eski test kapısı ağzı kapatıldı (zemin + fıçı/kasa,
+  kırılmaz `sabit` decor). Mobilde sabit joystick boştayken yarı saydam.
+
 ---
 
-*Son güncelleme: 2026-11-16, v19.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-11-16, v19.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
