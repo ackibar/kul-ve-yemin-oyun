@@ -12,7 +12,7 @@ sonradan güncellenir. Amaç yeni bir şey eklerken eskisiyle çelişmemek
 (ör. Mirna'nın saydığı sayı, Alf'in yemini) ve aynı hatayı iki kez
 yapmamak.
 
-Repo: `~/Desktop/Kul-ve-Yemin` · GitHub `ackibar/kul-ve-yemin-oyun` · Vercel
+Repo: `~/Documents/Kul-ve-Yemin` · GitHub `ackibar/kul-ve-yemin-oyun` · Vercel
 `kul-ve-yemin-oyun.vercel.app`. React 19 + Vite + TS, Canvas 2D motor
 (`lib/game/engine.ts`), veri/hikâye (`lib/game/data.ts`), mekânlar
 (`lib/game/world.ts`), arayüz (`app/page.tsx`).
@@ -2927,4 +2927,39 @@ taşıyor.
 
 ---
 
-*Son güncelleme: 2026-09-18, v18.7. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+## 16 Kas 2026 kararları (v19.0, Birinci bölüm kapanışı)
+
+Kaynak metin: `_arsiv/taslak-bolum1-kapanis.md` (onaylı, kelimesi kelimesine
+kullanıldı). Denetim: `_arsiv/yayin-oncesi-denetim.md`.
+
+- **Oyun yaşayan bir yapı.** Bölüm bölüm büyür; "devam edecek" hissi serbest,
+  hatta isteniyor. Ama her bölüm kendi düğümünü çözer, yarım bitmez. Ekranda
+  "ikinci bölüm" ifadesi geçmez; devamı defter dili taşır ("sonraki sayfada",
+  "Bu defter bitmedi"). Son ekranının alt satırı dürüst kalır: "Birinci bölüm
+  burada bitiyor. Defterin öbür sayfaları yazıldıkça gelecek." Uydurma tarih yok.
+- **Her bölüm bir kapanış sayfasıyla biter (Undur'un sayfası).** Akış: son
+  seçimi (`final_goc` / `final_gercek`) → söz düğümü `ekin:sonSoz` (sonun yemini
+  ya da "Söz vermem.") → Undur'un cevabı → "Sayfayı oku." → son paneli. Son,
+  söz anında yazılır (`s.ending`, `flags.yemin`), oyuncu "Undur'un sayfası"
+  eşyasını alır (sonraki bölümün kancası: sarnıcın altındaki ılık yarık).
+  Panel tamamen bayraktan kurulur (`sonMetni`, `defterSatirlari`, `yeminler`,
+  `yeminCumlesi`, `SON_KONUSMA`); koşulsuz cümle yok. Satır sırası Undur'un
+  yazdığı sıra, "Sen." hep son satır. Başlık "Son sayfa", eyebrow
+  "BİRİNCİ BÖLÜM · DEFTER KAPANDI". Eski seal/claim/av sonları kayıtta null'a
+  çekilir.
+- **Av gizli.** `FINALLER`'de `gizli:true`; `finalDurum` listelemez, `final_av`
+  reddedilir. Bekçi yok, adımı tamamlanamıyordu. İleride bir bölümün kancası
+  olabilir; Birinci bölümde görünmez.
+- **Rauf ölü yolu.** Yoldaş Rauf yolda düşerse defter koynundan düşer
+  (`fugitive='dead'`, `ledgerStarted`, defter heybeye). Alf: "Defter döndü,
+  adam dönmedi. Bu sefer kaçtığı için değil. …Çizgiyi ben çektim; altını yol
+  yazdı. Ver şunu." Ödül yaşam halkası. İki son da açık kalır. Eski kayıtlar
+  `parseSave`'de aynı duruma göçer. Regresyonda motor testiyle korunuyor.
+- Göç'ün "Bir yol bul" adımı artık Yıkık Ev'e ulaşmak (`gordu_yikik`); test
+  koridoru kapısı sığınaktan kaldırıldı, mekân eski kayıtlar için duruyor.
+- Krediye yalnız kaynağı bilinen şey lisansıyla yazılır; bilinmeyen ses/müzik
+  için lisans uydurulmaz (doğrulanacaklar: `_arsiv/uygulama-asama1.md`).
+
+---
+
+*Son güncelleme: 2026-11-16, v19.0. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
