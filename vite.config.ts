@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
-import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
 const WORLD_TS = fileURLToPath(new URL('./lib/game/world.ts', import.meta.url));
 const NESNE_DIR = fileURLToPath(new URL('./public/assets/nesne/', import.meta.url));
@@ -183,8 +184,21 @@ function haritaEditoruEklentisi() {
   };
 }
 
+// Harita editoru public/ icinde duruyor (dev'de /harita-editor.html), ama
+// yayin paketine girmemeli (yayin oncesi denetim P1-9). Vite public/'i
+// oldugu gibi kopyaladigi icin derleme bitince dist'ten siliniyor.
+function haritaEditoruDerlemedenCikar() {
+  let outDir = 'dist';
+  return {
+    name: 'harita-editoru-derlemeden-cikar',
+    apply: 'build' as const,
+    configResolved(c: any) { outDir = resolve(c.root, c.build.outDir); },
+    closeBundle() { rmSync(join(outDir, 'harita-editor.html'), { force: true }); },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), haritaEditoruEklentisi()],
+  plugins: [react(), haritaEditoruEklentisi(), haritaEditoruDerlemedenCikar()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./', import.meta.url)),

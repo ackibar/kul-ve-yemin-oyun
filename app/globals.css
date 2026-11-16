@@ -837,3 +837,30 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
   box-shadow:0 4px 18px #00000059,inset 0 0 0 1px #f0d08f66!important;
 }
 .round.attack svg,.round.attack span{color:#2a1d0c!important}
+
+/* ===== SON SAYFA (v19.0) =====
+   Undur'un defteri: sonun yazisi, kisi basina tek satir, sozler ve kapanis
+   konusmasi. Uzun metin oldugu icin sola yasli ve bir boy kucuk. Renkler
+   parsomen temasinin degiskenlerinden (bkz. ust bolum). */
+.son-sayfa{text-align:left}
+.son-sayfa>svg{display:block}
+.son-sayfa .ending-prose{font-size:18px;line-height:1.6;margin:0 0 14px}
+.son-giris{margin:22px 0 12px!important;padding-top:16px;border-top:3px solid var(--pr-kenar);color:var(--pr-altin)!important;font-style:italic}
+.defter-satirlari{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:7px}
+.defter-satirlari li{font-family:'Pixelify Sans',monospace;font-size:16px;line-height:1.5;padding-left:12px;border-left:3px solid var(--pr-kenar);color:var(--pr-murekkep)}
+.son-yeminler{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:6px}
+.son-yeminler li{display:flex;gap:10px;align-items:flex-start;font-size:15px;color:var(--pr-murekkep)}
+.son-yeminler li svg{flex-shrink:0;margin-top:3px;color:var(--pr-altin)}
+.son-yeminler small{display:block;color:var(--pr-murekkep-soluk);font-size:13px;margin-top:2px}
+.son-undur{font-family:'Pixelify Sans',monospace;font-size:17px}
+.son-konusma{margin:18px 0;padding:4px 0 4px 14px;border-left:3px solid var(--pr-altin)}
+.son-konusma p{font-family:'Pixelify Sans',monospace;font-size:17px;line-height:1.6;margin:0 0 10px}
+.son-konusma p:last-child{margin-bottom:0}
+.son-sayfa .ending-buttons{flex-wrap:wrap}
+.credits-tesekkur{font-family:'Pixelify Sans',monospace;font-size:18px!important;color:var(--pr-altin)!important;margin-top:8px}
+/* Tus listesi birkac saniye sonra solar (denetim P1-10): sol alttaki
+   karakterlerin ustune biniyordu. Panel kapaninca ya da H'ye basilinca
+   yeniden mount edildigi icin bir sure tekrar gorunur. */
+.tus-liste{animation:tusSol 1.2s ease 7s forwards}
+@keyframes tusSol{to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.tus-liste{animation-duration:.01s}}
