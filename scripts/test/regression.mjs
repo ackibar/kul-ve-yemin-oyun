@@ -683,5 +683,132 @@ test('Motor: üçüncü ardışık isabet ağır (1.6 kat itme)',()=>{
  g.destroy();
 });
 
+/* ===== v19.2 ASAMA 3: diyalog derinligi ===== */
+console.log('\nAşama 3: diyalog derinliği');
+/** Konusma ac: motorun interact'i gibi (konusmaBasla + dialogue). */
+const konus=(s,id)=>{D.konusmaBasla(s,id);return D.dialogue(s,id);};
+const sec=(s,d,label)=>{const c=d.choices.find(c=>c.label===label);assert.ok(c,`seçenek yok: ${label} | var: ${d.choices.map(c=>c.label)}`);D.choose(s,c.action);return c;};
+const gunYap=(s,g)=>{while(s.gun<g)D.gunGec(s);};
+test('Graf: hiçbir düğüm çıkmaz sokak değil (rastgele bayraklarla)',()=>{
+ const ornek=[];
+ for(let i=0;i<40;i++){const s=D.newState();const r=()=>Math.random()<.5;
+  Object.assign(s.flags,{ayaz:r()?'indi':'kaldi',selviSir:r()?'soylendi':'',alfSir:r()?'soylendi':'',tuhn:r()?'kaldi':'',
+   rauf:['korundu','serbest','teslim','takip'][i%4],raufYemin:r()?'okundu':'',selvi:'tanisti',mirnaSir:'',kral:r()?'oldu':''});
+  if(r())s.inventory.ledger=1;s.gun=1+(i%9);ornek.push(s);}
+ const bos=[];
+ for(const [npc,dd] of Object.entries(D.STORY))for(const [ad,n] of Object.entries(dd)){
+  if(KESILEN.has(`${npc}:${ad}`))continue;
+  if(ornek.some(s=>!n.choices.some(c=>!c.if||c.if(s))))bos.push(`${npc}:${ad}`);}
+ assert.deepEqual(bos,[],'çıkmaz sokak');
+});
+test('D1: gün sohbeti güne göre değişir, günde bir kez, kişi tutmazsa açılmaz',()=>{
+ const s=D.newState();s.flags.ayaz='kaldi';gunYap(s,2);
+ assert.notEqual(s.flags.talk,'ekin:gun3','2. gün Undur sohbeti açılmaz');
+ s.flags.talk='';konus(s,'nil');assert.equal(s.flags.talk,'nil:gun2');
+ assert.ok(D.dialogue(s,'nil').text.includes('On iki.'),'çentik güne bağlı');
+ sec(s,D.dialogue(s,'nil'),'Sayma istersen. Ben sayarım senin yerine.');assert.equal(s.flags.linCentik,'sen');
+ D.choose(s,'story:bitir');konus(s,'nil');assert.notEqual(s.flags.talk,'nil:gun2','günde bir kez');
+ gunYap(s,3);s.flags.talk='';konus(s,'ekin');assert.equal(s.flags.talk,'ekin:gun3');
+ sec(s,D.dialogue(s,'ekin'),'İsimsiz kalsın.');assert.equal(s.flags.undurAd,'kalsin');
+ assert.ok(D.defterSatirlari(s).at(-1).includes('İsimsiz kalsın dedin; kaldı.'));
+ gunYap(s,4);s.flags.talk='';konus(s,'boran');assert.equal(s.flags.talk,'boran:gun4');
+ gunYap(s,6);s.flags.talk='';konus(s,'selvi');assert.equal(s.flags.talk,'selvi:gun6');
+ assert.ok(D.dialogue(s,'selvi').text.includes('otuz beş'),'Mirna gecesi güne bağlı');
+ const t=D.newState();t.flags.tuhn='kaldi';gunYap(t,8);konus(t,'tuhn');assert.equal(t.flags.talk,'tuhn:tekrar');
+ assert.ok(D.dialogue(t,'tuhn').text.startsWith('Lin’e odun'),'çift gün');assert.equal(t.flags.linTuhnOdun,true);
+});
+test('D1: başka kişinin açık girişi günün sohbetini engellemez',()=>{
+ const s=D.newState();s.gun=3;s.flags.talk='mira:yirmi';konus(s,'ekin');assert.equal(s.flags.talk,'ekin:gun3');
+});
+test('D2 çapraz hafıza: Lin’e çentik sözü, Alf’in ağzından ertesi gün döner',()=>{
+ const s=D.newState();s.flags.alfKilic='verildi';s.flags.linCentik='sen';D.anilariKaydet(s);
+ assert.ok(!konus(s,'boran').text.includes('çentiklerini'),'aynı gün dönmez');
+ D.gunGec(s);s.flags.talk='';s.flags['sohbet_'+s.gun]='x';
+ assert.ok(konus(s,'boran').text.startsWith('Çocuğun çentiklerini sen sayıyormuşsun.'));
+ s.flags['sohbet_'+s.gun]='x';assert.ok(!konus(s,'boran').text.includes('çentiklerini'),'bir kez');
+ const k=D.newState();k.flags.alfKirildi='evet';k.flags.linCentik='sen';D.gunGec(k);D.gunGec(k);
+ assert.ok(!konus(k,'boran').text.includes('çentiklerini'),'Alf kırıldıysa susar');
+ const t=D.newState();t.flags.tuhn='kaldi';D.gunGec(t);D.gunGec(t);t.flags['sohbet_'+t.gun]='x';
+ assert.ok(konus(t,'nil').text.startsWith('Tuhn amca odun getiriyor. Dört parça, saydım.'));
+});
+test('D3 ikinci tanık: taş birine gösterilir, görev kapanır, Uslu ertesi gün anlatır',()=>{
+ const s=D.newState();s.inventory.cakil=1;s.flags.usluSoru='4';
+ assert.equal(D.questList(s).find(q=>q.id==='tanik').active,true);
+ const d=konus(s,'ekin');sec(s,d,'Uslu’nun taşı. Bak.');assert.equal(s.flags.talk,'ekin:tas');
+ assert.equal(s.flags.usluTanik,'undur');assert.equal(s.flags.cakilGosterildi,true);assert.equal(s.inventory.cakil,1,'taş heybede kalır');
+ assert.ok(D.questList(s).find(q=>q.id==='tanik').done);
+ s.flags.talk='';assert.ok(!konus(s,'nil').choices.some(c=>c.label==='Uslu’nun taşı. Bak.'),'ikinci kişide seçenek yok');
+ assert.ok(!konus(s,'uslu').text.startsWith('Undur geldi'),'aynı gün değil');
+ D.gunGec(s);assert.ok(konus(s,'uslu').text.startsWith('Undur geldi. Soru sordu.'));
+ assert.ok(D.defterSatirlari(s).some(l=>l.startsWith('Uslu. Taşı sende. İkinci tanığı Undur;')));
+});
+test('D4 Lin’in közü: kral ölünce sorar, cevap hedefin ağzından ertesi gün döner',()=>{
+ const s=D.newState();s.flags.kral='oldu';s.flags.sozNil='verildi';
+ assert.equal(D.bekleyen(s,'nil'),true);
+ sec(s,konus(s,'nil'),'Közü kime götürsün, söyle.');assert.equal(s.flags.talk,'nil:koz');
+ sec(s,D.dialogue(s,'nil'),'Undur’a. Yazarken eli üşüyor.');assert.equal(s.flags.linKoz,'undur');
+ assert.equal(D.bekleyen(s,'nil'),false);
+ s.flags.talk='';assert.ok(!konus(s,'ekin').text.includes('köz'));
+ D.gunGec(s);s.flags['sohbet_'+s.gun]='x';s.flags.talk='';
+ assert.ok(konus(s,'ekin').text.includes('Çocuk köz getiriyor. Elim ısınınca'));
+ assert.ok(D.dialogue({...s,flags:{...s.flags,talk:''}},'nil').text.includes('Undur amcaya götürüyorum'));
+ assert.ok(D.defterSatirlari(s).some(l=>l.includes('Közü artık Undur’a taşıyor.')));
+});
+test('D5 eşya/yemin: Alf’in kılıcı Son Muhafız’ı geçirir; defter Undur’a yemini okutur',()=>{
+ const s=D.newState();
+ assert.ok(!konus(s,'muhafiz').choices.some(c=>c.label==='Elimdeki kılıca bak.'),'kılıçsız yok');
+ s.inventory.guard=1;s.equipment.weapon='guard';
+ sec(s,konus(s,'muhafiz'),'Elimdeki kılıca bak.');sec(s,D.dialogue(s,'muhafiz'),'Yemin.');
+ assert.equal(s.flags.muhafiz,'gecti');assert.equal(s.flags.muhafizKilic,'gordu');
+ s.flags.talk='';assert.ok(D.dialogue(s,'muhafiz').text.startsWith('Kılıç hâlâ belinde.'));
+ const r=D.newState();r.inventory.ledger=1;r.flags.fugitive='protected';r.flags.rauf='korundu';
+ sec(r,konus(r,'ekin'),'Alf’in nöbet defteri bende. Bir bak.');assert.equal(r.flags.raufYemin,'okundu');
+ r.flags.talk='rauf:korundu1';assert.ok(D.dialogue(r,'rauf').choices.some(c=>c.label==='Yeminini okudum.'));
+});
+test('D7 yalanın geç bedeli: Alf ertesi gün yüzleşir, Son sayfa yazar',()=>{
+ const s=D.newState();s.flags.alfKilic='verildi';s.flags.medicine='rauf';s.flags.medicineDone=true;s.flags.alfKarsi='yalan';s.flags.fugitive='protected';
+ D.anilariKaydet(s);konus(s,'boran');assert.notEqual(s.flags.talk,'boran:yalan','aynı gün değil');
+ D.gunGec(s);s.flags.talk='';konus(s,'boran');assert.equal(s.flags.talk,'boran:yalan');
+ sec(s,D.dialogue(s,'boran'),'Haklısın. Gördüm.');assert.equal(s.flags.alfKarsi,'itirafGec');
+ assert.ok(D.defterSatirlari(s).some(l=>l.includes('Yalanın ona erken geldi')));
+ D.gunGec(s);s.flags.talk='';konus(s,'boran');assert.notEqual(s.flags.talk,'boran:yalan','bir kez');
+});
+test('D7 Karga’nın payı: sır saklandıysa bir avuç et, bir kez',()=>{
+ const s=D.newState();s.flags.obrukDepo='biliyorum';s.flags.obrukSir='sakladin';
+ const d=konus(s,'karga');assert.ok(d.text.startsWith('Bey hâlâ uyuyor. Sen bir şey söylemedin.'));
+ const et=s.inventory.tuzet||0;sec(s,d,'Bir avuç yeter.');assert.equal(s.inventory.tuzet,et+1);
+ assert.ok(!konus(s,'karga').choices.some(c=>c.action==='karga_pay'));D.choose(s,'karga_pay');assert.equal(s.inventory.tuzet,et+1);
+ const o=D.newState();o.flags.obrukSir='soylendi';assert.ok(!konus(o,'karga').choices.some(c=>c.action==='karga_pay'));
+});
+test('D6 Alf–Rauf yüzleşmesi: motor teslimde açar, her dal teslimi tamamlar',()=>{
+ for(const [lab,soz] of [['Kızı için kaçtı. Yedi yaşındaydı.','kiz'],['Söyleyecek bir şeyim yok. İkinizin arası.','sus'],['Defteri bana ver, adını ben sileyim.','sil']]){
+  const olay=[];const g=new Engine({getContext:()=>({})},D.newState(),ses,()=>{},e=>olay.push(e));const s=g.state;
+  s.flags.rauf='takip';s.flags.alfKilic='verildi';g.world=W.makeWorld('haven');
+  const alf=g.world.entities.find(x=>x.id==='boran');s.x=alf.x+10;s.y=alf.y;
+  g.update(0.016);
+  assert.equal(s.flags.talk,'boran:teslim');assert.ok(olay.some(e=>e.type==='dialogue'&&e.id==='boran'));
+  sec(s,D.dialogue(s,'boran'),lab);
+  assert.equal(s.flags.alfRaufSoz,soz);assert.equal(s.flags.ledgerDone,true);assert.equal(s.inventory.life,1);
+  if(soz==='kiz')assert.ok(D.defterSatirlari(s).some(l=>l.includes('daha ince çekerdim')));
+  g.destroy();}
+});
+test('D6 Rauf yolda: her mekâna ilk girişte bir cümle, bir kez',()=>{
+ const olay=[];const g=new Engine({getContext:()=>({})},D.newState(),ses,()=>{},e=>olay.push(e));const s=g.state;
+ s.flags.rauf='takip';g.changeZone('disari',[20,20]);
+ assert.equal(s.flags.talk,'rauf:yol_disari');assert.ok(olay.some(e=>e.type==='dialogue'&&e.id==='rauf'));
+ s.flags.talk='';g.changeZone('disari',[20,20]);assert.equal(s.flags.talk,'');
+ g.destroy();
+});
+test('D8: hikâye ikinci kez sorulunca kısa giriş, “Anlat.” baştan açar',()=>{
+ const s=D.newState();D.choose(s,'story:mira:1');assert.equal(s.flags.talk,'mira:1');
+ D.choose(s,'story:bitir');D.choose(s,'story:mira:1');assert.equal(s.flags.talk,'mira:yine');
+ sec(s,D.dialogue(s,'mira'),'Anlat.');assert.equal(s.flags.talk,'mira:1');
+});
+test('Ana sayılar değişmedi; eski kayıt yeni bayraklar olmadan açılır',()=>{
+ const s=D.newState();delete s.flags.talk;const y=D.parseSave(JSON.stringify(s));assert.ok(y);
+ assert.ok(konus(y,'mira').text.length>0);assert.ok(D.defterSatirlari(y).at(-1).startsWith('Sen. Yetmiş ikinci.'));
+ for(const k of Object.keys(s.flags))assert.ok(!k.startsWith('yemin_')||s.flags[k]===y.flags[k]);
+});
+
 console.log(`\n${gecti} test geçti, ${kaldi} kaldı.`);
 if(kaldi)process.exit(1);
