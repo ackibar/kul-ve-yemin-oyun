@@ -75,6 +75,9 @@ olmalı (Boğulmuş = fırtınada ölenler, Fener taşıyan = ışığa gidenin 
   öldürmektir" tonu). Her karakter tek bir tonda konuşur.
 - Bir NPC'nin bilgisi yalnızca **kendi bildiği** kadardır. Kralın hikâyesi
   beş kaynaktan parça parça gelir; tek kişi her şeyi anlatmaz.
+- Her karar en az bir ikinci kişinin ağzından, en az bir gün sonra geri gelir;
+  kanalı (kim kime söyledi) yazılır. İkna anahtarı bayrak ya da eşyadır, sayı
+  değil. (16 Kas 2026, v19.2)
 
 ### İsimler
 Kısa, uydurma, Türkçe tınılı, 1–2 hece: Mirna, Alf, Undur, Rauf, Tuhn,
@@ -3000,6 +3003,54 @@ kullanıldı). Denetim: `_arsiv/yayin-oncesi-denetim.md`.
 - Sığınağın batı kenarındaki eski test kapısı ağzı kapatıldı (zemin + fıçı/kasa,
   kırılmaz `sabit` decor). Mobilde sabit joystick boştayken yarı saydam.
 
+## 16 Kas 2026 kararları (v19.2, Aşama 3: diyalog ve RPG derinliği)
+
+Kaynak: `_arsiv/fable-diyalog-rpg.md` (D1–D8, D10; D9'dan yalnız Karga'nın payı).
+
+- **Çapraz hafıza kuralı (KESİN).** "Her karar en az bir ikinci kişinin
+  ağzından, en az bir gün sonra geri gelir; kanalı (kim kime söyledi) yazılır.
+  İkna anahtarı bayrak ya da eşyadır, sayı değil." Onur puanı, istatistik
+  kontrolü yok. Kodda `ANILAR` tablosu (`data.ts`): her satırın yanında kanal
+  yorumu. "En az bir gün" `olgunlas()` ile: koşulun ilk doğru olduğu gün
+  `anisGun_<anahtar>` yazılır, ertesi günden itibaren çıkar. `hemen` işaretli
+  satırlar (görülen şey: Rauf'un bacağı, heybedeki şişe) aynı gün çıkabilir.
+- **Konuşma girişi tek yerde.** Motor NPC'yle konuşma açarken
+  `konusmaBasla(s,id)` çağırır. Sıra: yalanın bedeli (Alf) > günün ateş başı
+  sohbeti; ayrıca tek seferlik bir anı ön eki seçilir (`flags.anis`).
+  `dialogue()` saf kalır, yazma yapmaz.
+- **Ateş başı sohbetleri (D1).** Gün 2 Lin, 3 Undur, 4 Alf, 5 Uslu (kral olayı
+  ertelendiyse), 6 Elvi; 7+ tekrarlılar sırayla (Tuhn kaldıysa, Tiga indiyse,
+  depo ≥3 ise Mirna). Günde en çok bir; o kişiyle konuşmazsan kaçar
+  (`sohbet_<gun>`). Cevaplar bayrak bırakır: `linCentik` (sen/o),
+  `undurAd` (istedi/kalsin/yetmisiki), `elviBakti`.
+- **İkinci tanık (D3).** Uslu'nun taşı (`cakil`) Undur/Lin/Elvi/Mirna'dan
+  birine gösterilir: `cakilGosterildi`, `usluTanik`. Görev kartı "İkinci
+  tanık". Uslu ertesi gün tanığın gelişini anlatır.
+- **Köz kime (D4).** Kral ölünce Lin sorar: `linKoz` (alf/elvi/tuhn/undur/yok),
+  `linKozGun`. Hedef kişinin ana metnine ertesi günden itibaren kalıcı ön ek;
+  Mirna bir kez yankılar (`miraKozEk`).
+- **Eşya ve yemin anahtarları (D5).** Alf'in kılıcı kuşanılıysa Son Muhafız
+  geçirir (`muhafizKilic`); defter eldeyken Rauf korunduysa Undur yeminini
+  okur (`raufYemin='okundu'`, Rauf'ta "Yeminini okudum."); miğfer heybedeyse
+  Kral'ın sessizliği değişir. `yemin_*` bayrakları yalnız okunur.
+- **Alf–Rauf yüzleşmesi (D6).** Teslim artık sahne: motor `boran:teslim`
+  açar, her dal `boran_deliver`'ı çalıştırır (`alfRaufSoz`: kiz/sus/sil).
+  Rauf peşindeyken Kül Ovası, Sığınak, Yıkık Ev'e ilk girişte tek cümle
+  (`RAUF_YOL`, `raufYol_<zone>`).
+- **Yalanın geç bedeli (D7).** "Görmedim" deyip ilacı Rauf'a verdiysen Alf
+  ertesi gün yüzleşir (`alfYalan='ortaya'`, itirafta `alfKarsi='itirafGec'`).
+  Karga'nın payı: Obruk'tan sır saklandıysa bir avuç tuzlu et (`kargaPay`).
+- **İkinci kez sorulan hikâye (D8).** `anlatti_<npc>`; kısa "Yine mi?" girişi,
+  "Anlat." baştan açar. **Sayılar güne bağlı (D10):** çentik, Tuhn'un günü,
+  Mirna'nın gecesi `centik/tuhnGun/mirnaGece`.
+- Son sayfa eklemeleri (hepsi bayraklı): Uslu'nun ikinci tanığı, Lin'in közü,
+  Sen satırında `undurAd`, Rauf teslimde "daha ince çekerdim", Alf'te erken
+  gelen yalan.
+- **Dış dünya (kullanıcı kararı):** dış dünya büyük bir harita değil. Bölüm
+  bölüm büyür: her bölüm Kül Ovası'nın biraz ötesini açar (Bölüm II: "Yukarı:
+  Sara", fırtına seferi). Sığınak yemin ve insanların merkezi, dışarısı keşif
+  ve tehlike.
+
 ---
 
-*Son güncelleme: 2026-11-16, v19.1. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
+*Son güncelleme: 2026-11-16, v19.2. Karıştırıyorsa kısalt ya da sil; kullanıcı böyle istedi.*
