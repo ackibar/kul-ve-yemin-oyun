@@ -26,7 +26,7 @@ function blockerYolu(ctx:CanvasRenderingContext2D,b:number[]){
  }
  ctx.fill();
 }
-import {bekleyen,kulKademe,atesKademe,geceYaz,yeminDinle,yeminVer,yeminBitir,YEMINLER,type YeminOlay} from './data';
+import {konusmaBasla,RAUF_YOL,bekleyen,kulKademe,atesKademe,geceYaz,yeminDinle,yeminVer,yeminBitir,YEMINLER,type YeminOlay} from './data';
 /** Oyuncunun bakis yonu. 'S' yan, 'DS' asagi-capraz, 'US' yukari-capraz;
  *  bati tarafi bunlarin aynasi (flip). NPC/dusmanlar 3 yonde kaliyor. */
 type Yon='U'|'D'|'S'|'DS'|'US';
@@ -515,7 +515,9 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
    if(e.id==='tuhn'&&f.tuhn!=='kaldi')f.talk='tuhn:1';
    else if(e.id==='rauf'){/* Rauf'un diyalogu DURUMA gore aciliyor. Onceden yalnizca 'takip' ve
       'serbest' ozel idi; 'korundu' ve 'dizcokme' tanisma agacina dusuyor,
-      oyuncu ayni hikayeyi bastan dinliyordu. */const r=this.state.flags.rauf;this.state.flags.talk=r==='takip'?'rauf:takip1':r==='serbest'?'rauf:serbest1':r==='korundu'?'rauf:korundu1':r==='dizcokme'?'rauf:yenildi':'';}this.audio.play('talk');this.onEvent({type:'dialogue',id:e.id});return;}if(e.type==='chest'){
+      oyuncu ayni hikayeyi bastan dinliyordu. */const r=this.state.flags.rauf;this.state.flags.talk=r==='takip'?'rauf:takip1':r==='serbest'?'rauf:serbest1':r==='korundu'?'rauf:korundu1':r==='dizcokme'?'rauf:yenildi':'';}
+      /* v19.2: gunun ates basi sohbeti, yalanin bedeli ve capraz hafiza burada kurulur (data.ts konusmaBasla). */
+      konusmaBasla(this.state,e.id);this.audio.play('talk');this.onEvent({type:'dialogue',id:e.id});return;}if(e.type==='chest'){
     /* ARTIK OTOMATIK YAGMA YOK. Sandik iki yonlu bir kap: icerigi state'e
        tasinir (sandikAc), panel acilir, oyuncu alir ya da koyar. Yarasa
        surprizi yalnizca ILK acilista. */
@@ -540,7 +542,10 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      'uslu' icin 'giden' hedefi) - oyuncu o an ayni odadaysa gercekten
      yururken goruyor, degilse zaten sessizce diger tarafa varmis olur (tipki
      baska bir NPC'nin nerede oldugunu her an bilmedigin gibi). */
-  this.world=makeWorld(zone,this.state.flags as Record<string,string|boolean|undefined>);this.resetMobs();this.bekleyenleriKur();this.overlayNesneleriYukle();this.camera={x:this.state.x-this.gorus.en/2,y:this.state.y-this.gorus.boy/2};this.invulnerable=1.5;this.audio.setZone(zone);this.audio.play('door');this.onEvent({type:'zone',id:zone});this.save();this.emit()}
+  this.world=makeWorld(zone,this.state.flags as Record<string,string|boolean|undefined>);this.resetMobs();this.bekleyenleriKur();this.overlayNesneleriYukle();this.camera={x:this.state.x-this.gorus.en/2,y:this.state.y-this.gorus.boy/2};this.invulnerable=1.5;this.audio.setZone(zone);this.audio.play('door');this.onEvent({type:'zone',id:zone});
+  /* v19.2 D6: Rauf peşindeyken her mekana ilk giriste tek cumle soyler. */
+  const yol=RAUF_YOL[zone];if(yol&&this.state.flags.rauf==='takip'&&!this.state.flags['raufYol_'+zone]){this.state.flags['raufYol_'+zone]=true;this.state.flags.talk=yol;this.onEvent({type:'dialogue',id:'rauf'});}
+  this.save();this.emit()}
  useItem(id:ItemId){if(this.paused&&!['potion','tonic','bileme','merhem','toz','tuzet','durusu','petek','torch','medicine'].includes(id))return false;if(id==='medicine'){/* v19.1: son ilac icilebilir. Soz verildiyse bozulur; Mirna sabah kendi cumlesiyle karsilar. */if(this.state.flags.medicine||!removeItem(this.state,id))return false;this.state.hp=stats(this.state).maxHp;this.state.flags.medicine='icildi';this.state.flags.medicineDone=true;this.state.flags.medicineStarted=true;this.float(this.state.x,this.state.y-10,'+','#8cdda5');this.yay({tip:'ic',item:'medicine'});if(this.state.flags.yemin_mirna!=='bozuldu')this.notify('İlacı içtin. Canın doldu.');}else if(id==='potion'){if(this.state.hp>=stats(this.state).maxHp){this.notify('Canın zaten dolu.');return false;}if(!removeItem(this.state,id)){this.notify('Can iksirin kalmadı. Alf’ten alabilirsin.');return false;}this.state.hp=Math.min(stats(this.state).maxHp,this.state.hp+45);this.float(this.state.x,this.state.y-10,'+45','#8cdda5');}else if(id==='tonic'){if(!removeItem(this.state,id))return false;this.tonic=20;this.notify('Köz toniği: 20 saniye +8 saldırı.');}else if(id==='bileme'){if(!removeItem(this.state,id))return false;this.bileme=30;this.notify('Bileme taşı: 30 saniye %25 daha hızlı vuruş.');}else if(id==='merhem'){if(!removeItem(this.state,id))return false;this.merhem=12;this.notify('Sargı merhemi: 12 saniye boyunca yavaşça iyileşiyorsun.');}else if(id==='toz'){if(!removeItem(this.state,id))return false;this.gizli=8;this.notify('Kül tozu: 8 saniye görünmezsin.');}
    /* Obruk'un kileri. Tuzlu et oyunun en guclu tek seferlik iyilesmesi;
       bedeli de ona gore (26 altin, ustune iki bucuk kat zam). */
@@ -1544,8 +1549,10 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
      if(!this.state.inventory.ledger)addItem(this.state,'ledger');
      this.state.flags.teslimSahne='gidiyor';
      this.state.gold+=140;
-     this.state.journal.unshift('Rauf’u Alf’e teslim ettin. Alf hiçbir şey söylemeden 140 altın verdi ve onu alıp gitti.');
-     this.notify('Alf, Rauf’u aldı. +140 altın.');this.save();this.emit();}
+     this.state.journal.unshift('Rauf’u Alf’e teslim ettin. Alf 140 altın verdi; on bir yıl sonra ikisi ilk kez konuştu.');
+     this.notify('Alf, Rauf’u aldı. +140 altın.');
+     /* v19.2 D6: teslim artik bir yuzlesme; her dalda boran_deliver calisir. */
+     this.state.flags.talk='boran:teslim';this.onEvent({type:'dialogue',id:'boran'});this.save();this.emit();}
    }
    // --- Teslim sahnesi: Alf, Rauf'u alip kuzey koridorundan cikar, sonra doner ---
    const sah=this.state.flags.teslimSahne;

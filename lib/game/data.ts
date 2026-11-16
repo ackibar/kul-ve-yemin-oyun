@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='19.1';
+export const SURUM='19.2';
 /** Gelisim asamasi etiketi. v19.0'dan beri bos: Birinci bolum yayinda,
  *  ekranda "alpha" yazmasin (yayin oncesi denetim P0-3). Bos degilse surum
  *  numarasinin yaninda gorunur. */
@@ -252,6 +252,8 @@ export const GUN_OLAYLARI:Record<number,GunOlay>={
 /** Bir gunluk tuketim sonucu. Motor bunu oyuncuya bildirir. */
 export type GunRapor={olay:GunOlay|null;acliktan:number;uyari:string};
 export function gunGec(s:State):GunRapor{
+ /* v19.2: gece gecmeden once dunun bayraklari ani olarak tarihlenir. */
+ anilariKaydet(s);
  s.gun++;
  /* SIGINAK YER ve ICER. Depo bosalirsa her bos kalem bir cana mal olur -
     kitlik bir sayac degil, insan kaybi. Oyuncunun urettigi tuzlu et ve duru su
@@ -430,8 +432,12 @@ export function questList(s:State){return [
  {id:'medicine',title:'Bir doz umut',done:!!s.flags.medicineDone,active:!!s.flags.medicineStarted,step:s.flags.medicineDone?(s.flags.medicine==='rauf'?'Rauf’u kurtardın. Mirna kararını öğrendi.':s.flags.medicine==='icildi'?'İlacı sen içtin. Hastalar hâlâ yatıyor.':s.flags.yemin_mirna==='alindi'?'Sen yatarken Mirna ilacı aldı.':'İlaç sığınağın hastalarına ulaştı.'):s.flags.medicine==='rauf'?'Kararını Mirna’ya anlat.':s.inventory.medicine?'İlacı Mirna’ya götür veya yaralı Rauf’u ver.':'Sarnıcın kuzeydoğu odasındaki ilacı bul.'},
  {id:'ledger',title:'Defterdeki isim',done:!!s.flags.ledgerDone,active:!!s.flags.ledgerStarted,step:s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Rauf’u sırrını korudun.':s.flags.fugitive==='dead'?'Rauf yolda düştü. Defteri Alf’e sen götürdün.':'Rauf’u muhafızlara teslim ettin.'):s.inventory.ledger?(s.flags.fugitive==='dead'?'Rauf yolda düştü, defter sende. Alf’e götür.':'Defteri Alf’e götür.'): 'Sarnıcın doğusunda Rauf’u bul. Hikâyesini dinle ve ne yapacağına karar ver.'},
  // Istege bagli: Lin'in atesi ve yukarida bekleyen agabeyi. Ana sonu kilitlemez.
- {id:'ates',title:'Sönmeyen ateş',done:s.flags.ayaz==='indi',active:!!s.flags.nil||!!s.flags.ayaz||!!s.flags.nilSondu,step:s.flags.nilSondu?'Ateş söndü. Lin artık odun taşımıyor.':s.flags.ayaz==='indi'?'Tiga sığınağa indi. Lin’in ateşi yanmaya devam ediyor.':s.flags.ayaz==='kaldi'?'Tiga Yıkık Ev’de kalmayı seçti. Sara’yı bekliyor.':s.flags.ayaz?'Tiga Yıkık Ev’de. Onu aşağı inmeye ikna edecek bir sebep bul.':s.flags.sozNil==='verildi'?'Lin’e söz verdin: ağabeyini görürsen ateşin yandığını söyleyeceksin. Kül Ovası’ndaki yıkığa bak.':'Lin’in ağabeyi on bir gündür yukarıda. Kül Ovası’ndaki yıkığa bak.'}
+ {id:'ates',title:'Sönmeyen ateş',done:s.flags.ayaz==='indi',active:!!s.flags.nil||!!s.flags.ayaz||!!s.flags.nilSondu,step:s.flags.nilSondu?'Ateş söndü. Lin artık odun taşımıyor.':s.flags.ayaz==='indi'?'Tiga sığınağa indi. Lin’in ateşi yanmaya devam ediyor.':s.flags.ayaz==='kaldi'?'Tiga Yıkık Ev’de kalmayı seçti. Sara’yı bekliyor.':s.flags.ayaz?'Tiga Yıkık Ev’de. Onu aşağı inmeye ikna edecek bir sebep bul.':s.flags.sozNil==='verildi'?'Lin’e söz verdin: ağabeyini görürsen ateşin yandığını söyleyeceksin. Kül Ovası’ndaki yıkığa bak.':`Lin’in ağabeyi ${centik(s)} gündür yukarıda. Kül Ovası’ndaki yıkığa bak.`},
+ // v19.2 D3: Uslu'nun tasi bir tanik daha bulur. Kime gosterilecegini oyuncu secer.
+ {id:'tanik',title:'İkinci tanık',done:!!s.flags.cakilGosterildi,active:!!s.inventory.cakil||!!s.flags.cakilGosterildi,
+  step:s.flags.cakilGosterildi?`${TANIK_AD_Q[String(s.flags.usluTanik)]??'Biri'} Uslu’ya gitti. İki oldu.`:'Uslu’nun taşını birine göster. Kime, sen seç.'},
  ]}
+const TANIK_AD_Q:Record<string,string>={undur:'Undur',lin:'Lin',elvi:'Elvi',mirna:'Mirna'};
 /** NPC'nin basinda unlem gosterilsin mi: oyuncunun onunla henuz kapatmadigi
  *  bir isi var demektir. Motor bunu her karede cagirir. */
 export function bekleyen(s:State,id:string):boolean{
@@ -444,7 +450,7 @@ export function bekleyen(s:State,id:string):boolean{
   case 'ekin':return !!s.flags.medicineStarted&&!s.ending;
   case 'rauf':return !s.flags.fugitive;
   case 'tuhn':return !s.flags.tuhn;
-  case 'nil':return !s.flags.sozNil&&!s.flags.nilSondu;
+  case 'nil':return (!s.flags.sozNil&&!s.flags.nilSondu)||(s.flags.kral==='oldu'&&!s.flags.nilSondu&&!s.flags.linKoz);
   case 'selvi':return !s.flags.sozSelvi;
   case 'ayaz':return s.flags.ayaz!=='indi'&&s.flags.ayaz!=='kaldi';
   case 'muhafiz':return !s.flags.muhafiz;
@@ -507,26 +513,29 @@ export function defterSatirlari(s:State):string[]{
   :f.alfSir==='soylendi'?'Alf. Anahtarını sana verdi. On bir yıllık cümlesi gitti, yerine bir şey koymadık. Kapıdan geçebilir; nereye, bilmiyor.'
   :f.alfSir==='sakladin'?'Alf. Kapıda. Cümlesi duruyor: gökyüzünü ben karattım. Yanlış, ama ayakta tutuyor. Sen bıraktın; ben de.'
   :'Alf. Kapıda. Her sabah aynı cümleyle kalkıyor.')
-  +(f.alfKurdele==='verildi'?' Kurdele avucunda. ‘Yedi yaşında mıydı’ dedi; başka bir şey demedi.':''));
+  +(f.alfKurdele==='verildi'?' Kurdele avucunda. ‘Yedi yaşında mıydı’ dedi; başka bir şey demedi.':'')
+  +(f.alfYalan==='ortaya'?' Yalanın ona erken geldi; “bitmedi” dedi, ikisi de biliyor.':''));
  // Rauf
  const rauf=f.fugitive==='protected'
   ?'Rauf. Sarnıçta. Defter döndü, adam dönmedi; Alf bunu biliyor.'
-   +(f.alfKarsi==='itiraf'?' Yüzüne söyledin. ‘Bitmedi’ dedi. Bitmedi.':f.alfKarsi==='yalan'?' Yüzüne yalan söyledin; inanmadı. ‘Seninki seni bir gün bana getirecek’ dedi.':'')
+   +(f.alfKarsi==='itiraf'?' Yüzüne söyledin. ‘Bitmedi’ dedi. Bitmedi.':f.alfKarsi==='yalan'?' Yüzüne yalan söyledin; inanmadı. ‘Seninki seni bir gün bana getirecek’ dedi.':f.alfKarsi==='itirafGec'?' Önce yalan söyledin, sonra “gördüm” dedin. Geç geldi; Alf yine de dinledi.':'')
   :f.rauf==='teslim'
   ?'Rauf. Yıkık Ev. Alf kendi götürdü, kendi döndü, bir şey söylemedi.'
    +(f.kurdeleAlindi?' Kurdeleyi bileğinden sen çözdün.':' Kurdele hâlâ bileğinde; kül örtmeye başladı.')
+   +(f.alfRaufSoz==='kiz'?' Alf çizgiyi “daha ince çekerdim” dedi; çekti mi, bilmiyorum.':'')
   :f.rauf==='oldu'
   ?'Rauf. Yolda düştü, seni korurken. Kılıcı yerde, defteri sende. Adını ikinci kez çizmedik; ilk çizgi yetmişti.'
   :'';
  if(rauf)out.push(rauf+(f.medicine==='rauf'?' Son ilacı ona verdin. Mirna’ya kendin söyledin; Mirna yazdı.':''));
  if(f.medicine==='icildi')out.push('Son ilaç. Sen içtin. Mirna kızmadı; bir dahakini kendisi taşıyacak.');
  // Lin
- out.push(f.nilSondu==='evet'?'Lin. Ateş söndü. Odun taşımıyor. Sebebini ben yazmadım; sen biliyorsun.'
+ out.push((f.nilSondu==='evet'?'Lin. Ateş söndü. Odun taşımıyor. Sebebini ben yazmadım; sen biliyorsun.'
   :f.ayaz==='indi'?'Lin. Ateş yandı. Ağabeyi geldi; ilk gördüğü şey ateşti.'
    +(f.sozNil==='verildi'&&f.ayazHaber==='soylendi'?' Haberi sen götürdün; söz iki kişilikti, iki kişi tuttu.'
     :f.sozNil==='verildi'&&!f.ayazHaber?' Söz vermiştin, söylemedin. Ateş yine de yandı; Lin’in sözü sana bağlı değildi.':'')
   :f.ayaz==='kaldi'?'Lin. Ateş yanıyor. Ağabeyi yıkıkta; ikisi de ‘bekle’de. Biri aşağıda, biri yukarıda, aynı söz.'
-  :'Lin. Ateş yanıyor. On bir çentik on iki oldu. Ağabeyi görülmedi.');
+  :`Lin. Ateş yanıyor. On bir çentik ${sayiYaz(10+Math.max(2,s.gun))} oldu. Ağabeyi görülmedi.`)
+  +(f.nilSondu!=='evet'&&f.linKoz?(f.linKoz==='yok'?' Köz kavanozda; kimseye gitmiyor.':` Közü artık ${KOZ_KIME[String(f.linKoz)]} taşıyor.`):''));
  // Tiga
  out.push(f.ayaz==='indi'&&f.sozAyaz==='verildi'?'Tiga. İndi, matarayı getirdi. Sana bir şey sordu; ‘arayacağım’ dedin. Yazdım. Defter bunu unutmaz.'
   :f.ayaz==='indi'?'Tiga. İndi, matarayı getirdi. Sara için söz istedi, vermedin; ‘bakarım’ dedin. Onu da yazdım.'
@@ -538,7 +547,7 @@ export function defterSatirlari(s:State):string[]{
   :f.tuhn==='kaldi'&&f.tuhnSare?'Tuhn. Ateşin yanında. Testi boş ama onun. Sara’yı ölülere yazdırmadı; bir gün daha bekliyor, sonra bir gün daha.'
   :f.tuhn==='kaldi'?'Tuhn. Ateşin yanında. Odun taşıyor; biri taşıyacaktı. Sen saydın, o indi.'
   :f.tuhn==='atladi'?'Tuhn. Uçurum. Testi kenarda duruyor, kimse almadı. Ona söylediğin cümleyi yazmadım.'
-  :'Tuhn. Uçurumun başında. Üç gün dört oldu. Kimse ona gitmedi.');
+  :`Tuhn. Uçurumun başında. Üç gün ${sayiYaz(2+Math.max(2,s.gun))} oldu. Kimse ona gitmedi.`);
  // Elvi
  out.push((f.selviSir==='soylendi'?'Elvi. Yirminci. Mirna yüzüne baktı. Kapının dibinden çekildi; artık ateşin yanında oturuyor.'
   :f.mirnaSir==='sakladin'?'Elvi. Hâlâ kapının dibinde, hâlâ sayılmıyor. Kapıda kimin durduğunu sen biliyorsun, o bilmiyor.'
@@ -552,9 +561,10 @@ export function defterSatirlari(s:State):string[]{
   /* Kral oldu ama karar verilmedi: taslakta satir yok, Undur'un kendi
      diyalogundaki cumle kullanildi (data.ts, ekin ana metni). */
   :'Ongun. Bereket. Altına çizgi çektim.')
-  +(f.muhafiz==='gecti'?' Son muhafızı hâlâ ovada.':f.muhafiz==='dovus'||f.muhafiz==='oldu'?' Son muhafızı ovada kaldı; emri geri alan olmadı.':''));
+  +(f.muhafiz==='gecti'?(f.muhafizKilic?' Son muhafızı hâlâ ovada. Alf’in kılıcı kapıdan geçti; yolu ona o açtı.':' Son muhafızı hâlâ ovada.'):f.muhafiz==='dovus'||f.muhafiz==='oldu'?' Son muhafızı ovada kaldı; emri geri alan olmadı.':''));
  // Uslu
- out.push(s.inventory.cakil?'Uslu. Taşı sende. ‘Sen bakarsan iki olur’ demişti. İki oldu; defter iki tanık ister.'
+ out.push(f.usluTanik&&TANIK_AD[String(f.usluTanik)]?`Uslu. Taşı sende. İkinci tanığı ${TANIK_AD[String(f.usluTanik)]}; biri sordu, biri cevapladı. Sayıklama hikâye oldu.`
+  :s.inventory.cakil?'Uslu. Taşı sende. ‘Sen bakarsan iki olur’ demişti. İki oldu; defter iki tanık ister.'
   :'Uslu. Günü ateşle sayıyor. Anlattıklarını dinleyen oldu mu, bilmiyorum.');
  // Obruk
  out.push((f.kargaSurgun==='evet'?'Obruk. Karga gitti; kapısında tek mızrak kaldı. Daha az adam, daha çok hafta. Sevindi mi, sorma.'
@@ -565,7 +575,9 @@ export function defterSatirlari(s:State):string[]{
  // Depo
  if(s.kayip>0)out.push(`Depo ${s.kayip} gece boş kaldı. O geceleri ayrı sayfaya yazdım; bu sayfaya sığmazlar.`);
  // Sen: her zaman son satir
- out.push('Sen. Yetmiş ikinci. On bir yıl sonra kapıdan giren ilk kişi. Sözlerin aşağıda.');
+ out.push('Sen. Yetmiş ikinci. On bir yıl sonra kapıdan giren ilk kişi.'
+  +(f.undurAd==='istedi'?' Adını istedin; bekletiyorum.':f.undurAd==='kalsin'?' İsimsiz kalsın dedin; kaldı.':f.undurAd==='yetmisiki'?' Yetmiş ikinci; adı yok, satırı var.':'')
+  +' Sözlerin aşağıda.');
  return out;
 }
 /** Son ekraninin duz yazisi: sona ve verilen yemine gore. */
@@ -664,12 +676,23 @@ export type Dialogue={who:string;role:string;portrait:number;text:string;choices
  *  normal gorev diyalogu gosterilir. Her dugum bir metin ve secenekler icerir;
  *  `to` bir sonraki dugum, null ise sohbet biter ve gorev diyaloguna donulur.
  *  Basit tutuldu, sonradan derinlestirilecek. */
-export type StoryNode={text:string;choices:{label:string;to:string|null;
+export type StoryNode={text:Metin;choices:{label:Metin;to:string|null;
  /** Secenek yalnizca bu kosul saglaninca gorunur (baska bir NPC'den ogrenilen bilgi gibi). */
  if?:(s:State)=>boolean;
  /** Secenegin altinda kucuk uyari: geri alinamaz kararlarda gosterilir. */
  note?:string}[]};
 const AYRIL={label:'Gitmem gerek.',to:null};
+/** v19.2: metin sabit ya da duruma bagli (sayi gune bagli, varyant bayraga bagli). */
+export type Metin=string|((s:State)=>string);
+export const metin=(t:Metin,s:State)=>typeof t==='function'?t(s):t;
+/* D10: sayilar gune bagli. Birinci gun eski sabit metinle ayni: on bir cetik,
+   uc gun, otuz gece. Her uyanis bir ekler. */
+const BIRLER=['','bir','iki','üç','dört','beş','altı','yedi','sekiz','dokuz'],ONLAR=['','on','yirmi','otuz','kırk','elli','altmış','yetmiş','seksen','doksan'];
+export const sayiYaz=(n:number)=>n<=0||n>=100?String(n):[ONLAR[Math.floor(n/10)],BIRLER[n%10]].filter(Boolean).join(' ');
+export const buyukHarf=(t:string)=>t.charAt(0).toLocaleUpperCase('tr')+t.slice(1);
+export const centik=(s:State)=>sayiYaz(10+s.gun);
+export const tuhnGun=(s:State)=>sayiYaz(2+s.gun);
+export const mirnaGece=(s:State)=>sayiYaz(29+s.gun);
 export const STORY:Record<string,Record<string,StoryNode>>={
  /* Uslu: firtinaya cikip geri donen TEK kisi. Onceki surumde sekiz tane
   *  sonucu olmayan bilmece sorardi - olculdu: 24 dugumun 15'i etkisiz yaprakti,
@@ -803,7 +826,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={
   // diyalog 'rauf:1'e dusuyordu, yani tanisma agaci bastan basliyor ve
   // oyuncu ayni hikayeyi iki kez dinliyordu.
   'korundu1':{text:'Hâlâ buradayım. Sen söyledin, ben kaldım. Alf’in adımı duyduğu gün ikimiz de öğreniriz ne olacağını.',
-   choices:[{label:'Fikrimi değiştirdim, benimle geleceksin.',to:'zorla'},{label:'Sadece bakmaya geldim.',to:null}]},
+   choices:[{label:'Yeminini okudum.',to:'yemin',if:s=>s.flags.raufYemin==='okundu'},{label:'Fikrimi değiştirdim, benimle geleceksin.',to:'zorla'},{label:'Sadece bakmaya geldim.',to:null}]},
   'yenildi':{text:'…Kılıcım yerde. Nefesimi toparlayayım, sonra ardından geliyorum.',choices:[{label:'Acele etme.',to:null}]},
   'kal':{text:'…Sağ ol. Bir gün bunun karşılığını veririm. Buradan başka gidecek yerim yok ama borcumu unutmam.',
    choices:[AYRIL]},
@@ -819,7 +842,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={
   'cozuldu':{text:'…Gerçekten mi? Beni yendin, hakkındı. …Peki. Borcum iki oldu. Yukarıda bir şey kaldıysa, senin için kalsın.',
    choices:[AYRIL]},
   'serbest1':{text:'Beni bıraktığın gün bir daha nefes aldım. Bunu unutmadım.',
-   choices:[AYRIL]},
+   choices:[{label:'Yeminini okudum.',to:'yemin',if:s=>s.flags.raufYemin==='okundu'},AYRIL]},
   'zorla':{text:'Hayır. HAYIR! Beni oraya götüremezsin — önce beni öldürmen gerekir!',
    choices:[{label:'Öyle olsun.',to:null},AYRIL]},
  },
@@ -830,9 +853,9 @@ export const STORY:Record<string,Record<string,StoryNode>>={
  tuhn:{
   '1':{text:'Yaklaşma. Buradan aşağısı görünmüyor, biliyor musun? Ne kadar derin olduğunu kimse bilmiyor. Bu hoşuma gidiyor.',
    choices:[{label:'Orada ne yapıyorsun?',to:'2'},{label:'Ver şu testiyi.',to:'sert'},AYRIL]},
-  '2':{text:'Duruyorum. Üç gündür duruyorum. Bir adım var aramızda, o kadar. Bir adımın bu kadar ağır olabileceğini bilmezdim.',
+  '2':{text:s=>`Duruyorum. ${buyukHarf(tuhnGun(s))} gündür duruyorum. Bir adım var aramızda, o kadar. Bir adımın bu kadar ağır olabileceğini bilmezdim.`,
    choices:[{label:'Kimi kaybettin?',to:'3'},{label:'Aşağıda ne var sanıyorsun?',to:'4'},AYRIL]},
-  '3':{text:'Karımı. Sara’yı. Yukarı çıktı, yanında bir de çocuk vardı, Tiga. Su arayacaklardı, bir gün sürer dedi. On bir gün oldu. Mirna sayıyor ya, onu hâlâ saymadı. Saymasını bekliyorum.',
+  '3':{text:s=>`Karımı. Sara’yı. Yukarı çıktı, yanında bir de çocuk vardı, Tiga. Su arayacaklardı, bir gün sürer dedi. ${buyukHarf(centik(s))} gün oldu. Mirna sayıyor ya, onu hâlâ saymadı. Saymasını bekliyorum.`,
    choices:[{label:'Yukarıda hâlâ olabilir.',to:'umut'},{label:'Bu ölümle onu geri getirmezsin.',to:'sert'},
             {label:'Aşağıda on dokuz kişiyiz. On sekiz olmasın.',to:'ihtiyac',if:s=>s.flags.selviSir!=='soylendi'},
             {label:'Aşağıda yirmi kişiyiz. On dokuz olmasın.',to:'ihtiyac20',if:s=>s.flags.selviSir==='soylendi'},
@@ -844,7 +867,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={
    choices:[{label:'Kimi kaybettin?',to:'3'},
             {label:'Aşağıda on dokuz kişiyiz. On sekiz olmasın.',to:'ihtiyac',if:s=>s.flags.selviSir!=='soylendi'},
             {label:'Aşağıda yirmi kişiyiz. On dokuz olmasın.',to:'ihtiyac20',if:s=>s.flags.selviSir==='soylendi'},AYRIL]},
-  'umut':{text:'Olabilir. Olmayabilir. On bir gündür bu iki kelimenin arasında duruyorum ve ikisi de beni tutmuyor. Sen tutar mısın sandın?',
+  'umut':{text:s=>`Olabilir. Olmayabilir. ${buyukHarf(centik(s))} gündür bu iki kelimenin arasında duruyorum ve ikisi de beni tutmuyor. Sen tutar mısın sandın?`,
    choices:[{label:'Aşağıda on dokuz kişiyiz. On sekiz olmasın.',to:'ihtiyac',if:s=>s.flags.selviSir!=='soylendi'},
             {label:'Aşağıda yirmi kişiyiz. On dokuz olmasın.',to:'ihtiyac20',if:s=>s.flags.selviSir==='soylendi'},
             {label:'Sara su bulmuş. Tiga’ya vermiş; çocuk yıkıkta bekliyor.',to:'sare',if:s=>!!s.flags.ayaz},
@@ -904,11 +927,11 @@ export const STORY:Record<string,Record<string,StoryNode>>={
   // Oyuncuya ilac gorevini verdigi an ikinci yeminini bozdu.
   '6':{text:'Gönderdim. Sarnıca üç kişi yolladım, üçü de dönmedi. O gece yemin ettim: bir daha kimseyi göndermem. Sonra sen kapıdan girdin ve ağzımdan çıkan ilk cümle “aşağıda bir ilaç var” oldu. Yeminim seni gördüğüm anda bitti. Bunu bilmeni istedim — sen bana borçlusun diye değil, ben sana borçluyum diye.',
    choices:[{label:'Neden sayıyorsun?',to:'7'},{label:'Başka yemin var mı?',to:'7'},AYRIL]},
-  '7':{text:'İlk gece kapıda ben durdum. Undur havanın yetmiş kişiyi kaldıracağını hesaplamıştı. Yetmiş dedim. Yetmiş birinciyi ben çevirdim; sesini duydum, yüzünü görmedim. O gece de yemin ettim: bir daha kimseyi dışarıda bırakmam. Onu da tutamadım — sarnıca gönderdiklerim de dışarıda kaldı. O yüzden sayıyorum. Sayı tutmak, yemin tutmaktan kolay.',
+  '7':{text:s=>'İlk gece kapıda ben durdum. Undur havanın yetmiş kişiyi kaldıracağını hesaplamıştı. Yetmiş dedim. Yetmiş birinciyi ben çevirdim; sesini duydum, yüzünü görmedim. O gece de yemin ettim: bir daha kimseyi dışarıda bırakmam. Onu da tutamadım — sarnıca gönderdiklerim de dışarıda kaldı. O yüzden sayıyorum. Sayı tutmak, yemin tutmaktan kolay.'+(s.flags.miraElviEk==='acik'?' Elvi’ye bakmışsın. Bana bakıyor şimdi; sayması zor oldu.':''),
    choices:[{label:'Yetmiş birinci hayatta. Kapının dibinde duruyor.',to:'selvi',if:s=>!!s.flags.selvi&&!s.flags.mirnaSir},AYRIL]},
   'selvi':{text:'…Biliyorum. İçeri girdiği gün sesinden tanıdım. Yazamadım. Yazarsam yetmişin yanlış olduğunu yazmış olurum; yetmiş yanlışsa o gece kapıda kalanlar boşuna kaldı. Yazamadım.',
    choices:[{label:'Ona kapıda senin durduğunu söyleyeceğim.',to:'selviSoyle'},{label:'Bu senin taşıyacağın bir yük.',to:'selviSakla'}]},
-  'selviSoyle':{text:'…Söyle. Ben otuz gecedir onun önünden yüzüme bakmadan geçiyorum. Belki bakması gerekir. Belki o zaman yazabilirim.',
+  'selviSoyle':{text:s=>`…Söyle. Ben ${mirnaGece(s)} gecedir onun önünden yüzüme bakmadan geçiyorum. Belki bakması gerekir. Belki o zaman yazabilirim.`,
    choices:[AYRIL]},
   'selviSakla':{text:'Teşekkür ederim. Ya da etmiyorum, bilmiyorum. Taşımaya devam ederim. Öksürenleri saymaya da.',
    choices:[AYRIL]},
@@ -984,7 +1007,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={
   // parcalarini birbirine baglayan cumle — herkesin bozdugu yemin kulun sebebi.
   'besin':{text:'Odun sanırdım. Otuz yıl arşivde okuduktan sonra artık sanmıyorum. Ocağa inen her muhafız orada bir yemin ederdi; nöbet defteri onun için tutulurdu. Tutulan yemin ocağı uyutur, bozulan uyandırır. Bu sığınakta kaç yemin bozuldu, say istersen. Sonra gökyüzüne bak.',
    choices:[{label:'Burada yeminini tutan biri var mı?',to:'nil'},{label:'Alf kapıyı açtığını söylüyor.',to:'5'},AYRIL]},
-  'nil':{text:'Bir kişi. Şuradaki çocuk, Lin. Ağabeyine ateşi söndürmeyeceğine söz verdi; on bir gündür söndürmüyor. Sekiz yaşında ve bu sığınakta sözünü tutan tek insan. Ocakların hâlâ yanmasını ben ona bağlıyorum. Kimse bana inanmıyor; ben de yazıyorum.',
+  'nil':{text:s=>`Bir kişi. Şuradaki çocuk, Lin. Ağabeyine ateşi söndürmeyeceğine söz verdi; ${centik(s)} gündür söndürmüyor. Sekiz yaşında ve bu sığınakta sözünü tutan tek insan. Ocakların hâlâ yanmasını ben ona bağlıyorum. Kimse bana inanmıyor; ben de yazıyorum.`,
    choices:[{label:'Alf kapıyı açtığını söylüyor.',to:'5'},AYRIL]},
   // --- SON: soz dugumu. Final secildikten hemen sonra acilir (bkz. choose,
   // 'final_*'). Oyuncu ya sonun yeminini verir ya da bilerek vermez; secim
@@ -1011,7 +1034,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={
  // Lin: sekiz yasinda, agabeyi Tiga'ya atesi sondurmeyecegine soz verdi.
  // Bu siginakta yeminini tutan tek kisi; yemini karsi tarafa bagli degil.
  nil:{
-  '1':{text:'Yukarıda. Sara teyzeyle su aramaya gitti. On bir gün oldu; şu direğe on bir çentik attım. Herkes “döner” diyor ama gözleri başka yere bakıyor. Sen de mi öyle bakacaksın?',
+  '1':{text:s=>`Yukarıda. Sara teyzeyle su aramaya gitti. ${buyukHarf(centik(s))} gün oldu; şu direğe ${centik(s)} çentik attım. Herkes “döner” diyor ama gözleri başka yere bakıyor. Sen de mi öyle bakacaksın?`,
    choices:[{label:'Bakmayacağım. Ne yapmamı istersin?',to:'soz'},{label:'Belki dönmez.',to:'belki'},
     {label:'Köşedeki taçlı amca kim?',to:'kral',if:s=>!!s.flags.kralGoruldu},AYRIL]},
   // Cocuk, krala iyi davranan tek kisi. Kralin ellerini uzattigi tek yer.
@@ -1044,7 +1067,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={
    choices:[{label:'Burada ne yapıyorsun?',to:'3'},AYRIL]},
   '3':{text:'Bekliyorum. Bekle dedi, söz verdim. Aşağıya inersem sözüm burada kalır. Sen sözünü bırakıp gidebilir misin?',
    choices:[{label:'Lin ateşini senin için yakıyor. On bir gündür.',to:'nilKey',if:s=>!!s.flags.nil},
-            {label:'Tuhn üç gündür uçurumun başında duruyor.',to:'tuhnKey',if:s=>!!s.flags.tuhnTanisti},
+            {label:s=>`Tuhn ${tuhnGun(s)} gündür uçurumun başında duruyor.`,to:'tuhnKey',if:s=>!!s.flags.tuhnTanisti},
             {label:'Sara dönmeyecek.',to:'sert'},{label:'Söz verdiysen bekle.',to:'kal'},AYRIL]},
   'nilKey':{text:'…Lin. Ona “söndürme, dönerim” demiştim. …İki söz verdim, ikisi de “bekle” diyor, biri burada biri aşağıda. İkisini birden tutamam.',
    choices:[{label:'Birini seç.',to:'sec'},{label:'Sara bir yetişkin. Lin sekiz yaşında.',to:'sec'}]},
@@ -1058,7 +1081,7 @@ export const STORY:Record<string,Record<string,StoryNode>>={
    choices:[{label:'Söz veriyorum. Arayacağım.',to:'sozVerildiKal'},{label:'Söz veremem. Ama bakarım.',to:'sozRedKal'}]},
   'sert':{text:'Çık dışarı. …Hayır, dur. Kül var. Kal ama bir daha söyleme. O “bekle” dedi. Dönmeyecek biri “bekle” demez.',
    choices:[{label:'Söz verdiysen bekle.',to:'kal'},{label:'Lin ateşini senin için yakıyor. On bir gündür.',to:'nilKey',if:s=>!!s.flags.nil},
-            {label:'Tuhn üç gündür uçurumun başında duruyor.',to:'tuhnKey',if:s=>!!s.flags.tuhnTanisti},AYRIL]},
+            {label:s=>`Tuhn ${tuhnGun(s)} gündür uçurumun başında duruyor.`,to:'tuhnKey',if:s=>!!s.flags.tuhnTanisti},AYRIL]},
   'sozVerildi':{text:'Tamam. O zaman koşuyorum.',choices:[AYRIL]},
   'sozRed':{text:'Bakarsın. Olsun. Koşuyorum.',choices:[AYRIL]},
   'sozVerildiKal':{text:'Tamam. O zaman ben burada beklerim, sen orada ararsın.',choices:[AYRIL]},
@@ -1096,17 +1119,332 @@ export const STORY:Record<string,Record<string,StoryNode>>={
  },
 };
 
+/* ===== v19.2 ASAMA 3: DIYALOG DERINLIGI (_arsiv/fable-diyalog-rpg.md) =====
+   Kural (SKILL 16 Kas): her karar en az bir ikinci kisinin agzindan, en az bir
+   gun sonra geri gelir; kanali (kim kime soyledi) yorumda yazilir. Ikna
+   anahtari bayrak ya da esyadir, sayi degil. yemin_* bayraklari yalniz OKUNUR.
+   Metinler onayli taslaktan kelimesi kelimesine; taslagin ozetledigi yerlerde
+   yazilanlar _arsiv/uygulama-asama3.md'de ayrica listeli. */
+const EK_STORY:Record<string,Record<string,StoryNode>>={
+ nil:{
+  /* D1 gun 2. Varyant: Tiga indi mi. */
+  gun2:{text:s=>s.flags.ayaz==='indi'
+    ?`Ağabeyim çentikleri saydı gece. Hepsini, parmağıyla. Sonra bir tane daha attı; “bu, döndüğüm gün” dedi. Şimdi ${centik(s)} var ve biri onun.`
+    :`Bak, yeni çentik. ${buyukHarf(centik(s))}. Alf amca “sayma” diyor, saymazsam gün geçmemiş gibi oluyormuş. Geçmemiş gün dönmez ki.`,
+   choices:[
+    {label:'Sayma istersen. Ben sayarım senin yerine.',to:'gun2a',if:s=>s.flags.ayaz!=='indi'},
+    {label:'Say. Her çentik bir gece daha yandı demek.',to:'gun2b',if:s=>s.flags.ayaz!=='indi'},
+    {label:'Direk artık ikinizin.',to:'gun2c',if:s=>s.flags.ayaz==='indi'},
+    {label:'…',to:null,if:s=>s.flags.ayaz==='indi'}]},
+  gun2a:{text:'…Olur mu? …Olur. Ama ateş benim. Çentik senin, ateş benim.',choices:[AYRIL]},
+  gun2b:{text:s=>`Öyle mi? …Öyle. Bunu ağabeyime söyleyeceğim: yandı, yandı, yandı. ${buyukHarf(centik(s))} kere.`,choices:[AYRIL]},
+  gun2c:{text:'Hep ikimizindi. O yukarıdayken de. Sadece o bilmiyordu.',choices:[AYRIL]},
+  /* D3 ikinci tanik */
+  tas:{text:'Ver. …Sıcak değil. Kül de yok. Dışarıdan mı? Dışarıda ateş var mı Uslu amca’ya göre?',
+   choices:[{label:'Sor ona.',to:'tas2'},{label:'Bilmiyorum.',to:'tas3'}]},
+  tas2:{text:s=>'Sorarım. Dışarıda ateş varsa ağabeyim orada ısınmıştır. '+(s.flags.ayaz==='indi'?'Ağabeyim ısınmamış, dedi. Ama ışık görmüş. Işık da bir şey. ':'')+'Taşı ona götürüyorum, sonra sana geri. Söz.',choices:[AYRIL]},
+  tas3:{text:'Uslu amca bilir. Herkes “deli” diyor; deli olan dışarıyı görmez, deli olan içeride gün sayar. Ben sayıyorum mesela.',choices:[AYRIL]},
+  /* D4 koz kime. Alf secenegi kosulsuz: Alf kirildiysa bile cocuk koz goturur;
+     yalniz Alf'in karsilik satiri kapanir (bkz. kozOnek). */
+  koz:{text:'Kral amca ellerini uzatıyordu. Konuşmazdı ama uzatırdı. Şimdi köz elimde kalıyor, kavanozda soğuyor. Sen söyle. Kime?',
+   choices:[{label:'Alf amcaya.',to:'kozAlf'},
+    {label:'Elvi’ye. Kapının dibi soğuk.',to:'kozElvi',if:s=>s.flags.selviSir!=='soylendi'},
+    {label:'Tuhn amcaya.',to:'kozTuhn',if:s=>s.flags.tuhn==='kaldi'},
+    {label:'Undur’a. Yazarken eli üşüyor.',to:'kozUndur'},
+    {label:'Kimseye. Ateş yeter.',to:'kozYok'}]},
+  kozAlf:{text:'Alf amca “götürme” demişti. Krala. Kendine götürülmesini ister mi? …Denerim. Almazsa yerine koyarım, bir daha denerim.',choices:[AYRIL]},
+  kozElvi:{text:'Kapıdaki teyze. Kimse ona bir şey götürmüyor; Mirna önünden geçiyor. Ben sekiz yaşındayım, geçmem. Götürürüm.',choices:[AYRIL]},
+  kozTuhn:{text:'Tuhn amca bana odun getiriyor, ben ona köz götürürüm. Odun gider köz gelir; ağabeyim buna “ateş böyle yürür” derdi.',choices:[AYRIL]},
+  kozUndur:{text:'Undur amca hep yazıyor, hiç ısınmıyor. Eli ısınırsa daha mı çok yazar? …O zaman götürmeyeyim. Şaka. Götürürüm.',choices:[AYRIL]},
+  kozYok:{text:'…Tamam. Ateş yeter. Ama köz vermek de bir şeydi. Ağabeyim “paylaşmazsan söner” demişti. Demedi mi? …Demiş olsun.',choices:[AYRIL]},
+ },
+ ekin:{
+  gun3:{text:'Gece yazarken elim durdu. İsim yazmadım; bir şey yazdım: “kapıdan biri girdi.” Üç gün önce. Sen. Bu defterde isimsiz ilk satır.',
+   choices:[{label:'Adımı yaz.',to:'gun3a'},{label:'İsimsiz kalsın.',to:'gun3b'},
+    {label:'Yetmiş ikinci yaz.',to:'gun3c',if:s=>s.flags.selviSir==='soylendi'}]},
+  gun3a:{text:'Yazmam. Burada isimler ölünce yazılıyor. Seninkini bekletiyorum; bekletebildiğim tek isim.',choices:[AYRIL]},
+  gun3b:{text:'Elvi gibi mi? …Hayır. Elvi’ninki sayılmamak. Seninki henüz. İkisi aynı boşluk değil.',choices:[AYRIL]},
+  gun3c:{text:'…Yetmiş ikinci. Mirna yirmi yazdı, sen yetmiş iki diyorsun. İkisi de doğru; biri kalanları sayıyor, biri gelenleri. Yazdım: yetmiş ikinci, adı yok.',choices:[AYRIL]},
+  tas:{text:'…Üstünde kül yok. On bir yıl… Bunu yazamam; adı yok, ölmedi, gelmedi. Deftere ne diye girer?',
+   choices:[{label:'Ad verme. Ne olduğunu yaz.',to:'tas2'},{label:'Yazma. Sadece bak.',to:'tas3'}]},
+  tas2:{text:'“Uslu dışarıdan bir taş getirdi, temizdi.” …Yazdım. Bu defterde ilk kez bir isim değil, bir şey var. Uslu’ya gideceğim; ona hiç soru sormamıştım. Deliye soru sorulmaz, derler. Dışarıyı gören tek adama sorulmazsa kime sorulur.',choices:[AYRIL]},
+  tas3:{text:'Bakıyorum. …Otuz yıl kâğıda baktım; bir taşa bakmak başka. Uslu’ya söyle: baktım. Söylemezsen kendim söylerim, iki tanık böyle olur.',choices:[AYRIL]},
+  /* D5: defter elde + Rauf korundu. Kanal: oyuncu defteri gosteriyor. */
+  defter:{text:'Nöbet defteri. Alf’in. …Rauf’un yemini şurada: “Kapıyı bekleyeceğim; içeridekiler için.” İçeridekiler yukarıdaydı, kızı dahil. Çizgi yemini silmiyor, Rauf haklı; ama yemin de kızı geri getirmedi. Alf’e söylersen ben söylemedim.',choices:[AYRIL]},
+  yine:{text:'Yine mi? …Peki. Defter de her açılışta aynı şeyi söyler; okuyan değişir.',choices:[{label:'Anlat.',to:'1'},AYRIL]},
+ },
+ boran:{
+  gun4:{text:s=>{const r=s.flags.rauf;return 'Dört gece. Kapıdan dört kez geçtin, dört kez döndün. '
+    +(r==='korundu'||r==='serbest'?'Rauf bir kez geçti, dönmedi.':r==='teslim'?'Rauf’u ben geçirdim; ben döndüm.':'Rauf bir kez geçti.')
+    +' Dönen adamı saymayı unutmuşum.';},
+   choices:[{label:'Dönmek için gitmek lazım.',to:'gun4a'},{label:'Sen de bir gün geçersin.',to:'gun4b'},
+    {label:'Artık geçebilirsin, kendin söyledin.',to:'gun4c',if:s=>s.flags.alfSir==='soylendi'}]},
+  gun4a:{text:'…Evet. Ben gitmedim ki döneyim. On bir yıl aynı yerde durup “döndüm” denmiyor.',choices:[AYRIL]},
+  gun4b:{text:'Geçersem kim sayar? …Boş ver. Sen geç, ben sayarım. İşim bu.',choices:[AYRIL]},
+  gun4c:{text:'Söyledim. Söylemekle geçmek arasında bir kapı var; kolu yok. Dört gece oldu, hâlâ buradayım. Belki yeminin yerine alışkanlık geçti.',choices:[AYRIL]},
+  /* D7 yalanin gec bedeli. Kanal: Mirna Alf'e soyledi (ayni atesi paylasiyorlar). */
+  yalan:{text:'Mirna söyledi. Son ilacı aşağıda topal birine vermişsin. “Görmedim” demiştin. …Görmeyen adam ilaç vermez. Yalanın seni bana getirdi, demiştim; erken geldi.',
+   choices:[{label:'Haklısın. Gördüm.',to:'yalanItiraf'},{label:'İlacı verdim, adını söylemedim.',to:'yalanAd'}]},
+  yalanItiraf:{text:'Geç. Ama gördüm dedin. Bu iş bitmedi; şimdi ikimiz de biliyoruz.',choices:[AYRIL]},
+  yalanAd:{text:'Adını söylemedin. Yüzünü de söylemedin. İkisi ayrı yalan, aynı adam.',choices:[AYRIL]},
+  /* D6 yuzlesme: motor Rauf'u Alf'e getirince acar. Rauf'un sozleri parantez
+     icinde, Alf'in metninde (portre Alf). Her dalda boran_deliver calisir. */
+  teslim:{text:'…Rauf. (Rauf: “Alf.”) Defter? (Rauf: “Bende. Adımın üstünde senin çizgin.”) Çizgiyi ben çektim. Altını? (Rauf: “Yol yazdı.”) (Alf sana dönüyor.) Sen getirdin. Söyleyecek bir şeyin var mı, yoksa ben mi söyleyeyim?',
+   choices:[{label:'Kızı için kaçtı. Yedi yaşındaydı.',to:'teslim2'},
+    {label:'Söyleyecek bir şeyim yok. İkinizin arası.',to:'teslim3'},
+    {label:'Defteri bana ver, adını ben sileyim.',to:'teslim4',if:s=>!!s.inventory.ledger}]},
+  teslim2:{text:'…Yedi. Bana söylememişti. Kaçan adamın sebebi olmaz sanırdım; sebebi varmış, çocuk kadar. (Rauf: “Söyleseydim bırakır mıydın?”) Hayır. Ama çizgiyi daha ince çekerdim.',choices:[{label:'…',to:null}]},
+  teslim3:{text:'Doğru. İkimizin arası. …Rauf, Yıkık Ev’e kadar yürüyeceğiz. Konuşmadan. On bir yıl konuşmadık, bir saat daha konuşmayız.',choices:[{label:'…',to:null}]},
+  teslim4:{text:'Silinmez. Çizgi de kalır, ad da. Kalan şeyleri taşımak nöbet; sen daha öğrenmedin. (Rauf: “Bırak. Çizgi benim; onu da götürüyorum.”)',choices:[{label:'…',to:null}]},
+  yine:{text:'Yine mi? …Peki. Kapıda başka işim yok zaten.',choices:[{label:'Anlat.',to:'1'},AYRIL]},
+ },
+ uslu:{
+  /* D1 gun 5: yalniz kral olayi ertelendiyse (5. gun bos kalmasin). */
+  gun5:{text:'Beş. Ateşe beş kez odun attım senin için; birini Lin attı, saymadım. Dışarıda beş gün beş gün değildir, bir gündür, uzun. Burada beş gün beş ayrı sabah. Hangisi iyi, bilmem.',
+   choices:[{label:'Köşedeki adamı gördün mü hiç?',to:'gun5a'},{label:'Beş sabah da aynıydı.',to:'gun5b'}]},
+  gun5a:{text:'Taçlı mı? Görüyorum. Bakmıyorum; bakan sayılır, Mirna öyle diyor. Sen bak. Sen baktın mı, ben de sayılırım.',choices:[AYRIL]},
+  gun5b:{text:'Değildi. Bir sabah sen uyanmadan Alf ağladı; sesi yok, omzu var. Bir sabah Lin çentik attı, kazıdı, bir daha attı. Aynı sabah yok; aynı adam var.',choices:[AYRIL]},
+ },
+ selvi:{
+  gun6:{text:s=>s.flags.selviSir==='soylendi'
+    ?'Ateşin yanında altıncı gecem. Sıcak. Sıcak insanı tembel yapıyor; kapıda daha uyanıktım. Yirmi olmak biraz da uyumakmış.'
+    :`Altı gece. Mirna önümden ${mirnaGece(s)} kez geçti. Altısında sen de buradaydın; bakmadın, o da bakmadı. Sayı bulaşıcı.`,
+   choices:[{label:'Bakıyorum. Şimdi.',to:'gun6a',if:s=>s.flags.selviSir!=='soylendi'},
+    {label:'Ne istiyorsun benden?',to:'gun6b',if:s=>s.flags.selviSir!=='soylendi'},
+    {label:'Kapıyı özledin mi?',to:'gun6c',if:s=>s.flags.selviSir==='soylendi'},
+    {label:'Uyu. Hak ettin.',to:'gun6d',if:s=>s.flags.selviSir==='soylendi'}]},
+  gun6a:{text:'…Geç. Ama tamam. Bakan sayar; sen saydın, bir. Mirna’nın saymasına bir kaldı.',choices:[AYRIL]},
+  gun6b:{text:'Hiçbir şey. Kapıda isteyen kalmaz; bekleyen kalır. Sen istiyorsan bir şey, aşağıdaki kalbi hatırla.',choices:[AYRIL]},
+  gun6c:{text:'Kapıyı değil. Kapının bana verdiği hakkı: kimseye bir şey borçlu olmamak. Şimdi Mirna’ya borçluyum, sana borçluyum. Yirmi, on dokuzdan pahalı.',choices:[AYRIL]},
+  gun6d:{text:'Hak etmek… kapıda o kelime yoktu. Alışacağım.',choices:[AYRIL]},
+  tas:{text:'Kemerli yıkık mı? …Oradan. Kül girmiyordu, taş biliyordu. Ben üç gece orada durdum; Uslu bir gece. Aynı taşın altında durmuşuz, bilmeden.',
+   choices:[{label:'Ona söyle.',to:'tas2'},{label:'Yıkık hâlâ orada.',to:'tas3'}]},
+  tas2:{text:'Söylerim. Kapıda kalanla fırtınadan dönen aynı yerde durmuş; bunu bilen iki kişi oluruz. İki, bir sayıdır. Bir, değil.',choices:[AYRIL]},
+  tas3:{text:'Oradadır. Taş gitmez; insan gider. Bir gün biri daha kapıda kalırsa oraya gitsin, Uslu’ya bunu söyleyeceğim: adresi ikimiz biliyoruz.',choices:[AYRIL]},
+  yine:{text:'Yine mi? …Peki. İkinci kez soran ilk kişisin.',choices:[{label:'Anlat.',to:'1'},AYRIL]},
+ },
+ mira:{
+  tas:{text:'Uslu’nun mu? …Ciğerine baktım döndüğünde; kül doluydu. Elindekine bakmadım. Kimse bakmadı. Bunu getirmesi için iki gece nefessiz kalmış ve ben yalnız öksürüğünü yazdım.',
+   choices:[{label:'Git, bak.',to:'tas2'},{label:'Öksürüğü değil, taşı yaz.',to:'tas3'}]},
+  tas2:{text:s=>'Giderim. “Sayıyordum seni” derim; “ölülere mi” derse ne derim? …Yaşayanlara, derim. '+(s.flags.selviSir==='soylendi'?'İkinci kez olur bu; Elvi birinciydi.':'…İlk kez olur bu.'),choices:[AYRIL]},
+  tas3:{text:'Ben sayı yazarım, Undur şey yazar. …Ama sayıya girmeyen şey yok oluyorsa, bir satır açarım: “Uslu, taş, temiz.” Üç kelime. Hastalardan sonra ilk uzun satırım.',choices:[AYRIL]},
+  /* D1 tekrarli (gun 7+, depo >=3). D4 yankisi: Lin'in kozu, bir kez. */
+  tekrar:{text:s=>(s.flags.miraKozEk===String(s.gun)
+     ?(s.flags.linKoz==='yok'?'Lin közü kimseye taşımıyor. Kavanoz ateşin yanında duruyor, dolu. Dolu kavanoz boş eldir. '
+      :`Lin közü ${KOZ_KIME[String(s.flags.linKoz)]??''} taşıyor artık. Krala taşırdı; o satır kapandı, bu açıldı. `):'')
+    +'Bir gün daha. Kimseyi yazmadım bu gece. Bunu söylemeye alışık değilim; cümlenin sonu boş kalıyor.',
+   choices:[{label:'Boş iyi.',to:'tekrar2'}]},
+  tekrar2:{text:'Boş iyi. Yazamadığım günleri de saymaya başlasam, iki defter gerekir.',choices:[AYRIL]},
+  yine:{text:'Yine mi? …Peki. Ben de her gece aynı isimleri okuyorum; bir kez daha okumak eksiltmez.',choices:[{label:'Anlat.',to:'1'},AYRIL]},
+ },
+ tuhn:{
+  /* D1 tekrarli. Cift gunde Lin'e odun (motor linTuhnOdun birakir). */
+  tekrar:{text:s=>s.gun%2===0
+    ?'Lin’e odun taşıdım. “Tuhn amca, kaç parça?” dedi, saydım: dört. O da çentik attı: dört. Çocuk her şeyi sayıyor, Mirna’dan kapmış.'
+    :'Bugün de indim. Yarın da inerim herhâlde; bir gün inmediğimi duyarsan testiyi uçurumun başında ara. Şaka değil, adres.',
+   choices:[{label:'…',to:null}]},
+ },
+ ayaz:{
+  tekrar:{text:'Lin uyurken ateşe ben baktım. Söz onun, ateş ikimizin. …Sara teyzeyi düşündüm; “bekle” demişti, beklemedim. İndim diye kızar mı? Sence?',
+   choices:[{label:'Kızmaz. Sen Lin için indin.',to:'tekrarA'},{label:'Belki kızar.',to:'tekrarB'}]},
+  tekrarA:{text:'Lin için. …Evet. Bunu ona söylerim, dönerse.',choices:[AYRIL]},
+  tekrarB:{text:'…Peki. Kızsın. Yüzünü görürüm en azından.',choices:[AYRIL]},
+ },
+ muhafiz:{
+  /* D5: Alf'in kilici elde (soz bozulmus). Bozulan sozun bir ise yaramasi bilerek. */
+  kilic:{text:'O kılıç. Kapı muhafızının. Alf’in. …Kapıdan çıkmış demek; o kılıç kapıdan geçmezdi. Ya Alf öldü ya yemin. Hangisi?',
+   choices:[{label:'Yemin.',to:'kilicYemin'},{label:'Alf yaşıyor, kılıcı bende.',to:'kilicYasiyor'}]},
+  kilicYemin:{text:'Geç. Bozulan yemin kapı açar; bilirim, ben de bir tanesinin kapısında duruyorum.',choices:[AYRIL]},
+  kilicYasiyor:{text:'Yaşıyorsa yemini ölmüş. Geç.',choices:[AYRIL]},
+ },
+ rauf:{
+  yemin:{text:'…Okudun mu? İçeridekiler için. Ben dışarıdakini seçtim. Hangisi yemin, hâlâ bilmiyorum.',choices:[AYRIL]},
+  /* D6 yol cumleleri: takipteyken mekana ilk giriste (motor changeZone). */
+  yol_disari:{text:'Kül. …Kızım bunun altında bir yerde. Hangi yerde, bilmiyorum; külün adresi yok.',choices:[{label:'Yürü.',to:null}]},
+  yol_haven:{text:'Orada. Kapıda. On bir yıl… duruşu aynı. Beni görmesin daha; önce sen git, ben arkandayım. Söz verdim, arkandayım.',choices:[{label:'Yürü.',to:null}]},
+  yol_yikik:{text:'Burası… Sara’nın çocuğunun yeri mi? Bir çocuk bekliyor, bir baba kaçıyor. Aynı külün iki yüzü.',choices:[{label:'Yürü.',to:null}]},
+  yine:{text:'Yine mi? …Peki. Bacağım gidecek yer bırakmadı; anlatırım.',choices:[{label:'Anlat.',to:'1'},AYRIL]},
+ },
+ karga:{
+  yine:{text:'Yine mi? …Peki. Konuşmak bedava; bunu beye söyleme.',choices:[{label:'Anlat.',to:'1'},AYRIL]},
+ },
+};
+for(const [npc,d] of Object.entries(EK_STORY))Object.assign(STORY[npc],d);
+/** D6: Rauf takipteyken mekana ilk giris (motor changeZone okur). */
+export const RAUF_YOL:Partial<Record<Zone,string>>={disari:'rauf:yol_disari',haven:'rauf:yol_haven',yikik:'rauf:yol_yikik'};
+/** D8: "hikayeni anlat" ikinci kez acilinca kisa giris. */
+const YINE:Record<string,string>={mira:'mira:yine',boran:'boran:yine',ekin:'ekin:yine',rauf:'rauf:yine',selvi:'selvi:yine',karga:'karga:yine'};
+const KOZ_KIME:Record<string,string>={alf:'Alf’e',elvi:'Elvi’ye',tuhn:'Tuhn’a',undur:'Undur’a'};
+const KOZ_SECIM:Record<string,string>={'nil:kozAlf':'alf','nil:kozElvi':'elvi','nil:kozTuhn':'tuhn','nil:kozUndur':'undur','nil:kozYok':'yok'};
+const TAS_KIM:Record<string,string>={'ekin:tas':'undur','nil:tas':'lin','selvi:tas':'elvi','mira:tas':'mirna'};
+const TAS_EYLEM:Record<string,string>={ekin:'story:ekin:tas',nil:'story:nil:tas',selvi:'story:selvi:tas',mira:'story:mira:tas'};
+const TANIK_AD:Record<string,string>={undur:'Undur',lin:'Lin',elvi:'Elvi',mirna:'Mirna'};
+const TANIK_YONE:Record<string,string>={undur:'Undur’a',lin:'Lin’e',elvi:'Elvi’ye',mirna:'Mirna’ya'};
+/** D3: Uslu'nun karsiligi; ikinci tanik ona gittikten sonra (en az bir gun). */
+const USLU_TANIK:Record<string,string>={
+ undur:'Undur geldi. Soru sordu. On bir yılda ilk soru; “dışarıda ne var” dedi, “kül olmayan bir taş” dedim, yazdı. …Yazdı. Sayıklama hikâye oldu.',
+ lin:'Çocuk geldi. Taşı tuttu, sıcak mı diye. Sonra “dışarıda ateş var mı” dedi. Yok, dedim. Işık var, dedim; ateşten değil, bilmiyorum neyden. Yalan mı söyledim? Söylemedim; ışık vardı.',
+ elvi:'Kapıdaki kadın geldi. “Kemerli yıkık” dedi, “ben de orada durdum.” İkimiz aynı taşın altında durmuşuz. Hikâyeyi iki kişi bilince sayıklama olmuyor, biliyor muydun?',
+ mirna:'Şifacı geldi. Ciğerime baktı, sonra elime. “Sayıyordum seni” dedi. “Ölülere mi” dedim. Cevap vermedi; ama bakmadan da gitmedi. Bu da bir sayı.',
+};
+/** D2 CAPRAZ HAFIZA. Her satir tek seferlik bir on ek (ya da `yerine`: tum
+ *  ana metin). `hemen` olmayanlar kosulun ilk dogru oldugu gunun ERTESINDEN
+ *  itibaren cikar (olgunlas). Yorumdaki "kanal": bu kisi bunu nereden biliyor. */
+type Anis={k:string;if:(s:State)=>boolean;t:Metin;yerine?:boolean;hemen?:boolean};
+export const ANILAR:Record<string,Anis[]>={
+ ekin:[
+  // kanal: Mirna'nin defteri siginakta acik
+  {k:'selviYirmi',if:s=>s.flags.selviSir==='soylendi',t:'Mirna yirmi yazdı. Ben Elvi’yi dördüncü gün yazmıştım; şimdi iki defter aynı şeyi söylüyor. On bir yılda ilk.'},
+  // kanal: ates herkesin gozu onunde sondu
+  {k:'nilSondu',if:s=>s.flags.nilSondu==='evet',t:'Ateş söndü. Ocakların yanmasını o çocuğa bağlıyordum; hâlâ bağlıyorum. Yanmayan ocağı da yazdım.'},
+  // kanal: karar siginak onunde verildi
+  {k:'kralIsim',if:s=>['karga','obruk','alf'].includes(String(s.flags.kralKarar)),t:'Mirna’ya bir isim verdin. Yanlış isim de yazılır; ben çizmem. Doğrusunu öğrenirsen altına yazarım, üstüne değil.'}],
+ boran:[
+  // kanal: Lin (cocuk Alf'e "o sayiyor" demis)
+  {k:'linCentik',if:s=>s.flags.linCentik==='sen'&&!s.flags.alfKirildi,t:'Çocuğun çentiklerini sen sayıyormuşsun. Ben “sayma” demiştim. Haklı değildim; sayılmayan şey yok oluyor, Mirna öyle diyor.'},
+  // kanal: Mirna Alf'e soyledi
+  {k:'ilacItiraf',if:s=>s.flags.medicine==='rauf'&&!!s.flags.medicineDone&&s.flags.alfKarsi==='itiraf'&&!s.flags.alfKirildi,t:'Mirna söyledi: ilacı ona vermişsin. Bıraktığını söylemiştin; iyileştirdiğini söylememiştin. İkisi birden ağır.'}],
+ nil:[
+  // kanal: Tuhn odun getiriyor
+  {k:'tuhnKaldi',if:s=>!s.flags.nilSondu&&s.flags.tuhn==='kaldi',t:'Tuhn amca odun getiriyor. Dört parça, saydım.'},
+  // kanal: ucurum konusuldu
+  {k:'tuhnAtladi',if:s=>!s.flags.nilSondu&&s.flags.tuhn==='atladi',t:'Tuhn amca odun getirmiyor artık. Kimse bir şey demiyor; demeyince ben de saymıyorum.'},
+  // kanal: Tiga anlatti
+  {k:'sozAyaz',if:s=>!s.flags.nilSondu&&s.flags.sozAyaz==='verildi'&&s.flags.ayaz==='indi',t:'Ağabeyim dedi: Sara teyzeyi sen arayacaksın. Söz vermişsin. Ben de söz tutuyorum; ikimiz aynı işi yapıyoruz.'}],
+ mira:[
+  // kanal: sayar. Kral olduyse susar: o gun "on dokuz" diyor (mevcut metin), iki sayi yan yana durmasin.
+  {k:'tuhnAtladi',if:s=>s.flags.tuhn==='atladi'&&s.flags.kral!=='oldu',t:'On sekiz. Tuhn’u yazdım; testisi yanında değildi.'},
+  // kanal: gordu (Rauf yaninda)
+  {k:'raufTakip',hemen:true,if:s=>s.flags.rauf==='takip',t:'Yanındaki adam… bacağı. Bakmadım, bakmam gerekir. Alf görmesin önce ben göreyim.'}],
+ selvi:[
+  // kanal: ilac heybede gorunur (yemin_mirna yalniz okunur)
+  {k:'ilac',hemen:true,if:s=>s.flags.yemin_mirna==='tasiniyor',t:'Heybendeki şişe Mirna’nın. Hastalar bu gece de yatıyor. Kapıda beklemeyi bilirim; onlar bilmez.'},
+  // kanal: Tuhn onunden gecti
+  {k:'tuhnKaldi',if:s=>s.flags.tuhn==='kaldi',t:'Uçurumdaki adam indi. Kimse onu yazmadı; zaten yazılıydı. Sayıdan düşmemek, sayıya girmekten kolay.'},
+  // kanal: herkes gordu
+  {k:'kralOldu',if:s=>s.flags.kral==='oldu',t:'Köşedeki adam öldü. On dokuz on sekiz oldu mu? Hayır: on dokuz dedi Mirna, yine. Ölen sayıdan düşmüyor, gelen sayıya girmiyor. Bu hesap yalnız ona ait.'}],
+ obruk:[
+  // kanal: kendi kapisi
+  {k:'kargaSurgun',if:s=>s.flags.kargaSurgun==='evet',t:'Karga’yı sen gönderdin. Kapımda tek mızrak kaldı; daha az adam, daha çok hafta. Teşekkür etmem, sen de bekleme.'}],
+ uslu:[
+  // kanal: tanik ona gitti (D3)
+  {k:'tanik',yerine:true,if:s=>!!USLU_TANIK[String(s.flags.usluTanik)],t:s=>USLU_TANIK[String(s.flags.usluTanik)]},
+  // kanal: oyuncu ovadan dondu, yuzunden belli
+  {k:'muhafiz',hemen:true,if:s=>!!s.flags.usluMuhafiz&&!!s.flags.muhafiz,t:'Ovadaki adamı gördün. Yüzünden belli; o adamı gören bir daha aynı yüzle bakmaz. Dedim sana.'},
+  // kanal: Tuhn asagida anlatti
+  {k:'tuhnSare',if:s=>s.flags.tuhnSare==='biliyor'&&!!s.flags.usluSara,t:'Tuhn uçurumdan indi; benim gördüğüm kadınla. Beni duymadılar, sen duydun, o indi. Delinin sözü iki elden geçince söz oluyor.'}],
+ ayaz:[
+  // kanal: kendi (haberi oyuncu getirdi)
+  {k:'linSoz',if:s=>s.flags.ayaz==='indi'&&s.flags.sozNil==='verildi'&&s.flags.ayazHaber==='soylendi',t:'Lin’e verdiğin sözü tuttun, bana söyledin. Lin bunu biliyor mu? Ben söylemedim; sen söyle, sözler sahibinden duyulur.'}],
+};
+/** D4: Lin'in kozu hedef kisinin ana metnine ERTESI GUNDEN itibaren kalici on ek. */
+const KOZ_ONEK:Record<string,[string,string]>={
+ boran:['alf','Çocuk köz getiriyor. Krala “götürme” demiştim; şimdi bana getiriyor. Sen söylemişsin. İlk gün almadım. İkinci gün aldım. '],
+ selvi:['elvi','Çocuk kapının dibine köz getirdi. İlk gece kimse getirmedi. Senin fikrinmiş. Sayılmıyorum ama ısınıyorum; demek biri önce geliyor. '],
+ tuhn:['tuhn','Lin köz getirdi. “Kral amcanınkiydi” dedi. Ölü adamın közü. Aldım. Sara da alırdı; o her şeyi alırdı, taşımak için. '],
+ ekin:['undur','Çocuk köz getiriyor. Elim ısınınca daha çok yazıyorum; bilmiyordum. Senin fikrin. Yazdım: “köz Undur’a.” Kendi adımı ilk kez yazdım. '],
+};
+function kozOnek(s:State,id:string){const k=KOZ_ONEK[id];
+ if(!k||s.flags.linKoz!==k[0]||s.gun<=Number(s.flags.linKozGun||0))return '';
+ if(id==='boran'&&s.flags.alfKirildi)return '';return k[1];}
+/** D1 ATES BASI SOHBETLERI. Gun 2-6 sabit kisi; 7+ kosulu tutan tekrarlilar
+ *  arasinda sirayla. Gunde en cok bir; o kisiyle konusmazsan kacar. */
+const GUN_SOHBET:Record<number,{npc:string;dugum:string;if?:(s:State)=>boolean}>={
+ 2:{npc:'nil',dugum:'nil:gun2',if:s=>!s.flags.nilSondu},
+ 3:{npc:'ekin',dugum:'ekin:gun3'},
+ 4:{npc:'boran',dugum:'boran:gun4',if:s=>!s.flags.alfKirildi},
+ 5:{npc:'uslu',dugum:'uslu:gun5',if:s=>!s.flags.olay_kralOldu},
+ 6:{npc:'selvi',dugum:'selvi:gun6'},
+};
+const TEKRAR_SOHBET:{npc:string;dugum:string;if:(s:State)=>boolean}[]=[
+ {npc:'tuhn',dugum:'tuhn:tekrar',if:s=>s.flags.tuhn==='kaldi'},
+ {npc:'ayaz',dugum:'ayaz:tekrar',if:s=>s.flags.ayaz==='indi'},
+ {npc:'mira',dugum:'mira:tekrar',if:s=>s.erzak.yiyecek>=3&&s.erzak.su>=3},
+];
+/** Bugunun sohbeti bu kisiyle mi; oyleyse dugum adi. */
+export function gunSohbeti(s:State,id:string):string|null{
+ if(s.flags['sohbet_'+s.gun])return null;
+ let g:{npc:string;dugum:string;if?:(s:State)=>boolean}|undefined;
+ if(s.gun<=6)g=GUN_SOHBET[s.gun];
+ else{const l=TEKRAR_SOHBET.filter(t=>t.if(s));g=l.length?l[(s.gun-7)%l.length]:undefined;}
+ return g&&g.npc===id&&(!g.if||g.if(s))?g.dugum:null;
+}
+/** Kosulun ilk dogru oldugu gunu tutar; ertesi gunden itibaren true doner. */
+function olgunlas(s:State,anahtar:string,kosul:boolean):boolean{
+ if(!kosul)return false;const g='anisGun_'+anahtar;
+ if(!s.flags[g]){s.flags[g]=String(s.gun);return false;}
+ return s.gun>Number(s.flags[g]);
+}
+const yalanOrtada=(s:State)=>s.flags.medicine==='rauf'&&!!s.flags.medicineDone&&s.flags.alfKarsi==='yalan';
+/** Bayraklarin ilk goruldugu gunu kaydeder (choose sonu, gunGec basi, konusma basi). */
+export function anilariKaydet(s:State){
+ for(const [npc,l] of Object.entries(ANILAR))for(const a of l)if(!a.hemen&&a.if(s))olgunlas(s,npc+'_'+a.k,true);
+ olgunlas(s,'boran_yalan',yalanOrtada(s));
+}
+/** Motor bir NPC ile konusma acarken cagirir (tanisma girisleri kurulduktan
+ *  sonra). Sirasi: yalanin bedeli > gunun sohbeti; ayrica tek seferlik bir ani
+ *  secilir (on ek, sohbet bitince ana metinde gorunur). dialogue() saf kalsin
+ *  diye butun yazma burada. */
+const KURULU_GIRIS=new Set(['mira:yirmi','mira:ayazYazdi','ayaz:asagi','tuhn:1','rauf:takip1','rauf:serbest1','rauf:korundu1','rauf:yenildi','boran:teslim']);
+export function konusmaBasla(s:State,id:string){
+ const f=s.flags;delete f.anis;anilariKaydet(s);
+ /* Motorun bu konusma icin kurdugu tek seferlik giris ezilmez. Yarida
+    kapanmis eski bir hikaye dugumu (talk temizlenmeden) sohbeti engellemez. */
+ const kurulu=typeof f.talk==='string'&&f.talk.startsWith(id+':')&&KURULU_GIRIS.has(f.talk);
+ if(!kurulu&&id==='boran'&&!f.alfKirildi&&!f.alfYalan&&olgunlas(s,'boran_yalan',yalanOrtada(s))){f.alfYalan='ortaya';f.talk='boran:yalan';}
+ else if(!kurulu){const d=gunSohbeti(s,id);
+  if(d){f['sohbet_'+s.gun]=d;f.talk=d;
+   if(d==='tuhn:tekrar'&&s.gun%2===0)f.linTuhnOdun=true;
+   if(d==='mira:tekrar'&&f.linKoz&&!f.miraKozEk)f.miraKozEk=String(s.gun);}}
+ const a=(ANILAR[id]||[]).find(x=>!f['anis_'+id+'_'+x.k]&&x.if(s)&&(x.hemen||olgunlas(s,id+'_'+x.k,true)));
+ if(a){f['anis_'+id+'_'+a.k]=true;f.anis=id+':'+a.k;}
+}
+/** D5/D3/D4: esya, bayrak ya da yemine bagli ek secenekler (hic sayi yok). */
+function ekSecenekler(s:State,id:string):Choice[]{
+ const f=s.flags,ek:Choice[]=[];
+ if(TAS_EYLEM[id]&&s.inventory.cakil&&!f.cakilGosterildi&&!(id==='nil'&&f.nilSondu))
+  ek.push({label:'Uslu’nun taşı. Bak.',action:TAS_EYLEM[id],note:'İkinci tanık'});
+ if(id==='nil'&&f.kral==='oldu'&&!f.nilSondu&&!f.linKoz)
+  ek.push({label:'Közü kime götürsün, söyle.',action:'story:nil:koz',note:'Lin’in sorusu'});
+ if(id==='ekin'&&s.inventory.ledger&&f.fugitive==='protected'&&!f.raufYemin)
+  ek.push({label:'Alf’in nöbet defteri bende. Bir bak.',action:'story:ekin:defter',note:'Nöbet defteri'});
+ if(id==='muhafiz'&&s.equipment.weapon==='guard'&&!f.muhafiz&&!s.inventory.tac&&f.tac!=='satildi')
+  ek.push({label:'Elimdeki kılıca bak.',action:'story:muhafiz:kilic',note:'Alf’in kılıcı'});
+ if(id==='karga'&&f.obrukSir==='sakladin'&&!f.kargaPay&&!f.kargaSurgun)
+  ek.push({label:'Bir avuç yeter.',action:'karga_pay',note:'Karga’nın payı · 1 tuzlu et'});
+ return ek;
+}
+/** Ana diyaloga hafiza on eki, Lin'in kozu ve ek secenekler eklenir. */
+/** D4 sonrasi Lin'in ana metni (oyuncunun soyledigi kisiye goturuyor). */
+const LIN_KOZ:Record<string,string>={
+ alf:'Kral amca gitti. Közü artık Alf amcaya götürüyorum. Bazen alıyor. Almadığı gün yerine koyuyorum.',
+ elvi:'Kral amca gitti. Közü artık kapıdaki teyzeye götürüyorum. Teşekkür etmiyor; ellerini uzatıyor. Kral amca gibi.',
+ tuhn:'Kral amca gitti. Közü artık Tuhn amcaya götürüyorum. O odun getiriyor, ben köz. Ateş yürüyor.',
+ undur:'Kral amca gitti. Közü artık Undur amcaya götürüyorum. Eli ısınınca bana bakmadan “sağ ol” diyor. Yazarken bile.',
+ yok:'Kral amca gitti. Köz kavanozda duruyor. Ateşi söndürmüyorum ama… kavanoz da ağır.',
+};
+function hafizaEkle(s:State,id:string,d:Dialogue):Dialogue{
+ const a=typeof s.flags.anis==='string'&&s.flags.anis.startsWith(id+':')?(ANILAR[id]||[]).find(x=>s.flags.anis===id+':'+x.k):undefined;
+ const at=a?metin(a.t,s):'';
+ const text=a?.yerine?at:(at?at+' ':'')+kozOnek(s,id)+d.text;
+ const ek=ekSecenekler(s,id);if(!ek.length)return {...d,text};
+ const i=d.choices.findIndex(c=>c.action==='close');const ch=[...d.choices];
+ ch.splice(i<0?ch.length:i,0,...ek);return {...d,text,choices:ch};
+}
 export function dialogue(s:State,id:string):Dialogue{
- const close={label:'Şimdilik hoşça kal.',action:'close'};
  // Hikaye sohbeti suruyorsa gorev diyalogu yerine o dugum gosterilir.
  const talk=typeof s.flags.talk==='string'?s.flags.talk:'';
  const [tNpc,tNode]=talk.split(':');
  if(tNpc===id&&STORY[id]?.[tNode]){
   const n=STORY[id][tNode],base=dialogue({...s,flags:{...s.flags,talk:''}},id);
-  return {...base,text:n.text,choices:[
-   ...n.choices.filter(c=>!c.if||c.if(s)).map(c=>({label:c.label,action:c.to?`story:${id}:${c.to}`:'story:bitir',...(c.note?{note:c.note}:{})})),
+  return {...base,text:metin(n.text,s),choices:[
+   ...n.choices.filter(c=>!c.if||c.if(s)).map(c=>({label:metin(c.label,s),action:c.to?`story:${id}:${c.to}`:'story:bitir',...(c.note?{note:c.note}:{})})),
   ]};
  }
+ return hafizaEkle(s,id,anaDiyalog(s,id));
+}
+function anaDiyalog(s:State,id:string):Dialogue{
+ const close={label:'Şimdilik hoşça kal.',action:'close'};
  // Tuhn: ucurumdayken butun sohbeti STORY agacinda (motor talk'i 'tuhn:1'e
  // kurar). Indikten sonra siginakta durur ve buradaki metin gosterilir.
  if(id==='tuhn')return {who:'Tuhn',role:s.flags.tuhn==='kaldi'?'Ateşin yanındaki adam':'Uçurumun başındaki adam',portrait:6,
@@ -1116,7 +1454,7 @@ export function dialogue(s:State,id:string):Dialogue{
  if(id==='nil'){
   return {who:'Lin',role:'Ateşi söndürmeyen',portrait:7,
    text:s.flags.nilSondu?'…Söndü. Bakma bana. Odun taşımak kolaydı; zor olan neden taşıdığını bilmekti. Sen onu aldın.'
-    :s.flags.kral==='oldu'?'Kral amca gitti. Köz götürecek kimsem kalmadı. Ateşi yine söndürmem ama… kime götüreceğim onu?'
+    :s.flags.kral==='oldu'?(s.flags.linKoz?LIN_KOZ[String(s.flags.linKoz)]:'Kral amca gitti. Köz götürecek kimsem kalmadı. Ateşi yine söndürmem ama… kime götüreceğim onu?')
     :s.flags.ayaz==='indi'?'Ağabeyim geldi! Koşarak geldi, külden bembeyazdı. Ateşin yandığını gördü. …Mirna onu yazdı. Yaşayanlara.'
     :s.flags.ayazHaber==='soylendi'?'Söyledin mi ona? Ateşin yandığını? …Tamam. O zaman biliyor. Bilmesi yeter, gelmese de.'
     :s.flags.ayaz==='kaldi'?'Onu gördün, değil mi? Yüzünden belli. Bekliyor. …Sara teyze ona “bekle” dedi, bana “söndürme”. İkimiz de tutuyoruz.'
@@ -1156,7 +1494,7 @@ export function dialogue(s:State,id:string):Dialogue{
   const tac=!!s.inventory.tac||s.flags.tac==='satildi';
   return {who:'Son Muhafız',role:'Kralın adamı',portrait:15,
    text:tac?'…Heybendeki. O taç. Onu ancak bir şekilde almış olabilirsin. Konuşmayacağız.'
-    :s.flags.muhafiz==='gecti'?(s.flags.kralMuhafizHaber?'Söyledin mi? …Söylemedi. Biliyordum. Geç; yol senin, nöbet benim.':'Söyledin mi ona? …Henüz. Geç. Söylediğinde bir kelime yeter: dön.')
+    :s.flags.muhafiz==='gecti'?(s.flags.muhafizKilic?'Kılıç hâlâ belinde. Ona bakmıyorum artık. Geç; yol senin, nöbet benim.':s.flags.kralMuhafizHaber?'Söyledin mi? …Söylemedi. Biliyordum. Geç; yol senin, nöbet benim.':'Söyledin mi ona? …Henüz. Geç. Söylediğinde bir kelime yeter: dön.')
     :'Dur. Bu yol kralın yoludur. Miğferin içinden ses kül gibi geliyor. …Kimin adamısın?',
    choices:tac?[{label:'Kılıcını çek.',action:'story:muhafiz:dovus'}]
     :s.flags.muhafiz==='gecti'?[close]
@@ -1183,11 +1521,12 @@ export function dialogue(s:State,id:string):Dialogue{
   const bilgi=['kralMirna','kralAlf','kralUndur','kralLin','kralObruk'].filter(k=>s.flags[k]).length;
   return {who:'Kral',role:'Küllerin kralı',portrait:13,
    text:s.flags.kralMuhafizHaber?'Dinliyor. Ovada bir adamın onu beklediğini duyuyor. “Dön” demiyor. Diyemiyor; ağzı kıpırdıyor, ses çıkmıyor.'
+    :s.inventory.migfer?'Heybendeki miğferi gördü. Eli tacına gitmedi; dizine gitti. Bir şey demiyor; miğferin kimin olduğunu biliyor.'
     :s.flags.kralAlf&&s.flags.kralUndur?'Elini kaldırıyor, yarım. Bir emir verir gibi. Sonra eli düşüyor. Kimseye emir vermiyor artık; elin hatırladığı bu.'
     :bilgi>=2?'Sana bakıyor. Uzun. Sonra elini tacına götürüyor; düzeltmiyor, sadece orada olduğunu kontrol ediyor. Hâlâ orada. Bir şey demiyor.'
     :bilgi>=1?'Gözlerini kaldırıyor. Tacın altında kül var, sakalında kül var. Bir şey demiyor; demeyeceğini artık biliyorsun.'
     :'Köşede oturuyor. Başında paslı bir taç; gözleri ateşe değil duvara bakıyor. Sen konuşunca kıpırdamıyor.',
-   choices:[...(s.flags.muhafiz==='gecti'&&!s.flags.kralMuhafizHaber?[{label:'Muhafızın ovada. “Dön” de, yeter.',action:'kral_haber',note:'Son muhafızın ricası'}]:[]),{label:'Onu rahat bırak.',action:'kral_bak'}]};}
+   choices:[...(s.flags.muhafiz==='gecti'&&!s.flags.kralMuhafizHaber&&!s.flags.muhafizKilic?[{label:'Muhafızın ovada. “Dön” de, yeter.',action:'kral_haber',note:'Son muhafızın ricası'}]:[]),{label:'Onu rahat bırak.',action:'kral_bak'}]};}
  /* Obruk ve iki parali askeri. Yeri SIMDILIK Sarnic Agzi: kendi odasi
   *  uretilince oraya tasinacak (bkz. world.ts magara bolumu). */
  if(id==='obruk'){
@@ -1203,12 +1542,13 @@ export function dialogue(s:State,id:string):Dialogue{
     ...(s.inventory.tac?[{label:'Sende bir taç var. Ne verirsin?',action:'obruk_tac',note:'Ongun’un tacı · 150 altın'}]:[]),
     {label:'Malına bakayım.',action:'shop:obruk',note:bey?'Beye yakışır fiyat':'Fiyatlar iki buçuk kat'},close]};}
  if(id==='karga')return {who:'Karga',role:'Obruk’un adamı',portrait:11,
-  text:s.flags.obrukSir==='soylendi'?'Bey bu hafta kilere iki kez indi. İki kez. …Sen bir şey söyledin, değil mi? Söyleme, bilmek istemiyorum. Bilirsem bir şey yapmam gerekir.'
+  text:s.flags.obrukSir==='sakladin'?(s.flags.kargaPay?'Bey hâlâ uyuyor. Demek söylemedin.':'Bey hâlâ uyuyor. Sen bir şey söylemedin. Borçluyum demem, ama bu haftaki payımdan bir avuç senin.')
+   :s.flags.obrukSir==='soylendi'?'Bey bu hafta kilere iki kez indi. İki kez. …Sen bir şey söyledin, değil mi? Söyleme, bilmek istemiyorum. Bilirsem bir şey yapmam gerekir.'
    :s.flags.obrukDepo==='biliyorum'?'Sayıyı biliyorsun. Ağzını da benim gibi kapalı tut, ikimiz de kışı görelim.'
    :'Yaklaşma demedim. Ama durdurmadım da. Aradaki farkı bilen adam uzun yaşar.',
   choices:[...(s.flags.kralCinayet==='acik'&&!s.flags.ifadeKarga?[{label:'O gece dışarıdaymışsın.',action:'ifade_karga',note:'Soruşturma · Karga'}]:[]),{label:'Konuşalım.',action:'story:karga:1'},close]};
  if(id==='cakal')return {who:'Çakal',role:'Obruk’un adamı',portrait:12,
-  text:s.flags.obrukDepo==='biliyorum'?'…Karga çok konuşuyor.':'Ben konuşmam. Karga konuşur. İkimize bir ağız yeter.',
+  text:s.flags.kargaSurgun==='evet'?'…Karga gitti. Şimdi ben konuşuyorum. Beğenmedim.':s.flags.obrukDepo==='biliyorum'?'…Karga çok konuşuyor.':'Ben konuşmam. Karga konuşur. İkimize bir ağız yeter.',
   choices:[...(s.flags.kralCinayet==='acik'&&!s.flags.ifadeCakal?[{label:'O gece Karga neredeydi?',action:'ifade_cakal',note:'Soruşturma · Çakal'}]:[]),close]};
  if(id==='mira')return {who:'Mirna',role:'Sığınağın şifacısı',portrait:3,text:(s.flags.kral==='oldu'?(s.flags.kralKarar==='kendi'?'On dokuz. Yazdım. Yanına da senin cümleni yazdım. ':s.flags.kralKarar?'On dokuz. Yazdım. Bir isim daha yazdım; onu yazarken elim titredi. ':'On dokuz. Yazdım. Adının yanı boş duruyor. ') : '')+sabahOnek(s,'mirna')+(s.flags.medicine==='icildi'?(sabahOnek(s,'mirna')?'':'İlacı içmişsin. ')+'Hastalar hâlâ yatıyor. Kızmıyorum; dipte ne olduğunu biliyorum. Bir dahaki şişeyi ben taşırım.':s.flags.medicineDone?(s.flags.medicine==='rauf'?'Bir hayat kurtardın. Buradakiler için başka bir yol bulacağız. Yaralarını sarayım.':'İlaç işe yaradı. Bu gece kimseyi kaybetmedik. Dinlen; yaralarını sarayım.'):s.flags.medicine==='rauf'?'Ellerin boş… ama yüzünde söylemek istediğin bir şey var.':s.inventory.medicine?'Buldun! Bir şişenin bu kadar ağır bir umut taşıyacağını düşünmezdim.':'Aşağıdaki sarnıçta bir doz ilaç kaldı. Burada ateşler içinde yatanlar var. Onu bana getirir misin?'),choices:[
   /* Kral cinayeti: ifade + KARAR. Karar Mirna'ya veriliyor cunku olen herkesi
@@ -1257,10 +1597,54 @@ export function dialogue(s:State,id:string):Dialogue{
  /* Tanimsiz kisi: eskiden Kul Ocagi'nin "Eski muhur"u buraya duserdi. */
  return {who:'…',role:'',portrait:1,text:'Burada konuşacak kimse yok.',choices:[close]};
 }
-export function choose(s:State,action:string):{message:string;special?:'close'|'shop'|'ending';leveled?:boolean;satici?:string}{
+type Sonuc={message:string;special?:'close'|'shop'|'ending';leveled?:boolean;satici?:string};
+/** Her secimden sonra ani bayraklarinin ilk gunu kaydedilir (bkz. olgunlas). */
+export function choose(s:State,action:string):Sonuc{const r=secim(s,action);anilariKaydet(s);return r;}
+function secim(s:State,action:string):Sonuc{
  // Hikaye dugumleri: story:<npc>:<dugum>
  if(action.startsWith('story:')&&action!=='story:bitir'){
-  const dugum=action.slice(6);
+  const dugum=action.slice(6);const f=s.flags;
+  if(f.miraElviEk==='acik')f.miraElviEk='goruldu';
+  /* D8: "hikayeni anlat" ikinci kez: once kisa giris, "Anlat." ile 1'e. */
+  const [npc0,dg0]=dugum.split(':');
+  if(dg0==='1'&&YINE[npc0]){
+   if(f['anlatti_'+npc0]&&f.talk!==YINE[npc0]){f.talk=YINE[npc0];return {message:''};}
+   f['anlatti_'+npc0]=true;}
+  /* D3 ikinci tanik: tasi kime gosterdin (bir kez). */
+  if(TAS_KIM[dugum]){f.talk=dugum;
+   if(!f.cakilGosterildi&&s.inventory.cakil){const k=TAS_KIM[dugum];f.cakilGosterildi=true;f.usluTanik=k;
+    s.journal.unshift(`Uslu’nun taşını ${TANIK_YONE[k]} gösterdin. Uslu’nun ikinci tanığı oldu.`);gainXp(s,20);}
+   return {message:''};}
+  /* D4 Lin'in kozu: kime goturecegi (bir kez). */
+  if(KOZ_SECIM[dugum]){f.talk=dugum;
+   if(!f.linKoz){const k=KOZ_SECIM[dugum];f.linKoz=k;f.linKozGun=String(s.gun);
+    s.journal.unshift(k==='yok'?'Lin’e közü kimseye götürmemesini söyledin. Kavanoz ateşin yanında kaldı.':`Lin’e közü ${KOZ_KIME[k]} götürmesini söyledin.`);gainXp(s,20);}
+   return {message:''};}
+  /* D1 gun sohbetleri: cevap bir bayrak birakir, Son sayfa ve hafiza okur. */
+  if(dugum==='nil:gun2a'&&!f.linCentik)f.linCentik='sen';
+  if(dugum==='nil:gun2b'&&!f.linCentik)f.linCentik='o';
+  if(dugum==='ekin:gun3a'&&!f.undurAd)f.undurAd='istedi';
+  if(dugum==='ekin:gun3b'&&!f.undurAd)f.undurAd='kalsin';
+  if(dugum==='ekin:gun3c'&&!f.undurAd)f.undurAd='yetmisiki';
+  if(dugum==='selvi:gun6a'&&!f.elviBakti)f.elviBakti='evet';
+  if(dugum==='mira:7'&&f.elviBakti&&!f.miraElviEk){f.talk=dugum;f.miraElviEk='acik';return {message:''};}
+  /* D5 Alf'in kilici: bozulan soz bir kapi acar. */
+  if((dugum==='muhafiz:kilicYemin'||dugum==='muhafiz:kilicYasiyor')&&s.equipment.weapon==='guard'&&!f.muhafiz){
+   f.muhafiz='gecti';f.muhafizKilic='gordu';f.talk=dugum;
+   s.journal.unshift('Son muhafız Alf’in kılıcını tanıdı. Sorgulamadı; yolu açtı.');return {message:''};}
+  if(dugum==='ekin:defter'){f.talk=dugum;
+   if(!f.raufYemin){f.raufYemin='okundu';s.journal.unshift('Undur, Alf’in defterinde Rauf’un yeminini okudu: “içeridekiler için.”');}
+   return {message:''};}
+  /* D7 yalanin bedeli */
+  if(dugum==='boran:yalanItiraf'){f.talk=dugum;f.alfKarsi='itirafGec';
+   s.journal.unshift('Alf’e ilacı gördüğünü söyledin. Geç söyledin; “bu iş bitmedi” dedi.');return {message:''};}
+  if(dugum==='boran:yalanAd'){f.talk=dugum;
+   s.journal.unshift('Alf’e ilacı verdiğini söyledin ama adı söylemedin. Alf ikisini de yalan saydı.');return {message:''};}
+  /* D6 yuzlesme: her dalda teslim tamamlanir. */
+  if(dugum==='boran:teslim2'||dugum==='boran:teslim3'||dugum==='boran:teslim4'){
+   if(dugum==='boran:teslim4'&&!s.inventory.ledger)return {message:''};
+   if(!f.alfRaufSoz)f.alfRaufSoz=dugum==='boran:teslim2'?'kiz':dugum==='boran:teslim3'?'sus':'sil';
+   const r=f.ledgerDone?{message:''}:secim(s,'boran_deliver');f.talk=dugum;return r;}
   // Rauf dallanmasi: korumak sohbeti bitirir, zorlamak dovusu baslatir
   // Rauf'un kaderi ARTIK TEK YERDE. Once iki paralel karar vardi: ana
   // diyalogdaki "Sirrini koruyacagim / Alf'e teslim olmalisin" ve hikaye
@@ -1424,6 +1808,8 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
  case 'boran_deliver':if(s.flags.ledgerDone||!s.flags.fugitive||!removeItem(s,'ledger'))return {message:''};s.flags.ledgerDone=true;s.flags.ledgerStarted=true;xp=140;s.gold+=25;/* Rauf yolda olduyse (fugitive 'dead') defteri oyuncu getirir; Alf
    cizginin altina kendi eliyle bir satir yazar. Odul yuzuk (taslak §2). */
   /* v19.1: muhafiz kilici artik Alf'in sozu; teslimde yuzuk. */addItem(s,'life');message=s.flags.fugitive==='protected'?'Rauf’un ismini gizledin. Yaşam halkası kazandın.':s.flags.fugitive==='dead'?'Alf defteri aldı ve çizginin altına bir satır yazdı. Yaşam halkası kazandın.':'Defteri ve Rauf’u teslim ettin. Yaşam halkası kazandın.';break;
+ case 'karga_pay':if(s.flags.kargaPay||s.flags.obrukSir!=='sakladin'||s.flags.kargaSurgun)return {message:''};s.flags.kargaPay='alindi';addItem(s,'tuzet');
+  s.journal.unshift('Karga payından bir avuç tuzlu et verdi. Obruk’a söylemediğin için.');message='Karga bir avuç tuzlu et uzattı: “Sayma. Ben saydım.”';break;
  case 'son_sayfa':if(!s.ending)return {message:''};return {message:'',special:'ending'};
  case 'nil_odun':if(s.flags.nilOdun||!removeItem(s,'wood'))return {message:''};s.flags.nilOdun=true;xp=20;message='Lin odunu aldı: “Bu gece de yanar.”';break;
  case 'ayaz_haber':if(s.flags.ayazHaber||!s.flags.sozNil)return {message:''};s.flags.ayazHaber='soylendi';xp=30;message=s.flags.sozNil==='verildi'?'Lin’e verdiğin sözü tuttun. Tiga: “…Yanıyor demek.”':'Tiga: “…Yanıyor demek.”';break;
