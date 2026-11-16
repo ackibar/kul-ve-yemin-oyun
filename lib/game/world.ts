@@ -112,13 +112,9 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // elle aciliyor, disari cikis da onun ucunda.
   for(let j=2;j<4;j++)for(let i=12;i<18;i++)tiles[j][i]=1;
   gecis(12,2,18,3,'disari',[27,27]);    // ust kapi: kul ovasina cikis
-  /* GECICI TEST KAPISI - kullanici "100x100 test mekani" karar verince
-     kaldirilacak. Depo denemesinde aynen bu satirlar reachable oldugu
-     WASD ile dogrulanmisti (Kral'in koltugunun hemen kuzeyi), o yuzden
-     ayni yer tekrar kullanildi - "bos gorunuyor ama izole" hatasi
-     tekrarlanmasin diye. */
-  for(let j=15;j<17;j++)for(let i=1;i<3;i++)tiles[j][i]=1;
-  gecis(1,15,3,17,'test100',[36,14]);   // tas koridora gecis (bati kapisi -> koridorun DOGU ucu)
+  /* v19.0: Sigginaktan test koridoruna (test100) acilan gecici kapi kaldirildi
+     (yayin oncesi denetim P1-1). Mekan eski kayitlar icin duruyor; icinde
+     kalan oyuncu kendi geri donus gecisiyle sigginaga cikar. */
   // Ocaklarda boyali ALEV yok, sadece kor ve odun var; animasyonlu alevi motor
   // buraya koyuyor. Konum ocak halkasinin prop bileseninden olculdu.
   // Capa: Fire1 sprite'i 32 birimlik hucrenin TAMAMINI dolduruyor ve sprite()

@@ -1469,8 +1469,13 @@ if(!walkable(this.world,s.x,s.y)){[s.x,s.y]=this.world.spawn;}this.camera={x:s.x
        this.world.entities=this.world.entities.filter(x=>x.id!=='rauf');
        this.sahneYuru.delete('rauf');
        this.state.flags.rauf='oldu';
-       this.state.journal.unshift('Rauf yolda düştü. Seni korurken öldü.');
-       this.notify('Rauf öldü.');this.save();this.emit();}
+       /* Defter koynundan duser; oyuncu onu Alf'e goturur (fugitive 'dead').
+          Bu olmadan Defterdeki isim gorevi ve iki son da kilitleniyordu
+          (yayin oncesi denetim P0-1). */
+       this.state.flags.fugitive='dead';this.state.flags.ledgerStarted=true;
+       if(!this.state.inventory.ledger&&!this.state.flags.ledgerDone)addItem(this.state,'ledger');
+       this.state.journal.unshift('Rauf yolda düştü. Seni korurken öldü. Defter koynundan düştü; aldın.');
+       this.notify('Rauf öldü. Defter koynundan düştü; aldın.');this.save();this.emit();}
      }
     }else{
     // oyuncunun birkac adim gerisinde yurur

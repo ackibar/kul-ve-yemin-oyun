@@ -154,7 +154,8 @@ grup('Hikâye bütünlüğü');
 const storyKaynak=(await readFile(new URL('../../lib/game/data.ts',import.meta.url),'utf8'))
  +(await readFile(new URL('../../lib/game/engine.ts',import.meta.url),'utf8'));
 /* choose() icinde dugum ARANMADAN yakalanan hedefler (dovuse dallananlar). */
-const KESILEN=new Set(['muhafiz:dovus','rauf:zorla','tuhn:atladi']);
+/* 'ekin:sonSayfa' son panelini acar (bkz. data.ts choose). */
+const KESILEN=new Set(['muhafiz:dovus','rauf:zorla','tuhn:atladi','ekin:sonSayfa']);
 /* Sablonla kurulan girisler: `story:uslu:${SIRA[i]}` duz aramayla bulunmaz. */
 const SABLON=new Set(['uslu:d1','uslu:d2','uslu:d3','uslu:d4']);
 test('Her diyalog seçeneği var olan bir düğüme gidiyor',()=>{
@@ -244,31 +245,133 @@ test('Suçlanan tüccar satmaz; Karga sürgün edilince haritadan kalkar',()=>{
 });
 
 /* ============ FINALLER ============ */
-grup('Üç final');
-test('Başlangıçta hiçbir final hazır değil ve Undur teklif etmez',()=>{
+grup('İki son');
+/* Birinci bolumde iki son var: Goc ve Gercek. Av gizli (Bekci yok). Son
+   secilince once soz dugumu acilir; son, soz verilince yazilir. */
+const gercekHazir=()=>{const s=D.newState();
+ for(const k of ['kralMirna','kralAlf','kralUndur','kralLin','kralObruk'])s.flags[k]=true;
+ s.flags.alfSir='soylendi';s.flags.gordu_tunel=true;s.flags.gordu_cistern=true;s.flags.ledgerDone=true;
+ return s;};
+const gocHazir=()=>{const s=D.newState();
+ s.gun=4;s.kayip=0;s.erzak={yiyecek:8,su:8};s.flags.gordu_yikik=true;
+ s.flags.medicineDone=true;s.flags.ledgerDone=true;return s;};
+test('Başlangıçta hiçbir son hazır değil ve Undur teklif etmez',()=>{
  const s=D.newState();
  assert.equal(D.finalDurum(s).filter(f=>f.hazir).length,0);
  assert.equal(D.dialogue(s,'ekin').choices.filter(c=>c.action?.startsWith('final_')).length,0);
 });
-test('Adımları biten final seçilebilir, hazır olmayan reddedilir',()=>{
+test('Av gizli: listede yok, seçilemez',()=>{
  const s=D.newState();
  s.killed.push('warden');s.flags.muhafiz='gecti';
  s.inventory.balta=1;s.inventory.chain=1;s.equipment.armor='chain';
- const av=D.finalDurum(s).find(f=>f.id==='av');
- assert.equal(av.hazir,true,'eksik: '+av.adimlar.filter(a=>!a.bitti).map(a=>a.id));
- assert.ok(D.dialogue(s,'ekin').choices.some(c=>c.action==='final_av'));
- assert.equal(D.choose(s,'final_goc').message,'Henüz değil. Eksiklerini günlükten görebilirsin.');
- D.choose(s,'final_av');
- assert.equal(s.ending,'av');
- assert.equal(D.choose(s,'final_gercek').message,'','ikinci final secilememeli');
+ assert.deepEqual(D.finalDurum(s).map(f=>f.id),['goc','gercek']);
+ assert.ok(!D.dialogue(s,'ekin').choices.some(c=>c.action==='final_av'));
+ assert.equal(D.choose(s,'final_av').message,'Henüz değil. Eksiklerini günlükten görebilirsin.');
+ assert.equal(s.ending,null);
 });
-test('Her finalin metni yazılı ve kayıpları hatırlatıyor',()=>{
- for(const id of ['goc','gercek','av']){
+test('Göç yolu test koridoruna değil Yıkık Ev’e bağlı',()=>{
+ const s=gocHazir();delete s.flags.gordu_yikik;s.flags.gordu_test100=true;
+ assert.equal(D.finalDurum(s).find(f=>f.id==='goc').hazir,false);
+ s.flags.gordu_yikik=true;
+ assert.equal(D.finalDurum(s).find(f=>f.id==='goc').hazir,true);
+});
+test('Gerçek: son seçimi → söz düğümü → sayfa → son paneli',()=>{
+ const s=gercekHazir();
+ assert.equal(D.choose(s,'final_goc').message,'Henüz değil. Eksiklerini günlükten görebilirsin.');
+ assert.ok(D.dialogue(s,'ekin').choices.some(c=>c.action==='final_gercek'));
+ const r=D.choose(s,'final_gercek');
+ assert.equal(r.special,undefined,'son hemen açılmamalı, önce söz');
+ assert.equal(s.ending,null);
+ const d=D.dialogue(s,'ekin');
+ const etiket=d.choices.map(c=>c.label);
+ assert.ok(etiket.includes('Bir daha ‘bilmiyoruz’ demeyeceğim.'),'Gerçek yemini görünmeli');
+ assert.ok(!etiket.includes('Kimseyi geride bırakmayacağım.'),'Göç yemini görünmemeli');
+ assert.ok(etiket.includes('Söz vermem.'));
+ D.choose(s,d.choices.find(c=>c.label.startsWith('Bir daha')).action);
+ assert.equal(s.ending,'gercek');assert.equal(s.flags.yemin,'gercek');
+ assert.equal(s.inventory.sayfa,1,'Undur’un sayfası verilmeli');
+ const cevap=D.dialogue(s,'ekin');
+ assert.equal(cevap.text,'Benim yüküm. Sen taşırsın, ben yazarım demiştim; işte.');
+ const son=D.choose(s,cevap.choices[0].action);
+ assert.equal(son.special,'ending');assert.equal(s.flags.talk,'');
+ assert.equal(D.choose(s,'final_goc').message,'','ikinci son seçilememeli');
+ assert.equal(D.choose(s,'son_sayfa').special,'ending','son sayfa yeniden açılabilmeli');
+ assert.ok(D.dialogue(s,'ekin').choices.some(c=>c.action==='son_sayfa'));
+ assert.equal(D.yeminCumlesi(s),'Sen taşırsın, ben yazarım demiştim. Taşıdın. Yazıyorum.');
+ const sat=D.defterSatirlari(s);
+ assert.ok(sat.at(-1).startsWith('Sen. Yetmiş ikinci.'),'son satır Sen olmalı');
+ assert.ok(sat[0].startsWith('Mirna.'));
+ const p=D.sonMetni(s).split('\n\n');
+ assert.equal(p.length,3);assert.ok(p[0].startsWith('Undur son sayfayı yazdı'));
+ assert.ok(D.yeminler(s).some(y=>y.soz==='Bir daha ‘bilmiyoruz’ demeyeceğim.'&&y.not==='yazıldı, sınanmadı'));
+});
+test('Göç: "Söz vermem" de sonu yazar; Alf kalınca yemin ilk gün sınanır',()=>{
+ const s=gocHazir();
+ D.choose(s,'final_goc');
+ D.choose(s,'story:ekin:sozYok');
+ assert.equal(s.ending,'goc');assert.equal(s.flags.yemin,'yok');
+ assert.equal(D.yeminCumlesi(s),'Söz yok. Boşluk yazıldı.');
+ const t=gocHazir();D.choose(t,'final_goc');
+ /* Goc'te Gercek yemini secilemez */
+ D.choose(t,'story:ekin:sozGercek');assert.equal(t.ending,null);
+ D.choose(t,'story:ekin:sozGoc');assert.equal(t.ending,'goc');
+ assert.ok(D.yeminCumlesi(t).includes('Yemin ilk gün sınandı'));
+ assert.ok(D.yeminler(t).some(y=>y.not==='ilk gün sınandı'));
+ t.flags.alfSir='soylendi';
+ assert.ok(D.yeminCumlesi(t).startsWith('Mirna’nın ilk yemini'));
+ const m=D.sonMetni(t);
+ assert.ok(m.startsWith('Kapıyı arkanızdan kapatmadınız'));
+ assert.ok(m.includes('Alf en arkada yürüdü.'));
+});
+test('Söz verilmeden kapatılırsa Undur sözü yeniden sorar',()=>{
+ const s=gercekHazir();D.choose(s,'final_gercek');D.choose(s,'story:bitir');
+ s.flags.talk='';
+ const d=D.dialogue(s,'ekin');
+ assert.ok(!d.choices.some(c=>c.action?.startsWith('final_')),'son yeniden seçilmemeli');
+ assert.ok(d.choices.some(c=>c.action==='story:ekin:sonSoz'));
+});
+test('Her sonun metni yazılı ve kayıpları hatırlatıyor',()=>{
+ for(const id of ['goc','gercek']){
   const s=D.newState();s.ending=id;s.kayip=2;
   const m=D.sonMetni(s);
   assert.ok(m.length>80,id+' metni cok kisa');
   assert.ok(m.includes('2 kez boş kaldı'),id+' kayiplari anmiyor');
- }});
+ }
+ const s=D.newState();s.kayip=3;
+ assert.ok(D.defterSatirlari(s).includes('Depo 3 gece boş kaldı. O geceleri ayrı sayfaya yazdım; bu sayfaya sığmazlar.'));
+});
+test('Son ekranında koşulsuz ya da eski satır yok',()=>{
+ const s=gercekHazir();s.ending='gercek';s.flags.yemin='gercek';
+ const hepsi=[D.sonMetni(s),...D.defterSatirlari(s),...D.yeminler(s).map(y=>y.not),D.yeminCumlesi(s)].join(' ');
+ for(const yasak of ['ikinci bölüm','İkinci bölüm','hastalarına umut','Tutulan yemin','Yeni bir ateş'])
+  assert.ok(!hepsi.includes(yasak),yasak);
+});
+
+grup('Rauf yolda ölürse');
+test('Alf defteri alır; iki son da açılabilir',()=>{
+ const s=D.newState();s.flags.rauf='oldu';s.flags.fugitive='dead';s.flags.ledgerStarted=true;s.inventory.ledger=1;
+ s.flags.alfKilic=true;
+ const d=D.dialogue(s,'boran');
+ assert.ok(d.text.includes('Defter döndü, adam dönmedi. Bu sefer kaçtığı için değil.'));
+ const ver=d.choices.find(c=>c.action==='boran_deliver');
+ assert.ok(ver,'teslim seçeneği olmalı');
+ D.choose(s,'boran_deliver');
+ assert.equal(s.flags.ledgerDone,true);assert.equal(s.inventory.life,1,'yüzük verilmeli');
+ assert.ok(!s.inventory.ledger);
+ assert.ok(D.questList(s).find(q=>q.id==='ledger').step.startsWith('Rauf yolda düştü.'));
+ for(const k of ['kralMirna','kralAlf','kralUndur','kralLin','kralObruk'])s.flags[k]=true;
+ s.flags.alfSir='soylendi';s.flags.gordu_tunel=true;s.flags.gordu_cistern=true;
+ assert.equal(D.finalDurum(s).find(f=>f.id==='gercek').hazir,true);
+ s.ending='gercek';
+ assert.ok(D.defterSatirlari(s).some(l=>l.startsWith('Rauf. Yolda düştü, seni korurken.')));
+ assert.ok(D.sonMetni(s).includes('İkincisini Alf yazdı.'));
+});
+test('Eski kayıt: Rauf ölmüş ama defter yoksa açılışta verilir',()=>{
+ const s=D.newState();s.flags.rauf='oldu';s.ending='av';
+ const y=D.parseSave(JSON.stringify(s));
+ assert.equal(y.flags.fugitive,'dead');assert.equal(y.inventory.ledger,1);
+ assert.equal(y.ending,null,'gizli son kayıtta kalmamalı');
+});
 
 /* ============ KAYIT ============ */
 grup('Kayıt');
@@ -428,6 +531,20 @@ test('Düşmanlar yalnız yürünür zeminde doğuyor',()=>{
    assert.ok(W.walkable(g.world,m.x,m.y),zone+':'+m.id+' engelde dogdu');
   g.destroy();
  }});
+test('Rauf yolda düşünce defter düşer, fugitive dead olur',()=>{
+ const g=kur();const s=g.state;
+ s.flags.rauf='takip';s.flags.raufCan='1';s.flags.ledgerStarted=undefined;
+ g.update(.016);
+ const r=g.world.entities.find(e=>e.id==='rauf');
+ assert.ok(r,'Rauf yoldaş olarak doğmalı');
+ g.mobs.push({id:'test_mob',kind:2,x:r.x+4,y:r.y,hp:999,max:999,cool:99,windup:0,burn:0,hurt:0,homeX:r.x+4,homeY:r.y});
+ g.raufHasar=0;
+ for(let i=0;i<5&&s.flags.rauf!=='oldu';i++)g.update(.016);
+ assert.equal(s.flags.rauf,'oldu');
+ assert.equal(s.flags.fugitive,'dead');
+ assert.equal(s.inventory.ledger,1,'defter düşmeli');
+ g.destroy();
+});
 test('Hit-stop kilitlenmiyor: donma sayacı update dışında iniyor',()=>{
  const g=kur();
  /* update() icinden dusen sayac listesine donma EKLENIRSE oyun kalici
