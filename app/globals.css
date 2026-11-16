@@ -864,3 +864,7 @@ h1,h2,h3,.zone-title,.quest-hint b,.chapter-label,.menu-buttons button{font-fami
 .tus-liste{animation:tusSol 1.2s ease 7s forwards}
 @keyframes tusSol{to{opacity:0}}
 @media (prefers-reduced-motion:reduce){.tus-liste{animation-duration:.01s}}
+/* v19.1 IKI EL: hero rozetinin altinda iki yuva; bos el soluk. */
+.eller{display:flex;gap:4px;margin-top:5px}.el{display:flex;align-items:center;gap:3px;min-width:56px;height:20px;padding:0 5px;border:1px dashed #8f9aa466;border-radius:3px;font-size:11px;color:#8f9aa4;line-height:1}.el.dolu{border-style:solid;border-color:#d5b579aa;color:#f0d7ad;background:#2a2318cc}.el-kurallari{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}.el-kurallari li{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid #d5b57955;border-radius:4px;background:#1c1a16}.el-kurallari b{display:block;color:#f0d7ad;font-weight:600;margin-bottom:2px}.el-kurallari span{font-size:14px;color:#dfe3e6}
+/* v19.1 (P1-10): sabit joystick bostayken yari saydam; parmak degince tam gorunur. */
+.joystick:not(.joystick-serbest):not(.basili){opacity:.5;transition:opacity .15s}

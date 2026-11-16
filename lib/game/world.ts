@@ -4,7 +4,7 @@ export type Entity={id:string;type:'npc'|'chest'|'portal'|'lever'|'core'|'fire'|
  *  sprite anahtarini `characters${portrait}${yon}${eylem}` diye kuruyor,
  *  bu yuzden dogrudan STRING olarak da calisiyor (bkz. harita-editor.html
  *  Karakterler modu: ayni yuruyus animasyonunu, sadece silahi degistirerek
- *  tekrar kullanmak icin, yeni bir PixelLab uretimi GEREKMEDEN). */portrait?:number|string;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number;/** harita-editor.html'in "Nesneler" modunda eklenen tekil PNG - boyali
+ *  tekrar kullanmak icin, yeni bir PixelLab uretimi GEREKMEDEN). */portrait?:number|string;asset?:string;to?:Zone;spawn?:[number,number];items?:[ItemId,number][];gold?:number;s?:number;/** Dolasma sisteminden muaf: oldugu yerde durur (nobetci, tezgah sahibi). */sabit?:boolean;/** v19.1: dururken baktigi yon (varsayilan D, oyuncuya). Alf kapiya bakar; defter donunce odaya doner. */bak?:'D'|'U'|'S';/** Sprite capasi (zemin satiri/2). Oturan kral gibi kisa figurler icin; yoksa 31. */capa?:number;/** harita-editor.html'in "Nesneler" modunda eklenen tekil PNG - boyali
  *  sahnenin UZERINE, actors[] y-sirasina gore cizilir (normal decor gibi
  *  gizli kalmaz). asset public/assets/<asset>.png yolunu gosterir. */overlay?:boolean;
  /** Cizim katmani - varsayilan 0 (oyuncu/mob/normal decor hepsi 0, aralarinda
@@ -87,11 +87,22 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // dogrulama katmani generated/_YENI_ENGEL.png.
   const ZEMIN=['000000000000000000000000000000','000000000000000000000000000000','000000000000111111000000000000','000000000000111111000000000000','000001111111111111111111110000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','011111111111111111111111111000','011111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000111111111111111111111111000','000000000001111111100000000000','000000000000111111000000000000','000000000000111111000000000000','000000000000111111000000000000','000000000000000000000000000000','000000000000000000000000000000'];
   for(let j=0;j<h;j++)for(let i=0;i<w;i++)tiles[j][i]=ZEMIN[j][i]==='1'?1:0;
-  at({id:'mira',type:'npc',x:9,y:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
+  /* v19.1 (Asama 1 artigi): bati kenarindaki boyali agiz eski test kapisiydi
+     (satir 15-16, sutun 1-2). Kapi v19.0'da kalkti ama zemin yurunur ve resimde
+     karanlik bir gedik olarak kaldi; oyuncu oraya yuruyup duvara takiliyordu.
+     Zemin kapatilir, agzin onune fici + kasa konur: depo kosesi gibi okunsun. */
+  for(let j=15;j<17;j++)for(let i=0;i<3;i++)tiles[j][i]=0;
+  at({id:'agizFici',type:'decor',x:1.1,y:14.9,asset:'nesne/fici',s:.9,overlay:true,sabit:true});
+  at({id:'agizKasa',type:'decor',x:1.9,y:15.9,asset:'nesne/kasa',s:1,overlay:true,sabit:true});
+  /* v19.1 (oneri A4) ODUL ANLARI yerle soylenir, yaziyla degil:
+     ilac siginaga ulastiysa Mirna atesin basina gecer (hastalar orada), Elvi
+     kapidan bir adim iceri girer. Defter donduyse Alf kapiya sirtini doner. */
+  const ilacGeldi=flags?.medicine==='haven';
+  at({id:'mira',type:'npc',x:ilacGeldi?10:9,y:ilacGeldi?12:16,name:'Mirna',portrait:3});at({id:'boran',type:'npc',x:17,y:11,name:'Alf',portrait:2,bak:flags?.alfKirildi?'U':(flags?.ledgerDone||flags?.alfSir==='soylendi')?'D':'U'});at({id:'ekin',type:'npc',x:20,y:17,name:'Undur',portrait:4});
   // Elvi ust kapinin dibinde: cevrildigi kapidan uzaklasmiyor. Lin sag-alt
   // ocagin yaninda. Tiga indiyse ve Tuhn ucurumdan cekildiyse ikisi de o atesin
   // basina gelir. `s` sprite olcegi: cocuklar icin ayni sheet kucuk cizilir.
-  at({id:'selvi',type:'npc',x:13,y:6,name:'Elvi',portrait:9});
+  at({id:'selvi',type:'npc',x:13,y:ilacGeldi?7:6,name:'Elvi',portrait:9});
   at({id:'nil',type:'npc',x:18,y:21,name:'Lin',portrait:7,s:.74});
   // Kral: sol ust kosede oturur, kimse bakmaz. Uslu ortada dolasir.
   /* Kral: vurulabilir (engine kralHasar). Oldurulduyse kosede cesedi kalir.
@@ -122,7 +133,8 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
   // otursun diye y = merkez + halka_yuksekligi*0.35 - 6.
   entities.push({id:'alev0',type:'fire',x:190.8,y:171.9,s:1.16});entities.push({id:'alev1',type:'fire',x:334.0,y:190.6,s:1.16});/* Lin'in atesi. Cocugun sozu kirildiysa (flags.nilSondu) ARTIK YANMIYOR:
      boyali koz yerinde kalir, animasyonlu alev cizilmez. */
-  if(flags?.nilSondu!=='evet')entities.push({id:'alev2',type:'fire',x:327.2,y:323.4,s:1.13});
+  /* v19.1: Tiga indiyse Lin'in atesi buyur - iki kisi odun tasiyor. */
+  if(flags?.nilSondu!=='evet')entities.push({id:'alev2',type:'fire',x:327.2,y:323.4,s:flags?.ayaz==='indi'?1.4:1.13});
   decor('table2',22.1,7.5,'Tables/2.png','Zanaat Masası');
   // Alt-soldaki yatak: etkilesim noktasi yatagin UST kenarinin hemen disinda,
   // cunku yatagin kendisi engel ve icinden gorus hatti kurulamiyor.
@@ -211,6 +223,9 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
      Hicbir gorev ona bagli olmadigi icin dunyadan cikarilmasi guvenli. */
   if(!flags?.kargaSurgun)at({id:'karga',type:'npc',x:5,y:10,name:'Karga',portrait:11,sabit:true});
   at({id:'cakal',type:'npc',x:5,y:16,name:'Çakal',portrait:12,sabit:true});
+  /* v19.1 (oneri A5) ILK DOVUS: siginaktan inen oyuncu sarnica girmeden once
+     iki fareyle kilici dener. Kimlikler kalici (killed), bir kez olurler. */
+  enemy('m0',1,15,12);enemy('m1',1,13,17);
   // Uslu buraya da ugrayabilir - bkz. haven'daki ayni flag kontrolu.
   if(flags?.usluYer==='magara')at({id:'uslu',type:'npc',x:14,y:10,name:'Uslu',portrait:14});
  }else if(zone==='tunel'){
@@ -252,22 +267,29 @@ export function makeWorld(zone:Zone,flags?:Record<string,string|boolean|undefine
    at({id:'rauf',type:'npc',x:44,y:18,name:'Rauf',portrait:5});
   chest('medicineChest',48,8,[['medicine',1],['potion',2],['toz',2],['torch',2]],12);
   chest('cisternWest',6,20,[['chain',1],['bow',1],['potion',2],['yeminh',1]],24);
-  chest('cisternEast',49,24,[['guard',1],['potion',2],['uzunyay',1],['okdelici',8]],20);
+  /* v19.1: muhafiz kilici artik yalniz Alf'in sozuyle geliyor; sandikta bileme tasi. */chest('cisternEast',49,24,[['bileme',2],['potion',2],['uzunyay',1],['okdelici',8]],20);
   fire(10,16);fire(40,14);
   /* DALGA SISTEMI KALDIRILDI (2026-09-13). Once yaratiklar alt kapidan
      bes dalga halinde geliyordu ve aralarda sarnic bombostu; simdi mekan
      bastan dolu. Konumlar yurunebilir ve CEVRESI de acik karolardan,
      birbirine en az 5 karo uzaklikta secildi; girise ve Rauf'a yakin
      olanlar elendi. */
-  enemy('c0',1,21,5);enemy('c1',1,26,21);enemy('c2',1,35,4);enemy('c3',1,4,17);enemy('c4',1,27,3);enemy('c5',5,36,14);
-  enemy('c6',5,15,21);enemy('c7',5,44,6);enemy('c8',5,7,19);enemy('c9',2,37,21);enemy('c10',2,40,7);enemy('c11',2,32,22);
-  enemy('c12',4,30,19);enemy('c13',4,22,24);enemy('c14',1,39,3);enemy('c15',1,10,16);enemy('c16',1,37,26);enemy('c17',1,4,24);
-  enemy('c18',1,14,25);enemy('c19',5,48,8);enemy('c20',5,26,13);enemy('c21',5,32,27);enemy('c22',5,9,23);enemy('c23',2,14,15);
-  enemy('c24',2,24,16);enemy('c25',2,32,15);enemy('c26',4,17,17);enemy('c27',4,17,7);enemy('c28',1,31,7);enemy('c29',1,25,26);
-  enemy('c30',1,46,25);enemy('c31',1,29,25);enemy('c32',1,47,4);enemy('c33',5,13,9);enemy('c34',5,21,20);enemy('c35',5,43,27);
-  enemy('c36',5,3,10);enemy('c37',2,7,13);enemy('c38',2,18,13);enemy('c39',2,8,27);enemy('c40',4,50,22);enemy('c41',4,19,26);
-  enemy('c42',1,25,6);enemy('c43',1,40,24);enemy('c44',1,11,12);enemy('c45',1,50,15);enemy('c46',1,12,19);enemy('c47',5,18,3);
-  enemy('c48',5,22,12);enemy('c49',5,35,18);
+  /* v19.1 (oneri A2) ZORLUK EGRISI. Eski yerlesimde konumlarin bir kismi duvar
+     icindeydi (motor calisirken kaydiriyordu) ve sarnic her yerde ayni
+     yogunluktaydi. Simdi batidan doguya artiyor: giriste uc fare (ogrenme),
+     ortada karisik suru, doguda agir. Ilac kapisinda iki orumcek (c10,c23),
+     Rauf'un onunde iki kullenmis (c26,c40). Uretici:
+     _arsiv/denetim/asama2/sarnic_yerlesim.mjs (yurunebilir yaricap 7, giristen,
+     Rauf'tan, sandiklardan ve atesten uzak). Kimlikler ayni, killed listesi bozulmaz. */
+  enemy('c0',1,13,23);enemy('c1',1,20,11);enemy('c2',1,34,16);enemy('c3',1,5,18);enemy('c4',1,27,17);enemy('c5',5,26,25);
+  enemy('c6',5,14,19);enemy('c7',5,42,11);enemy('c8',5,50,18);enemy('c9',2,42,25);enemy('c10',2,45,12);enemy('c11',2,30,22);
+  enemy('c12',4,33,20);enemy('c13',4,24,15);enemy('c14',1,23,12);enemy('c15',1,9,21);enemy('c16',1,18,19);enemy('c17',1,7,23);
+  enemy('c18',1,19,23);enemy('c19',5,39,11);enemy('c20',5,23,19);enemy('c21',5,26,22);enemy('c22',5,16,25);enemy('c23',2,50,13);
+  enemy('c24',2,28,20);enemy('c25',2,27,10);enemy('c26',4,40,17);enemy('c27',4,37,21);enemy('c28',1,23,26);enemy('c29',1,32,14);
+  enemy('c30',1,37,24);enemy('c31',1,26,13);enemy('c32',1,42,14);enemy('c33',5,31,10);enemy('c34',5,34,23);enemy('c35',5,38,15);
+  enemy('c36',5,46,25);enemy('c37',2,48,15);enemy('c38',2,30,18);enemy('c39',2,47,21);enemy('c40',4,41,21);enemy('c41',4,39,26);
+  enemy('c42',1,34,11);enemy('c43',1,34,26);enemy('c44',1,15,13);enemy('c45',1,47,18);enemy('c46',1,19,15);enemy('c47',5,44,22);
+  enemy('c48',5,30,26);enemy('c49',5,29,14);
   /* Alt agiz artik bir yere cikiyor: Dar Gecit. */
   gecis(23,29,31,30,'tunel',[6,10]);
   // Dagilmis dusman YOK: yaratiklar alt kapidan dalga dalga geliyor (engine.ts).

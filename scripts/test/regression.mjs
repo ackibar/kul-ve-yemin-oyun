@@ -508,8 +508,13 @@ test('Canı doluyken iksir harcanmaz',()=>{
 });
 test('Duvar hasarı engelliyor',()=>{
  const g=kur();g.state.zone='cistern';g.world=W.makeWorld('cistern');g.resetMobs();
- g.state.x=15*16;g.state.y=15*16;
- const m=g.mobs[0];m.x=g.state.x+20;m.y=g.state.y;const can=m.hp;
+ /* v19.1: eski hali (15,15)+20 noktasinda aslinda duvar yoktu; test yalniz
+    yakindaki baska bir dusman (c23) hedef alindigi icin geciyordu. Yeni
+    yerlesimde bu tesaduf bozuldu. Gercek duvarli cift olculerek secildi ve
+    on kosul olarak sinaniyor; sahnede tek dusman birakiliyor. */
+ g.state.x=5*16+8;g.state.y=20*16+8;
+ const m=g.mobs[0];m.x=g.state.x+28;m.y=g.state.y;g.mobs=[m];const can=m.hp;
+ assert.equal(W.lineOfSight(g.world,g.state.x,g.state.y,m.x,m.y),false,'on kosul: arada duvar olmali');
  g.attack();
  assert.equal(m.hp,can,'duvarin ardindaki dusman hasar almamali');
  g.destroy();
@@ -553,6 +558,128 @@ test('Hit-stop kilitlenmiyor: donma sayacı update dışında iniyor',()=>{
  g.donma=1;
  for(let i=0;i<10;i++)g.update(.02);
  assert.equal(g.donma,1,'update() donmayi azaltmamali - o is loop()`in');
+ g.destroy();
+});
+
+
+/* ============ v19.1: IKI EL, IKI SOZ ============
+   Beden sozleri sahada bozulur; gece Undur yazar, sabah kisi karsilar.
+   Olum bir gece; altin dusmanda yok, tarifte yok, olumde gitmiyor. */
+grup('Yeminler (v19.1)');
+test('İki el: üçüncü söz verilmez, kişi kendi cümlesiyle reddeder',()=>{
+ const s=D.newState();s.flags.alfKilic='verildi';s.flags.gordu_cistern=true;
+ assert.ok(D.choose(s,'alf_muhafiz').message.includes('kapıdan geçmez'));
+ assert.equal(s.flags.yemin_alf,'tasiniyor');assert.equal(s.inventory.guard,1);
+ D.choose(s,'mira_start');assert.equal(s.flags.yemin_mirna,'tasiniyor');
+ assert.deepEqual(D.tasinanYeminler(s),['alf','mirna']);assert.equal(D.elBos(s),false);
+ assert.equal(D.yeminVer(s,'rauf'),false,'üçüncü el yok');
+ const s2=D.newState();s2.flags.alfKilic='verildi';s2.flags.gordu_cistern=true;
+ D.yeminVer(s2,'alf');D.yeminVer(s2,'rauf');
+ const r=D.choose(s2,'mira_start');
+ assert.ok(r.message.startsWith('Mirna: “Ellerin dolu.'),r.message);
+ assert.ok(!s2.flags.medicineStarted,'eller doluyken görev başlamamalı');
+});
+test('Söz sahada bozulur: kılıç kapıdan geçer, ilaç içilir, Rauf geride kalır',()=>{
+ const s=D.newState();D.yeminVer(s,'alf');s.inventory.guard=1;s.equipment.weapon='guard';
+ assert.deepEqual(D.yeminDinle(s,{tip:'gecis',from:'haven',to:'magara'}),[],'aşağı inmek bozmaz');
+ assert.deepEqual(D.yeminDinle(s,{tip:'gecis',from:'haven',to:'disari'}),['alf']);
+ assert.equal(s.flags.yemin_alf,'bozuldu');
+ const s2=D.newState();D.yeminVer(s2,'alf');s2.inventory.guard=1;s2.equipment.weapon='rusty';
+ assert.deepEqual(D.yeminDinle(s2,{tip:'gecis',from:'haven',to:'disari'}),[],'kuşanılı değilse bozulmaz');
+ const s3=D.newState();D.yeminVer(s3,'rauf');
+ assert.deepEqual(D.yeminDinle(s3,{tip:'gecis',from:'cistern',to:'magara',raufUzak:false}),[]);
+ assert.deepEqual(D.yeminDinle(s3,{tip:'gecis',from:'cistern',to:'magara',raufUzak:true}),['rauf']);
+});
+test('Motor: ilaç içilince Mirna sözü bozulur, can dolar',()=>{
+ const g=kur();const s=g.state;s.flags.alfKilic='verildi';D.choose(s,'mira_start');
+ s.inventory.medicine=1;s.hp=10;
+ assert.equal(g.useItem('medicine'),true);
+ assert.equal(s.hp,D.stats(s).maxHp);assert.equal(s.flags.medicine,'icildi');
+ assert.equal(s.flags.yemin_mirna,'bozuldu');assert.equal(s.flags.medicineDone,true);
+ assert.equal(D.kulKademe(s),1,'bozulan söz sığınağa kül');
+ g.destroy();
+});
+test('Motor: kuşanılı muhafız kılıcıyla üst kapıdan geçmek sözü bozar',()=>{
+ const g=kur();const s=g.state;s.flags.alfKilic='verildi';s.flags.gordu_cistern=true;
+ D.choose(s,'alf_muhafiz');s.equipment.weapon='guard';
+ const g0=g.world.gecisler.find(x=>x.to==='disari');
+ s.x=(g0.kutu[0]+.5)*16;s.y=(g0.kutu[1]+.5)*16;g.bolgeKontrol();
+ assert.equal(s.zone,'disari');assert.equal(s.flags.yemin_alf,'bozuldu');
+ g.destroy();
+});
+test('Gece: Undur yazar, sabah kişi kendi cümlesiyle karşılar (yalnız o gün)',()=>{
+ const s=D.newState();D.yeminVer(s,'mirna');D.yeminDinle(s,{tip:'ic',item:'medicine'});
+ s.flags.medicine='icildi';s.flags.medicineDone=true;
+ D.gunGec(s);const yazi=D.geceYaz(s);
+ assert.equal(yazi.length,1);assert.ok(yazi[0].startsWith('Undur gece yazdı: “Mirna’nın ilacını sen içtin.'));
+ assert.ok(s.journal[0].startsWith('Undur gece yazdı'));
+ assert.ok(D.dialogue(s,'mira').text.includes('Kendin içtin. Yazdım. Yaşayanlara.'));
+ assert.equal(D.geceYaz(s).length,0,'bir kez yazılır');
+ D.gunGec(s);assert.ok(!D.dialogue(s,'mira').text.includes('Kendin içtin'),'ertesi gün önek kalkar');
+ assert.ok(D.dialogue(s,'mira').text.includes('Bir dahaki şişeyi ben taşırım.'));
+});
+test('Tutulan söz: kılıç geri verilir, Alf karşılar, ateş büyür',()=>{
+ const s=D.newState();s.flags.alfKilic='verildi';s.flags.gordu_cistern=true;s.inventory.rusty=1;
+ D.choose(s,'alf_muhafiz');s.equipment.weapon='guard';
+ assert.ok(D.choose(s,'alf_muhafiz_geri').message.includes('Taşıdın, geçirmedin. Yeter.'));
+ assert.equal(s.flags.yemin_alf,'tutuldu');assert.equal(s.inventory.guard,undefined);
+ assert.equal(s.equipment.weapon,'rusty');assert.equal(D.atesKademe(s),1);
+ D.gunGec(s);D.geceYaz(s);assert.ok(D.dialogue(s,'boran').text.startsWith('Kılıç duvarda.'));
+});
+test('Alf’in sırrı söylenince kılıcın kuralı kalkar',()=>{
+ const s=D.newState();D.yeminVer(s,'alf');s.inventory.guard=1;
+ D.choose(s,'story:boran:sirSoyle');
+ assert.equal(s.flags.yemin_alf,'kalkti');assert.ok(D.elBos(s));
+});
+test('Ölüm bir gece: gün ilerler, altın gitmez, Mirna’nın ateşinde uyanılır',()=>{
+ const g=kur();const s=g.state;s.gold=200;const gun=s.gun;const yiyecek=s.erzak.yiyecek;
+ s.zone='cistern';g.world=W.makeWorld('cistern');s.hp=0;g.paused=true;
+ g.respawn();
+ assert.equal(s.gold,200,'altın cezası yok');assert.equal(s.gun,gun+1,'bir gece geçer');
+ assert.ok(s.erzak.yiyecek<yiyecek,'gece depo eksilir');
+ assert.equal(s.zone,'haven');assert.equal(s.hp,D.stats(s).maxHp);
+ assert.ok(W.walkable(g.world,s.x,s.y),'uyanış noktası yürünür olmalı');
+ const mira=g.world.entities.find(e=>e.id==='mira');
+ assert.ok(Math.hypot(mira.x-s.x,mira.y-s.y)<64,'Mirna’nın yanında');
+ assert.ok(s.journal.some(j=>j.includes('Bir gece geçti')));
+ g.destroy();
+});
+test('Ölümde heybedeki ilacı Mirna alır; söz düşer, ödül yok',()=>{
+ const g=kur();const s=g.state;s.flags.alfKilic='verildi';D.choose(s,'mira_start');s.inventory.medicine=1;
+ const altin=s.gold;g.respawn();
+ assert.equal(s.inventory.medicine,undefined);assert.equal(s.flags.medicine,'haven');
+ assert.equal(s.flags.yemin_mirna,'alindi');assert.equal(s.gold,altin);
+ assert.ok(D.dialogue(s,'mira').text.startsWith('Sen yatarken aldım; hastaya gitti.'));
+ g.destroy();
+});
+test('Altın: düşmandan düşmez, tarifte yok, satıcıdan muhafız kılıcı kalktı',()=>{
+ const g=kur();const m={id:'t1',kind:4,x:g.state.x+10,y:g.state.y,hp:0,max:40,cool:9,windup:0,burn:0,hurt:0,homeX:0,homeY:0};
+ g.mobs.push(m);g.kill(m);
+ assert.ok(!g.drops.some(d=>d.kind==='gold'),'düşmandan altın düşmemeli');
+ assert.ok(D.TARIFLER.every(t=>!('gold' in t)),'tariflerde altın yok');
+ assert.ok(!D.SATICILAR.boran.liste.includes('guard'));
+ const s=D.newState();s.gold=0;s.inventory.et=1;s.inventory.pacavra=1;
+ assert.equal(D.tarifDurum(s,D.TARIFLER.find(t=>t.id==='potion')).olur,true,'altınsız tarif olur');
+ g.destroy();
+});
+test('Rauf teslim edilince ödül yüzük; söz tutuldu sayılır',()=>{
+ const s=D.newState();D.yeminVer(s,'rauf');s.flags.fugitive='reported';s.inventory.ledger=1;
+ D.choose(s,'boran_deliver');assert.equal(s.inventory.life,1);assert.equal(s.inventory.guard,undefined);
+});
+test('Eski kayıt: satın alınmış muhafız kılıcı kuralsız, başlamış ilaç sözü verilmiş sayılır',()=>{
+ const s=D.newState();s.inventory.guard=1;s.flags.medicineStarted=true;
+ delete s.flags.yemin_alf;
+ const y=D.parseSave(JSON.stringify(s));
+ assert.ok(y,'eski kayıt açılmalı');assert.equal(y.flags.yemin_alf,'eski');
+ assert.equal(y.flags.yemin_mirna,'tasiniyor');assert.deepEqual(D.tasinanYeminler(y),['mirna']);
+});
+test('Motor: üçüncü ardışık isabet ağır (1.6 kat itme)',()=>{
+ const g=kur();const s=g.state;s.zone='cistern';g.world=W.makeWorld('cistern');
+ s.x=30*16+8;s.y=18*16+8;const itmeler=[];
+ for(let i=0;i<3;i++){const m={id:'agir'+i,kind:4,x:s.x+16,y:s.y,hp:999,max:999,cool:9,windup:0,burn:0,hurt:0,homeX:0,homeY:0};
+  g.mobs=[m];g.attack();itmeler.push(m.x-(s.x+16));g.attackTimer=0;}
+ assert.ok(itmeler[0]>0,'ilk vuruş itmeli');
+ assert.ok(Math.abs(itmeler[2]/itmeler[0]-1.6)<.05,`üçüncü vuruş 1.6 kat: ${itmeler}`);
  g.destroy();
 });
 

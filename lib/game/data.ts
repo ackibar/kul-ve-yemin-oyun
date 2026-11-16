@@ -1,6 +1,6 @@
 /** Oyun surumu. Her yayina cikan degisiklikte 0.1 artar: 0.1, 0.2 ... 0.9,
  *  sonra 1.0, 1.1 diye devam eder. Ekranin sol altinda gorunur. */
-export const SURUM='19.0';
+export const SURUM='19.1';
 /** Gelisim asamasi etiketi. v19.0'dan beri bos: Birinci bolum yayinda,
  *  ekranda "alpha" yazmasin (yayin oncesi denetim P0-3). Bos degilse surum
  *  numarasinin yaninda gorunur. */
@@ -55,7 +55,7 @@ export const ITEMS:Record<ItemId,Item>={
  elmesale:{id:'elmesale',name:'Elde meşale',kind:'weapon',description:'Yanan meşale. Zayıf vurur ama tutuşturur; karanlıkta yolunu açar.',rarity:'Sıradan',icon:'flame',attack:5,price:0,sprite:'mesale',yakar:2},
  yumruk:{id:'yumruk',name:'Çıplak eller',kind:'weapon',description:'Silah yok. Zayıf ama hızlı. +2 saldırı.',rarity:'Sıradan',icon:'hand',attack:2,price:0},
  rusty:{id:'rusty',name:'Yıpranmış kılıç',kind:'weapon',description:'Sığınaktan kalan son hatıra. +10 saldırı.',rarity:'Sıradan',icon:'sword',attack:10,price:0},
- guard:{id:'guard',name:'Muhafız kılıcı',kind:'weapon',description:'Alf’in sözü kadar sağlam. +17 saldırı.',rarity:'Nadir',icon:'sword',attack:17,price:90,sadece:'satin'},
+ guard:{id:'guard',name:'Muhafız kılıcı',kind:'weapon',description:'Alf’in kılıcı. Ağır, dengeli; nöbet yıllarının ağırlığı. +17 saldırı.',rarity:'Nadir',icon:'sword',attack:17,price:90,sadece:'hikaye'},
  ember:{id:'ember',name:'Köz kılıcı',kind:'weapon',description:'+23 saldırı. Vuruşlar 3 saniye boyunca yakar.',rarity:'Eşsiz',icon:'flame',attack:23,price:160,sadece:'satin'},
  blood:{id:'blood',name:'Gece dişi',kind:'weapon',description:'+19 saldırı. Her vuruşta 3 can yeniler.',rarity:'Eşsiz',icon:'sword',attack:19,price:140,sadece:'satin'},
  bow:{id:'bow',name:'Avcı yayı',kind:'weapon',description:'+18 saldırı. Menzilli ok fırlatır.',rarity:'Nadir',icon:'bow',attack:18,price:95,menzilli:true,sadece:'satin'},
@@ -113,7 +113,7 @@ export const ITEMS:Record<ItemId,Item>={
  tac:{id:'tac',name:'Ongun’un tacı',kind:'quest',description:'Paslı demir. Bildiği tek işlev Obruk’a satılmak; başka kimse istemiyor. Taşıyan bilir.',rarity:'Görev',icon:'gem',price:0,sadece:'hikaye'},
  migfer:{id:'migfer',name:'Son muhafızın miğferi',kind:'armor',description:'+8 savunma, +10 azami can. İçi kül dolu: Kül Ovası’nda canın %40 daha yavaş erir.',rarity:'Eşsiz',icon:'shield',defense:8,hp:10,price:0,kulKalkan:.6,sadece:'hikaye'},
  cakil:{id:'cakil',name:'Küllenmemiş taş',kind:'quest',description:'Uslu fırtınadan dönerken getirdi: on bir yılda kül olmayan tek şey. Bir işe yaramıyor, bir şeyi kanıtlıyor — dışarıda hâlâ kül olmayan bir şey var.',rarity:'Görev',icon:'gem',price:0},
- medicine:{id:'medicine',name:'Son ilaç',kind:'quest',description:'Tek bir doz. Mirna’nın hastaları mı, yaralı kaçak mı?',rarity:'Görev',icon:'potion',price:0,sadece:'hikaye'},
+ medicine:{id:'medicine',name:'Son ilaç',kind:'quest',description:'Tek bir doz. Mirna’nın hastaları mı, yaralı kaçak mı? İçersen canın tamamen dolar.',rarity:'Görev',icon:'potion',price:0,sadece:'hikaye'},
  ledger:{id:'ledger',name:'Nöbet defteri',kind:'quest',description:'Ocak muhafızlarının yemin defteri. Rauf’un adı çizili. Alf bunu bekliyor.',rarity:'Görev',icon:'book',price:0,sadece:'hikaye'},
  sayfa:{id:'sayfa',name:'Undur’un sayfası',kind:'quest',description:'Sarnıcın altındaki yarık. Hava ılık. Undur yazdı, sana verdi.',rarity:'Görev',icon:'book',price:0,sadece:'hikaye'},
  kurdele:{id:'kurdele',name:'Kırmızı kurdele',kind:'quest',description:'Rauf’un bileğinden. Kızınındı. Alf bunu hiç görmedi.',rarity:'Görev',icon:'ring',price:0,sadece:'hikaye'},
@@ -171,7 +171,8 @@ export const DUSURME:Record<number,{id:ItemId;sans:number;az:number;cok:number}[
  *   * URETILEMEYENLER bilincli: yay ve varyantlari, iyi kiliclar, yuzukler ve
  *     hikaye esyalari. Bunlar tuccardan ya da hikayeden gelir (bkz. Item.sadece).
  */
-export type Tarif={id:ItemId;adet:number;malzeme:Partial<Record<ItemId,number>>;gold?:number};
+/* v19.1: tariflerde altin yok; malzeme yeter (oneri §4). */
+export type Tarif={id:ItemId;adet:number;malzeme:Partial<Record<ItemId,number>>};
 export const TARIFLER:Tarif[]=[
  /* --- tuketilebilir --- */
  {id:'torch',  adet:2, malzeme:{wood:1,pacavra:1}},
@@ -181,14 +182,14 @@ export const TARIFLER:Tarif[]=[
  {id:'tuzet',  adet:1, malzeme:{et:2,kurum:1}},
  {id:'durusu', adet:1, malzeme:{kanat:1,kurum:2}},
  {id:'merhem', adet:1, malzeme:{pacavra:2,post:1}},
- {id:'potion', adet:1, malzeme:{et:1,pacavra:1},gold:8},
+ {id:'potion', adet:1, malzeme:{et:1,pacavra:1}},
  {id:'toz',    adet:1, malzeme:{kurum:3,ag:1}},
- {id:'tonic',  adet:1, malzeme:{zehirk:1,kurum:2},gold:12},
+ {id:'tonic',  adet:1, malzeme:{zehirk:1,kurum:2}},
  /* --- zirh --- */
  {id:'yelek',  adet:1, malzeme:{post:4,ag:2}},
  {id:'kemik',  adet:1, malzeme:{kemikp:6,post:2,ag:2}},
  {id:'chain',  adet:1, malzeme:{celik:3,pacavra:2}},
- {id:'ocakz',  adet:1, malzeme:{celik:5,kurum:4},gold:30},
+ {id:'ocakz',  adet:1, malzeme:{celik:5,kurum:4}},
  /* --- silah --- */
  {id:'hancer', adet:1, malzeme:{celik:1,post:1}},
  {id:'mizrak', adet:1, malzeme:{wood:2,celik:1,ag:1}},
@@ -203,7 +204,7 @@ export const TARIFLER:Tarif[]=[
  {id:'bileme',  adet:1, malzeme:{celik:1,kurum:2}},
  {id:'okdelici',adet:5, malzeme:{celik:1,wood:1}},
  {id:'okcengel',adet:5, malzeme:{ag:2,celik:1,wood:1}},
- {id:'kavanoz', adet:1, malzeme:{celik:1,kurum:3},gold:10},
+ {id:'kavanoz', adet:1, malzeme:{celik:1,kurum:3}},
 ];
 /** Tarif yapilabiliyor mu - eksik malzeme listesiyle birlikte. */
 export function tarifDurum(s:State,t:Tarif){
@@ -211,11 +212,10 @@ export function tarifDurum(s:State,t:Tarif){
  for(const [id,n] of Object.entries(t.malzeme)as [ItemId,number][]){
   const v=s.inventory[id]||0;if(v<n)eksik.push({id,gerek:n,var:v});
  }
- const altinYeter=s.gold>=(t.gold||0);
  /* Tuketilebilir olmayan bir esyadan ikincisi uretilemez - kusanilir esya
     zaten tek; ikinci kopya envanteri sisiriyordu. */
  const zaten=ITEMS[t.id].kind!=='consumable'&&ITEMS[t.id].kind!=='ammo'&&!!s.inventory[t.id];
- return {olur:!eksik.length&&altinYeter&&!zaten,eksik,altinYeter,zaten};
+ return {olur:!eksik.length&&!zaten,eksik,zaten};
 }
 /** Tarifi uygular. Cagirmadan once tarifDurum().olur kontrol edilmeli. */
 export function tarifUygula(s:State,t:Tarif){
@@ -223,7 +223,6 @@ export function tarifUygula(s:State,t:Tarif){
  for(const [id,n] of Object.entries(t.malzeme)as [ItemId,number][]){
   s.inventory[id]=(s.inventory[id]||0)-n;if(s.inventory[id]!<=0)delete s.inventory[id];
  }
- if(t.gold)s.gold-=t.gold;
  addItem(s,t.id,t.adet);
  return true;
 }
@@ -320,19 +319,104 @@ export function sandikAc(s:State,id:string,items?:[ItemId,number][],gold=0){
  if(ilk){for(const [iid,n] of items||[])s.sandiklar[id]![iid]=(s.sandiklar[id]![iid]||0)+n;
   s.sandiklar[id]!.arrow=(s.sandiklar[id]!.arrow||0)+10;}
  return ilk;}
-export function gainXp(s:State,n:number){s.xp+=n;let leveled=false;while(s.level<5&&s.xp>=XP[s.level]){s.level++;s.points++;leveled=true;}if(leveled){s.hp=stats(s).maxHp;s.journal.unshift(`Seviye ${s.level}: yeni bir yetenek puanı kazandın.`)}return leveled;}
+/* v19.1: seviye metni sayi degil beden (oneri §4). Sistem ayni, yalniz cumle. */
+const SEVIYE_CUMLE:Record<number,string>={2:'kolun alıştı',3:'nefesin uzadı',4:'ayakların hafifledi',5:'yorgunluk geç geliyor'};
+export function gainXp(s:State,n:number){s.xp+=n;let leveled=false;while(s.level<5&&s.xp>=XP[s.level]){s.level++;s.points++;leveled=true;}if(leveled){s.hp=stats(s).maxHp;s.journal.unshift(`Seviye ${s.level}: ${SEVIYE_CUMLE[s.level]??'kolun alıştı'}.`)}return leveled;}
 export function equip(s:State,id:ItemId){if(!s.inventory[id])return false;const kind=ITEMS[id].kind;if(kind!=='weapon'&&kind!=='armor'&&kind!=='ring'&&kind!=='ammo')return false;if(kind==='ammo')s.equipment.ok=id;else s.equipment[kind]=id;s.hp=Math.min(s.hp,stats(s).maxHp);return true;}
 export function spendPoint(s:State,key:keyof State['skills']){if(s.points<1||!['power','vigor','agility'].includes(key))return false;s.points--;s.skills[key]++;if(key==='vigor')s.hp+=18;return true;}
+/* ==== IKI EL, IKI SOZ (v19.1, oneri A1) ====
+   Beden sozu: bir kisiye verilen ve oyuncunun ELINE bir sey, BEDENINE bir
+   kural koyan soz. Lin/Elvi/Tiga'ya verilen metin sozlerinden (yeminler())
+   AYRI: onlar defter sozu, iki el sinirina girmez.
+   Soz diyalogda degil SAHADA bozulur: motor olay yayar (gecis/dash/ic/uyu),
+   bu tablo dinler. Bozulan soz o an kisa bir cumleyle bildirilir; gece Undur
+   yazar (gunluge), sabah kisi kendi cumlesiyle karsilar. Puan, sayac yok.
+   Durum flags['yemin_'+id] icinde: 'tasiniyor' | 'bozuldu' | 'tutuldu' |
+   'kalkti' (kurali sahibi kaldirdi) | 'verildi' | 'alindi' | 'dustu' |
+   'serbest' (kuralsiz verildi) | 'eski' (eski kayitta satin alinmis). */
+export type YeminOlay={tip:'gecis';from:Zone;to:Zone;raufUzak?:boolean}|{tip:'dash'}|{tip:'ic';item:ItemId}|{tip:'uyu'};
+export type YeminId='alf'|'mirna'|'rauf';
+export type Yemin={id:YeminId;kime:string;npc:string;yuk:string;ikon:ItemId;kural:string;
+ /** Yuk elde mi (ikon soluk mu parlak mi). */
+ elde:(s:State)=>boolean;
+ bozar:(s:State,o:YeminOlay)=>boolean;
+ /** Undur'un gece satiri, duruma gore. */
+ gece:Record<string,string>;
+ /** Sabah kisinin ana metnine on ek, duruma gore. */
+ sabah:Record<string,string>;
+ /** Bozulunca sahada cikan tek cumle. */
+ an:string};
+export const YEMINLER:Record<YeminId,Yemin>={
+ alf:{id:'alf',kime:'Alf',npc:'boran',yuk:'Muhafız kılıcı',ikon:'guard',kural:'Kuşanılıyken üst kapıdan geçmez.',
+  elde:s=>!!s.inventory.guard,
+  bozar:(s,o)=>o.tip==='gecis'&&o.from==='haven'&&o.to==='disari'&&s.equipment.weapon==='guard',
+  gece:{bozuldu:'Alf’in kılıcı kapıdan geçti. Yazdım.',tutuldu:'Alf’in kılıcı kapıda kaldı. Yazdım.',kalkti:'Alf kapıdan geçebilir artık; kılıcı da. Yazdım.'},
+  sabah:{bozuldu:'Sende kalsın. İkimizin yemini de bozuk, en azından aynı yerde. ',tutuldu:'Kılıç duvarda. Sen de buradasın. ',kalkti:'Artık geçebilirim. O da geçer. '},
+  an:'Alf’in kılıcı kapıdan geçti.'},
+ mirna:{id:'mirna',kime:'Mirna',npc:'mira',yuk:'Son ilaç',ikon:'medicine',kural:'Hastaya götürülecek; içilmez.',
+  elde:s=>!!s.inventory.medicine,
+  bozar:(s,o)=>o.tip==='ic'&&o.item==='medicine',
+  gece:{bozuldu:'Mirna’nın ilacını sen içtin. Yazdım.',tutuldu:'İlaç Mirna’ya ulaştı. Yazdım.',verildi:'İlaç Rauf’a gitti. Mirna’ya sen söyleyeceksin. Yazdım.',alindi:'İlaç sen yatarken Mirna’ya gitti. Yazdım; senin adına değil.'},
+  sabah:{bozuldu:'Kendin içtin. Yazdım. Yaşayanlara. ',alindi:'Sen yatarken aldım; hastaya gitti. '},
+  an:'İlacı içtin. Mirna’nın hastaları bu gece de yatıyor.'},
+ rauf:{id:'rauf',kime:'Rauf',npc:'rauf',yuk:'Rauf',ikon:'ledger',kural:'Onu geride bırakıp kapıdan geçme.',
+  elde:s=>s.flags.rauf==='takip',
+  bozar:(s,o)=>o.tip==='gecis'&&!!o.raufUzak,
+  gece:{bozuldu:'Rauf’u bir kapının öbür yanında bıraktın. Yazdım.',tutuldu:'Rauf’u bırakmadın. Yazdım.',dustu:'Rauf yolda düştü. Yazdım; çizgi çekmedim.',salindi:'Rauf’u saldın. Söz onunla gitti. Yazdım.'},
+  sabah:{bozuldu:'Kapıda beni bıraktın. Topal da olsa geldim. Bir daha bırakma. '},
+  an:'Rauf geride kaldı.'},
+};
+/** Tasinan beden sozleri: HUD'daki iki el. */
+export const tasinanYeminler=(s:State)=>(Object.keys(YEMINLER) as YeminId[]).filter(id=>s.flags['yemin_'+id]==='tasiniyor');
+export const IKI_EL=2;
+export const elBos=(s:State)=>tasinanYeminler(s).length<IKI_EL;
+/** Soz verilir. Eller doluysa verilmez; cagiran kisinin cumlesi bunu soyler. */
+export function yeminVer(s:State,id:YeminId){if(s.flags['yemin_'+id]||!elBos(s))return false;s.flags['yemin_'+id]='tasiniyor';return true;}
+/** Tasinan sozu kapatir; gece Undur yazacak. */
+export function yeminBitir(s:State,id:YeminId,durum:string){if(s.flags['yemin_'+id]!=='tasiniyor')return false;
+ s.flags['yemin_'+id]=durum;s.flags['yeminGece_'+id]=true;return true;}
+/** Motorun olay dinleyicisi: bu olayla bozulan sozleri kapatir, kimliklerini dondurur. */
+export function yeminDinle(s:State,o:YeminOlay):YeminId[]{
+ return tasinanYeminler(s).filter(id=>YEMINLER[id].bozar(s,o)&&yeminBitir(s,id,'bozuldu'));}
+/** GECE: uykunun ya da olumun sonunda, gun ilerledikten SONRA cagrilir.
+ *  Olumde tasinan soz sinanir (oneri A2): ilac heybedeyse Mirna gece almistir.
+ *  Undur kapanan sozleri gunluge yazar; sabah kisi kendi cumlesiyle karsilar. */
+export function geceYaz(s:State,olum=false):string[]{
+ if(olum&&s.inventory.medicine&&!s.flags.medicine){removeItem(s,'medicine');s.flags.medicine='haven';s.flags.medicineDone=true;s.flags.medicineStarted=true;
+  if(!yeminBitir(s,'mirna','alindi')){s.flags.yemin_mirna='alindi';s.flags.yeminGece_mirna=true;}}
+ const out:string[]=[];
+ for(const id of Object.keys(YEMINLER) as YeminId[]){if(!s.flags['yeminGece_'+id])continue;
+  delete s.flags['yeminGece_'+id];const d=String(s.flags['yemin_'+id]);const satir=YEMINLER[id].gece[d];
+  if(satir){const t=`Undur gece yazdı: “${satir}”`;s.journal.unshift(t);out.push(t);}
+  if(YEMINLER[id].sabah[d])s.flags['yeminSabah_'+id]=`${d}:${s.gun}`;}
+ return out;}
+/** Sabah karsilamasi: yalniz gece yazildigi gunun sabahi gorunur. */
+export function sabahOnek(s:State,id:YeminId){const v=String(s.flags['yeminSabah_'+id]||'');const [d,g]=v.split(':');
+ return d&&Number(g)===s.gun?YEMINLER[id].sabah[d]||'':'';}
+/** Siginagin kulu: bozulan her soz bir kademe (en cok iki). Tutulan soz atesi buyutur. */
+export const kulKademe=(s:State)=>Math.min(2,(Object.keys(YEMINLER) as YeminId[]).filter(id=>s.flags['yemin_'+id]==='bozuldu').length);
+export const atesKademe=(s:State)=>Math.min(2,(Object.keys(YEMINLER) as YeminId[]).filter(id=>['tutuldu','kalkti'].includes(String(s.flags['yemin_'+id]))).length+(s.flags.ayaz==='indi'?1:0));
+/** Undur'un sayfasinda ayri baslik: elde tasinan sozler (defter sozlerinden ayri). */
+export function bedenSozleri(s:State):string[]{
+ const d=(id:YeminId)=>String(s.flags['yemin_'+id]||'');const out:string[]=[];
+ const alf:Record<string,string>={tasiniyor:'Alf’in kılıcı. Sende; kapıdan geçmedi.',bozuldu:'Alf’in kılıcı. Kapıdan geçti. Alf geri almadı.',tutuldu:'Alf’in kılıcı. Duvara döndü.',kalkti:'Alf’in kılıcı. Kural kalktı; ikisi de geçebilir.'};
+ const mir:Record<string,string>={tasiniyor:'Mirna’nın ilacı. Söz duruyor.',bozuldu:'Mirna’nın ilacı. Sen içtin.',tutuldu:'Mirna’nın ilacı. Hastaya gitti.',verildi:'Mirna’nın ilacı. Rauf’a gitti.',alindi:'Mirna’nın ilacı. Sen yatarken hastaya gitti.'};
+ const rau:Record<string,string>={tasiniyor:'Rauf. Arkanda yürüyor.',bozuldu:'Rauf. Bir kapıda geride kaldı.',tutuldu:'Rauf. Bırakmadın.',dustu:'Rauf. Yolda düştü.',salindi:'Rauf. Saldın; söz onunla gitti.'};
+ if(alf[d('alf')])out.push(alf[d('alf')]);if(mir[d('mirna')])out.push(mir[d('mirna')]);if(rau[d('rauf')])out.push(rau[d('rauf')]);
+ return out;}
 /** Saticilar. `zam` fiyat carpani: Alf malzemeyi maliyetine verir (1),
  *  Obruk dunyanin sonundan kar eder (2.5). Liste ayni zamanda satin alma
  *  YETKISI: bir esya hangi saticinin listesindeyse yalnizca ondan alinir. */
 export const SATICILAR:Record<string,{liste:ItemId[];zam:number}>={
- boran:{liste:['potion','tonic','torch','bileme','merhem','kavanoz','toz','chain','copper','guard','bow','arrow','tatar','kemik','yelek','gozu','mizrak','balta','hancer','topuz','pelerin','okates','okzehir','okdelici','okcengel'],zam:1},
+ boran:{liste:['potion','tonic','torch','bileme','merhem','kavanoz','toz','chain','copper','bow','arrow','tatar','kemik','yelek','gozu','mizrak','balta','hancer','topuz','pelerin','okates','okzehir','okdelici','okcengel'],zam:1},
  obruk:{liste:['tuzet','durusu','petek','muhur','ash','ocakz','kavanoz'],zam:2.5},
 };
 /** Obruk'a "bey" diyen oyunciya daha az zam yapar: kibri satin alinabilir. */
 export function zamOrani(s:State,satici:string){const z=SATICILAR[satici]?.zam??1;return satici==='obruk'&&s.flags.obrukSaygi==='bey'?z-.35:z;}
-export const fiyat=(s:State,id:ItemId,satici:string)=>Math.round(ITEMS[id].price*zamOrani(s,satici));
+/* v19.1: dusmanlardan altin dusmuyor; altin yalniz sandik, takas ve gorevden.
+   Fiyatlar buna gore ucte birine indi (oneri §4). Obruk'un Alf'e orani ayni. */
+export const FIYAT_CARPAN=.35;
+export const fiyat=(s:State,id:ItemId,satici:string)=>Math.max(1,Math.round(ITEMS[id].price*FIYAT_CARPAN*zamOrani(s,satici)));
 export function buy(s:State,id:ItemId,satici='boran'){const item=ITEMS[id];const v=SATICILAR[satici];if(!v||!v.liste.includes(id))return false;
  /* Kral cinayetinde suclanan tuccar bir daha satmaz (bkz. karar_* eylemleri). */
  if(satici==='boran'&&s.flags.alfKirildi)return false;
@@ -343,7 +427,7 @@ export function questList(s:State){return [
     veriyor - bu yuzden gorev "konus"la kapaniyor, "iste"yle degil. */
  {id:'kilic',title:'Boş el',done:!!s.flags.alfKilic,active:!s.flags.alfKilic,
   step:s.flags.alfKilic?'Alf yıpranmış kılıcını sana verdi.':'Kapı muhafızı Alf ile konuş. Elin boş aşağı inilmez.'},
- {id:'medicine',title:'Bir doz umut',done:!!s.flags.medicineDone,active:!!s.flags.medicineStarted,step:s.flags.medicineDone?(s.flags.medicine==='rauf'?'Rauf’u kurtardın. Mirna kararını öğrendi.':'İlaç sığınağın hastalarına ulaştı.'):s.flags.medicine==='rauf'?'Kararını Mirna’ya anlat.':s.inventory.medicine?'İlacı Mirna’ya götür veya yaralı Rauf’u ver.':'Sarnıcın kuzeydoğu odasındaki ilacı bul.'},
+ {id:'medicine',title:'Bir doz umut',done:!!s.flags.medicineDone,active:!!s.flags.medicineStarted,step:s.flags.medicineDone?(s.flags.medicine==='rauf'?'Rauf’u kurtardın. Mirna kararını öğrendi.':s.flags.medicine==='icildi'?'İlacı sen içtin. Hastalar hâlâ yatıyor.':s.flags.yemin_mirna==='alindi'?'Sen yatarken Mirna ilacı aldı.':'İlaç sığınağın hastalarına ulaştı.'):s.flags.medicine==='rauf'?'Kararını Mirna’ya anlat.':s.inventory.medicine?'İlacı Mirna’ya götür veya yaralı Rauf’u ver.':'Sarnıcın kuzeydoğu odasındaki ilacı bul.'},
  {id:'ledger',title:'Defterdeki isim',done:!!s.flags.ledgerDone,active:!!s.flags.ledgerStarted,step:s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Rauf’u sırrını korudun.':s.flags.fugitive==='dead'?'Rauf yolda düştü. Defteri Alf’e sen götürdün.':'Rauf’u muhafızlara teslim ettin.'):s.inventory.ledger?(s.flags.fugitive==='dead'?'Rauf yolda düştü, defter sende. Alf’e götür.':'Defteri Alf’e götür.'): 'Sarnıcın doğusunda Rauf’u bul. Hikâyesini dinle ve ne yapacağına karar ver.'},
  // Istege bagli: Lin'in atesi ve yukarida bekleyen agabeyi. Ana sonu kilitlemez.
  {id:'ates',title:'Sönmeyen ateş',done:s.flags.ayaz==='indi',active:!!s.flags.nil||!!s.flags.ayaz||!!s.flags.nilSondu,step:s.flags.nilSondu?'Ateş söndü. Lin artık odun taşımıyor.':s.flags.ayaz==='indi'?'Tiga sığınağa indi. Lin’in ateşi yanmaya devam ediyor.':s.flags.ayaz==='kaldi'?'Tiga Yıkık Ev’de kalmayı seçti. Sara’yı bekliyor.':s.flags.ayaz?'Tiga Yıkık Ev’de. Onu aşağı inmeye ikna edecek bir sebep bul.':s.flags.sozNil==='verildi'?'Lin’e söz verdin: ağabeyini görürsen ateşin yandığını söyleyeceksin. Kül Ovası’ndaki yıkığa bak.':'Lin’in ağabeyi on bir gündür yukarıda. Kül Ovası’ndaki yıkığa bak.'}
@@ -352,9 +436,12 @@ export function questList(s:State){return [
  *  bir isi var demektir. Motor bunu her karede cagirir. */
 export function bekleyen(s:State,id:string):boolean{
  switch(id){
-  case 'mira':return !s.flags.medicineDone;
-  case 'boran':return !s.flags.ledgerDone;
-  case 'ekin':return !s.ending;
+  /* v19.1 (oneri A5): ilk dakikalarda yonu unlem degil ALF'IN CUMLESI verir
+     ("Mirna atesin yaninda; once ona git"). Kilic alinana kadar yalniz Alf'te
+     unlem var; sonra yalniz Mirna'da. Alf ve Undur ilac yolu baslayinca acilir. */
+  case 'mira':return !!s.flags.alfKilic&&!s.flags.medicineDone;
+  case 'boran':return !s.flags.alfKilic||(!!s.flags.medicineStarted&&!s.flags.ledgerDone);
+  case 'ekin':return !!s.flags.medicineStarted&&!s.ending;
   case 'rauf':return !s.flags.fugitive;
   case 'tuhn':return !s.flags.tuhn;
   case 'nil':return !s.flags.sozNil&&!s.flags.nilSondu;
@@ -432,6 +519,7 @@ export function defterSatirlari(s:State):string[]{
   ?'Rauf. Yolda düştü, seni korurken. Kılıcı yerde, defteri sende. Adını ikinci kez çizmedik; ilk çizgi yetmişti.'
   :'';
  if(rauf)out.push(rauf+(f.medicine==='rauf'?' Son ilacı ona verdin. Mirna’ya kendin söyledin; Mirna yazdı.':''));
+ if(f.medicine==='icildi')out.push('Son ilaç. Sen içtin. Mirna kızmadı; bir dahakini kendisi taşıyacak.');
  // Lin
  out.push(f.nilSondu==='evet'?'Lin. Ateş söndü. Odun taşımıyor. Sebebini ben yazmadım; sen biliyorsun.'
   :f.ayaz==='indi'?'Lin. Ateş yandı. Ağabeyi geldi; ilk gördüğü şey ateşti.'
@@ -1122,7 +1210,7 @@ export function dialogue(s:State,id:string):Dialogue{
  if(id==='cakal')return {who:'Çakal',role:'Obruk’un adamı',portrait:12,
   text:s.flags.obrukDepo==='biliyorum'?'…Karga çok konuşuyor.':'Ben konuşmam. Karga konuşur. İkimize bir ağız yeter.',
   choices:[...(s.flags.kralCinayet==='acik'&&!s.flags.ifadeCakal?[{label:'O gece Karga neredeydi?',action:'ifade_cakal',note:'Soruşturma · Çakal'}]:[]),close]};
- if(id==='mira')return {who:'Mirna',role:'Sığınağın şifacısı',portrait:3,text:(s.flags.kral==='oldu'?(s.flags.kralKarar==='kendi'?'On dokuz. Yazdım. Yanına da senin cümleni yazdım. ':s.flags.kralKarar?'On dokuz. Yazdım. Bir isim daha yazdım; onu yazarken elim titredi. ':'On dokuz. Yazdım. Adının yanı boş duruyor. ') : '')+(s.flags.medicineDone?(s.flags.medicine==='rauf'?'Bir hayat kurtardın. Buradakiler için başka bir yol bulacağız. Yaralarını sarayım.':'İlaç işe yaradı. Bu gece kimseyi kaybetmedik. Dinlen; yaralarını sarayım.'):s.flags.medicine==='rauf'?'Ellerin boş… ama yüzünde söylemek istediğin bir şey var.':s.inventory.medicine?'Buldun! Bir şişenin bu kadar ağır bir umut taşıyacağını düşünmezdim.':'Aşağıdaki sarnıçta bir doz ilaç kaldı. Burada ateşler içinde yatanlar var. Onu bana getirir misin?'),choices:[
+ if(id==='mira')return {who:'Mirna',role:'Sığınağın şifacısı',portrait:3,text:(s.flags.kral==='oldu'?(s.flags.kralKarar==='kendi'?'On dokuz. Yazdım. Yanına da senin cümleni yazdım. ':s.flags.kralKarar?'On dokuz. Yazdım. Bir isim daha yazdım; onu yazarken elim titredi. ':'On dokuz. Yazdım. Adının yanı boş duruyor. ') : '')+sabahOnek(s,'mirna')+(s.flags.medicine==='icildi'?(sabahOnek(s,'mirna')?'':'İlacı içmişsin. ')+'Hastalar hâlâ yatıyor. Kızmıyorum; dipte ne olduğunu biliyorum. Bir dahaki şişeyi ben taşırım.':s.flags.medicineDone?(s.flags.medicine==='rauf'?'Bir hayat kurtardın. Buradakiler için başka bir yol bulacağız. Yaralarını sarayım.':'İlaç işe yaradı. Bu gece kimseyi kaybetmedik. Dinlen; yaralarını sarayım.'):s.flags.medicine==='rauf'?'Ellerin boş… ama yüzünde söylemek istediğin bir şey var.':s.inventory.medicine?'Buldun! Bir şişenin bu kadar ağır bir umut taşıyacağını düşünmezdim.':'Aşağıdaki sarnıçta bir doz ilaç kaldı. Burada ateşler içinde yatanlar var. Onu bana getirir misin?'),choices:[
   /* Kral cinayeti: ifade + KARAR. Karar Mirna'ya veriliyor cunku olen herkesi
      o yaziyor - "kim" sorusunun muhatabi o. Karar icin en az bir ifade sart;
      'kendi eliyle' secenegi ise YALNIZCA Mirna'nin ifadesi alindiysa acilir,
@@ -1141,7 +1229,7 @@ export function dialogue(s:State,id:string):Dialogue{
   ...(s.inventory.durusu?[{label:'Depoya duru su bırak.',action:'depo_su',note:'+2 gün su'}]:[]),
   {label:'Bana hikâyeni anlat.',action:'story:mira:1'},...(!s.flags.medicineStarted?[{label:'İlacı bulacağım.',action:'mira_start',note:'Görev · Bir doz umut'}]:[]),...(s.inventory.medicine?[{label:'İlaç senin. Hastaları iyileştir.',action:'mira_deliver',note:'+35 altın · Mirna’nın güveni'}]:[]),...(s.flags.medicine==='rauf'&&!s.flags.medicineDone?[{label:'İlacı yaralı birine verdim. Onu bırakamadım.',action:'mira_confess',note:'Kararını Mirna’ya anlat'}]:[]),{label:'Dinlen ve yaralarını sar.',action:'rest',note:'Canın tamamen yenilenir'},close]};
  if(id==='boran')return {who:'Alf',role:s.flags.alfSir==='soylendi'?'Eski kapı muhafızı':'Kapı muhafızı',portrait:2,text:(!s.flags.alfKilic?'Dur. …Dışarıdan mı? Demek hâlâ yürüyen var. Elin boş; aşağı öyle inilmez. (Duvardan yıpranmış bir kılıç indirip sana uzatıyor.) Al şunu, ihtiyacın olur. Bu benim değildi, ondan önceki adamın da değildi. '
- : s.flags.alfKirildi?'…': s.flags.kral==='oldu'?'Emri veren adam gitti. Hafifledim mi? Hayır. Aynı kapıyı şimdi tek başıma taşıyorum. ':'')+(s.inventory.ledger&&s.flags.fugitive==='dead'&&!s.flags.ledgerDone?'Defter döndü, adam dönmedi. Bu sefer kaçtığı için değil. …Çizgiyi ben çektim; altını yol yazdı. Ver şunu.':s.flags.alfSir==='soylendi'?'Yeminim bir yalanın üstüne kuruluymuş. Demek ki artık bu kapıdan geçebilirim. Nereye gideceğimi bilmiyorum ama gidebilirim.':s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Defter geri döndü, adam dönmedi. Onu gördüğünü biliyorum. Bir gün bana bunu neden yaptığını anlatırsın.':s.flags.fugitive==='dead'?'Defter döndü, adam dönmedi. Bu sefer kaçtığı için değil.':'Rauf’u getirdin. Gerisi benimle onun arasında. Sana borçluyum — ama teşekkür edemem.'):s.inventory.ledger?(s.flags.fugitive==='dead'?'Defter döndü, adam dönmedi. Bu sefer kaçtığı için değil. …Çizgiyi ben çektim; altını yol yazdı. Ver şunu.':'Defteri tanıdım. Peki adam? Rauf nerede?'):'Birliğimden bir adam kaçtı. Rauf. Aşağıda, sarnıcın doğusunda bir yerde. Nöbet defterimi de aldı — birliğin yeminleri onda yazılı; onun adı da, üstü çizili. Çizen bendim. Onu bul ve bana getir. Defteri de. Ben gidemem; sebebini sorarsan anlatırım.'),choices:[{label:'Bana hikâyeni anlat.',action:'story:boran:1'},
+ : s.flags.alfKirildi?'…': s.flags.kral==='oldu'?'Emri veren adam gitti. Hafifledim mi? Hayır. Aynı kapıyı şimdi tek başıma taşıyorum. ':'')+sabahOnek(s,'alf')+(s.inventory.ledger&&s.flags.fugitive==='dead'&&!s.flags.ledgerDone?'Defter döndü, adam dönmedi. Bu sefer kaçtığı için değil. …Çizgiyi ben çektim; altını yol yazdı. Ver şunu.':s.flags.alfSir==='soylendi'?'Yeminim bir yalanın üstüne kuruluymuş. Demek ki artık bu kapıdan geçebilirim. Nereye gideceğimi bilmiyorum ama gidebilirim.':s.flags.ledgerDone?(s.flags.fugitive==='protected'?'Defter geri döndü, adam dönmedi. Onu gördüğünü biliyorum. Bir gün bana bunu neden yaptığını anlatırsın.':s.flags.fugitive==='dead'?'Defter döndü, adam dönmedi. Bu sefer kaçtığı için değil.':'Rauf’u getirdin. Gerisi benimle onun arasında. Sana borçluyum — ama teşekkür edemem.'):s.inventory.ledger?(s.flags.fugitive==='dead'?'Defter döndü, adam dönmedi. Bu sefer kaçtığı için değil. …Çizgiyi ben çektim; altını yol yazdı. Ver şunu.':'Defteri tanıdım. Peki adam? Rauf nerede?'):'Birliğimden bir adam kaçtı. Rauf. Aşağıda, sarnıcın doğusunda bir yerde. Nöbet defterimi de aldı — birliğin yeminleri onda yazılı; onun adı da, üstü çizili. Çizen bendim. Onu bul ve bana getir. Defteri de. Ben gidemem; sebebini sorarsan anlatırım.'),choices:[{label:'Bana hikâyeni anlat.',action:'story:boran:1'},
   /* Ilk silah: oyun SILAHSIZ basliyor, kilic Alf'ten geliyor. Sart sadece
      "bayrak yok" degil, "elinde kesici bir sey yok" - oyuncu sandiktan yay
      bulmus olabilir, o zaman da kilic teklifi durmali. */
@@ -1149,10 +1237,14 @@ export function dialogue(s:State,id:string):Dialogue{
   /* Kilic ISTENMIYOR, VERILIYOR: secenek yalnizca alma onayi. Alf'in karsilama
      metni de bunu soyluyor (asagida, 'alfKilic' yoksa). */
   ...(!s.flags.alfKilic?[{label:'…Sağ ol.',action:'alf_kilic',note:'Kılıcı al'}]:[]),
+  /* v19.1 IKI EL: Alf'in kendi kilici bir BEDEN SOZU olarak verilir. Oyuncu
+     sarnici gordukten sonra acilir (asagida neye ihtiyac oldugunu bildiginde). */
+  ...(s.flags.alfKilic&&s.flags.gordu_cistern&&!s.flags.yemin_alf&&!s.inventory.guard?[{label:'Aşağısı ağır. Senin kılıcın lazım.',action:'alf_muhafiz',note:'Söz · Kılıç kapıdan geçmez'}]:[]),
+  ...(s.flags.yemin_alf==='tasiniyor'?[{label:'Kılıcını getirdim. Kapıdan geçmedi.',action:'alf_muhafiz_geri',note:'Sözü tamamla · Kılıcı geri ver'}]:[]),
   ...(s.inventory.kurdele?[{label:'Rauf’un bileğindeki kurdele. Kızınınmış.',action:'alf_kurdele',note:'Kurdeleyi Alf’e ver'}]:[]),
   ...(s.flags.alfSir==='biliyorum'?[{label:'Undur’un sana söylemediği bir şey var.',action:'story:boran:sir',note:'Karar · Onbir yılın sahibi'}]:[]),
   ...((s.flags.rauf==='korundu'||s.flags.rauf==='serbest')&&!s.flags.alfKarsi
-    ?[{label:'Bana bir şey soracaktın.',action:'story:boran:karsi',note:'Yüzleşme · Rauf'}]:[]),...(!s.flags.ledgerStarted?[{label:'Rauf’u bulup getireceğim.',action:'boran_start',note:'Görev · Defterdeki isim'}]:[]),...(s.inventory.ledger?[{label:s.flags.fugitive==='protected'?'Defter terk edilmişti. Rauf’u görmedim.':s.flags.fugitive==='dead'?'Al. Yolda düştü, beni korurken.':'Rauf teslim olmayı kabul etti.',action:'boran_deliver',note:s.flags.fugitive==='protected'?'Rauf’u koru · Yaşam halkası':s.flags.fugitive==='dead'?'Defteri ver · Yaşam halkası':'Rauf’u teslim et · Muhafız kılıcı'}]:[]),{label:'Malzemelerine bakabilir miyim?',action:'shop'},close]};
+    ?[{label:'Bana bir şey soracaktın.',action:'story:boran:karsi',note:'Yüzleşme · Rauf'}]:[]),...(!s.flags.ledgerStarted?[{label:'Rauf’u bulup getireceğim.',action:'boran_start',note:'Görev · Defterdeki isim'}]:[]),...(s.inventory.ledger?[{label:s.flags.fugitive==='protected'?'Defter terk edilmişti. Rauf’u görmedim.':s.flags.fugitive==='dead'?'Al. Yolda düştü, beni korurken.':'Rauf teslim olmayı kabul etti.',action:'boran_deliver',note:s.flags.fugitive==='protected'?'Rauf’u koru · Yaşam halkası':s.flags.fugitive==='dead'?'Defteri ver · Yaşam halkası':'Rauf’u teslim et · Yaşam halkası'}]:[]),{label:'Malzemelerine bakabilir miyim?',action:'shop'},close]};
  if(id==='ekin')return {who:'Undur',role:'Yeminlerin arşivcisi',portrait:4,text:(s.flags.kral==='oldu'?'Ongun. Bereket. Altına çizgi çektim. Tacın nerede olduğunu biliyorum; onu da yazdım. ':'')+(s.ending?(s.flags.alfSir==='soylendi'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf’inki yalanmış; sen söyledin, o da bıraktı. Bunu yazdım.':s.flags.alfSir==='sakladin'?'Bir yemin, onu tutan insanlar kadar güçlüdür. Alf hâlâ kendi yükünü taşıyor — sayende. Bunu da yazdım.':'Bir yemin, onu tutan insanlar kadar güçlüdür. Seninkinin izini bu taşlar uzun süre taşıyacak.'):'Defterin son sayfası boş. Oraya ne yazılacağını ben seçmem; sen seçersin. Bir de sana bir sözüm var, duruyor: kalbin yolunu bulduğumda ilk sana söyleyeceğim. Henüz bulmadım. Hazır olduğunda gel.'),choices:[
   /* UC FINAL. Yalnizca ADIMLARI TAMAMLANMIS olanlar gorunur - oyuncu hazir
      olmadigi bir sonu secemez, ama hangi sonlara yaklastigini gunlukten gorur. */
@@ -1161,7 +1253,7 @@ export function dialogue(s:State,id:string):Dialogue{
   ...(!s.ending&&s.flags.sonSecim?[{label:'Son sayfaya sözümü yazdır.',action:'story:ekin:sonSoz'}]:[]),
   ...(s.ending?[{label:'Son sayfayı yeniden oku.',action:'son_sayfa'}]:[]),
 {label:'Bana hikâyeni anlat.',action:'story:ekin:1'},close]};
- if(id==='rauf')return {who:'Rauf',role:'Yaralı kaçak',portrait:5,text:s.flags.fugitive==='reported'?'Teslim olacağım. Defteri de götür; adımın altına ne yazdıysa bir de yüzüme okusun.':s.flags.medicine==='rauf'?'Nefes almak artık acıtmıyor. Bunu unutmayacağım.': 'Alf’in nöbet defteri bende. Adım içinde, üstü çizili — ben çizmedim, o çizdi. Ocak kapısını açık bulunca içeri girdim; bacağım burada bitti. Alf beni dinlemez. Bana yardım eder misin?',choices:[{label:'Bana hikâyeni anlat.',action:'story:rauf:1'},...(s.inventory.medicine&&s.flags.fugitive!=='reported'?[{label:'Bu ilacı al. Yaşaman gerek.',action:'rauf_heal',note:'Son ilacı harca · Mirna’ya götüremeyeceksin'}]:[]),close]};
+ if(id==='rauf')return {who:'Rauf',role:'Yaralı kaçak',portrait:5,text:sabahOnek(s,'rauf')+(s.flags.fugitive==='reported'?'Teslim olacağım. Defteri de götür; adımın altına ne yazdıysa bir de yüzüme okusun.':s.flags.medicine==='rauf'?'Nefes almak artık acıtmıyor. Bunu unutmayacağım.': 'Alf’in nöbet defteri bende. Adım içinde, üstü çizili — ben çizmedim, o çizdi. Ocak kapısını açık bulunca içeri girdim; bacağım burada bitti. Alf beni dinlemez. Bana yardım eder misin?'),choices:[{label:'Bana hikâyeni anlat.',action:'story:rauf:1'},...(s.inventory.medicine&&s.flags.fugitive!=='reported'?[{label:'Bu ilacı al. Yaşaman gerek.',action:'rauf_heal',note:'Son ilacı harca · Mirna’ya götüremeyeceksin'}]:[]),close]};
  /* Tanimsiz kisi: eskiden Kul Ocagi'nin "Eski muhur"u buraya duserdi. */
  return {who:'…',role:'',portrait:1,text:'Burada konuşacak kimse yok.',choices:[close]};
 }
@@ -1231,6 +1323,8 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
    s.journal.unshift('Undur’un sırrını sakladın. Alf yükünü taşımaya devam edecek.');
    return {message:''};}
   if(dugum==='boran:sirSoyle'){s.flags.alfSir='soylendi';s.flags.talk=dugum;
+   /* Kilicin kurali Alf'in yeminine bagliydi; yemin dusunce kural da duser. */
+   if(yeminBitir(s,'alf','kalkti'))s.journal.unshift('Alf: “Artık geçebilirim. O da geçer.”');
    addItem(s,'copper');
    s.journal.unshift('Alf’e gerçeği söyledin. On bir yıllık cümlesi elinden gitti; nöbet anahtarını sana verdi.');
    return {message:'Alf nöbet anahtarını verdi.'};}
@@ -1318,15 +1412,18 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
   // shop:<satici> - hangi kisinin tezgahi acilacak. Sade 'shop' Alf demek.
   case 'shop:obruk':return {message:'',special:'shop',satici:'obruk'};
  case 'rest':s.hp=stats(s).maxHp;message='Dinlendin. Canın tamamen yenilendi.';break;
- case 'mira_start':if(s.flags.medicineStarted)return {message:''};s.flags.medicineStarted=true;message='Yeni görev: Bir doz umut.';break;
+ case 'mira_start':if(s.flags.medicineStarted)return {message:''};
+  /* Beden sozu: ilac ele konur, beden kurali gelir (icilmez). Eller doluysa Mirna vermez. */
+  if(!yeminVer(s,'mirna'))return {message:'Mirna: “Ellerin dolu. Önce taşıdığını bırak; ilaç beklemez ama ben beklerim.”'};
+  s.flags.medicineStarted=true;message='Söz verdin: ilaç hastaya gidecek. İçilmeyecek.';break;
  case 'boran_start':if(s.flags.ledgerStarted)return {message:''};s.flags.ledgerStarted=true;message='Yeni görev: Defterdeki isim.';break;
- case 'mira_deliver':if(s.flags.medicineDone||!removeItem(s,'medicine'))return {message:''};s.flags.medicine='haven';s.flags.medicineDone=true;s.flags.medicineStarted=true;s.gold+=35;addItem(s,'potion',2);xp=130;message='İlaç sığınağa ulaştı. +35 altın, +2 iksir.';break;
+ case 'mira_deliver':if(s.flags.medicineDone||!removeItem(s,'medicine'))return {message:''};s.flags.medicine='haven';s.flags.medicineDone=true;s.flags.medicineStarted=true;s.gold+=35;addItem(s,'potion',2);xp=130;yeminBitir(s,'mirna','tutuldu');message='İlaç sığınağa ulaştı. +35 altın, +2 iksir.';break;
  case 'mira_confess':if(s.flags.medicine!=='rauf'||s.flags.medicineDone)return {message:''};s.flags.medicineDone=true;s.flags.medicineStarted=true;xp=130;addItem(s,'potion');message='Mirna kararını kabul etti. Bir hayat kurtardın.';break;
- case 'rauf_heal':if(s.flags.fugitive==='reported'||s.flags.medicine||!removeItem(s,'medicine'))return {message:''};s.flags.medicine='rauf';s.flags.medicineStarted=true;addItem(s,'blood');xp=35;message='Rauf iyileşti. Sana Gece dişi kılıcını verdi.';break;
+ case 'rauf_heal':if(s.flags.fugitive==='reported'||s.flags.medicine||!removeItem(s,'medicine'))return {message:''};s.flags.medicine='rauf';s.flags.medicineStarted=true;yeminBitir(s,'mirna','verildi');addItem(s,'blood');xp=35;message='Rauf iyileşti. Sana Gece dişi kılıcını verdi.';break;
  // 'rauf_protect' / 'rauf_report' kaldirildi: karar hikaye agacina tasindi.
  case 'boran_deliver':if(s.flags.ledgerDone||!s.flags.fugitive||!removeItem(s,'ledger'))return {message:''};s.flags.ledgerDone=true;s.flags.ledgerStarted=true;xp=140;s.gold+=25;/* Rauf yolda olduyse (fugitive 'dead') defteri oyuncu getirir; Alf
    cizginin altina kendi eliyle bir satir yazar. Odul yuzuk (taslak §2). */
-  addItem(s,s.flags.fugitive==='reported'?'guard':'life');message=s.flags.fugitive==='protected'?'Rauf’un ismini gizledin. Yaşam halkası kazandın.':s.flags.fugitive==='dead'?'Alf defteri aldı ve çizginin altına bir satır yazdı. Yaşam halkası kazandın.':'Defteri ve Rauf’u teslim ettin. Muhafız kılıcı kazandın.';break;
+  /* v19.1: muhafiz kilici artik Alf'in sozu; teslimde yuzuk. */addItem(s,'life');message=s.flags.fugitive==='protected'?'Rauf’un ismini gizledin. Yaşam halkası kazandın.':s.flags.fugitive==='dead'?'Alf defteri aldı ve çizginin altına bir satır yazdı. Yaşam halkası kazandın.':'Defteri ve Rauf’u teslim ettin. Yaşam halkası kazandın.';break;
  case 'son_sayfa':if(!s.ending)return {message:''};return {message:'',special:'ending'};
  case 'nil_odun':if(s.flags.nilOdun||!removeItem(s,'wood'))return {message:''};s.flags.nilOdun=true;xp=20;message='Lin odunu aldı: “Bu gece de yanar.”';break;
  case 'ayaz_haber':if(s.flags.ayazHaber||!s.flags.sozNil)return {message:''};s.flags.ayazHaber='soylendi';xp=30;message=s.flags.sozNil==='verildi'?'Lin’e verdiğin sözü tuttun. Tiga: “…Yanıyor demek.”':'Tiga: “…Yanıyor demek.”';break;
@@ -1346,6 +1443,9 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
  case 'mira_yatak':if(s.flags.miraYatak)return {message:''};s.flags.miraYatak='soylendi';
   message='Mirna köşeyi gösterdi: “Şuradaki yatak senin. Kimse istemedi; sen istemesen de kullan. Uyu, sabah daha az ağrır — ama uyandığında bir gün geçmiş olur, onu bil.”';break;
  case 'depo_et':if(!depoBirak(s,'tuzet'))return {message:''};xp=12;
+  /* Oneri A4 odul ani: ilk et. Lin odunu birakir; Mirna bunu defterine yazmaz. */
+  if(!s.flags.ilkEt){s.flags.ilkEt=true;s.journal.unshift('Lin odunu bıraktı, ete baktı. Mirna: “Yazmadım. Yaşayanlara yazılacak bir şey değil bu; yenecek.”');
+   message=`Lin odunu bıraktı, ete baktı. Mirna: “Yazmadım. Yaşayanlara yazılacak bir şey değil bu; yenecek.” (Depo: ${s.erzak.yiyecek} gün yiyecek)`;break;}
   message=`Mirna eti aldı, tartmadı bile: “İki gün. Az mı? Az. Ama iki gün, iki gün.” (Depo: ${s.erzak.yiyecek} gün yiyecek)`;break;
  case 'depo_su':if(!depoBirak(s,'durusu'))return {message:''};xp=12;
   message=`Mirna suyu ışığa tuttu: “Külsüz. Nereden buldun bilmiyorum, sormayacağım.” (Depo: ${s.erzak.su} gün su)`;break;
@@ -1381,7 +1481,15 @@ export function choose(s:State,action:string):{message:string;special?:'close'|'
   message='Alf itiraz etmedi. Kılıcını kapıya dayadı: “Zaten benim değildi.” Bir daha yüzüne bakmadı. Malını da artık sana satmıyor.';break;
  case 'karar_sessiz':if(s.flags.kralKarar)return {message:''};s.flags.kralKarar='sessiz';s.flags.kralCinayet='kapandi';xp=25;
   message='“Bilmiyorum” dedin. Mirna defteri kapattı: “Bilmiyorum da bir cevaptır. Ama sığınak bilmemekle uyuyamıyor.” Kimse bir şey demedi; herkes birbirine baktı.';break;
- case 'alf_kilic':if(s.flags.alfKilic)return {message:''};s.flags.alfKilic='verildi';addItem(s,'rusty');s.equipment.weapon='rusty';xp=10;message='Alf kılıcı avucuna bıraktı: “Şimdi senin. Geri getirmene gerek yok; taşıyabilirsen yeter.”';break;
+ case 'alf_kilic':if(s.flags.alfKilic)return {message:''};s.flags.alfKilic='verildi';addItem(s,'rusty');s.equipment.weapon='rusty';xp=10;message='Alf kılıcı avucuna bıraktı: “Şimdi senin. Geri getirmene gerek yok; taşıyabilirsen yeter. Mirna ateşin yanında; önce ona git.”';break;
+ case 'alf_muhafiz':if(s.flags.yemin_alf||s.inventory.guard||!s.flags.alfKilic)return {message:''};
+  /* Sir zaten soylendiyse kural yok: Alf de kapidan gecebiliyor artik. */
+  if(s.flags.alfSir==='soylendi'){s.flags.yemin_alf='serbest';addItem(s,'guard');message='Alf: “Al. Artık ikimiz de geçebiliyoruz; kılıç da geçsin.”';break;}
+  if(!yeminVer(s,'alf'))return {message:'Alf: “İki elin dolu. Kılıç bekler; ben de.”'};
+  addItem(s,'guard');xp=10;message='Alf: “Al. Aşağıda işine yarar. Ama bu kılıç o kapıdan geçmez; ben de geçmem.”';break;
+ case 'alf_muhafiz_geri':if(s.flags.yemin_alf!=='tasiniyor'||!s.inventory.guard)return {message:''};
+  if(s.equipment.weapon==='guard')s.equipment.weapon=s.inventory.rusty?'rusty':'yumruk';
+  removeItem(s,'guard');yeminBitir(s,'alf','tutuldu');xp=40;message='Alf: “Taşıdın, geçirmedin. Yeter.”';break;
  case 'alf_kurdele':if(!removeItem(s,'kurdele'))return {message:''};s.flags.alfKurdele='verildi';xp=40;message='Alf kurdeleyi avucunda tuttu: “…Yedi yaşında mıydı? Bana söylememişti.”';break;
  default:return {message:''};
  }
@@ -1400,4 +1508,11 @@ export function parseSave(raw:string):State|null{try{const s=JSON.parse(raw) as 
  s.inventory.yumruk=s.inventory.yumruk||1;
  // Ok yuvasi sonradan eklendi; eski kayitta yok.
  s.equipment.ok=s.equipment.ok||'arrow';
+ /* v19.1 IKI EL: eski kayitta Alf'ten satin alinan ya da teslim odulu muhafiz
+    kilici kuralsiz kalir ('eski'); eski oyuncuya geriye donuk soz yuklenmez.
+    Ilac gorevi baslamis ve ilac henuz kimseye gitmediyse soz verilmis sayilir
+    (el bossa). Rauf pesindeyse onun sozu da. */
+ if(s.inventory.guard&&!s.flags.yemin_alf)s.flags.yemin_alf='eski';
+ if(s.flags.medicineStarted&&!s.flags.medicineDone&&!s.flags.medicine&&!s.flags.yemin_mirna)yeminVer(s,'mirna');
+ if(s.flags.rauf==='takip'&&!s.flags.yemin_rauf)yeminVer(s,'rauf');
  s.hp=Math.min(s.hp,stats(s).maxHp);return s}catch{return null}}
